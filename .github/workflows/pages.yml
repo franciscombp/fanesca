@@ -27,11 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # enablement: prende Pages (modo "GitHub Actions") la primera vez,
-      # para no tener que ir a Settings a mano.
+      # Ojo, una sola vez: Pages tiene que estar prendido en modo
+      # "GitHub Actions" (Settings → Pages → Build and deployment →
+      # Source: GitHub Actions). El GITHUB_TOKEN del workflow no puede
+      # prenderlo solo — la API contesta "Resource not accessible by
+      # integration" — así que ese clic es a mano. Mientras no esté,
+      # este paso falla con "Get Pages site failed / Not Found".
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Armar el sitio
         run: |

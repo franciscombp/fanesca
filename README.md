@@ -202,6 +202,8 @@ npx serve .        # y abrir la raíz
 la rama por defecto. No hay build: se sube el repo tal cual (sin
 `.git/` ni `.github/`).
 
-Para que salga al aire, en **Settings → Pages → Build and deployment**
-la fuente tiene que ser **GitHub Actions**. El workflow intenta
-activarla solo la primera vez.
+Un solo paso a mano, y una sola vez: en **Settings → Pages → Build and
+deployment**, la fuente tiene que ser **GitHub Actions**. El
+`GITHUB_TOKEN` del workflow no tiene permiso para prenderlo por su
+cuenta. Hasta que esté, el workflow falla en `configure-pages` con
+*Get Pages site failed — Not Found*.
