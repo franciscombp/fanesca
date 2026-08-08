@@ -190,6 +190,32 @@ export const TARJETAS = {
     texto: 'Zapallo y sambo son americanos y son la base: molidos y hervidos con leche, son lo que le da cuerpo a la fanesca. Lo dulce de abajo, que sostiene los doce granos sin que se note. Casi nunca se los nombra, y sin ellos no hay plato.',
     abre: ['nombre'],
   },
+  arveja: {
+    titulo: 'La que llegó con las otras',
+    texto: 'La arveja vino del mismo lado que la haba y el garbanzo, y como ellas se quedó. En la olla nadie las separa por origen: se separan por gesto, que es lo único que distingue de verdad un grano de otro cuando lo tienes en la mano.',
+    abre: ['granos'],
+  },
+  melloco: {
+    titulo: 'El que se defiende',
+    texto: 'El melloco es andino y es terco: viene forrado en una baba que hay que quitarle raspando, porque apretándolo se dispara. En la sierra se lo come desde antes de que existiera la palabra fanesca, y sigue entrando en la olla sin que casi nadie lo nombre.',
+    abre: ['origen'],
+  },
+  col: {
+    titulo: 'La col, que llegó y se hizo indispensable',
+    texto: 'La col cruzó el Atlántico con los españoles y terminó picada finita en una sopa andina de Semana Santa. Es el ejemplo más doméstico de lo que hace este plato: no adoptó la col como adorno, la volvió estructura.',
+    abre: ['granos'],
+  },
+  quinua: {
+    titulo: 'El grano que se defiende con jabón',
+    texto: 'La quinua se cubre de saponina para que no se la coman los pájaros, y ese jabón amarga la olla si entra con ella. Quitarlo es agua y vueltas, igual que desamargar el chocho: dos granos de aquí que exigen paciencia antes de dejarse comer. Nadie descubrió eso en una tarde.',
+    abre: ['origen'],
+  },
+  mani: {
+    titulo: 'Majar, que es el gesto más viejo',
+    texto: 'Moler en piedra es anterior a todo lo demás que hay en esta cocina: a la olla, al fogón, al calendario que le puso fecha al plato. El maní es americano y se maja como se ha majado siempre — yendo y viniendo, sin atajo. Es el único ingrediente que no premia la maña sino la insistencia.',
+    cita: CHANCOSO_AGRICULTURA,
+    abre: ['origen', 'voces'],
+  },
   bacalao: {
     titulo: 'La sal era el barco',
     texto: 'El bacalao llegó por una regla religiosa —nada de carne en vigilia— y se quedó por una razón física: sin frío, el único pescado que podía cruzar el Atlántico y subir a los Andes era el que venía seco y enterrado en sal. Desalarlo, como acabas de hacer, es deshacerle el viaje.',

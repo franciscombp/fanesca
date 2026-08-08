@@ -16,10 +16,15 @@ import './cocina.js';
 import './bichos.js';
 import './choclo.js';
 import './habas.js';
+import './arveja.js';
 import './chochos.js';
 import './frejol.js';
+import './melloco.js';
 import './zapallo.js';
+import './col.js';
 import './lenteja.js';
+import './quinua.js';
+import './mani.js';
 import './bacalao.js';
 
 export { registrar, pieza, parte, partes, cargarGLB, tieneGLB, registradas } from './registro.js';

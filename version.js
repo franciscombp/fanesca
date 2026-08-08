@@ -14,10 +14,24 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.5.0',
+    fecha: '2026-08-08',
+    titulo: 'Doce granos, de verdad',
+    cambios: [
+      'Cinco ingredientes nuevos, y con ellos la olla llega a doce: la arveja, el melloco, la col, la quinua y el maní.',
+      'La arveja no se abre frotándola como el haba: está cosida por un hilo que hay que jalar del rabito, a lo largo. Recién ahí el pulgar corre por encima y salen en cadena.',
+      'El melloco se te dispara si lo empujas de golpe. Se raspa parejo, y la baba se ve irse: la cáscara pasa de brillante a mate.',
+      'La col se enrolla como un cigarro y se corta al través. Cortar grueso no te frena en el momento — te frena después, cuando se te acaba la col y toca traer otra.',
+      'La quinua es la primera batea con agua del juego: se remueve en círculos hasta que espuma, y ahí se bota el agua y se empieza otra. Ir y venir en línea recta no lava nada.',
+      'El maní se maja en piedra, yendo y viniendo. Cada pasada empuja los granos a la orilla, donde la piedra ya no muerde: hay que arrimarlos de vuelta.',
+      'La olla grande ahora cuenta hasta doce, con una frase por ingrediente que entra.',
+    ],
+  },
   {
     v: '1.4.0',
     fecha: '2026-08-08',

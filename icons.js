@@ -96,6 +96,53 @@ ICONS.hoja = _svg(`
   <path d="M32 8 Q52 18 50 36 Q48 52 32 56 Q16 52 14 36 Q12 18 32 8 Z" fill="#9dbd8a"/>
   <path d="M32 12 V52 M32 24 Q24 26 20 32 M32 24 Q40 26 44 32 M32 38 Q26 40 23 44 M32 38 Q38 40 41 44" stroke="#7d9b76" stroke-width="2" fill="none" stroke-linecap="round"/>`);
 
+/* la vaina de arveja: cosida por su hilo, que es el gesto del nivel */
+ICONS.arveja = _svg(`
+  <path d="M10 38 Q10 22 26 18 L46 15 Q56 20 54 32 Q52 44 40 47 L22 50 Q11 48 10 38 Z" fill="#7cbb4a"/>
+  <path d="M12 34 Q30 26 52 24" stroke="#4e8a33" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M52 24 Q58 22 60 16" stroke="#4e8a33" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <g fill="#a6cc55" stroke="#5f9438" stroke-width="1.2">
+    <circle cx="22" cy="40" r="5"/><circle cx="33" cy="37" r="5.2"/><circle cx="44" cy="34" r="4.8"/>
+  </g>
+  ${face(33, 30, .58)}`);
+
+/* el melloco: amarillo manchado de rosa, y relumbrando de baba */
+ICONS.melloco = _svg(`
+  <ellipse cx="33" cy="50" rx="16" ry="3" fill="#3a2c18" opacity=".15"/>
+  <path d="M14 34 Q14 20 30 19 Q46 18 50 28 Q54 40 42 46 Q26 51 18 44 Q13 40 14 34 Z" fill="#f0c352"/>
+  <ellipse cx="24" cy="28" rx="6" ry="3.4" fill="#c9527e" transform="rotate(-18 24 28)"/>
+  <ellipse cx="42" cy="35" rx="5" ry="3" fill="#c9527e" transform="rotate(12 42 35)"/>
+  <ellipse cx="31" cy="41" rx="4" ry="2.4" fill="#c9527e" transform="rotate(-8 31 41)"/>
+  <path d="M20 26 Q26 21 34 21" stroke="#fffdf2" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".8"/>
+  ${face(32, 33, .62)}`);
+
+/* la quinua: la batea, el agua y la espuma que hay que botar */
+ICONS.quinua = _svg(`
+  <ellipse cx="32" cy="53" rx="19" ry="3.2" fill="#3a2c18" opacity=".16"/>
+  <path d="M10 28 Q10 50 32 50 Q54 50 54 28 Z" fill="#e8d9b8"/>
+  <ellipse cx="32" cy="28" rx="22" ry="7.4" fill="#bcd7dd"/>
+  <g fill="#fcfaf2">
+    <circle cx="22" cy="26" r="4"/><circle cx="31" cy="24" r="5"/><circle cx="41" cy="26.5" r="4.2"/>
+    <circle cx="26" cy="29" r="3"/><circle cx="37" cy="29" r="3.2"/>
+  </g>
+  <g fill="#ded0a0">
+    <ellipse cx="25" cy="34" rx="2.6" ry="1.6"/><ellipse cx="34" cy="36" rx="2.6" ry="1.6"/>
+    <ellipse cx="42" cy="33" rx="2.6" ry="1.6"/>
+  </g>
+  <path d="M10 28 Q10 50 32 50 Q54 50 54 28" fill="none" stroke="${INK}" stroke-width="1.8" stroke-opacity=".35" stroke-linecap="round"/>`);
+
+/* el maní: la piedra de moler con su mano y el grano encima */
+ICONS.mani = _svg(`
+  <path d="M8 38 Q8 33 14 32 H50 Q56 33 56 38 Q56 43 50 44 H14 Q8 43 8 38 Z" fill="#7d766c"/>
+  <path d="M14 44 V49 M32 45 V50 M50 44 V49" stroke="#8d8577" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="24" cy="31" rx="9" ry="6" fill="#8d8577"/>
+  <ellipse cx="22" cy="29" rx="4" ry="2.2" fill="#a09789" opacity=".7"/>
+  <g fill="#b5673a">
+    <ellipse cx="40" cy="30" rx="4.4" ry="3.6"/><ellipse cx="45.6" cy="30.6" rx="4.4" ry="3.6"/>
+  </g>
+  <ellipse cx="42.8" cy="30.3" rx="2.2" ry="3.4" fill="#eccb92"/>
+  ${face(24, 31, .42)}`);
+
 /* ============ El plato y el cuaderno ============ */
 
 ICONS.fanesca = _svg(`${steam(32, 10)}

@@ -1,10 +1,17 @@
 name: Publicar en GitHub Pages
 
 # El sitio es estático: no hay build, se sube el repo tal cual.
-# Solo publica la rama por defecto — así una rama de trabajo puede
-# empujarse sin salir al aire por accidente.
+#
+# Publica SOLO desde `main`. Antes decía "la rama por defecto", que
+# suena más listo y falla peor: cuando Pages se prende, GitHub le
+# pone al environment `github-pages` una política de rama, y un job
+# que la incumple no falla en un paso —falla en la puerta, en un
+# segundo y sin un solo log— que es de las cosas más difíciles de
+# diagnosticar que da Actions. Con el nombre puesto a mano, una rama
+# de trabajo se salta el job limpiamente en vez de estrellarse.
 on:
   push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

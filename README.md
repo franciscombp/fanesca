@@ -14,7 +14,7 @@ con Three.js versionado en `vendor/`.
 Nació como minijuego dentro de [Pambamesa](https://github.com/franciscombp/pambamesa)
 y se mudó aquí, a su propia olla. De allá se trajo el sistema de
 diseño (`design-system.css`) y las ilustraciones (`icons.js`,
-recortado a los siete que este juego pide).
+recortado a los pocos que este juego pide).
 
 La escena 3D **lee la paleta de `:root`** con `getComputedStyle` en vez
 de copiarla. No es un detalle: el juego nació sobre la paleta anterior
@@ -34,8 +34,8 @@ Andes enterrado en sal porque no había otra forma de que llegara.
 
 Todo eso está en `historia.js` y se reparte por el juego:
 
-- **El cuaderno** (`screen-cuaderno`): seis capítulos —origen, fecha,
-  nombre, granos, bacalao, unidad— con sus fuentes al pie. Empiezan
+- **El cuaderno** (`screen-cuaderno`): siete capítulos —origen, fecha,
+  nombre, granos, bacalao, unidad, voces— con sus fuentes al pie. Empiezan
   cerrados: cada ingrediente que preparas abre uno o dos. La historia
   se gana con las manos, igual que en la cocina.
 - **La tarjeta** que aparece al terminar un nivel, con lo que ese
@@ -55,17 +55,35 @@ cuaderno lo dice así.
 
 ## La idea
 
-Siete ingredientes, siete gestos, una sola regla compartida.
+Doce ingredientes, doce gestos, una sola regla compartida. Doce
+porque son los doce granos —el chiste del plato— y porque ninguno
+repite la mano de otro: en cuanto un ingrediente nuevo iba a pedir un
+gesto que ya estaba, se quedó fuera. El sambo se corta como el
+zapallo; el garbanzo se pela como el chocho; el arroz se escoge como
+la lenteja. Ninguno de los tres entró, y por eso.
 
 | Nivel | Gesto lento | Gesto rápido | El bicho |
 |---|---|---|---|
 | **El choclo** | deshojar, y tocar grano a grano | arrastrar a lo largo → cascada | gusanito bajo un grano |
 | **Las habas** | tocar haba por haba | barrer la vaina abierta | gusanito dentro de la vaina |
+| **La arveja** | jalar el hilo desde el rabito, a lo largo | correr el pulgar → salen en cadena | gusanito dentro de la vaina |
 | **Los chochos** | apretar uno | arrastrar y van saltando en fila | gorgojo del mismo color |
 | **El fréjol** | — | mantener el dedo hasta que truene, y barrer | gorgojo entre los granos |
+| **El melloco** | raspar parejo la babaza | *no hay* — de golpe se dispara y hay que ir a buscarlo | gusanito entre la tierra |
 | **El zapallo** | — | cruzar la línea punteada de un trazo | gusano paseando sobre el corte |
+| **La col** | enrollar la hoja de lado a lado | cruzar el rollo → una tira por pasada | gusano del color de la hoja |
 | **La lenteja** | tocar cada piedrita | *no hay* — barrer antes de limpiar arruina la olla | gorgojo igualito a una piedra |
+| **La quinua** | remover en círculos, y botar el agua | *no hay* — el agua saturada no lava | gorgojo, al lado de la batea |
+| **El maní** | vaivén con la mano de piedra | *no hay* — y es a propósito, cierra los doce | gorgojo entre los granos |
 | **El bacalao** | frotar la sal | — | mosca posada en la presa |
+
+**Tres niveles no tienen atajo rápido, y los tres dicen lo mismo por
+distintos lados.** La lenteja premia la mirada; el melloco castiga el
+arrebato en el acto —se te dispara— y la quinua no deja correr: el
+agua se satura y hay que parar a cambiarla. Después de nueve niveles
+enseñando que la maña se paga en segundos, el maní cierra la olla
+pidiendo lo contrario. Es el gesto más viejo de la cocina y el único
+que no tiene truco.
 
 **El choclo llega con hojas y con genio.** Se deshoja jalando cada
 hoja hacia abajo y arrancando los pelos de un jalón — el mismo gesto
@@ -77,8 +95,8 @@ aguantan el doble y la cascada corre pesada. Ir rápido en el choclo
 equivocado es ir más lento — que es exactamente lo que enseña
 desgranar de verdad.
 
-**La lenteja es la excepción a propósito.** Los otros seis premian la
-mano rápida; escoger el grano premia la mirada. Ahí el bicho deja de
+**La lenteja es la excepción a propósito.** Los que premian la mano
+rápida son mayoría; escoger el grano premia la mirada. Ahí el bicho deja de
 ser un castigo añadido y se vuelve el nivel entero: el gorgojo tiene
 el tamaño y casi el color de una piedrita, y tocar lo que sobra es
 justamente el gesto correcto. La única defensa es mirar antes de

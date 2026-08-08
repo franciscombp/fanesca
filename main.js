@@ -123,12 +123,22 @@ function pintarDev() {
 
 /* ---------- la mesa de prep ---------- */
 
+/* una frase por ingrediente que ya entró: doce granos, doce estados
+   de la olla. El índice es cuántos van, así que la última es la de
+   la olla completa y no se alcanza hasta el bacalao. */
 const FRASES_OLLA = [
   'Todavía está el agua sola. Prepara un ingrediente.',
   'Ya hay algo adentro. Huele a que empieza.',
+  'Dos. Todavía se distingue cada cosa.',
   'Va tomando cuerpo. Sigue con el siguiente.',
+  'Cuatro. El agua ya no es agua: es caldo.',
+  'Se está espesando. Ahora sí hay que revolver.',
   'Media fanesca. La cocina ya huele a jueves santo.',
+  'Siete. De aquí para allá ya no se puede parar.',
+  'Ocho. Se acabó el sitio para dudar de la receta.',
   'Falta poquito. No aflojes ahora.',
+  'Diez. Ya nadie podría separar lo que hay adentro.',
+  'Once. Falta el que cruzó el mar.',
   '¡Los doce granos completos! Que hierva despacio.',
 ];
 

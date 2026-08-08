@@ -51,6 +51,14 @@ export const COMIDA = {
   haba_ombligo: '#9bb069',
   hilo_haba: '#5f8a3e',
 
+  /* arveja: la vaina más tiesa y brillante que la del haba, y el
+     hilo que la cose — que aquí es una pieza, no una raya pintada */
+  vaina_arveja: '#7cbb4a',
+  vaina_arveja_dentro: '#eaf4d2',
+  hilo_arveja: '#4e8a33',
+  arveja: '#a6cc55',
+  arveja_cicatriz: '#dfeab4',
+
   /* chochos: piel translúcida, pepa amarilla */
   chocho_piel: '#efe7cd',
   chocho_pepa: '#f5cf58',
@@ -67,6 +75,33 @@ export const COMIDA = {
   zapallo_pulpa: '#f6b957',
   zapallo_pepa: '#f3e6bc',
   zapallo_guia: '#5b3b1c',
+
+  /* melloco: amarillo manchado de rosa fuerte, y la babaza —esa
+     baba transparente que es la razón entera del nivel */
+  melloco: '#f0c352',
+  melloco_mancha: '#c9527e',
+  melloco_babaza: '#f4f7e4',
+  melloco_limpio: '#f8dc8e',
+
+  /* col: la hoja clara con su nervadura gruesa y el tronco */
+  col_hoja: '#bcd88f',
+  col_nervio: '#eaf3d4',
+  col_tira: '#cbe2a0',
+  col_tronco: '#e6efcd',
+
+  /* quinua: el grano crudo, el lavado, y la espuma de saponina */
+  quinua: '#ded0a0',
+  quinua_limpia: '#f3ead0',
+  quinua_germen: '#c3b083',
+  espuma: '#fcfaf2',
+  agua: '#bcd7dd',
+
+  /* maní: la piel colorada, el grano y la pasta ya majada */
+  mani: '#eccb92',
+  mani_piel: '#b5673a',
+  mani_pasta: '#d7a45f',
+  mani_veta: '#8e4a26',
+  piedra_moler: '#7d766c',
 
   /* lenteja: la buena, la piedra y la picada */
   lenteja: '#c98a4b',
