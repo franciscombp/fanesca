@@ -9,7 +9,7 @@
    ============================================================ */
 
 import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
-import { NIVELES, porId, cucharasDe, tiempoBonito } from './niveles.js';
+import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niveles.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 
 const $ = (s) => document.querySelector(s);
@@ -144,18 +144,20 @@ const FRASES_OLLA = [
 
 function renderMesa() {
   const hechos = listos();
+  const todos = hechos >= NIVELES.length;
   $('#mesa-progreso').textContent = `${hechos} / ${NIVELES.length}`;
   $('#olla-nivel').style.height = Math.round(hechos / NIVELES.length * 100) + '%';
   $('#olla-frase').textContent = FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)];
 
   const lista = $('#mesa-lista');
   lista.innerHTML = '';
+
   NIVELES.forEach((n, i) => {
     const abierto = desbloqueado(i);
     const mejor = estado.mejores[n.id];
     const card = document.createElement('button');
     card.type = 'button';
-    card.className = 'ingrediente' + (abierto ? '' : ' bloqueado');
+    card.className = 'ingrediente' + (abierto ? '' : ' bloqueado') + (mejor ? ' hecho' : '');
     card.innerHTML = `
       <span class="plate">${icono(n.icono)}</span>
       <span class="ing-datos">
@@ -173,6 +175,50 @@ function renderMesa() {
       sfx('tab');
       if (!abierto) { toast('Primero termina ' + NIVELES[i - 1].nombre.toLowerCase()); return; }
       abrirBrief(n.id);
+    });
+    lista.appendChild(card);
+  });
+
+  /* ---- la olla, al final: el paso que junta todo ---- */
+  const olla = document.createElement('button');
+  olla.type = 'button';
+  olla.className = 'ingrediente ingrediente--olla' + (todos ? '' : ' bloqueado');
+  olla.innerHTML = `
+    <span class="plate">${icono(OLLA.icono)}</span>
+    <span class="ing-datos">
+      <span class="ing-tarea">${OLLA.tarea}</span>
+      <span class="ing-nombre">${OLLA.nombre}</span>
+      <span class="ing-marca">${todos ? '¡todo listo! a la olla' : `faltan ${NIVELES.length - hechos} ingredientes`}</span>
+    </span>
+    <span class="ing-estado">${todos ? '<span class="ing-listo">🔥</span>' : '<span class="ing-candado">🔒</span>'}</span>`;
+  olla.addEventListener('click', () => {
+    sfx('tab');
+    if (!todos) { toast(`Todavía faltan ${NIVELES.length - hechos} ingredientes`); return; }
+    mostrarFinal();
+  });
+  lista.appendChild(olla);
+
+  /* ---- y lo que aún no tiene minijuego, dicho sin disimulo ---- */
+  const sep = document.createElement('p');
+  sep.className = 'mesa-sep';
+  sep.innerHTML = 'todavía en la despensa <span>· su minijuego viene después</span>';
+  lista.appendChild(sep);
+
+  POR_VENIR.forEach(n => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'ingrediente ingrediente--porvenir';
+    card.innerHTML = `
+      <span class="plate">${icono(n.icono)}</span>
+      <span class="ing-datos">
+        <span class="ing-tarea">${n.tarea}</span>
+        <span class="ing-nombre">${n.nombre}</span>
+        <span class="ing-marca">en camino</span>
+      </span>
+      <span class="ing-estado"><span class="ing-pronto">pronto</span></span>`;
+    card.addEventListener('click', () => {
+      sfx('tab');
+      toast(n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, ''));
     });
     lista.appendChild(card);
   });
@@ -323,10 +369,22 @@ function alerta(msg) {
 const api = {
   MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA,
   progreso(hechos, total) {
+    /* TODO el jugo del juego cuelga de aquí, y esa es la gracia.
+
+       Cada nivel llama a `progreso()` cuando algo salió bien —es la
+       única cosa que los doce hacen igual— así que la racha, el
+       latido de la barra y el aplauso salen solos, sin que ningún
+       nivel tenga que acordarse de pedirlos. La alternativa era
+       repetir el mismo bloque de celebración doce veces y que once
+       quedaran desincronizados a la tercera semana. */
+    const subio = hechos > hechosAhora;
+    const cuanto = hechos - hechosAhora;
     hechosAhora = hechos; totalAhora = total || 1;
     const k = Math.max(0, Math.min(1, hechos / totalAhora));
-    $('#hud-barra').style.width = (k * 100) + '%';
+    const barra = $('#hud-barra');
+    barra.style.width = (k * 100) + '%';
     Motor.llenarRecipiente('batea', k);
+    if (subio) racha(cuanto, k);
   },
   composta(k) { Motor.llenarRecipiente('composta', Math.max(0, Math.min(1, k))); },
   completar() { if (corriendo) terminarNivel(); },
@@ -356,6 +414,72 @@ const api = {
   parte: (...a) => Motor.parte(...a),
   get reloj() { return Motor.reloj; },
 };
+
+
+/* ---------- la racha ----------
+   Cuenta los aciertos seguidos y los celebra cada vez más fuerte.
+   Es lo que convierte "voy sacando granos" en "no puedo parar": la
+   recompensa no es el grano, es la seguidilla — y por eso se corta
+   sola con un respiro de segundo y medio, para que valga algo. */
+
+const RACHA_VENTANA = 1500;      /* ms sin acertar y se corta */
+const RACHA_GRITOS = [
+  { n: 5, txt: '¡Cinco seguidas!' },
+  { n: 10, txt: '¡Diez! 🔥' },
+  { n: 18, txt: '¡Qué mano! 🙌' },
+  { n: 28, txt: '¡Imparable! ✨' },
+];
+
+let rachaN = 0, rachaT = 0, rachaGritado = 0, rachaTimer = null;
+
+function racha(cuanto, k) {
+  const ahora = performance.now();
+  if (ahora - rachaT > RACHA_VENTANA) { rachaN = 0; rachaGritado = 0; }
+  rachaT = ahora;
+  rachaN += cuanto;
+
+  /* la barra late cuando sube: sin esto el progreso es un rectángulo
+     que crece y nadie mira */
+  const barra = $('#hud-barra');
+  barra.classList.remove('late');
+  void barra.offsetWidth;
+  barra.classList.add('late');
+
+  const contador = $('#hud-racha');
+  if (contador) {
+    if (rachaN >= 3) {
+      contador.textContent = '×' + rachaN;
+      contador.classList.add('visible');
+      contador.classList.remove('brinca');
+      void contador.offsetWidth;
+      contador.classList.add('brinca');
+    }
+    clearTimeout(rachaTimer);
+    rachaTimer = setTimeout(() => contador.classList.remove('visible'), RACHA_VENTANA + 400);
+  }
+
+  const grito = RACHA_GRITOS.filter(g => rachaN >= g.n).pop();
+  if (grito && grito.n > rachaGritado) {
+    rachaGritado = grito.n;
+    toast(grito.txt);
+    sfx('fiesta');
+    buzz([12, 20, 12]);
+    Motor.destello('rgba(255,222,140,.28)');
+  }
+
+  /* y a mitad y a tres cuartos, un empujón: son los dos momentos en
+     que cualquiera se pregunta cuánto falta */
+  if (k >= 0.5 && !api._medio) { api._medio = true; toast('¡Media faena! 💪'); }
+  if (k >= 0.85 && !api._casi) { api._casi = true; toast('Ya casi 🎉'); }
+}
+
+function reiniciarRacha() {
+  rachaN = 0; rachaT = 0; rachaGritado = 0;
+  clearTimeout(rachaTimer);
+  const c = $('#hud-racha');
+  if (c) c.classList.remove('visible');
+  api._medio = false; api._casi = false;
+}
 
 function renderControles(mod) {
   const cont = $('#juego-controles');
@@ -388,6 +512,7 @@ async function jugar(id) {
   $('#hud-tarea').textContent = `${n.tarea} · ${n.nombre.toLowerCase()}`;
   $('#hud-barra').style.width = '0%';
   tiempoMs = 0; hechosAhora = 0; totalAhora = 1;
+  reiniciarRacha();
   pintarReloj();
   alerta(null);
   mostrar('juego');

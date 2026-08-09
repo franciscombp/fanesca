@@ -53,6 +53,18 @@ Lo que está en disputa se dice que está en disputa: el origen del
 nombre (¿*fames*? ¿*faneca*? ¿*juanesca*?) no lo sabe nadie, y el
 cuaderno lo dice así.
 
+## Se juega con el dedo, no con la vista
+
+Regla de diseño, y manda sobre las demás: **nada que haya que tocar
+puede medir menos que la yema de un dedo.** El objetivo no es alguien
+con buenos ojos y buen pulso — es una señora de setenta jugando en el
+sillón. Cuando un nivel pedía puntería, perdió el nivel: los chochos
+pasaron de veinticuatro chiquitos a doce gordos, la lenteja al doble,
+la cámara se acercó y bajó la mirada para que la mesa llene el cuadro.
+El mesón cabe entero en pantalla porque llevar un bicho a la composta
+es una regla, y una regla no se pide contra un objetivo que está medio
+fuera de cuadro.
+
 ## La idea
 
 Doce ingredientes, doce gestos, una sola regla compartida. Doce
@@ -70,7 +82,7 @@ la lenteja. Ninguno de los tres entró, y por eso.
 | **Los chochos** | apretar uno | arrastrar y van saltando en fila | gorgojo del mismo color |
 | **El fréjol** | — | mantener el dedo hasta que truene, y barrer | gorgojo entre los granos |
 | **El melloco** | raspar parejo la babaza | *no hay* — de golpe se dispara y hay que ir a buscarlo | gusanito entre la tierra |
-| **El zapallo** | — | cruzar la línea punteada de un trazo | gusano paseando sobre el corte |
+| **El zapallo** | partir, despepitar y pelar | cruzar la línea punteada de un trazo | gusano paseando sobre la pulpa |
 | **La col** | enrollar la hoja de lado a lado | cruzar el rollo → una tira por pasada | gusano del color de la hoja |
 | **La lenteja** | tocar cada piedrita | *no hay* — barrer antes de limpiar arruina la olla | gorgojo igualito a una piedra |
 | **La quinua** | remover en círculos, y botar el agua | *no hay* — el agua saturada no lava | gorgojo, al lado de la batea |

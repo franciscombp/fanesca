@@ -38,6 +38,14 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
      perder sin poder reaccionar — que no es dificultad, es injusticia. */
   const GRACIA = opts.gracia != null ? opts.gracia : 1.0;
 
+  /* Cuánto se levanta y cuánto se adelanta el bicho cargado. Los dos
+     valores van juntos: en esta cámara subir en Y equivale a irse
+     hacia el fondo de la pantalla, así que si se levanta hay que
+     compensar trayéndolo hacia el jugador o el bicho parece
+     escaparse justo cuando lo agarras. */
+  const ALTO_CARGA = 0.2;
+  const ADELANTE_CARGA = 0.22;
+
   const grupo = new THREE.Group();
   raiz.add(grupo);
   const lista = [];
@@ -141,7 +149,18 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     mover(punto) {
       if (!cargado || !punto) return;
       cargado.suelo = { x: punto.x, z: punto.z };
-      cargado.nodo.position.set(punto.x, api.MESA_Y + 0.45, punto.z);
+      /* HACIA ADELANTE, NO HACIA ARRIBA.
+
+         Levantarlo 0.45 en Y y dejarlo en el mismo z se veía al revés
+         de lo que hace la mano: en esta cámara, subir es alejarse en
+         pantalla, así que el bicho pellizcado SALTABA hacia atrás y se
+         escapaba del dedo justo en el cuadro en que lo agarrabas. Se
+         sentía como que se soltaba.
+
+         Levantar poco y traerlo hacia el jugador (+z es hacia la
+         cámara) lo deja pegado bajo los dedos, que es donde estaría
+         de verdad: cargado, no lanzado. */
+      cargado.nodo.position.set(punto.x, api.MESA_Y + ALTO_CARGA, punto.z + ADELANTE_CARGA);
       cargado.nodo.rotation.z = Math.sin(api.reloj * 12) * 0.3;
     },
     /* devuelve 'composta' si lo botaste bien, 'devuelto' si se te cayó */

@@ -71,8 +71,16 @@ import { sombraBlob as _sombraBlob, ojitos as _ojitos } from './modelos/utileria
 
 /* ---------- geografía compartida del mesón ---------- */
 export const MESA_Y = 0.96;                              /* cara del mesón */
-export const BATEA = new THREE.Vector3(0.98, MESA_Y, 1.42);    /* lo bueno va aquí */
-export const COMPOSTA = new THREE.Vector3(-1.0, MESA_Y, 1.44);  /* cáscaras y bichos */
+/* Los dos cuencos, adentrados a propósito.
+
+   Estaban en x ±1.0 y con la cámara más cerca se quedaban pegados al
+   borde de la pantalla: la composta llegaba a verse a un dedo del
+   filo. Eso no es un detalle estético — llevar el bicho hasta la
+   composta es UNA REGLA del juego, y una regla no se puede pedir
+   contra un objetivo que está medio fuera de cuadro. Se acercan al
+   centro lo justo para que quepan enteros con margen. */
+export const BATEA = new THREE.Vector3(0.84, MESA_Y, 1.42);    /* lo bueno va aquí */
+export const COMPOSTA = new THREE.Vector3(-0.86, MESA_Y, 1.44); /* cáscaras y bichos */
 export const RADIO_CUENCO = 0.44;
 
 /* Hasta dónde puede acercarse una tabla de picar sin meterse dentro
@@ -96,7 +104,11 @@ let vuelos = [];
 let sacudida = { t: 0, fuerza: 0 };
 let camBase = new THREE.Vector3();
 let camMira = new THREE.Vector3();
-const CAM_POR_DEFECTO = { pos: [0, 3.02, 4.05], mira: [0, 1.12, 0.46] };
+/* Mira más abajo de lo que parece natural, y es a propósito: subir
+   el punto de mira llena media pantalla de pared de azulejo, que es
+   bonita y no se juega. Bajarlo empuja la mesa hacia el centro del
+   cuadro, que es donde están los dedos. */
+const CAM_POR_DEFECTO = { pos: [0, 2.86, 3.78], mira: [0, 0.99, 0.5] };
 let destelloEl = null;
 let bateaGrupo = null, compostaGrupo = null;
 
@@ -532,9 +544,16 @@ export const Motor = {
       .then(n => { if (n) console.info('[fanesca] modelos .glb cargados:', n); })
       .catch(() => {});
 
-    /* el FOV horizontal se mantiene: una pantalla más alta muestra
-       más cocina, nunca menos ancho de mesón */
-    const HFOV = 47;
+    /* El FOV horizontal se mantiene: una pantalla más alta muestra
+       más cocina, nunca menos ancho de mesón.
+
+       Y se bajó de 47 a 41. Es el mando más barato que hay para que
+       TODO el juego se vea más grande sin tocar un solo nivel: menos
+       campo es más zoom. La cuenta que lo limita por abajo es que la
+       batea y la composta —que están en x ±1.0— tienen que seguir
+       cabiendo en cuadro, porque llevar el bicho hasta allá es una
+       regla del juego y no se puede pedir a ciegas. */
+    const HFOV = 43;
     const ajustar = () => {
       const w = cont.clientWidth, h = cont.clientHeight;
       if (!w || !h) return;

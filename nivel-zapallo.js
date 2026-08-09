@@ -1,97 +1,332 @@
 /* ============================================================
    FANESCA — nivel-zapallo.js
-   CORTAR EL ZAPALLO.
+   PARTIR, DESPEPITAR, PELAR Y CORTAR.
 
-   Aquí el gesto es el trazo largo y decidido: cruzar el zapallo
-   siguiendo una línea punteada, de adelante hacia atrás. Un trazo
-   torcido no corta nada — el cuchillo resbala y pierdes tiempo.
+   Un zapallo no llega a la olla en rodajas. Llega redondo y con su
+   rabo, y antes del cuchillo hay tres cosas que hacer con las manos.
+   Este nivel las hace todas, en el orden en que se hacen:
 
-   Y otra vez la lección del choclo, con otra cara: una tajada
-   solo cae a la batea cuando queda suelta por los dos lados. Si
-   empiezas por una punta, cada corte te entrega una tajada. Si
-   empiezas por el medio, cortas igual pero no cae nada todavía.
+     1. PARTIR    — un trazo largo de adelante hacia atrás, por el
+                    lomo. Se abre en dos mitades que se mecen.
+     2. DESPEPITAR— barrer el hueco: las pepas y las hebras salen a
+                    la composta a puñados.
+     3. PELAR     — jalar cada tira de cáscara a lo largo del gajo.
+     4. CORTAR    — ahora sí, las tajadas, cruzando la línea.
 
-   El gusano de este nivel no camina rápido: se pasea encima del
-   zapallo. El peligro no es que llegue a la batea, es que lo
-   partas en dos sin verlo, porque estaba justo sobre tu línea.
+   Es el mismo arco que el choclo: primero desvestir, después el
+   gesto rápido. Y la lección de siempre en el último tramo —una
+   tajada solo cae cuando quedó suelta por los dos lados— sigue
+   entera, porque es la mejor idea que tenía este nivel.
+
+   El gusano aparece cuando la pulpa queda al aire, que es cuando
+   aparece de verdad. No corre a la batea: se pasea sobre el
+   zapallo. El peligro no es que llegue, es que lo partas en dos sin
+   verlo porque estaba justo sobre tu línea.
    ============================================================ */
 
 import { nuevoGusano } from './modelos/bichos.js';
 import { ARRUINADO } from './arruinado.js';
-import { N, GRUESO, R, xDeTajada, xDeFrontera } from './modelos/zapallo.js';
+import { N, GRUESO, R, R_ENTERO, xDeTajada, xDeFrontera } from './modelos/zapallo.js';
 
 let THREE, raiz, api;
 
-/* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
-   hasta dónde puede llegar sin meterse dentro de los cuencos, y de
-   ahí se resta media tabla. Si mañana la batea se mueve, la tabla se
-   corre sola. */
-const HONDO_TABLA = 1.5;
-let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const TOL_X = 0.19;             /* cuánto puede desviarse el corte */
-const LARGO_MIN = 0.42;         /* profundidad mínima del trazo, en el mundo */
-const GUSANO_VEL = 0.055;       /* se pasea despacio: da tiempo a verlo */
+const HONDO_TABLA = 1.6;
+let TABLA_Z = 0;
+const TOL_X = 0.26;             /* cuánto puede desviarse el corte */
+const LARGO_MIN = 0.4;          /* profundidad mínima del trazo */
+const GUSANO_VEL = 0.055;
 
-let zapallo = null;             /* grupo con las tajadas */
-let tajadas = [];               /* {mesh, i, ida} */
-let guias = [];                 /* {grupo, b} — b = frontera 1..N-1 */
-let cortes = new Set();         /* fronteras ya cortadas */
-let bicho = null;               /* {nodo, gus, x, estado} */
+const PEPAS = 5;                /* por mitad */
+const TIRAS = 4;                /* tiras de cáscara por mitad */
+const SEP_MITAD = 0.62;         /* cuánto se separan al partirse */
+
+/* el marcador va sumando las cuatro faenas, para que la barra se
+   mueva desde el primer gesto y no se quede plana media partida */
+const TOTAL = 1 + PEPAS * 2 + TIRAS * 2 + N;
+
+let fase = 'partir';            /* partir | despepitar | pelar | cortar */
+let grupo = null;
+let entero = null;
+let mitades = [];               /* {obj, lado, pepas[], tiras[], pelada} */
+let tajadas = [];
+let guias = [];
+let cortes = new Set();
+let bicho = null;
 let hechos = 0;
 let modo = null, cargado = false, pellizcando = false;
-let p0 = null;                  /* dónde empezó el trazo, en el mundo */
+let p0 = null;
 let terminado = false;
 
-/* La tajada, la guía punteada y las pepas viven en
-   modelos/zapallo.js — junto con las medidas (N, GRUESO, R) que
-   este nivel usa para saber dónde cae cada corte. */
-
-/* a qué altura descansa el zapallo: sobre la tabla, no sobre el mesón */
 const ALTO = () => api.MESA_Y + 0.1;
 
-function nuevaTajada(i) {
-  const g = api.pieza('tajada-zapallo');
-  g.position.set(xDeTajada(i), ALTO(), TABLA_Z);
-  g.userData = { tipo: 'zapallo', i };
-  return g;
+function sumar(n) {
+  hechos += n;
+  api.progreso(hechos, TOTAL);
 }
 
-function nuevaGuia(b) {
-  const g = api.pieza('guia-zapallo');
-  g.position.set(xDeFrontera(b), ALTO(), TABLA_Z);
-  return { grupo: g, b };
+/* ============================================================
+   1 · PARTIR
+   ============================================================ */
+
+function ponerEntero() {
+  entero = api.pieza('zapallo-entero');
+  entero.position.set(0, ALTO() + R_ENTERO * 0.78, TABLA_Z);
+  entero.userData = { tipo: 'entero' };
+  entero.add(api.sombraBlob(1.5, -R_ENTERO * 0.78 + 0.06));
+  grupo.add(entero);
+
+  /* la guía por el lomo: la única línea de esta fase */
+  /* el zapallo entero es más ancho que alto, así que la guía se pide
+     con sus dos radios: escalada por igual se metía dentro de la
+     calabaza por los costados y flotaba por arriba */
+  const g = api.pieza('guia-zapallo', {
+    ry: R_ENTERO * 0.78 + 0.045,
+    rz: R_ENTERO + 0.045,
+    grosor: 1.5,
+  });
+  g.position.set(0, ALTO() + 0.02, TABLA_Z);
+  g.userData.ignorar = true;
+  grupo.add(g);
+  guias.push({ grupo: g, b: 'lomo' });
+
+  api.rotulo('Partir el zapallo');
+  api.pista('Cruza el zapallo <b>de adelante hacia atrás</b>, por la línea. Un trazo largo y decidido.', 4600);
+}
+
+function partir() {
+  if (fase !== 'partir') return;
+  fase = 'despepitar';
+
+  const g = guias.find(x => x.b === 'lomo');
+  if (g) { g.grupo.visible = false; }
+  grupo.remove(entero);
+  entero = null;
+
+  api.sfx('corte'); api.buzz([26, 40, 26]);
+  api.destello('rgba(255,220,150,.42)');
+  api.sacudir(0.55);
+  api.chispas(new THREE.Vector3(0, ALTO() + R_ENTERO, TABLA_Z), '#ffe6ab', 22, 1.3);
+
+  [-1, 1].forEach(lado => {
+    const m = api.pieza('mitad-zapallo');
+    /* La media calabaza se apoya en su cúpula, así que hay que
+       levantarla el alto de esa cúpula. Con el origen puesto en la
+       tabla, la mitad de abajo quedaba ENTERRADA y desde la cámara
+       se veía un disco pálido y plano: parecía una tortilla, no
+       medio zapallo. */
+    m.position.set(0, ALTO() + R_ENTERO * 0.78, TABLA_Z);
+    m.rotation.y = lado > 0 ? 0 : Math.PI;
+    m.userData = { tipo: 'mitad', lado };
+    grupo.add(m);
+
+    const rec = { obj: m, lado, pepas: [], tiras: [], pelada: false, limpia: false };
+
+    /* las pepas, dentro del hueco */
+    for (let i = 0; i < PEPAS; i++) {
+      const a = (i / PEPAS) * Math.PI * 2 + lado;
+      const r = R_ENTERO * (0.14 + (i % 2) * 0.14);
+      const p = api.pieza('pepa-zapallo');
+      p.scale.setScalar(1.5);
+      p.position.set(Math.cos(a) * r, 0.03 + (i % 2) * 0.01, Math.sin(a) * r);
+      p.rotation.y = a;
+      p.userData = { tipo: 'pepa', ignorar: false };
+      m.add(p);
+      rec.pepas.push(p);
+
+      /* y su hebra al lado: lo que de verdad cuesta sacar */
+      const f = api.pieza('fibra-zapallo', { variante: i });
+      f.position.set(Math.cos(a + 0.5) * r * 1.2, 0.02, Math.sin(a + 0.5) * r * 1.2);
+      f.rotation.y = a;
+      f.userData.ignorar = true;
+      m.add(f);
+      rec.fibras = rec.fibras || [];
+      rec.fibras.push(f);
+    }
+
+    mitades.push(rec);
+    /* se mecen al abrirse, como se abre un zapallo de verdad */
+    api.tween(m.position, 'x', lado * SEP_MITAD, 0.42, undefined);
+    api.tween(m.rotation, 'z', lado * 0.16, 0.3, undefined,
+      () => api.tween(m.rotation, 'z', 0, 0.36));
+  });
+
+  sumar(1);
+  api.rotulo('Sacar las pepas');
+  api.pista('Ahora <b>barre el hueco</b> con el dedo: las pepas y las hebras van a la composta.', 4200);
+  api.toast('¡Se abrió! 🎃');
+}
+
+/* ============================================================
+   2 · DESPEPITAR
+   ============================================================ */
+
+function despepitarEn(punto) {
+  if (fase !== 'despepitar' || !punto) return;
+  let saco = 0;
+  for (const m of mitades) {
+    if (m.limpia) continue;
+    for (const p of m.pepas) {
+      if (p.userData.ida) continue;
+      const w = p.getWorldPosition(new THREE.Vector3());
+      if (Math.hypot(w.x - punto.x, w.z - punto.z) > 0.3) continue;
+      p.userData.ida = true;
+      p.userData.tipo = null;
+      m.obj.remove(p);
+      p.position.copy(w);
+      p.userData.escalaBase = p.scale.x;
+      raiz.add(p);
+      api.volarA(p, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.44, alto: 0.5 });
+      saco++;
+    }
+    if (saco && m.fibras) {
+      const f = m.fibras.find(x => !x.userData.ida);
+      if (f) {
+        f.userData.ida = true;
+        const w = f.getWorldPosition(new THREE.Vector3());
+        m.obj.remove(f);
+        f.position.copy(w);
+        f.userData.escalaBase = f.scale.x;
+        raiz.add(f);
+        api.volarA(f, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.42 });
+      }
+    }
+    if (m.pepas.every(p => p.userData.ida)) m.limpia = true;
+  }
+  if (!saco) return;
+
+  sumar(saco);
+  api.sfx(saco > 1 ? 'pop2' : 'pop');
+  api.buzz(saco > 1 ? 14 : 9);
+  api.chispas(punto.clone().setY(ALTO() + 0.3), '#f3e6bc', 4 + saco * 2, 0.8);
+  api.composta(Math.min(1, hechos / (1 + PEPAS * 2)));
+
+  if (mitades.every(m => m.limpia)) pasarAPelar();
+}
+
+/* ============================================================
+   3 · PELAR
+   ============================================================ */
+
+function pasarAPelar() {
+  fase = 'pelar';
+  api.rotulo('Pelar la cáscara');
+  api.pista('Jala cada tira de cáscara <b>a lo largo</b>, de una punta a la otra.', 4200);
+  api.toast('Limpio por dentro ✨');
+
+  mitades.forEach(m => {
+    for (let i = 0; i < TIRAS; i++) {
+      /* Cada tira cuelga de su propio pivote girado: orientar la malla
+         con tres ángulos de Euler a la vez se enreda —el orden importa
+         y las tiras salían atravesadas— mientras que un grupo girado
+         en Y y la tira apenas inclinada dentro se lee bien y se
+         entiende al leerlo. */
+      const piv = new THREE.Group();
+      piv.rotation.y = -Math.PI / 2 + (i + 0.5) / TIRAS * Math.PI;
+      const c = api.pieza('cascara-zapallo', { largo: R_ENTERO * 1.2 });
+      c.position.set(0, -R_ENTERO * 0.26, R_ENTERO * 0.84);
+      c.rotation.x = 0.42;
+      c.userData = { tipo: 'cascara', i };
+      piv.add(c);
+      m.obj.add(piv);
+      m.tiras.push(c);
+    }
+  });
+
+  nacerBicho();
+}
+
+function pelarEn(punto, dz) {
+  if (fase !== 'pelar' || !punto) return;
+  /* pelar es un tirón A LO LARGO: el barrido de lado no despega nada,
+     igual que el cuchillo de pelar no va de través */
+  if (Math.abs(dz) < 0.012) return;
+
+  for (const m of mitades) {
+    for (const c of m.tiras) {
+      if (c.userData.ida) continue;
+      const w = c.getWorldPosition(new THREE.Vector3());
+      if (Math.hypot(w.x - punto.x, w.z - punto.z) > 0.34) continue;
+      c.userData.ida = true;
+      c.userData.tipo = null;
+      if (c.parent) c.parent.remove(c);
+      c.position.copy(w);
+      c.userData.escalaBase = 1;
+      raiz.add(c);
+      api.volarA(c, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.55 });
+      sumar(1);
+      api.sfx('frotar'); api.buzz(11);
+      api.chispas(w.clone().setY(w.y + 0.2), '#e9b56a', 6, 0.7);
+      api.composta(Math.min(1, hechos / (1 + PEPAS * 2 + TIRAS * 2)));
+      return;                    /* una tira por tirón: se siente mejor */
+    }
+  }
+}
+
+function todoPelado() {
+  return mitades.every(m => m.tiras.every(c => c.userData.ida));
+}
+
+/* ============================================================
+   4 · CORTAR
+   ============================================================ */
+
+function pasarACortar() {
+  fase = 'cortar';
+  api.rotulo('Cortar en tajadas');
+  api.pista('Cruza cada línea <b>de un trazo</b>. La tajada cae cuando queda suelta por los dos lados.', 4600);
+  api.toast('¡Pelado! 🔪');
+
+  mitades.forEach(m => { grupo.remove(m.obj); });
+
+  for (let i = 0; i < N; i++) {
+    const g = api.pieza('tajada-zapallo');
+    g.position.set(xDeTajada(i), ALTO(), TABLA_Z);
+    g.userData = { tipo: 'zapallo', i };
+    grupo.add(g);
+    tajadas.push({ mesh: g, i, ida: false });
+    /* entran cayendo, escalonadas: se ve que el zapallo se acomodó */
+    g.scale.setScalar(0.01);
+    setTimeout(() => {
+      api.tween(g.scale, 'x', 1, 0.26); api.tween(g.scale, 'y', 1, 0.26); api.tween(g.scale, 'z', 1, 0.26);
+    }, i * 45);
+  }
+
+  for (let b = 1; b < N; b++) {
+    const g = api.pieza('guia-zapallo', { grosor: 1.2 });
+    g.position.set(xDeFrontera(b), ALTO(), TABLA_Z);
+    grupo.add(g);
+    guias.push({ grupo: g, b });
+  }
+
+  if (bicho) bicho.x = xDeFrontera(2 + Math.floor(Math.random() * (N - 3)));
 }
 
 function libre(b) { return b <= 0 || b >= N || cortes.has(b); }
 
-/* una tajada cae cuando quedó suelta por los dos lados */
 function revisarSueltas() {
+  let cayeron = 0;
   tajadas.forEach(t => {
     if (t.ida) return;
     if (!libre(t.i) || !libre(t.i + 1)) return;
     t.ida = true;
     t.mesh.userData.tipo = null;
-    hechos++;
-    api.chispas(t.mesh.position.clone().setY(ALTO() + 0.3), '#ffd28a', 8, 0.9);
+    cayeron++;
+    api.chispas(t.mesh.position.clone().setY(ALTO() + 0.3), '#ffd28a', 10, 0.9);
     t.mesh.userData.escalaBase = 1;
     api.volarA(t.mesh, api.BATEA.clone().setY(api.MESA_Y + 0.24), { dur: 0.5, alto: 0.72 });
-    api.sfx('pop');
-    api.progreso(hechos, N);
   });
+  if (cayeron) {
+    sumar(cayeron);
+    api.sfx(cayeron > 1 ? 'bien' : 'pop');
+    api.buzz(cayeron > 1 ? [14, 20, 14] : 11);
+    if (cayeron > 1) api.toast(`¡${cayeron} tajadas de una! 🎃`);
+  }
   revisarFinal();
-}
-
-function revisarFinal() {
-  if (terminado || hechos < N) return;
-  if (bicho && bicho.estado !== 'ido') { api.aviso('Falta sacar el gusano antes de llevar la batea'); return; }
-  terminado = true;
-  api.completar();
 }
 
 function cortar(b) {
   if (cortes.has(b)) return false;
 
-  /* ¿estaba el gusano justo ahí? entonces lo partiste */
   if (bicho && bicho.estado === 'suelto' && Math.abs(bicho.x - xDeFrontera(b)) < 0.19) {
     api.destello('rgba(230,57,70,.55)');
     api.arruinar({
@@ -103,220 +338,224 @@ function cortar(b) {
 
   cortes.add(b);
   const g = guias.find(x => x.b === b);
-  if (g) {
-    api.tween(g.grupo.scale, 'y', 0.01, 0.18, undefined, () => { g.grupo.visible = false; });
-  }
+  if (g) api.tween(g.grupo.scale, 'y', 0.01, 0.18, undefined, () => { g.grupo.visible = false; });
   api.sfx('corte'); api.buzz([12, 18]);
   api.chispas(new THREE.Vector3(xDeFrontera(b), ALTO() + R, TABLA_Z), '#fff3c9', 9, 0.8);
   revisarSueltas();
   return true;
 }
 
-/* ---------- el gusano paseandero ---------- */
+function revisarFinal() {
+  if (terminado || hechos < TOTAL) return;
+  if (bicho && bicho.estado !== 'ido') { api.aviso('Falta sacar el gusano antes de llevar la batea'); return; }
+  terminado = true;
+  api.completar();
+}
+
+/* ============================================================
+   el gusano paseandero
+   ============================================================ */
 
 function nacerBicho() {
-  const gus = nuevoGusano(THREE, { eje: 'z', escala: 1.9, color: '#c4e076', color2: '#9dc24f', segmentos: 6 });
+  if (bicho) return;
+  const gus = nuevoGusano(THREE, { eje: 'z', escala: 2.2, color: '#c4e076', color2: '#9dc24f', segmentos: 6 });
   const nodo = new THREE.Group();
   nodo.userData = { tipo: 'bicho' };
   nodo.add(gus.obj);
-  const x = xDeFrontera(2 + Math.floor(Math.random() * (N - 3)));
-  nodo.position.set(x, ALTO() + R + 0.1, TABLA_Z + 0.02);
+  const x = (Math.random() - 0.5) * 1.1;
+  nodo.position.set(x, ALTO() + 0.24, TABLA_Z + 0.02);
   nodo.rotation.y = Math.PI / 2;
   raiz.add(nodo);
   bicho = { nodo, gus, x, dir: 1, estado: 'suelto' };
+  api.sfx('crack'); api.buzz([25, 30, 25]);
+  api.aviso('🪱 ¡Un gusano en la pulpa! Llévalo a la composta — no lo aplastes');
+  api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde (o arrástralo con uno).', 5000);
+}
+
+function alturaBicho() {
+  return fase === 'cortar' ? ALTO() + R + 0.1 : ALTO() + 0.24;
 }
 
 function bichoEncima() {
   if (!bicho || bicho.estado !== 'suelto') return;
-  bicho.nodo.position.set(bicho.x, ALTO() + R + 0.1, TABLA_Z + 0.02);
+  bicho.nodo.position.set(bicho.x, alturaBicho(), TABLA_Z + 0.02);
 }
+
+function aplastarBicho() {
+  if (!bicho || bicho.estado !== 'suelto') return;
+  api.arruinar(ARRUINADO.aplastado('el gusano'));
+}
+
+/* ============================================================
+   el módulo
+   ============================================================ */
 
 export default {
   id: 'zapallo',
+  /* de cerca: el zapallo entero es lo más grande de la cocina y
+     tiene que llenar la pantalla para que partirlo se sienta */
+  camara: { pos: [0, 2.86, 3.5], mira: [0, 1.14, 0.36] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
-    tajadas = []; guias = []; cortes = new Set(); hechos = 0;
-    terminado = false; modo = null; cargado = false; pellizcando = false; bicho = null;
+    fase = 'partir';
+    mitades = []; tajadas = []; guias = []; cortes = new Set(); hechos = 0;
+    terminado = false; modo = null; cargado = false; pellizcando = false;
+    bicho = null; entero = null; p0 = null;
 
-    const tabla = api.pieza('tabla', { ancho: 3.2, hondo: HONDO_TABLA });
+    const tabla = api.pieza('tabla', { ancho: 3.4, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
     tabla.userData = { tipo: 'tabla' };
     raiz.add(tabla);
 
-    zapallo = new THREE.Group();
-    raiz.add(zapallo);
+    grupo = new THREE.Group();
+    raiz.add(grupo);
 
-    for (let i = 0; i < N; i++) {
-      const m = nuevaTajada(i);
-      zapallo.add(m);
-      tajadas.push({ mesh: m, i, ida: false });
-    }
-    /* las pepas asomando por la cara abierta de las puntas */
-    [-1, 1].forEach(s => {
-      for (let i = 0; i < 5; i++) {
-        const p = api.pieza('pepa-zapallo');
-        const a = 0.4 + Math.random() * 2.3;
-        p.position.set(s * (N * GRUESO / 2 - 0.01), ALTO() + Math.sin(a) * R * 0.45, TABLA_Z - Math.cos(a) * R * 0.45);
-        p.rotation.set(Math.random(), Math.random(), Math.random());
-        zapallo.add(p);
-      }
-    });
-
-    for (let b = 1; b < N; b++) {
-      const g = nuevaGuia(b);
-      zapallo.add(g.grupo);
-      guias.push(g);
-    }
-
-    nacerBicho();
-    api.aviso('🪱 Hay un gusano encima. Sácalo antes de cortar por ahí');
-    api.progreso(0, N);
+    ponerEntero();
+    api.progreso(0, TOTAL);
   },
 
-  objetivos() { return (bicho && bicho.estado !== 'ido') ? [zapallo, bicho.nodo] : [zapallo]; },
+  objetivos() { return bicho ? [grupo, bicho.nodo] : [grupo]; },
 
   alTocar(info) {
-    if (terminado || !info.raiz) return;
-    if (info.raiz.userData.tipo === 'bicho') {
-      api.arruinar(ARRUINADO.aplastado('gusano'));
-      return;
+    if (terminado) return;
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { aplastarBicho(); return; }
+    if (fase === 'partir') {
+      api.sfx('resist');
+      api.pista('No se parte a golpecitos: <b>cruza el zapallo</b> de adelante hacia atrás, de un trazo.', 3200);
+    } else if (fase === 'pelar') {
+      api.sfx('resist');
+      api.pista('La cáscara se <b>jala a lo largo</b>, no se pellizca.', 3000);
     }
-    api.sfx('resist');
-    api.pista('El zapallo no se abre a toquecitos: <b>cruza la línea punteada</b> de un trazo.', 3200);
   },
 
   alArrastrarInicio(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho' && bicho && bicho.estado === 'suelto') {
-      modo = 'cargar'; cargado = true;
-      bicho.estado = 'cargado';
+      bicho.estado = 'cargado'; cargado = true;
       bicho.gus.aro.visible = false;
       api.sfx('tab'); api.buzz(12);
       api.aviso('Llévalo a la composta 🌿');
+      modo = 'cargar';
       return;
     }
-    modo = 'cortar';
-    p0 = api.puntoEnPlano(ALTO() + R * 0.55);
+    modo = 'gesto';
+    p0 = api.puntoEnPlano(ALTO());
   },
 
   alArrastrar() {
     if (terminado) return;
-    if (modo === 'cargar' && bicho) {
-      const p = api.puntoEnPlano(api.MESA_Y);
-      if (p) {
-        bicho.suelo = { x: p.x, z: p.z };
-        bicho.nodo.position.set(p.x, api.MESA_Y + 0.45, p.z);
-      }
+    const p = api.puntoEnPlano(ALTO());
+    if (modo === 'cargar') {
+      if (!p || !bicho) return;
+      /* hacia el jugador y apenas levantado: cargado, no lanzado */
+      bicho.suelo = { x: p.x, z: p.z };
+      bicho.nodo.position.set(p.x, api.MESA_Y + 0.2, p.z + 0.22);
       bicho.nodo.rotation.z = Math.sin(api.reloj * 12) * 0.3;
+      return;
     }
-  },
+    if (modo !== 'gesto' || !p || !p0) return;
 
-  /* pellizcar con dos dedos: el gusano se pasea encima del zapallo y
-     un raycast exacto de un dedo solo lo pierde fácil; en pantalla,
-     con un radio generoso, es mucho más fácil de agarrar. */
-  alPellizcarInicio(info) {
-    pellizcando = false;
-    modo = null;          /* que un modo viejo no siga vivo bajo el pellizco */
-    if (terminado || !bicho || bicho.estado !== 'suelto') return;
-    const mundo = new THREE.Vector3();
-    bicho.nodo.getWorldPosition(mundo);
-    const p = api.proyectar(mundo);
-    if (Math.hypot(p.x - info.cliente.x, p.y - info.cliente.y) > 70) return;
-    pellizcando = true;
-    modo = 'cargar'; cargado = true;
-    bicho.estado = 'cargado';
-    bicho.gus.aro.visible = false;
-    api.sfx('tab'); api.buzz(12);
-    api.aviso('Llévalo a la composta 🌿');
-  },
-  /* Solo si el pellizco DE VERDAD agarró el gusano se sigue el ciclo
-     de cargar. Si no agarró nada, el gesto no hace nada — antes
-     delegaba igual y podía ejecutar un corte con el `modo` que había
-     quedado de un gesto anterior, partiendo al gusano sin que el
-     jugador hubiera cortado nada. */
-  alPellizcarMover(info) { if (pellizcando) this.alArrastrar(info); },
-  alPellizcarFin(info) {
-    if (!pellizcando) { modo = null; return; }
-    pellizcando = false;
-    this.alArrastrarFin(info);
+    const dz = p.z - (this._pz != null ? this._pz : p.z);
+    this._pz = p.z;
+
+    if (fase === 'despepitar') { despepitarEn(p); return; }
+    if (fase === 'pelar') { pelarEn(p, dz); return; }
   },
 
   alArrastrarFin() {
-    if (terminado) { modo = null; return; }
-
     if (modo === 'cargar' && bicho) {
       const p = bicho.suelo || bicho.nodo.position;
       if (Math.hypot(p.x - api.COMPOSTA.x, p.z - api.COMPOSTA.z) < 0.75) {
         bicho.estado = 'ido';
         api.volarA(bicho.nodo, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.35, alto: 0.35 });
-        api.chispas(api.COMPOSTA.clone().setY(api.MESA_Y + 0.4), '#8ab143', 10);
+        api.chispas(api.COMPOSTA.clone().setY(api.MESA_Y + 0.4), '#8ab143', 12, 1);
         api.sfx('bien'); api.buzz([15, 25]);
         api.aviso(null); api.toast('¡Fuera de la olla! 🌿');
-        api.composta(1);
         revisarFinal();
       } else {
         bicho.estado = 'suelto';
         bicho.gus.aro.visible = true;
-        bicho.nodo.rotation.z = 0;
         bichoEncima();
         api.sfx('resist');
-        api.aviso('🪱 Se te resbaló, y volvió al zapallo');
+        api.aviso('🪱 Se te resbaló. Otra vez: hasta la composta');
       }
-      modo = null; cargado = false;
+      cargado = false; modo = null; this._pz = null;
       return;
     }
 
-    if (modo === 'cortar' && p0) {
-      const p1 = api.puntoEnPlano(ALTO() + R * 0.55);
-      modo = null;
-      if (!p1) return;
+    /* el trazo largo: partir y cortar se juzgan al soltar, porque lo
+       que importa es la línea entera, no cada cuadro */
+    const p1 = api.puntoEnPlano(ALTO());
+    if (modo === 'gesto' && p0 && p1) {
       const largo = Math.abs(p1.z - p0.z);
-      const xMedio = (p0.x + p1.x) / 2;
       const torcido = Math.abs(p1.x - p0.x);
-
-      /* ¿a qué línea le apuntaba el trazo? */
-      let mejor = null, mejorD = Infinity;
-      guias.forEach(g => {
-        if (cortes.has(g.b)) return;
-        const d = Math.abs(xDeFrontera(g.b) - xMedio);
-        if (d < mejorD) { mejorD = d; mejor = g.b; }
-      });
-
-      if (mejor === null) return;
-      if (largo < LARGO_MIN) {
-        api.sfx('resist');
-        api.pista('Trazo corto: <b>cruza el zapallo entero</b>, de adelante hacia atrás.', 2800);
-        return;
+      if (fase === 'partir') {
+        if (largo >= LARGO_MIN && torcido < TOL_X * 1.6 && Math.abs((p0.x + p1.x) / 2) < TOL_X * 1.4) {
+          partir();
+        } else if (largo >= LARGO_MIN * 0.6) {
+          api.sfx('resist'); api.buzz([16, 20]);
+          api.pista('Se te fue el cuchillo. <b>Por el medio</b>, y de adelante hacia atrás.', 3200);
+        }
+      } else if (fase === 'cortar' && largo >= LARGO_MIN && torcido < TOL_X) {
+        const x = (p0.x + p1.x) / 2;
+        let mejor = -1, dMejor = TOL_X;
+        for (let b = 1; b < N; b++) {
+          const d = Math.abs(x - xDeFrontera(b));
+          if (d < dMejor) { dMejor = d; mejor = b; }
+        }
+        if (mejor > 0) cortar(mejor);
+        else { api.sfx('resist'); api.pista('Sigue <b>la línea punteada</b>: ahí es donde entra el cuchillo.', 2800); }
       }
-      if (mejorD > TOL_X || torcido > 0.5) {
-        api.sfx('resist'); api.buzz(20);
-        api.pista('Corte chueco — el cuchillo resbaló. Sigue la línea punteada.', 2800);
-        return;
-      }
-      cortar(mejor);
     }
-    modo = null;
+    modo = null; p0 = null; this._pz = null;
+  },
+
+  alPellizcarInicio(info) {
+    if (terminado || !bicho || bicho.estado !== 'suelto') return;
+    const p = api.proyectar(bicho.nodo.position.clone().setY(alturaBicho() + 0.05));
+    if (Math.hypot(p.x - info.cliente.x, p.y - info.cliente.y) > 80) return;
+    bicho.estado = 'cargado'; pellizcando = true;
+    bicho.gus.aro.visible = false;
+    api.sfx('tab'); api.buzz(12);
+    api.aviso('Llévalo a la composta 🌿');
+  },
+  alPellizcarMover() {
+    if (!pellizcando || !bicho) return;
+    const p = api.puntoEnPlano(api.MESA_Y);
+    if (!p) return;
+    bicho.suelo = { x: p.x, z: p.z };
+    bicho.nodo.position.set(p.x, api.MESA_Y + 0.2, p.z + 0.22);
+  },
+  alPellizcarFin() {
+    if (!pellizcando) return;
+    pellizcando = false;
+    modo = 'cargar';
+    this.alArrastrarFin();
   },
 
   actualizar(dt, t) {
-    if (!bicho) return;
-    bicho.gus.animar(t);
-    if (bicho.estado !== 'suelto') return;
+    if (bicho && bicho.estado === 'suelto') {
+      bicho.gus.animar(t);
+      /* se pasea de un lado a otro sobre el zapallo, sin salirse */
+      const tope = fase === 'cortar' ? (N / 2) * GRUESO - 0.12 : 1.0;
+      bicho.x += bicho.dir * GUSANO_VEL * dt;
+      if (bicho.x > tope) { bicho.x = tope; bicho.dir = -1; }
+      if (bicho.x < -tope) { bicho.x = -tope; bicho.dir = 1; }
+      bicho.nodo.rotation.y = bicho.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      bichoEncima();
+    }
 
-    /* se pasea de un lado a otro sobre lo que queda del zapallo */
-    const izq = -N * GRUESO / 2 + 0.12, der = N * GRUESO / 2 - 0.12;
-    bicho.x += bicho.dir * GUSANO_VEL * dt;
-    if (bicho.x > der) { bicho.x = der; bicho.dir = -1; }
-    if (bicho.x < izq) { bicho.x = izq; bicho.dir = 1; }
-    bicho.nodo.rotation.y = bicho.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-    bichoEncima();
+    if (fase === 'pelar' && todoPelado()) pasarACortar();
+
+    /* el zapallo entero respira un poco: nada quieto del todo */
+    if (entero) entero.position.y = ALTO() + R_ENTERO * 0.78 + Math.sin(t * 1.6) * 0.006;
   },
 
   destruir() {
-    tajadas = []; guias = []; cortes = new Set();
-    zapallo = null; bicho = null; p0 = null;
-    modo = null; cargado = false; pellizcando = false; terminado = false;
+    mitades = []; tajadas = []; guias = []; cortes = new Set();
+    grupo = null; entero = null; bicho = null;
+    modo = null; p0 = null; cargado = false; pellizcando = false; terminado = false;
   },
 };

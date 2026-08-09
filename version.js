@@ -14,10 +14,23 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.6.0',
+    fecha: '2026-08-09',
+    titulo: 'Todo más grande, y el zapallo entero',
+    cambios: [
+      'El zapallo ya no llega en rodajas: llega redondo y con su rabo. Se parte de un trazo, se le barre el hueco de pepas y hebras, se le jala la cáscara tira por tira, y recién ahí se corta en tajadas. Cuatro faenas seguidas — es el nivel más largo de la mesa y el que más se parece a estar cocinando.',
+      'Todo se ve más grande. Menos cosas en la tabla y más gordas: doce chochos en vez de veinticuatro, la lenteja al doble, la arveja y la quinua también. La cámara se acercó y mira más abajo, así que la mesa llena el cuadro en vez de la pared de azulejo.',
+      'La mesa muestra ahora el mapa completo: los doce que se juegan, la olla al final —que se abre cuando están todos— y lo que todavía no tiene minijuego (el sambo, el garbanzo, el arroz, el queso, el huevo, la guarnición), apagado y tocable para leer qué gesto va a pedir.',
+      'Rachas: los aciertos seguidos se cuentan y se celebran, con el contador junto al reloj. La barra late al subir y la faena avisa a mitad y a tres cuartos.',
+      'Arreglado: al pellizcar un bicho saltaba hacia atrás y se sentía como que se soltaba justo al agarrarlo. Ahora viene hacia ti, cargado bajo los dedos.',
+      'Nada que haya que tocar mide ya menos que la yema de un dedo.',
+    ],
+  },
   {
     v: '1.5.0',
     fecha: '2026-08-08',

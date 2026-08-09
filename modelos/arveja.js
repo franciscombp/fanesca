@@ -25,7 +25,7 @@ import { COMIDA, mate } from './paleta.js';
 import { abollar, curvar, formaVariada, forma } from './organico.js';
 
 export const POR_VAINA = 5;
-export const PASO_ARVEJA = 0.155;
+export const PASO_ARVEJA = 0.19;
 
 /* media cáscara. Más honda y menos ancha que la de haba: la vaina de
    arveja es casi un tubo partido, y esa sección redonda es lo que
@@ -41,7 +41,7 @@ function mediaVaina(THREE, arriba) {
       { eje: 'x', hacia: 'z', k: 0.1 },
     ));
   const m = new THREE.Mesh(geo, mate(THREE, COMIDA.vaina_arveja));
-  m.scale.set(0.4, 0.105, 0.095);
+  m.scale.set(0.5, 0.128, 0.116);
   const forro = new THREE.Mesh(
     new THREE.SphereGeometry(0.95, 18, 10, 0, Math.PI * 2, arriba ? 0 : Math.PI / 2, Math.PI / 2),
     mate(THREE, COMIDA.vaina_arveja_dentro, { side: THREE.DoubleSide })
@@ -70,8 +70,8 @@ registrar('vaina-arveja', (THREE) => {
   /* los bultos: la vaina de arveja marca sus granos mucho más que la
      de haba — se cuentan desde afuera antes de abrirla */
   for (let i = 0; i < POR_VAINA; i++) {
-    const b = new THREE.Mesh(new THREE.SphereGeometry(0.052, 8, 6), mate(THREE, COMIDA.vaina_arveja));
-    b.position.set((i - (POR_VAINA - 1) / 2) * PASO_ARVEJA, 0.045, 0.085);
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.064, 8, 6), mate(THREE, COMIDA.vaina_arveja));
+    b.position.set((i - (POR_VAINA - 1) / 2) * PASO_ARVEJA, 0.055, 0.1);
     b.scale.set(1, 0.62, 0.9);
     b.name = 'bulto' + i;
     b.userData.ignorar = true;
@@ -86,11 +86,11 @@ registrar('vaina-arveja', (THREE) => {
      larga y fina de verdad, no una línea pintada sobre la vaina: hay
      que poder verlo despegarse. */
   const hilo = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.008, 0.008, 0.84, 5),
+    new THREE.CylinderGeometry(0.011, 0.011, 1.02, 5),
     mate(THREE, COMIDA.hilo_arveja)
   );
   hilo.rotation.z = Math.PI / 2;
-  hilo.position.set(0, 0.012, 0.094);
+  hilo.position.set(0, 0.014, 0.115);
   hilo.name = 'hilo';
   v.add(hilo);
 
@@ -111,7 +111,7 @@ registrar('arveja', (THREE, opts = {}) => {
   const geo = formaVariada('arveja', 4, opts.variante || 0, (k) =>
     abollar(new THREE.SphereGeometry(1, 12, 9), { fuerza: 0.09, escala: 2.8, semilla: k + 21 }));
   const cuerpo = new THREE.Mesh(geo, mate(THREE, COMIDA.arveja));
-  cuerpo.scale.set(0.062, 0.058, 0.06);
+  cuerpo.scale.set(0.082, 0.077, 0.08);
   cuerpo.name = 'cuerpo';
   /* la cicatriz: el puntito claro por donde iba pegada a la vaina */
   const cicatriz = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 5), mate(THREE, COMIDA.arveja_cicatriz));

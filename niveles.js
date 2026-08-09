@@ -78,13 +78,13 @@ export const NIVELES = [
   {
     id: 'zapallo',
     nombre: 'El zapallo',
-    tarea: 'Cortar',
+    tarea: 'Partir, pelar y cortar',
     icono: 'zapallo',
     modulo: () => import('./nivel-zapallo.js'),
-    gesto: '<b>Corta</b> siguiendo las líneas punteadas, sin desviarte. Si hay un gusano en la línea, sácalo antes.',
-    nota: 'Zapallo y sambo, los dos hermanos dulces de la fanesca. Se cortan en cubos parejos para que se deshagan igual.',
-    bicho: 'el gusano gordo',
-    cucharas: [45, 70, 105],
+    gesto: 'Llega entero. <b>Párte­lo</b> cruzándolo de adelante hacia atrás por la línea gruesa; <b>barre el hueco</b> para sacar pepas y hebras; <b>jala cada tira de cáscara</b> a lo largo; y recién ahí <b>corta las tajadas</b>, una línea por trazo.',
+    nota: 'Un zapallo no llega a la olla en rodajas. Este es el nivel más largo de la mesa y el que más se parece a estar cocinando: cuatro faenas seguidas, cada una con su gesto.',
+    bicho: 'el gusano',
+    cucharas: [80, 120, 175],
   },
   {
     id: 'col',
@@ -142,6 +142,65 @@ export const NIVELES = [
     cucharas: [55, 85, 130],
   },
 ];
+
+/* ============================================================
+   EL RESTO DEL MAPA
+
+   La fanesca no son solo los doce granos. Estos ya están en la
+   receta y en el cuaderno, pero todavía no tienen minijuego: se
+   muestran en la mesa apagados, con el gesto que van a pedir
+   cuando les toque.
+
+   Están aquí y no escondidos en una rama a propósito. El mapa
+   completo es lo que hace que la mesa se lea como una cocina de
+   verdad —donde ves todo lo que falta antes de empezar— en vez de
+   como una lista de niveles que se estira sola. Y a quien juegue
+   le dice la verdad: esto todavía se está cocinando.
+   ============================================================ */
+
+export const POR_VENIR = [
+  {
+    id: 'sambo', nombre: 'El sambo', tarea: 'Rallar', icono: 'zapallo',
+    gesto: 'El hermano del zapallo, pero rallado: pasarlo por el rallador de un lado a otro hasta que quede hebra.',
+  },
+  {
+    id: 'garbanzo', nombre: 'El garbanzo', tarea: 'Pelar remojado', icono: 'granos_mixtos',
+    gesto: 'Después de la noche en agua, la piel se suelta sola: frotar un puñado entre las dos manos y las camisitas flotan.',
+  },
+  {
+    id: 'arroz', nombre: 'El arroz', tarea: 'Lavar', icono: 'quinua',
+    gesto: 'Tres aguas, como la quinua, pero sin espuma: aquí lo que se mira es cuándo el agua deja de salir blanca.',
+  },
+  {
+    id: 'queso', nombre: 'El queso y la leche', tarea: 'Desmenuzar', icono: 'granos_mixtos',
+    gesto: 'El queso fresco se desmigaja con los dedos, nunca se corta. La leche entra al final y de un solo golpe.',
+  },
+  {
+    id: 'huevo', nombre: 'El huevo duro', tarea: 'Cascar y pelar', icono: 'granos_mixtos',
+    gesto: 'Un golpecito seco, y después la cáscara sale en pedazos jalando desde la grieta. Va encima, no dentro.',
+  },
+  {
+    id: 'guarnicion', nombre: 'La guarnición', tarea: 'Freír y armar', icono: 'hoja',
+    gesto: 'Plátano maduro, empanaditas de viento y el ají al lado. Lo que va arriba del plato, que en esta casa importa tanto como lo de abajo.',
+  },
+];
+
+/* ============================================================
+   Y EL FINAL: LA OLLA
+
+   No es un ingrediente, es lo que se hace con todos. Se abre
+   cuando los doce están listos, y por ahora sirve la fanesca; el
+   minijuego de cocinarla —el orden en que entran los granos, que
+   es lo que de verdad decide si sale buena— viene después.
+   ============================================================ */
+
+export const OLLA = {
+  id: 'olla',
+  nombre: 'La fanesca',
+  tarea: 'Cocinar la olla',
+  icono: 'fanesca',
+  gesto: 'Los doce granos, cada uno a su tiempo: primero los que más tardan, al final la leche y el queso. Que hierva despacio y no se deje de revolver.',
+};
 
 export const porId = (id) => NIVELES.find(n => n.id === id);
 

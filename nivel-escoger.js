@@ -23,9 +23,11 @@ import { nuevaPlaga } from './plaga.js';
 
 let THREE, raiz, api;
 
-const BUENAS = 46;
-const PIEDRAS = 7;
-const PICADOS = 5;
+/* la mitad de lentejas, del doble de tamaño: escoger es mirar, y
+   mirar no puede depender de tener buena vista */
+const BUENAS = 22;
+const PIEDRAS = 5;
+const PICADOS = 4;
 const GORGOJOS = 2;
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
@@ -34,8 +36,8 @@ const GORGOJOS = 2;
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
 const ANCHO = 1.36, HONDO = 0.62;
-const RADIO_DEDO = 0.1;          /* fino a propósito: aquí se apunta */
-const RADIO_BARRIDO = 0.2;
+const RADIO_DEDO = 0.17;         /* fino a propósito, pero no imposible */
+const RADIO_BARRIDO = 0.28;
 
 let granosGrupo = null;
 let granos = [];                 /* {obj, clase:'buena'|'piedra'|'picado', ido} */
@@ -59,7 +61,12 @@ const PIEZA_DE = { buena: 'lenteja', piedra: 'piedra', picado: 'lenteja-picada' 
 
 function nuevoGrano(clase, x, z) {
   const g = api.pieza(PIEZA_DE[clase] || 'lenteja', { variante: granos.length });
-  g.position.set(x, api.MESA_Y + 0.13, z);
+  /* al doble: la lenteja de verdad es chiquita, pero un juego que se
+     juega con el dedo no puede tener el objetivo del tamaño de un
+     grano de verdad. Lo que importa es que la piedra siga
+     pareciéndose a la lenteja, no que ambas sean minúsculas. */
+  g.scale.setScalar(2);
+  g.position.set(x, api.MESA_Y + 0.15, z);
   g.rotation.set(Math.random() * 0.4, Math.random() * Math.PI, Math.random() * 0.4);
   g.userData = { tipo: 'grano', clase };
   return { obj: g, clase, ido: false };

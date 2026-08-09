@@ -519,3 +519,124 @@ svg[width="0"] { width: 0; height: 0; }
   font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
   font-style: normal; color: var(--accent-ink);
 }
+
+/* ============================================================
+   EL MAPA COMPLETO DE LA MESA
+   La olla al final y lo que todavía no tiene minijuego. Se
+   muestran a propósito: una cocina se lee mejor cuando ves todo
+   lo que falta, y decirle a quien juega "esto viene después" es
+   más honesto que esconderlo.
+   ============================================================ */
+
+/* la ficha del ingrediente ya hecho se marca, no solo con el ✓ */
+.ingrediente.hecho {
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(155,190,120,.16) 100%);
+}
+
+/* LA OLLA: la única ficha que no es un ingrediente, y se nota */
+.ingrediente--olla {
+  margin-top: var(--sp-4);
+  border: 3px solid var(--maiz-500, #f2b31f);
+  background: linear-gradient(180deg, #fff7e2 0%, #ffe9b8 100%);
+  box-shadow: var(--e-3);
+}
+.ingrediente--olla .ing-nombre { font-size: var(--t-lg); }
+.ingrediente--olla:not(.bloqueado) {
+  animation: olla-late 2.4s var(--ease-pop) infinite;
+}
+@keyframes olla-late {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.022); }
+}
+.ingrediente--olla.bloqueado { border-color: var(--hairline); background: var(--surface); }
+
+/* la raya que separa lo jugable de lo que viene */
+.mesa-sep {
+  margin: var(--sp-5) 0 var(--sp-2);
+  text-align: center;
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  letter-spacing: var(--track-caps); text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mesa-sep span { display: block; text-transform: none; letter-spacing: 0; font-weight: 600; opacity: .75; }
+
+/* lo que aún no existe: apagado, pero no bloqueado — se puede
+   tocar para leer qué gesto va a pedir */
+.ingrediente--porvenir { opacity: .62; border-style: dashed; }
+.ingrediente--porvenir .plate { filter: grayscale(.55); }
+.ing-pronto {
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
+  letter-spacing: var(--track-caps); text-transform: uppercase;
+  color: var(--text-muted);
+  border: 1.5px dashed var(--hairline); border-radius: var(--r-pill);
+  padding: .15rem .5rem;
+}
+
+
+/* ============================================================
+   EL JUGO
+   Lo que hace que un acierto se sienta acierto. Todo cuelga de
+   `progreso()` en main.js, así que ningún nivel tiene que pedirlo.
+   ============================================================ */
+
+/* la barra late cuando sube */
+.meter-fill.late { animation: barra-late .34s var(--ease-pop); }
+@keyframes barra-late {
+  0%   { filter: brightness(1); }
+  35%  { filter: brightness(1.5) saturate(1.3); }
+  100% { filter: brightness(1); }
+}
+
+/* el contador de racha, junto al reloj */
+.hud-racha {
+  position: absolute; right: calc(var(--sp-3) + 76px);
+  top: calc(env(safe-area-inset-top) + 14px);
+  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
+  color: var(--maiz-300, #ffd24d);
+  text-shadow: 0 2px 0 rgba(90,50,20,.55), 0 0 14px rgba(255,210,77,.7);
+  opacity: 0; transform: scale(.6);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+.hud-racha.visible { opacity: 1; transform: scale(1); }
+.hud-racha.brinca { animation: racha-brinca .3s var(--ease-pop); }
+@keyframes racha-brinca {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.45) rotate(-5deg); }
+  100% { transform: scale(1); }
+}
+
+/* las fichas de la mesa entran escalonadas: la lista se arma sola
+   delante de quien mira, en vez de aparecer de golpe ya hecha */
+.mesa-lista .ingrediente {
+  animation: ficha-entra .34s var(--ease-pop) both;
+}
+.mesa-lista .ingrediente:nth-child(1)  { animation-delay: .00s; }
+.mesa-lista .ingrediente:nth-child(2)  { animation-delay: .03s; }
+.mesa-lista .ingrediente:nth-child(3)  { animation-delay: .06s; }
+.mesa-lista .ingrediente:nth-child(4)  { animation-delay: .09s; }
+.mesa-lista .ingrediente:nth-child(5)  { animation-delay: .12s; }
+.mesa-lista .ingrediente:nth-child(6)  { animation-delay: .15s; }
+.mesa-lista .ingrediente:nth-child(7)  { animation-delay: .18s; }
+.mesa-lista .ingrediente:nth-child(n+8) { animation-delay: .21s; }
+@keyframes ficha-entra {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* el toque, más gordo: en un juego que se juega con el dedo, la
+   ficha tiene que hundirse de verdad al tocarla */
+.ingrediente:active { transform: translateY(3px) scale(.985); }
+
+/* Objetivos de toque grandes. Es la regla más aburrida de este
+   archivo y la que más decide si alguien de setenta puede jugar:
+   nada que haya que tocar mide menos de 44px de alto. */
+.ctrl { min-height: 56px; }
+.cuaderno-acceso { min-height: 48px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mesa-lista .ingrediente,
+  .hud-racha.brinca,
+  .meter-fill.late,
+  .ingrediente--olla:not(.bloqueado) { animation: none; }
+}

@@ -45,7 +45,7 @@ registrar('batea-quinua', (THREE, opts = {}) => {
     const rad = Math.sqrt((i + 0.5) / 46) * r * 0.62;
     const m = new THREE.Mesh(geoG, matG);
     m.position.set(Math.cos(a) * rad, (i % 3) * 0.006, Math.sin(a) * rad);
-    m.scale.set(0.028, 0.016, 0.028);
+    m.scale.set(0.042, 0.024, 0.042);
     m.rotation.y = a;
     m.userData.ignorar = true;
     granos.add(m);

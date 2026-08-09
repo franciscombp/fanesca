@@ -23,8 +23,13 @@ import { nuevaPlaga } from './plaga.js';
 
 let THREE, raiz, api;
 
-const FILAS = 4;
-const COLS = 6;
+/* Doce, no veinticuatro. Con veinticuatro chochos en la tabla cada
+   uno medía menos que la yema del dedo: se podía jugar mirando de
+   cerca, que es exactamente lo que este juego no quiere pedir.
+   Menos piezas y más grandes se aprietan igual de rico y se ven
+   desde el otro lado de la mesa. */
+const FILAS = 3;
+const COLS = 4;
 const TOTAL = FILAS * COLS;
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
@@ -32,9 +37,9 @@ const TOTAL = FILAS * COLS;
    corre sola. */
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const PASO_X = 0.44, PASO_Z = 0.34;
+const PASO_X = 0.62, PASO_Z = 0.46;
 const CON_GORGOJO = 2;
-const RADIO_DEDO = 0.16;         /* el dedo tapa más que un píxel */
+const RADIO_DEDO = 0.24;         /* el dedo tapa más que un píxel */
 
 let chochosGrupo = null;
 let chochos = [];                /* {obj, piel, pepa, ido} */
@@ -49,6 +54,7 @@ let terminado = false;
 
 function nuevoChocho(x, z, i) {
   const g = api.pieza('chocho', { variante: i });
+  g.scale.setScalar(1.7);   /* que se vea el chocho, no el píxel */
   g.position.set(x, api.MESA_Y + 0.16, z);
   g.rotation.y = Math.random() * Math.PI;
   g.userData = { tipo: 'chocho' };
