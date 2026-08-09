@@ -23,9 +23,11 @@ const NOVEDADES = [
     fecha: '2026-08-09',
     titulo: 'Rapidez, no puntería',
     cambios: [
-      'Las habas ya no piden dedo de cirujano: todo lo que quede bajo la yema se viene, y el barrido va juntando lo que roza. Además están más gordas.',
+      'Las habas ya no piden dedo de cirujano: todo lo que quede bajo la yema se viene, el barrido va juntando lo que roza, y la vaina se abre aunque el dedo pase apenas rozándola. Además están más gordas.',
       'El zapallo se entiende: cualquier trazo largo lo parte (chueco vale), el cuchillo toma solo la línea más cercana, y la cáscara sale se jale por donde se jale. Las pistas ahora hablan de la pantalla — "un trazo de arriba a abajo" — no de la cocina.',
       'El gusanito del choclo ya no se esconde: repta hacia el lado que estás mirando, así que gires como gires la mazorca, siempre lo tienes enfrente. Y camina más despacio, con más tiempo de gracia.',
+      'Desgranar perdona el arranque: si el dedo empieza un pelo afuera del grano y baja por la hilera, desgrana igual — antes ese gesto se tomaba por girar y no pasaba nada. Y con las hojas ya peladas, agarrar el choclo por donde sea arranca la envoltura: no hay que apuntarle a los pelos.',
+      'Arreglado: si el grano que escondía al gusanito se reventaba, el bicho quedaba sepultado en la papilla y no salía nunca. Ahora se despierta igual.',
     ],
   },
   {
