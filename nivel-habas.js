@@ -229,7 +229,9 @@ export default {
     if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'barrer';
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + 0.24);
-    if (r && r.userData.tipo === 'haba') sacarHaba(r);
+    /* el primer contacto ya junta lo que esté bajo la yema */
+    if (info.raiz && info.raiz.userData.tipo === 'haba') sacarHaba(info.raiz);
+    else if (ultimoPunto) habasCerca(ultimoPunto).forEach(sacarHaba);
   },
 
   alArrastrar(info) {

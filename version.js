@@ -14,10 +14,20 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.7.1',
+    fecha: '2026-08-09',
+    titulo: 'Rapidez, no puntería',
+    cambios: [
+      'Las habas ya no piden dedo de cirujano: todo lo que quede bajo la yema se viene, y el barrido va juntando lo que roza. Además están más gordas.',
+      'El zapallo se entiende: cualquier trazo largo lo parte (chueco vale), el cuchillo toma solo la línea más cercana, y la cáscara sale se jale por donde se jale. Las pistas ahora hablan de la pantalla — "un trazo de arriba a abajo" — no de la cocina.',
+      'El gusanito del choclo ya no se esconde: repta hacia el lado que estás mirando, así que gires como gires la mazorca, siempre lo tienes enfrente. Y camina más despacio, con más tiempo de gracia.',
+    ],
+  },
   {
     v: '1.7.0',
     fecha: '2026-08-09',
