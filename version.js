@@ -14,10 +14,25 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.7.0',
+    fecha: '2026-08-09',
+    titulo: 'El camino a la olla',
+    cambios: [
+      'La mesa es ahora un camino: los doce ingredientes serpentean hasta la olla, con el sendero recorrido en dorado y el siguiente paso latiendo. Se abre mostrando dónde vas.',
+      'Tocar un gusanito ya no arruina nada: lo asusta. El peligro siempre fue barrer sin mirar — y hasta ahí llega el perdón: la primera aplastada de cada nivel se disculpa, la segunda no.',
+      'El bicho cargado va pegado al dedo, adelante, como debe. Y agarrarlo ya no pide puntería: cerca es suficiente, con uno o dos dedos.',
+      'El reloj ya no se ve mientras juegas: corre por dentro y se cuenta al final, con las cucharas cayendo de a una. Leer una cita tampoco cuesta tiempo — el reloj se detiene solo.',
+      'Los aciertos seguidos suenan cada vez más agudo, la batea rebota al recibir, y perder te dice cuán cerca estabas.',
+      'Cocinar días seguidos enciende una racha 🔥 que se ve en la mesa.',
+      'Terminar un nivel lleva directo al siguiente, sin escalas. Y mantener apretado el fréjol ya no selecciona texto ni se corta si te tiembla el dedo.',
+      'La historia, más honesta: los doce apóstoles fueron el vestido que le pusieron encima — debajo sigue la fiesta de agradecerle a la Pachamama por sus frutos. Como la paja de páramo: la arrancaron, y volvió a crecer dentro de la misma olla.',
+    ],
+  },
   {
     v: '1.6.0',
     fecha: '2026-08-09',

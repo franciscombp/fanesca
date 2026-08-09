@@ -34,11 +34,11 @@ let TABLA_Z = 0;
 const ALTO = 0.14;
 
 /* cuánto mundo hay que empujar de lado para enrollar una hoja */
-const ENROLLADO = ANCHO_HOJA * 0.85;
+const ENROLLADO = ANCHO_HOJA * 0.68;
 /* el corte: lo que se considera fino, y lo máximo que el cuchillo
    se lleva de una vez (más que esto es un trozo, no una tira) */
-const FINA = 0.075;
-const GRUESA = 0.19;
+const FINA = 0.1;
+const GRUESA = 0.24;
 const MAX_TAJADA = 0.34;
 const SOBRA = 0.1;               /* el cabito que ya no se puede cortar */
 const CON_GUSANO = 2;
@@ -242,18 +242,20 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     if (hoja) { api.sfx('resist'); api.pista('La hoja se <b>enrolla</b>: pásale el dedo de lado a lado.', 2800); return; }
     if (rollo) { api.sfx('resist'); api.pista('No se pica a golpecitos: <b>cruza el rollo</b> de un lado al otro.', 2800); }
   },
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = hoja ? 'enrollar' : 'cortar';
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + ALTO);
   },

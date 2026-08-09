@@ -108,7 +108,7 @@ let camMira = new THREE.Vector3();
    el punto de mira llena media pantalla de pared de azulejo, que es
    bonita y no se juega. Bajarlo empuja la mesa hacia el centro del
    cuadro, que es donde están los dedos. */
-const CAM_POR_DEFECTO = { pos: [0, 2.86, 3.78], mira: [0, 0.99, 0.5] };
+const CAM_POR_DEFECTO = { pos: [0, 2.74, 3.62], mira: [0, 0.92, 0.52] };
 let destelloEl = null;
 let bateaGrupo = null, compostaGrupo = null;
 
@@ -264,6 +264,21 @@ function pasoVuelos() {
   });
   listos.forEach(v => {
     scene.remove(v.obj);
+    /* la batea (o la composta) RESPONDE al recibir: un pop de escala
+       de un cuarto de segundo. Es el eslabón que faltaba en la
+       cadena de recompensa — el grano vuela, cae, y ALGO lo recibe.
+       Sin esto, los aciertos aterrizaban en un cuenco de piedra. */
+    const cerca = (g, p) => g && Math.hypot(g.position.x - p.x, g.position.z - p.z) < 0.55;
+    const receptor = cerca(bateaGrupo, v.hasta) ? bateaGrupo : (cerca(compostaGrupo, v.hasta) ? compostaGrupo : null);
+    if (receptor && !receptor.userData.pop) {
+      receptor.userData.pop = true;
+      const s0 = receptor.scale.x;
+      tween(receptor.scale, 'x', s0 * 1.09, 0.09, undefined, () => tween(receptor.scale, 'x', s0, 0.14));
+      tween(receptor.scale, 'z', s0 * 1.09, 0.09, undefined, () => tween(receptor.scale, 'z', s0, 0.14));
+      tween(receptor.scale, 'y', s0 * 0.94, 0.09, undefined, () => {
+        tween(receptor.scale, 'y', s0, 0.14, undefined, () => { receptor.userData.pop = false; });
+      });
+    }
     if (v.fin) v.fin();
     /* aterrizó y nadie lo volvió a colgar: se descarta aquí y no al
        cambiar de nivel. Son ciento veintiséis granos por choclo — si

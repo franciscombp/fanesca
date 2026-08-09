@@ -114,7 +114,7 @@ export default {
   /* trabajo de detalle: la cámara se acerca para que el chocho se vea */
   /* acercada, pero no tanto: la composta y la batea TIENEN que caber
      en cuadro, porque llevar el bicho hasta allá es una regla del juego */
-  camara: { pos: [0, 2.86, 3.55], mira: [0, 1.08, 0.4] },
+  camara: { pos: [0, 2.7, 3.42], mira: [0, 0.96, 0.44] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
@@ -154,17 +154,25 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
-    apretarEn(api.puntoEnPlano(api.MESA_Y + 0.16));
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
+    /* el tap resuelve por área (el dedo es gordo), así que el bicho
+       también hay que buscarlo por área ANTES de apretar: si está en
+       el radio, esto es un toque al bicho — susto, no aplastada */
+    const punto = api.puntoEnPlano(api.MESA_Y + 0.16);
+    const b = punto && plaga.cercaDe(punto, RADIO_DEDO);
+    if (b) { plaga.tocado(b); return; }
+    apretarEn(punto);
   },
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'apretar';
     apretarEn(api.puntoEnPlano(api.MESA_Y + 0.16));
   },

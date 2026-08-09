@@ -32,25 +32,21 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
      Cada nivel dice dónde está su tabla. */
   const SUELO = opts.superficie || (() => api.MESA_Y);
   const CERCA_BATEA = opts.cercaBatea || 0.42;
-  const CERCA_COMPOSTA = opts.cercaComposta || 0.7;
+  const CERCA_COMPOSTA = opts.cercaComposta || 0.9;
   /* El bicho aparece justo bajo el dedo que lo destapó, y muchas veces
      ese dedo viene barriendo. Sin este respiro, destapar un bicho sería
      perder sin poder reaccionar — que no es dificultad, es injusticia. */
-  const GRACIA = opts.gracia != null ? opts.gracia : 1.0;
+  const GRACIA = opts.gracia != null ? opts.gracia : 1.5;
 
-  /* Cuánto se levanta y cuánto se adelanta el bicho cargado. Los dos
-     valores van juntos: en esta cámara subir en Y equivale a irse
-     hacia el fondo de la pantalla, así que si se levanta hay que
-     compensar trayéndolo hacia el jugador o el bicho parece
-     escaparse justo cuando lo agarras. */
-  const ALTO_CARGA = 0.2;
-  const ADELANTE_CARGA = 0.22;
+  /* A qué altura viaja el bicho cargado. */
+  const ALTO_CARGA = 0.3;
 
   const grupo = new THREE.Group();
   raiz.add(grupo);
   const lista = [];
   let cargado = null;
   let avisados = 0;
+  let perdonado = false;   /* una aplastada perdonada por nivel */
 
   const destino = api.BATEA.clone().setY(api.MESA_Y + ALTO);
 
@@ -95,13 +91,49 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     /* ¿este objeto tocado es uno de los nuestros? */
     de(raizTocada) { return lista.find(r => r.nodo === raizTocada && r.estado !== 'ido') || null; },
 
-    /* tocarlo o rozarlo con el dedo: se acabó — salvo que acabe de
+    /* Un TOQUE deliberado nunca mata. La tensión del juego siempre
+       fue barrer SIN MIRAR — el dedo que va lanzado y no vio al
+       bicho—, no el dedo que fue directo a él. Castigar el toque
+       castigaba justo al jugador atento (y al de setenta años, cuyo
+       gesto natural es tocar). El toque asusta al bicho y enseña el
+       gesto correcto; solo el barrido puede aplastarlo. */
+    tocado(rec) {
+      if (!rec || rec.estado !== 'suelto') return;
+      rec.nodo.position.z += 0.08;
+      rec.inmune = api.reloj + 1.2;
+      api.sfx('resist'); api.buzz([18, 14]);
+      api.pista('Así no sale: <b>pellízcalo</b> con dos dedos, o <b>arrastra desde él</b> hasta la composta.', 2800);
+    },
+
+    /* rozarlo BARRIENDO: se acabó — salvo que acabe de
        aparecer, que entonces solo pega el susto */
     aplastar(rec) {
+      /* UN gesto, UNA consecuencia. Sin esta invulnerabilidad breve,
+         un solo barrido continuo llamaba aplastar() muchos cuadros
+         seguidos y se cobraba el susto, el perdón y la derrota en
+         medio segundo — tres avisos que nadie alcanzó a leer. */
+      if (rec && rec.inmune && api.reloj < rec.inmune) return false;
       if (rec && api.reloj - rec.t0 < GRACIA) {
         rec.nodo.position.z += 0.06;
+        rec.inmune = api.reloj + 1.0;
         api.sfx('resist'); api.buzz([20, 20]);
-        api.pista('¡Casi! <b>No lo toques</b>: arrastra desde él hasta la composta.', 2800);
+        api.pista('¡Casi! <b>No lo toques</b>: pellízcalo y llévalo a la composta.', 2600);
+        return false;
+      }
+      /* EL PERDÓN. La primera aplastada de cada nivel es un susto, no
+         una derrota: el bicho queda mareado dos segundos y el jugador
+         entiende la regla sin perder toda la faena. Perder TODO por
+         un roce es la clase de castigo que en un juego casual vacía
+         la mesa — la regla se aprende igual de bien perdonando una. */
+      if (rec && !perdonado) {
+        perdonado = true;
+        rec.t0 = api.reloj + 0.6;          /* mareado: dos segundos sin caminar */
+        rec.inmune = api.reloj + 1.4;
+        rec.nodo.position.z += 0.1;
+        api.sfx('mal'); api.buzz([40, 30, 40]);
+        api.destello('rgba(230,57,70,.3)');
+        api.aviso('💛 ¡Uy, casi lo aplastas! Esta te la perdono — a la composta');
+        api.pista('Última: si lo vuelves a tocar, se arruina la olla. <b>Pellízcalo</b> y bótalo.', 3400);
         return false;
       }
       api.arruinar(ARRUINADO.aplastado(nombre));
@@ -118,7 +150,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
        exactamente donde está el bicho), mide en píxeles de pantalla
        contra dónde se VE el bicho — que es justo lo que el pellizco
        puede juzgar con generosidad sin volverse trampa. */
-    masCercaEnPantalla(clienteX, clienteY, radioPx = 70) {
+    masCercaEnPantalla(clienteX, clienteY, radioPx = 95) {
       let mejor = null, mejorD = radioPx;
       for (const rec of lista) {
         if (rec.estado !== 'suelto') continue;
@@ -149,18 +181,24 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     mover(punto) {
       if (!cargado || !punto) return;
       cargado.suelo = { x: punto.x, z: punto.z };
-      /* HACIA ADELANTE, NO HACIA ARRIBA.
+      /* PEGADO AL DEDO, EN PANTALLA.
 
-         Levantarlo 0.45 en Y y dejarlo en el mismo z se veía al revés
-         de lo que hace la mano: en esta cámara, subir es alejarse en
-         pantalla, así que el bicho pellizcado SALTABA hacia atrás y se
-         escapaba del dedo justo en el cuadro en que lo agarrabas. Se
-         sentía como que se soltaba.
+         Dos intentos anteriores fallaron por lo mismo: colocar el
+         bicho en coordenadas del mundo relativas al punto del mesón
+         (subirlo en Y, adelantarlo en Z) siempre lo despega del dedo
+         en pantalla — en esta cámara subir es irse hacia atrás, y
+         cualquier compensación fija solo acierta a una distancia.
 
-         Levantar poco y traerlo hacia el jugador (+z es hacia la
-         cámara) lo deja pegado bajo los dedos, que es donde estaría
-         de verdad: cargado, no lanzado. */
-      cargado.nodo.position.set(punto.x, api.MESA_Y + ALTO_CARGA, punto.z + ADELANTE_CARGA);
+         Lo correcto es no compensar: se raycastea el MISMO rayo del
+         dedo contra un plano a la altura de carga. La intersección
+         proyecta por construcción al píxel exacto del dedo, así que
+         el bicho queda debajo de la mano a cualquier altura y en
+         cualquier parte del mesón. El punto del plano del mesón se
+         guarda aparte (`suelo`): es el que decide dónde cae al
+         soltarlo, porque soltar se juzga contra la mesa, no contra
+         el aire. */
+      const enMano = api.puntoEnPlano(api.MESA_Y + ALTO_CARGA) || punto;
+      cargado.nodo.position.set(enMano.x, api.MESA_Y + ALTO_CARGA, enMano.z);
       cargado.nodo.rotation.z = Math.sin(api.reloj * 12) * 0.3;
     },
     /* devuelve 'composta' si lo botaste bien, 'devuelto' si se te cayó */

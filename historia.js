@@ -57,7 +57,7 @@ export const CHANCOSO_AGRICULTURA = {
 export const VOCES = [AMAGUANA_MAZORCA, CACUANGO_PARAMO, AMAGUANA_SANGRE, CHANCOSO_AGRICULTURA];
 
 export const HISTORIA = {
-  entradilla: 'Se come un solo día al año y casi nadie la cocina solo. Debajo del queso y la leche hay una fiesta de cosecha más vieja que las iglesias que hoy le ponen fecha.',
+  entradilla: 'Se come un solo día al año y casi nadie la cocina solo. Debajo del queso y la leche hay una fiesta de cosecha más vieja que las iglesias que hoy le ponen fecha: la de agradecer a la Pachamama por sus frutos.',
 
   capitulos: [
     {
@@ -66,7 +66,7 @@ export const HISTORIA = {
       icono: 'maiz',
       cuerpo: [
         'Mucho antes de la Semana Santa, en los Andes ya se cocinaba esta olla. Se llamaba <b>uchucuta</b>: en kichwa, granos tiernos cocidos con ají y hierbas. Se hacía con lo primero que daba la tierra —choclo, fréjol, habas, mellocos, zapallo, sambo— y se comía con carne de llama.',
-        'No era una comida cualquiera: era la del <b>Mushuk Nina</b>, la fiesta del Fuego Nuevo, y la del <b>Pawkar Raymi</b>, la del florecimiento. Se apagaban los fogones y se encendía fuego nuevo para estrenar el año. Comerse los primeros granos tiernos, todos juntos en una olla, era la manera de decir que la tierra había vuelto a responder.',
+        'No era una comida cualquiera: era la del <b>Mushuk Nina</b>, la fiesta del Fuego Nuevo, y la del <b>Pawkar Raymi</b>, la del florecimiento. Se apagaban los fogones y se encendía fuego nuevo para estrenar el año. Comerse los primeros granos tiernos, todos juntos en una olla, era la manera de darle las gracias a la <b>Pachamama</b>: la tierra había vuelto a responder, y eso se celebra comiéndosela juntos.',
       ],
     },
     {
@@ -91,12 +91,14 @@ export const HISTORIA = {
     },
     {
       id: 'granos',
-      titulo: 'Doce granos de dos orillas',
+      titulo: 'Doce apóstoles encima, la Pachamama debajo',
       icono: 'granos_mixtos',
       cuerpo: [
-        'Los españoles le dieron la lectura que hoy todos repiten: los <b>doce granos son los doce apóstoles</b> y el bacalao es Cristo. Pero mira de dónde viene cada grano y el plato cuenta otra cosa encima.',
-        'La fanesca no es un plato indígena con añadidos, ni un plato español con adornos. Es literalmente las dos despensas revueltas y hervidas juntas hasta que no se pueden separar.',
+        'Los españoles le pusieron encima la lectura que hoy todos repiten: los <b>doce granos son los doce apóstoles</b> y el bacalao es Cristo. Eso tiene nombre — <b>sincretismo</b>: vestir de misa una fiesta que ya existía, para que lo de antes pareciera venir de ellos.',
+        'Pero rasca el caldo y ahí sigue lo primero: una olla de cosecha para <b>agradecer a la Pachamama</b> por sus frutos, con los granos tiernos de marzo. Decirlo no es resentimiento — es la alegría de descubrir que en medio de la fiesta religiosa hay algo más, y que ese algo nunca se fue. Como la paja de páramo de Dolores Cacuango: la arrancaron, y volvió a crecer dentro de la misma olla.',
+        'Mira de dónde viene cada grano y el plato lo cuenta solo. No es un plato indígena con añadidos ni un plato español con adornos: es literalmente las dos despensas revueltas y hervidas juntas hasta que no se pueden separar.',
       ],
+      cita: CACUANGO_PARAMO,
       granos: [
         { n: 'Choclo', de: 'aca' }, { n: 'Fréjol', de: 'aca' },
         { n: 'Chochos', de: 'aca' }, { n: 'Zapallo', de: 'aca' },
@@ -223,4 +225,4 @@ export const TARJETAS = {
   },
 };
 
-export const CIERRE = 'Doce granos de dos orillas, un pescado del norte y una fiesta de cosecha con fecha de Semana Santa. Nada de eso se puede separar ya: por eso se sirve en un solo plato, y por eso se come entre varios.';
+export const CIERRE = 'Doce granos de dos orillas, un pescado del norte y una fiesta de cosecha que sobrevivió debajo de otra. La Pachamama puso los frutos; las manos, todo lo demás. Por eso se sirve en un solo plato, y por eso se come entre varios.';

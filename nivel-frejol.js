@@ -29,9 +29,9 @@ const VAINAS = 5;
    corre sola. */
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const APRIETE = 0.62;            /* segundos de presión para que reviente */
+const APRIETE = 0.48;            /* segundos de presión para que reviente */
 const CON_GORGOJO = 2;
-const RADIO_BARRIDO = 0.17;      /* qué tan gordo es el dedo, en el mundo */
+const RADIO_BARRIDO = 0.22;      /* qué tan gordo es el dedo, en el mundo */
 
 let vainasGrupo = null, granosGrupo = null;
 let vainas = [];
@@ -178,7 +178,7 @@ export default {
     apretando = null;
     if (terminado || !info.raiz) return;
     const t = info.raiz.userData.tipo;
-    if (t === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (t === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     if (t === 'vaina') {
       api.sfx('resist');
       api.pista('No basta un toquecito: <b>mantén el dedo</b> apretado hasta que truene.', 3200);
@@ -188,19 +188,29 @@ export default {
   },
 
   alArrastrarInicio(info) {
+    /* El temblor NO cancela el apriete. El umbral de arrastre del
+       motor son 8px, y una mano apoyada con ganas tiembla más que
+       eso: el "mantener apretado" se cortaba solo, sobre todo en
+       manos mayores. Si el dedo sigue SOBRE la misma vaina que
+       venía apretando, el apriete continúa y este arrastre no es
+       un barrido — es un pulso. */
+    if (apretando && info.raiz === apretando.rec.obj) return;
     apretando = null;
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'barrer';
     barrerEn(api.puntoEnPlano(api.MESA_Y + 0.14));
   },
 
   alArrastrar() {
     if (terminado) return;
+    if (apretando) return;         /* el pulso apretando no barre */
     if (modo === 'cargar') { plaga.mover(api.puntoEnPlano(api.MESA_Y)); return; }
     if (modo === 'barrer') barrerEn(api.puntoEnPlano(api.MESA_Y + 0.14));
   },

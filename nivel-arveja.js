@@ -40,11 +40,11 @@ const CON_GUSANO = 2;
 /* Cuánto mundo hay que jalar para que el hilo salga entero. Es
    deliberadamente más largo que el frote de la haba: deshilar es un
    tirón franco de punta a punta, no un restregón corto. */
-const LARGO_HILO = 0.5;
+const LARGO_HILO = 0.4;
 /* Cuánto puede desviarse el tirón del eje de la vaina antes de que
    deje de contar. Generoso —el dedo no va con regla— pero no tanto
    como para que cualquier arrastre deshile. */
-const TOLERANCIA = 0.72;
+const TOLERANCIA = 0.5;
 
 let vainasGrupo = null;
 let vainas = [];
@@ -240,7 +240,7 @@ export default {
   alTocar(info) {
     if (terminado || !info.raiz) return;
     const t = info.raiz.userData.tipo;
-    if (t === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (t === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     if (t === 'arveja') { cadena = 0; sacarArveja(info.raiz); return; }
     if (t === 'vaina') {
       const rec = vainas.find(v => v.obj === info.raiz);
@@ -254,11 +254,13 @@ export default {
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + 0.23);
     cadena = 0;
 

@@ -34,7 +34,7 @@ const HONDO_PIEDRA = ANCHO_PIEDRA;
 
 const RADIO_MANO = 0.26;         /* lo que la mano de piedra abarca */
 /* cuánto vaivén aguanta un grano antes de rendirse */
-const MOLIENDA = 1.5;
+const MOLIENDA = 1.15;
 /* la orilla donde ya no muerde: el grano queda ahí, a la vista y
    fuera de juego, hasta que se lo arrime */
 const ORILLA_X = LARGO_PIEDRA * 0.4;
@@ -160,7 +160,7 @@ function revisarFinal() {
 
 export default {
   id: 'mani',
-  camara: { pos: [0, 2.92, 3.62], mira: [0, 1.1, 0.42] },
+  camara: { pos: [0, 2.76, 3.48], mira: [0, 0.97, 0.44] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
@@ -209,18 +209,20 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     api.sfx('resist');
     api.pista('Un golpe no muele. <b>Arrastra</b> la piedra de un lado al otro.', 2800);
   },
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'moler';
     sentido = 0;
     ultimoPunto = api.puntoEnPlano(caraLosa());

@@ -220,7 +220,7 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     const punto = api.puntoEnPlano(api.MESA_Y + 0.13);
     const bicho = plaga.cercaDe(punto, RADIO_DEDO);
     if (bicho) { plaga.aplastar(bicho); return; }
@@ -232,11 +232,13 @@ export default {
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     if (fase === 'barrer') { modo = 'barrer'; barrerEn(api.puntoEnPlano(api.MESA_Y + 0.13)); return; }
     /* mientras haya basura, arrastrar no barre: obligaría a mirar menos */
     modo = null;

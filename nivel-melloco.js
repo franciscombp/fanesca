@@ -37,12 +37,12 @@ const CON_GUSANO = 2;
 const BABA_OPACA = 0.34;
 
 /* Cuánto mundo hay que raspar para dejar uno limpio. */
-const RASPADO = 0.95;
+const RASPADO = 0.78;
 /* Y el filo de la navaja: si el dedo recorre más que esto en un solo
    cuadro, el melloco sale disparado. Está calibrado contra el paso
    de un arrastre cómodo (~0.02-0.05 por cuadro a 60fps); pasarse de
    aquí es ir con ansias, no ir rápido. */
-const RESBALON = 0.075;
+const RESBALON = 0.115;
 
 let mellocosGrupo = null;
 let mellocos = [];               /* {obj, babaza, baba, limpio} */
@@ -102,9 +102,9 @@ function resbalar(rec, dx, dz) {
   if (rec.limpio || rec.resbalando > 0) return;
   const d = Math.hypot(dx, dz) || 1;
   const destino = encajar(new THREE.Vector3(
-    rec.obj.position.x + (dx / d) * (0.55 + Math.random() * 0.3),
+    rec.obj.position.x + (dx / d) * (0.4 + Math.random() * 0.2),
     api.MESA_Y + ALTO,
-    rec.obj.position.z + (dz / d) * (0.55 + Math.random() * 0.3),
+    rec.obj.position.z + (dz / d) * (0.4 + Math.random() * 0.2),
   ));
   rec.resbalando = 0.34;
   api.tween(rec.obj.position, 'x', destino.x, 0.32);
@@ -138,7 +138,7 @@ function revisarFinal() {
 export default {
   id: 'melloco',
   /* de cerca: la baba solo se lee si el melloco ocupa pantalla */
-  camara: { pos: [0, 2.88, 3.6], mira: [0, 1.08, 0.42] },
+  camara: { pos: [0, 2.72, 3.46], mira: [0, 0.96, 0.44] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
@@ -182,7 +182,7 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     /* un toque seco no raspa nada: la baba pide recorrido */
     if (info.raiz && info.raiz.userData.tipo === 'melloco') {
       api.sfx('resist');
@@ -192,11 +192,13 @@ export default {
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'raspar';
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + ALTO);
   },

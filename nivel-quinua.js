@@ -33,7 +33,7 @@ const ALTO_BATEA = 0.1;
 /* Cuánta saponina hay, en vueltas completas de dedo. Tres aguas
    bien removidas: cada agua aguanta una vuelta y pico antes de
    colmarse de espuma. */
-const VUELTAS = 4.2;
+const VUELTAS = 3.2;
 const TOTAL_RAD = VUELTAS * Math.PI * 2;
 /* la espuma de un agua se colma con esta parte del trabajo total */
 const POR_AGUA = 1 / 3;
@@ -81,7 +81,7 @@ function removerHasta(p) {
 
   /* remover pegado al centro no mueve el agua: el dedo tiene que ir
      por la orilla, que es donde de verdad arrastra el grano */
-  const peso = Math.min(1, r / (RADIO_BATEA * 0.55));
+  const peso = Math.min(1, r / (RADIO_BATEA * 0.42));
   const avance = Math.abs(d) * peso;
   if (avance < 1e-5) return;
 
@@ -160,7 +160,7 @@ function listo() {
 export default {
   id: 'quinua',
   /* la batea manda el encuadre: tiene que verse el agua entera */
-  camara: { pos: [0, 3.0, 3.5], mira: [0, 1.06, 0.34] },
+  camara: { pos: [0, 2.86, 3.4], mira: [0, 0.95, 0.38] },
 
   controles: [{ id: 'botar', txt: '🪣 Botar el agua', tip: 'cuando esté espumosa' }],
 
@@ -206,18 +206,20 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(info.raiz)); return; }
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     api.sfx('resist');
     api.pista('Con tocar no sale: hay que <b>dar vueltas</b> dentro de la batea.', 2800);
   },
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    const r = info.raiz;
-    if (r && r.userData.tipo === 'bicho') {
-      const rec = plaga.de(r);
-      if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
-    }
+    /* Agarrar por cercanía EN PANTALLA, como el pellizco. Exigir que
+       el rayo acierte la malla exacta de un bicho de un centímetro
+       hacía que "arrastrar desde él" fallara la mitad de las veces y
+       el dedo terminara barriendo POR ENCIMA del bicho que intentaba
+       salvar — el gesto correcto castigado por puntería. */
+    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'remover';
     anguloPrevio = null;
     removerHasta(api.puntoEnPlano(api.MESA_Y + 0.2));

@@ -32,8 +32,8 @@ let THREE, raiz, api;
 
 const HONDO_TABLA = 1.6;
 let TABLA_Z = 0;
-const TOL_X = 0.26;             /* cuánto puede desviarse el corte */
-const LARGO_MIN = 0.4;          /* profundidad mínima del trazo */
+const TOL_X = 0.34;             /* cuánto puede desviarse el corte */
+const LARGO_MIN = 0.3;          /* profundidad mínima del trazo */
 const GUSANO_VEL = 0.055;
 
 const PEPAS = 5;                /* por mitad */
@@ -390,8 +390,24 @@ function bichoEncima() {
   bicho.nodo.position.set(bicho.x, alturaBicho(), TABLA_Z + 0.02);
 }
 
+let perdonado = false;
+
+function tocarBicho() {
+  if (!bicho || bicho.estado !== 'suelto') return;
+  bicho.nodo.position.x += bicho.dir * -0.06;
+  api.sfx('resist'); api.buzz([18, 14]);
+  api.pista('Así no sale: <b>pellízcalo</b> con dos dedos, o <b>arrastra desde él</b>.', 2800);
+}
+
 function aplastarBicho() {
   if (!bicho || bicho.estado !== 'suelto') return;
+  if (!perdonado) {
+    perdonado = true;
+    api.sfx('mal'); api.buzz([40, 30, 40]);
+    api.destello('rgba(230,57,70,.3)');
+    api.aviso('💛 ¡Uy, casi lo aplastas! Esta te la perdono — a la composta');
+    return;
+  }
   api.arruinar(ARRUINADO.aplastado('el gusano'));
 }
 
@@ -403,12 +419,13 @@ export default {
   id: 'zapallo',
   /* de cerca: el zapallo entero es lo más grande de la cocina y
      tiene que llenar la pantalla para que partirlo se sienta */
-  camara: { pos: [0, 2.86, 3.5], mira: [0, 1.14, 0.36] },
+  camara: { pos: [0, 2.74, 3.4], mira: [0, 1.02, 0.4] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     fase = 'partir';
+    perdonado = false;
     mitades = []; tajadas = []; guias = []; cortes = new Set(); hechos = 0;
     terminado = false; modo = null; cargado = false; pellizcando = false;
     bicho = null; entero = null; p0 = null;
@@ -429,7 +446,7 @@ export default {
 
   alTocar(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho') { aplastarBicho(); return; }
+    if (info.raiz && info.raiz.userData.tipo === 'bicho') { tocarBicho(); return; }
     if (fase === 'partir') {
       api.sfx('resist');
       api.pista('No se parte a golpecitos: <b>cruza el zapallo</b> de adelante hacia atrás, de un trazo.', 3200);
@@ -441,7 +458,12 @@ export default {
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    if (info.raiz && info.raiz.userData.tipo === 'bicho' && bicho && bicho.estado === 'suelto') {
+    /* agarre por cercanía en pantalla, como en plaga.js */
+    const cercaDelBicho = bicho && bicho.estado === 'suelto' && (() => {
+      const p = api.proyectar(bicho.nodo.position.clone().setY(alturaBicho() + 0.05));
+      return Math.hypot(p.x - info.cliente.x, p.y - info.cliente.y) < 62;
+    })();
+    if (cercaDelBicho) {
       bicho.estado = 'cargado'; cargado = true;
       bicho.gus.aro.visible = false;
       api.sfx('tab'); api.buzz(12);
@@ -458,9 +480,11 @@ export default {
     const p = api.puntoEnPlano(ALTO());
     if (modo === 'cargar') {
       if (!p || !bicho) return;
-      /* hacia el jugador y apenas levantado: cargado, no lanzado */
+      /* pegado al dedo en pantalla: mismo truco que plaga.js — el
+         rayo del dedo contra un plano a la altura de carga */
       bicho.suelo = { x: p.x, z: p.z };
-      bicho.nodo.position.set(p.x, api.MESA_Y + 0.2, p.z + 0.22);
+      const enMano = api.puntoEnPlano(api.MESA_Y + 0.3) || p;
+      bicho.nodo.position.set(enMano.x, api.MESA_Y + 0.3, enMano.z);
       bicho.nodo.rotation.z = Math.sin(api.reloj * 12) * 0.3;
       return;
     }
@@ -535,7 +559,8 @@ export default {
     const p = api.puntoEnPlano(api.MESA_Y);
     if (!p) return;
     bicho.suelo = { x: p.x, z: p.z };
-    bicho.nodo.position.set(p.x, api.MESA_Y + 0.2, p.z + 0.22);
+    const enMano = api.puntoEnPlano(api.MESA_Y + 0.3) || p;
+    bicho.nodo.position.set(enMano.x, api.MESA_Y + 0.3, enMano.z);
   },
   alPellizcarFin() {
     if (!pellizcando) return;

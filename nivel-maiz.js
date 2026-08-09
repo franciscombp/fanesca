@@ -369,10 +369,30 @@ function granoBajoElDedo() {
   return null;
 }
 
+/* el mismo trato que en plaga.js: el toque asusta, el primer barrido
+   encima se perdona, el segundo arruina. El primer nivel del juego es
+   el ÚLTIMO que puede ser más cruel que los demás. */
+let perdonado = false;
+
+function tocado(w) {
+  if (!w || w.estado !== 'suelto') return;
+  w.nodo.position.x += 0.06;
+  api.sfx('resist'); api.buzz([18, 14]);
+  api.pista('Así no sale: <b>pellízcalo</b> con dos dedos, o <b>arrastra desde él</b>.', 2800);
+}
+
 function aplastado(w) {
   if (w && api.reloj - w.t0 < GRACIA) {
     api.sfx('resist'); api.buzz([20, 20]);
-    api.pista('¡Casi! <b>No lo toques</b>: arrastra desde él hasta la composta.', 2800);
+    api.pista('¡Casi! <b>No lo toques</b>: pellízcalo y llévalo a la composta.', 2600);
+    return false;
+  }
+  if (w && !perdonado) {
+    perdonado = true;
+    w.t0 = api.reloj + 0.6;
+    api.sfx('mal'); api.buzz([40, 30, 40]);
+    api.destello('rgba(230,57,70,.3)');
+    api.aviso('💛 ¡Uy, casi lo aplastas! Esta te la perdono — a la composta');
     return false;
   }
   api.arruinar(ARRUINADO.aplastado('gusanito'));
@@ -552,6 +572,7 @@ export default {
   ],
 
   construir(ctx) {
+    perdonado = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     hechos = 0; choclo = 0; compostaN = 0;
     modo = null; cargado = null; giroObjetivo = null; girando = 0; pellizcando = false;
@@ -605,7 +626,7 @@ export default {
     if (terminado || fase === 'transicion') return;
     const r = info.raiz;
     if (!r) return;
-    if (r.userData.tipo === 'gusano') { aplastado(gusanoDe(r)); return; }
+    if (r.userData.tipo === 'gusano') { tocado(gusanoDe(r)); return; }
     if (fase === 'deshojar') {
       if (r.userData.tipo === 'hoja') {
         const h = hojas[r.userData.idx];

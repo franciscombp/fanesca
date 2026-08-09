@@ -28,11 +28,11 @@ const SAL_POR_PRESA = 7;
    corre sola. */
 const HONDO_TABLA = 1.4;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const FROTE = 0.14;              /* mundo recorrido por cada grano de sal */
+const FROTE = 0.11;              /* mundo recorrido por cada grano de sal */
 const CORDEL_Z = -0.62;          /* arrastra hacia el fondo para tender */
 const CORDEL_Y = () => api.MESA_Y + 0.92;
-const MOSCA_CADA = 7.5;          /* segundos entre moscas */
-const MOSCA_DURA = 9;            /* cuánto se queda posada */
+const MOSCA_CADA = 11;           /* segundos entre moscas */
+const MOSCA_DURA = 6.5;          /* cuánto se queda posada */
 /* Recién posada, la mosca no mata: el dedo ya venía frotando ahí y
    perder por eso sería castigar un reflejo imposible. En ese respiro,
    rozarla la espanta — que es lo que pasaría de verdad. */
@@ -45,6 +45,7 @@ let hechos = 0, TOTAL = PRESAS * (SAL_POR_PRESA + 1);
 let modo = null, cargada = null, frotando = null, ultimoPunto = null;
 let tMosca = 4, huecosCordel = [];
 let terminado = false, avisoLimpia = false;
+let perdonMosca = false;   /* una mosca aplastada perdonada por nivel */
 
 /* La presa con sus vetas y su piel, los cristales de sal y el
    cordel viven en modelos/bacalao.js. La carne se busca POR NOMBRE
@@ -155,6 +156,7 @@ export default {
   id: 'bacalao',
 
   construir(ctx) {
+    perdonMosca = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     presas = []; moscas = []; hechos = 0; terminado = false;
@@ -199,6 +201,13 @@ export default {
     if (info.raiz.userData.tipo === 'mosca') {
       const rec = moscas.find(m => m.obj === info.raiz && m.estado === 'posada');
       if (rec && api.reloj - rec.t0 < MOSCA_GRACIA) { espantar(rec); return; }
+      if (!perdonMosca) {
+        perdonMosca = true;
+        espantar(rec);
+        api.sfx('mal'); api.buzz([40, 30, 40]);
+        api.aviso('💛 ¡Por poquito! Esta te la perdono — espántala de un roce suave');
+        return;
+      }
       api.arruinar(ARRUINADO.aplastado('mosca'));
       return;
     }
@@ -263,6 +272,12 @@ export default {
       const mosca = moscaEn(rec);
       if (mosca) {
         if (api.reloj - mosca.t0 < MOSCA_GRACIA) { espantar(mosca); api.pista('La espantaste a tiempo. <b>No las toques</b>: arrastra desde ellas.', 2800); }
+        else if (!perdonMosca) {
+          perdonMosca = true;
+          espantar(mosca);
+          api.sfx('mal'); api.buzz([40, 30, 40]);
+          api.aviso('💛 ¡Por poquito! Esta te la perdono');
+        }
         else api.arruinar(ARRUINADO.aplastado('mosca'));
         return;
       }

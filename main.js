@@ -26,7 +26,12 @@ const SAVE_KEY_VIEJA = 'pambamesa_fanesca_v1';
 /* ---------- estado ---------- */
 
 function nuevoEstado() {
-  return { mejores: {}, vistoPortada: false, intentos: 0, arruinadas: 0, leidos: [], cuadernoVisto: true, devMode: false };
+  return {
+    mejores: {}, vistoPortada: false, intentos: 0, arruinadas: 0,
+    leidos: [], cuadernoVisto: true, devMode: false,
+    /* la racha de días: cocinar algo hoy la mantiene viva */
+    dias: { ultima: null, seguidos: 0 },
+  };
 }
 let estado = nuevoEstado();
 function guardar() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(estado)); } catch (e) {} }
@@ -67,12 +72,12 @@ const SFX = {
   bien:  [{ f: 523, d: .1, g: .1 }, { f: 659, t: .08, d: .1, g: .1 }, { f: 784, t: .16, d: .22, g: .12 }],
   fiesta:[{ f: 523, d: .12, g: .1 }, { f: 659, t: .1, d: .12, g: .1 }, { f: 784, t: .2, d: .12, g: .1 }, { f: 1046, t: .3, d: .3, g: .12 }],
 };
-function sfx(tipo) {
+function sfx(tipo, tono = 1) {
   initAudio(); if (!audioCtx) return;
   const now = audioCtx.currentTime;
   (SFX[tipo] || []).forEach(n => {
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.type = n.w || 'sine'; o.frequency.value = n.f;
+    o.type = n.w || 'sine'; o.frequency.value = n.f * tono;
     const t0 = now + (n.t || 0), dur = n.d || .1;
     g.gain.setValueAtTime(.0001, t0);
     g.gain.exponentialRampToValueAtTime(n.g || .1, t0 + .012);
@@ -89,7 +94,7 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('visible');
   clearTimeout(toastId);
-  toastId = setTimeout(() => t.classList.remove('visible'), 2400);
+  toastId = setTimeout(() => t.classList.remove('visible'), 1900);
 }
 
 /* ---------- piezas de interfaz ---------- */
@@ -145,83 +150,126 @@ const FRASES_OLLA = [
 function renderMesa() {
   const hechos = listos();
   const todos = hechos >= NIVELES.length;
-  $('#mesa-progreso').textContent = `${hechos} / ${NIVELES.length}`;
-  $('#olla-nivel').style.height = Math.round(hechos / NIVELES.length * 100) + '%';
+  const dias = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
+  $('#mesa-progreso').textContent = `${hechos} / ${NIVELES.length}${dias}`;
   $('#olla-frase').textContent = FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)];
+
+  /* ============================================================
+     EL CAMINO — de la cocina a la olla.
+
+     La mesa dejó de ser una lista de tarjetas y es un camino de
+     nodos que serpentea hacia abajo, como el mapa de un juego de
+     puzzles: el progreso se ve de un solo vistazo, el siguiente
+     paso late para que no haya que buscarlo, y el destino —la
+     olla— está literalmente al final del camino. Una lista dice
+     "esto es un menú"; un camino dice "esto es un viaje", y la
+     fanesca es un viaje.
+     ============================================================ */
 
   const lista = $('#mesa-lista');
   lista.innerHTML = '';
+  lista.className = 'camino';
+
+  const PASO = 132;               /* alto entre nodos */
+  const XS = [50, 22, 50, 78];    /* la serpiente, en % del ancho */
+  const centros = [];
+
+  const nodoDe = (n, i, estadoNodo) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    const x = XS[i % XS.length];
+    const y = i * PASO + 76;
+    centros.push({ x, y });
+    b.className = 'nodo ' + estadoNodo;
+    b.style.left = x + '%';
+    b.style.top = y + 'px';
+    b.style.animationDelay = Math.min(i * 0.045, 0.5) + 's';
+    return b;
+  };
 
   NIVELES.forEach((n, i) => {
     const abierto = desbloqueado(i);
     const mejor = estado.mejores[n.id];
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'ingrediente' + (abierto ? '' : ' bloqueado') + (mejor ? ' hecho' : '');
-    card.innerHTML = `
-      <span class="plate">${icono(n.icono)}</span>
-      <span class="ing-datos">
-        <span class="ing-tarea">${n.tarea}</span>
-        <span class="ing-nombre">${n.nombre}</span>
-        <span class="ing-marca">${mejor ? 'tu mejor: ' + tiempoBonito(mejor.ms) : (abierto ? 'sin preparar' : 'se abre con el anterior')}</span>
-      </span>
-      <span class="ing-estado">
-        ${abierto
-          ? (mejor ? `<span class="ing-listo">✓</span><span class="cucharas">${cucharasHTML(mejor.cucharas)}</span>`
-                   : `<span class="cucharas">${cucharasHTML(0)}</span>`)
-          : '<span class="ing-candado">🔒</span>'}
-      </span>`;
-    card.addEventListener('click', () => {
+    const esSiguiente = abierto && !mejor;
+    const b = nodoDe(n, i, mejor ? 'nodo--hecho' : (esSiguiente ? 'nodo--siguiente' : 'nodo--bloqueado'));
+    b.innerHTML = `
+      <span class="nodo-plato">${icono(n.icono)}</span>
+      ${!abierto && !mejor ? '<span class="nodo-candado" aria-hidden="true">🔒</span>' : ''}
+      ${mejor ? `<span class="nodo-cucharas">${cucharasHTML(mejor.cucharas)}</span>` : ''}
+      <span class="nodo-nombre">${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
+    b.setAttribute('aria-label', n.nombre + (abierto ? '' : ' (bloqueado)'));
+    b.addEventListener('click', () => {
       sfx('tab');
-      if (!abierto) { toast('Primero termina ' + NIVELES[i - 1].nombre.toLowerCase()); return; }
-      abrirBrief(n.id);
+      if (!abierto) { toast('Primero ' + NIVELES[i - 1].nombre.toLowerCase() + ' 👆'); return; }
+      /* rejugarlo no necesita instrucciones: directo a la mesa. El
+         brief queda para la primera vez, que es cuando enseña algo */
+      if (mejor) jugar(n.id);
+      else abrirBrief(n.id);
     });
-    lista.appendChild(card);
+    lista.appendChild(b);
   });
 
-  /* ---- la olla, al final: el paso que junta todo ---- */
-  const olla = document.createElement('button');
-  olla.type = 'button';
-  olla.className = 'ingrediente ingrediente--olla' + (todos ? '' : ' bloqueado');
+  /* la olla, al final del camino */
+  const olla = nodoDe(OLLA, NIVELES.length, todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado');
   olla.innerHTML = `
-    <span class="plate">${icono(OLLA.icono)}</span>
-    <span class="ing-datos">
-      <span class="ing-tarea">${OLLA.tarea}</span>
-      <span class="ing-nombre">${OLLA.nombre}</span>
-      <span class="ing-marca">${todos ? '¡todo listo! a la olla' : `faltan ${NIVELES.length - hechos} ingredientes`}</span>
-    </span>
-    <span class="ing-estado">${todos ? '<span class="ing-listo">🔥</span>' : '<span class="ing-candado">🔒</span>'}</span>`;
+    <span class="nodo-plato nodo-plato--olla">${icono(OLLA.icono)}</span>
+    ${todos ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
+    <span class="nodo-nombre">${todos ? '¡A cocinar!' : `La olla · faltan ${NIVELES.length - hechos}`}</span>`;
   olla.addEventListener('click', () => {
     sfx('tab');
-    if (!todos) { toast(`Todavía faltan ${NIVELES.length - hechos} ingredientes`); return; }
+    if (!todos) { toast(`La olla se abre con los doce — faltan ${NIVELES.length - hechos}`); return; }
     mostrarFinal();
   });
   lista.appendChild(olla);
 
-  /* ---- y lo que aún no tiene minijuego, dicho sin disimulo ---- */
-  const sep = document.createElement('p');
-  sep.className = 'mesa-sep';
-  sep.innerHTML = 'todavía en la despensa <span>· su minijuego viene después</span>';
-  lista.appendChild(sep);
+  /* el sendero dibujado: un tramo por par de nodos, y los tramos ya
+     recorridos van en dorado — el progreso se ve en el propio camino */
+  const alto = centros[centros.length - 1].y + 120;
+  lista.style.height = alto + 'px';
+  const tramos = centros.slice(1).map((c, i) => {
+    const a = centros[i];
+    const hecho = i < hechos;
+    const d = `M ${a.x} ${a.y} C ${a.x} ${a.y + 66}, ${c.x} ${c.y - 66}, ${c.x} ${c.y}`;
+    /* dos trazos por tramo: la base ancha es la tierra del sendero,
+       las rayas de encima son las baldosas — sobre el mantel a
+       cuadros, un solo trazo punteado se perdía */
+    return `<path class="tramo-base" d="${d}"/><path class="tramo ${hecho ? 'tramo--hecho' : ''}" d="${d}"/>`;
+  }).join('');
+  lista.insertAdjacentHTML('afterbegin',
+    `<svg class="camino-svg" viewBox="0 0 100 ${alto}" preserveAspectRatio="none" aria-hidden="true">${tramos}</svg>`);
 
+  /* la despensa: lo que aún no tiene minijuego, dicho sin disimulo */
+  const desp = document.createElement('div');
+  desp.className = 'despensa';
+  desp.innerHTML = '<p class="mesa-sep">todavía en la despensa <span>· su minijuego viene después</span></p>';
+  const fila = document.createElement('div');
+  fila.className = 'despensa-fila';
   POR_VENIR.forEach(n => {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'ingrediente ingrediente--porvenir';
-    card.innerHTML = `
-      <span class="plate">${icono(n.icono)}</span>
-      <span class="ing-datos">
-        <span class="ing-tarea">${n.tarea}</span>
-        <span class="ing-nombre">${n.nombre}</span>
-        <span class="ing-marca">en camino</span>
-      </span>
-      <span class="ing-estado"><span class="ing-pronto">pronto</span></span>`;
-    card.addEventListener('click', () => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'despensa-chip';
+    chip.innerHTML = `<span class="despensa-icono">${icono(n.icono)}</span><span>${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
+    chip.addEventListener('click', () => {
       sfx('tab');
       toast(n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, ''));
     });
-    lista.appendChild(card);
+    fila.appendChild(chip);
   });
+  desp.appendChild(fila);
+  lista.insertAdjacentElement('afterend', desp);
+
+  /* el mapa abre MOSTRANDO el siguiente paso: nadie debería tener
+     que hacer scroll para encontrar dónde seguir */
+  const scrollMesa = document.querySelector('#screen-mesa .scroll');
+  const nodoSig = lista.querySelector('.nodo--siguiente') || lista.querySelector('.nodo--olla');
+  if (scrollMesa && nodoSig) {
+    requestAnimationFrame(() => {
+      scrollMesa.scrollTop = Math.max(0, nodoSig.offsetTop - scrollMesa.clientHeight * 0.45);
+    });
+  }
+  /* si ya había una despensa de un render anterior, fuera */
+  let sig = desp.nextElementSibling;
+  while (sig && sig.classList.contains('despensa')) { const s = sig.nextElementSibling; sig.remove(); sig = s; }
 }
 
 /* ---------- el cuaderno ---------- */
@@ -295,7 +343,7 @@ function abrirBrief(id) {
   $('#brief-tarea').textContent = n.tarea;
   $('#brief-nombre').textContent = n.nombre;
   $('#brief-gesto').innerHTML = n.gesto;
-  $('#brief-bicho').innerHTML = `⚠️ Ojo con <b>${n.bicho}</b>: si lo aplastas o se te cuela a la batea, se arruina todo y empiezas de nuevo.`;
+  $('#brief-bicho').innerHTML = `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y a la composta. No lo aplastes.`;
   $('#brief-nota').textContent = n.nota || '';
   $('#brief-mejor').textContent = mejor
     ? `Tu mejor tiempo: ${tiempoBonito(mejor.ms)} · ${mejor.cucharas} cuchara${mejor.cucharas > 1 ? 's' : ''}`
@@ -310,11 +358,14 @@ let modActual = null;        /* el módulo cargado */
 let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let hechosAhora = 0, totalAhora = 1;
 
+/* El reloj corre por dentro (las cucharas salen de él) pero no se
+   muestra mientras se juega: un contador corriendo en la esquina es
+   presión pura, y este juego no la necesita — la recompensa por ir
+   rápido ya existe y se cobra al final, con las cucharas. El tiempo
+   se cuenta en el modal de listo, cuando ya no puede angustiar. */
 function pintarReloj() {
   const el = $('#hud-tiempo');
   el.textContent = tiempoBonito(tiempoMs);
-  const limite = nivelActual ? nivelActual.cucharas[0] * 1000 : Infinity;
-  el.classList.toggle('apurado', tiempoMs > limite);
 }
 
 function arrancarReloj() {
@@ -340,19 +391,26 @@ function pista(msg, ms = 3200) {
 }
 
 let vozId = null;
+let vozPauso = false;   /* la voz detuvo el reloj */
 /* Una cita no es un toast: se queda el tiempo suficiente para leerla
    y no interrumpe el juego, porque llega justo cuando el jugador
    acaba de HACER lo que la cita dice. */
 function voz(cita, ms = 9000, opts = {}) {
   const v = $('#voz');
-  if (!cita) { v.classList.remove('visible'); return; }
+  if (!cita) { v.classList.remove('visible'); if (vozPauso) { vozPauso = false; if (nivelActual) arrancarReloj(); } return; }
+  /* leer una cita no puede costar cucharas: el reloj se detiene
+     mientras está en pantalla y sigue cuando se va */
+  if (corriendo) { pararReloj(); vozPauso = true; }
   /* sobre la escena va la versión corta si la hay: la cita entera se
      lee en el cuaderno, con su contexto y su fuente */
   $('#voz-texto').textContent = '«' + ((opts.corta && cita.corta) || cita.texto) + '»';
   $('#voz-quien').textContent = cita.quien;
   v.classList.add('visible');
   clearTimeout(vozId);
-  vozId = setTimeout(() => v.classList.remove('visible'), ms);
+  vozId = setTimeout(() => {
+    v.classList.remove('visible');
+    if (vozPauso) { vozPauso = false; if (nivelActual) arrancarReloj(); }
+  }, ms);
 }
 
 let alertaId = null;
@@ -391,13 +449,18 @@ const api = {
   arruinar(motivo) { if (corriendo) arruinarNivel(motivo); },
   aviso: alerta,
   pista,
+  /* los pops suben de tono con la racha: la escalerita sonora es la
+     recompensa más barata y más efectiva que existe — el jugador la
+     persigue sin darse cuenta, y se reinicia sola al parar */
+  sfx: (tipo) => sfx(tipo, (tipo === 'pop' || tipo === 'pop2')
+    ? 1 + Math.min(rachaN, 14) * 0.045 : 1),
   voz,
   /* un nivel con fases puede renombrar lo que se está haciendo */
   rotulo(txt) { if (txt) $('#hud-tarea').textContent = txt; },
   /* un nivel puede abrir una página del cuaderno desde adentro */
   abrirCapitulo,
   toast,
-  sfx, buzz,
+  buzz,
   chispas: (...a) => Motor.chispas(...a),
   destello: (...a) => Motor.destello(...a),
   sacudir: (...a) => Motor.sacudir(...a),
@@ -548,12 +611,34 @@ function terminarNivel() {
   const esRecord = !previo || tiempoMs < previo.ms;
   if (esRecord) estado.mejores[n.id] = { ms: Math.round(tiempoMs), cucharas: cuch };
   else estado.mejores[n.id].cucharas = Math.max(estado.mejores[n.id].cucharas, cuch);
+
+  /* la racha de días se alimenta terminando CUALQUIER nivel hoy:
+     no pide ganar más, pide volver — que es lo único que un juego
+     de este tamaño puede pedirle a alguien */
+  const hoy = new Date().toISOString().slice(0, 10);
+  const d = estado.dias || (estado.dias = { ultima: null, seguidos: 0 });
+  if (d.ultima !== hoy) {
+    const ayer = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+    d.seguidos = d.ultima === ayer ? d.seguidos + 1 : 1;
+    d.ultima = hoy;
+    if (d.seguidos >= 2) setTimeout(() => toast(`🔥 ${d.seguidos} días cocinando seguidos`), 2600);
+  }
   guardar();
 
   setTimeout(() => {
     Motor.setActive(false);
     $('#listo-nombre').textContent = n.nombre + ' a la olla';
-    $('#listo-cucharas').innerHTML = cucharasHTML(cuch);
+    /* las cucharas se revelan de a una, cada una más aguda: el
+       redoble del final es la mitad de la celebración */
+    $('#listo-cucharas').innerHTML = cucharasHTML(0);
+    const huecos = $('#listo-cucharas').querySelectorAll('.cuchara');
+    for (let i = 0; i < cuch; i++) {
+      setTimeout(() => {
+        huecos[i].classList.add('llena', 'cae');
+        sfx('bien', 1 + i * 0.18);
+        buzz(14);
+      }, 500 + i * 330);
+    }
     $('#listo-tiempo').textContent = tiempoBonito(tiempoMs);
     $('#listo-mejor').textContent = esRecord
       ? (previo ? '¡Nuevo récord! antes: ' + tiempoBonito(previo.ms) : 'Primera vez que lo preparas')
@@ -590,9 +675,15 @@ function arruinarNivel(motivo) {
   setTimeout(() => {
     Motor.setActive(false);
     $('#arruinado-titulo').textContent = motivo && motivo.titulo ? motivo.titulo : 'Se arruinó la olla';
-    $('#arruinado-motivo').textContent = motivo && motivo.texto
+    let texto = motivo && motivo.texto
       ? motivo.texto
       : 'Un bicho llegó a la comida. Toca botar todo y volver a empezar.';
+    /* el near-miss: saber que ibas 17 de 20 es lo que hace apretar
+       "Empezar de nuevo" en vez de cerrar la app */
+    if (totalAhora > 1 && hechosAhora / totalAhora >= 0.45) {
+      texto += ` Ibas ${hechosAhora} de ${totalAhora}… ¡ya casi era!`;
+    }
+    $('#arruinado-motivo').textContent = texto;
     $('#modal-arruinado').classList.add('open');
   }, 900);
 }
@@ -639,15 +730,32 @@ function bindEventos() {
   $('#cuaderno-volver').addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
   $('#final-cuaderno').addEventListener('click', () => { cerrarModales(); mostrar('cuaderno'); });
 
-  $('#btn-salir').addEventListener('click', () => { sfx('tab'); salirDelNivel(); });
+  let salirArmado = 0;
+  $('#btn-salir').addEventListener('click', () => {
+    sfx('tab');
+    /* con faena empezada, un toque solo no bota el trabajo: el botón
+       está a 40px del filo y el pulgar izquierdo pasa rozando */
+    if (corriendo && hechosAhora > 0 && Date.now() - salirArmado > 2600) {
+      salirArmado = Date.now();
+      toast('¿Dejar la faena a medias? Toca otra vez para salir');
+      return;
+    }
+    salirDelNivel();
+  });
 
   $('#listo-seguir').addEventListener('click', () => {
     cerrarModales();
-    const quedan = NIVELES.find(x => !estaListo(x.id));
+    const sig = NIVELES.find(x => !estaListo(x.id));
     Motor.descargar();
     nivelActual = null; modActual = null;
-    if (quedan) { mostrar('mesa'); setTimeout(() => abrirBrief(quedan.id), 260); }
-    else { mostrar('mesa'); setTimeout(mostrarFinal, 300); }
+    if (!sig) { mostrar('mesa'); setTimeout(mostrarFinal, 300); return; }
+    /* DIRECTO al siguiente, sin escala en la mesa. La escala rompía
+       la seguidilla — que es exactamente lo que un juego casual debe
+       proteger: terminar un nivel tiene que desembocar en el
+       siguiente sin darle a la mano dónde soltarse. Si el nivel es
+       nuevo, su brief ES la transición; si ya se jugó, ni eso. */
+    if (estado.mejores[sig.id]) { jugar(sig.id); }
+    else { mostrar('mesa'); abrirBrief(sig.id); }
   });
   $('#listo-repetir').addEventListener('click', () => {
     const id = nivelActual ? nivelActual.id : null;
@@ -710,6 +818,10 @@ function init() {
       <p class="muted">Tu navegador no lo tiene activado, así que la mesa de prep no puede armarse.
       Prueba en otro navegador, o activa la aceleración por hardware.</p></div>`;
   }
+
+  /* el toque largo tampoco debe abrir el menú contextual: en el
+     fréjol "mantener apretado" es EL gesto del nivel */
+  document.getElementById('stage').addEventListener('contextmenu', (e) => e.preventDefault());
 
   bindEventos();
   pintarDev();

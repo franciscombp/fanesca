@@ -16,6 +16,13 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; font-size: 17px; }
+/* Es un juego de mantener el dedo apretado: sin esto, el toque largo
+   del fréjol dispara la selección de texto del navegador y la
+   pantalla entera se pinta de celeste. Nada aquí se selecciona. */
+html, body {
+  user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 html, body { height: 100%; }
 
 body {
@@ -520,58 +527,140 @@ svg[width="0"] { width: 0; height: 0; }
   font-style: normal; color: var(--accent-ink);
 }
 
+
+
 /* ============================================================
-   EL MAPA COMPLETO DE LA MESA
-   La olla al final y lo que todavía no tiene minijuego. Se
-   muestran a propósito: una cocina se lee mejor cuando ves todo
-   lo que falta, y decirle a quien juega "esto viene después" es
-   más honesto que esconderlo.
+   EL CAMINO — la mesa como mapa de viaje.
+   Nodos redondos que serpentean hacia la olla, el sendero
+   dibujado detrás, y lo recorrido en dorado. La lista de
+   tarjetas se leía como un menú; esto se lee como "vas aquí".
    ============================================================ */
 
-/* la ficha del ingrediente ya hecho se marca, no solo con el ✓ */
-.ingrediente.hecho {
-  background: linear-gradient(180deg, var(--surface) 0%, rgba(155,190,120,.16) 100%);
+.camino { position: relative; }
+
+.camino-svg {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.tramo {
+  fill: none;
+  stroke: var(--madera-500, #93491c);
+  stroke-opacity: .38;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 9;
+  /* el sendero se estira con preserveAspectRatio=none: sin esto el
+     grosor del trazo se deformaría con él */
+  vector-effect: non-scaling-stroke;
+}
+.tramo--hecho {
+  stroke: var(--maiz-500, #f2b31f);
+  stroke-opacity: .85;
+  stroke-dasharray: none;
 }
 
-/* LA OLLA: la única ficha que no es un ingrediente, y se nota */
-.ingrediente--olla {
-  margin-top: var(--sp-4);
-  border: 3px solid var(--maiz-500, #f2b31f);
-  background: linear-gradient(180deg, #fff7e2 0%, #ffe9b8 100%);
-  box-shadow: var(--e-3);
+.nodo {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
+  gap: .3rem;
+  width: 118px;
+  animation: nodo-entra .4s var(--ease-pop) both;
 }
-.ingrediente--olla .ing-nombre { font-size: var(--t-lg); }
-.ingrediente--olla:not(.bloqueado) {
-  animation: olla-late 2.4s var(--ease-pop) infinite;
+@keyframes nodo-entra {
+  from { opacity: 0; transform: translate(-50%, -38%) scale(.7); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
-@keyframes olla-late {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.022); }
-}
-.ingrediente--olla.bloqueado { border-color: var(--hairline); background: var(--surface); }
 
-/* la raya que separa lo jugable de lo que viene */
-.mesa-sep {
-  margin: var(--sp-5) 0 var(--sp-2);
-  text-align: center;
+.nodo-plato {
+  display: block;
+  width: 84px; height: 84px;
+  padding: 10px;
+  border-radius: 50%;
+  background: radial-gradient(120% 120% at 32% 26%, var(--surface-raised, #fff) 0%, var(--surface, #f4ead6) 100%);
+  border: 4px solid var(--madera-400, #b4632c);
+  box-shadow: var(--e-2);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.nodo:active .nodo-plato { transform: scale(.92); }
+
+/* el siguiente paso LATE: nadie debería tener que buscar dónde seguir */
+.nodo--siguiente .nodo-plato {
+  width: 96px; height: 96px;
+  border-color: var(--maiz-500, #f2b31f);
+  box-shadow: 0 0 0 6px rgba(242, 179, 31, .28), var(--e-3);
+  animation: nodo-late 1.6s var(--ease-pop) infinite;
+}
+@keyframes nodo-late {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 6px rgba(242,179,31,.28), var(--e-3); }
+  50%      { transform: scale(1.06); box-shadow: 0 0 0 11px rgba(242,179,31,.14), var(--e-3); }
+}
+
+.nodo--hecho .nodo-plato { border-color: var(--nopal-500, #6cbf5a); }
+
+.nodo--bloqueado .nodo-plato { filter: grayscale(.75); opacity: .55; border-color: var(--hairline); }
+.nodo--bloqueado .nodo-nombre { opacity: .6; }
+.nodo-candado {
+  position: absolute; top: 26px;
+  font-size: 26px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.3));
+  pointer-events: none;
+}
+
+/* la olla: el nodo grande del final */
+.nodo--olla .nodo-plato,
+.nodo-plato--olla {
+  width: 108px; height: 108px;
+  border-color: var(--chile-500, #d94f30);
+  border-width: 5px;
+}
+.nodo--olla:not(.nodo--bloqueado) .nodo-plato {
+  animation: nodo-late 1.6s var(--ease-pop) infinite;
+  box-shadow: 0 0 0 8px rgba(217, 79, 48, .22), var(--e-3);
+}
+
+.nodo-nombre {
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 800;
+  color: var(--text);
+  background: var(--surface-raised, #fff);
+  border: var(--ring);
+  border-radius: var(--r-pill);
+  padding: .12rem .6rem;
+  box-shadow: var(--e-1);
+  white-space: nowrap;
+  max-width: 130px; overflow: hidden; text-overflow: ellipsis;
+}
+
+.nodo-cucharas {
+  position: absolute; top: -8px; right: 2px;
+  display: flex; gap: 1px;
+  background: var(--surface-raised, #fff);
+  border: var(--ring); border-radius: var(--r-pill);
+  padding: 2px 5px;
+  box-shadow: var(--e-1);
+}
+.nodo-cucharas .cuchara { width: 13px; height: 13px; }
+
+/* la despensa: chips apagados, tocables para leer qué viene */
+.despensa { margin-top: var(--sp-5); padding-bottom: var(--sp-6); }
+.despensa-fila {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.despensa-chip {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .3rem .7rem .3rem .35rem;
+  background: var(--surface);
+  border: 1.5px dashed var(--hairline);
+  border-radius: var(--r-pill);
   font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  letter-spacing: var(--track-caps); text-transform: uppercase;
   color: var(--text-muted);
+  opacity: .75;
+  min-height: 44px;
 }
-.mesa-sep span { display: block; text-transform: none; letter-spacing: 0; font-weight: 600; opacity: .75; }
-
-/* lo que aún no existe: apagado, pero no bloqueado — se puede
-   tocar para leer qué gesto va a pedir */
-.ingrediente--porvenir { opacity: .62; border-style: dashed; }
-.ingrediente--porvenir .plate { filter: grayscale(.55); }
-.ing-pronto {
-  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
-  letter-spacing: var(--track-caps); text-transform: uppercase;
-  color: var(--text-muted);
-  border: 1.5px dashed var(--hairline); border-radius: var(--r-pill);
-  padding: .15rem .5rem;
-}
-
+.despensa-chip .despensa-icono { width: 30px; height: 30px; filter: grayscale(.6); }
 
 /* ============================================================
    EL JUGO
@@ -640,3 +729,61 @@ svg[width="0"] { width: 0; height: 0; }
   .meter-fill.late,
   .ingrediente--olla:not(.bloqueado) { animation: none; }
 }
+
+
+/* ============================================================
+   CALMA Y LEGIBILIDAD (auditoría UX)
+   ============================================================ */
+
+/* el reloj corre por dentro; mostrarlo era presión gratis */
+.hud-tiempo { display: none; }
+/* con el reloj fuera, la racha ocupa su esquina */
+.hud-racha { right: var(--sp-4); }
+
+/* la instrucción del nivel, en letra de leerse sin lentes */
+.juego-pista { font-size: var(--t-md); padding: .5rem 1.1rem; }
+
+/* la tarea del HUD con superficie propia: sobre la escena 3D el
+   text-shadow solo aguanta hasta que el fondo cambia de color */
+.hud-centro {
+  background: rgba(58, 42, 32, .72);
+  border-radius: var(--r-pill);
+  padding: .3rem .9rem;
+}
+.hud-tarea { font-size: var(--t-md); color: #fff; text-shadow: none; }
+.hud-centro .meter { height: 9px; }
+
+/* el botón de salir, alcanzable */
+.hud-salir { width: 2.9rem; height: 2.9rem; }
+
+/* la cuchara que cae al revelarse en el modal de listo */
+.cuchara.cae { animation: cuchara-cae .38s var(--ease-pop) both; }
+@keyframes cuchara-cae {
+  0%   { transform: translateY(-16px) scale(1.5); opacity: 0; }
+  60%  { transform: translateY(2px) scale(1.05); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+
+
+/* pulido del camino (auditoría UI) */
+.mesa-frase {
+  font-size: var(--t-sm); color: var(--text-muted);
+  text-align: center; line-height: var(--lead);
+  margin-bottom: var(--sp-3); padding: 0 var(--sp-4);
+}
+.tramo-base {
+  fill: none;
+  stroke: var(--madera-600, #6b3a16); stroke-opacity: .32;
+  stroke-width: 13; stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.tramo { stroke-width: 7; stroke-opacity: .55; stroke-dasharray: 0.1 15; }
+.tramo--hecho { stroke-opacity: .95; }
+
+/* los bloqueados, más chicos: la jerarquía se lee por tamaño antes
+   que por color — hecho (84) > siguiente (96) > bloqueado (64) */
+.nodo--bloqueado .nodo-plato { width: 64px; height: 64px; padding: 7px; }
+.nodo-candado { top: auto; bottom: 34px; right: 12px; font-size: 18px; }
+
+/* la barra de progreso con canal visible: vacía también se ve */
+.hud-centro .meter { background: rgba(43, 33, 41, .34); border-radius: 5px; }
