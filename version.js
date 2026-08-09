@@ -14,10 +14,22 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.7.3';
+const APP_VERSION = '1.8.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.8.0',
+    fecha: '2026-08-09',
+    titulo: 'El dedo que aprieta',
+    cambios: [
+      'Cambia la regla del bicho, y con ella la tensión del juego: barrer ya no lo aplasta —el dedo que va de paso solo lo empuja y lo deja rodando— pero posarle la yema encima sí. Apretar es lo único que en una cocina de verdad revienta a un gusano. La primera vez se te perdona; la segunda se bota la olla.',
+      'El reloj vuelve a verse. Estuvo escondido una versión entera, y como las cucharas salen de él, taparlo era pedirte que corrieras contra un número secreto.',
+      'Arreglado, y no era menor: el reloj no se reiniciaba entre ingredientes. Si salías a la mesa a medio jugar y entrabas a otro, empezaba con el tiempo del anterior sumado encima — y de ahí salían tus cucharas.',
+      'Los mensajes se ven: los avisos entran con un golpe, tienen color según si es peligro o celebración, y las pistas pesan más. Sobre una cocina en 3D, un aviso que aparecía con un fundido suave no lo veía nadie.',
+      'La frase de Tránsito Amaguaña sobre la mazorca ya no sale dos veces: si se te da la cascada, se te guarda para la tarjeta del final; si vas grano por grano sin que se suelte la hilera, aparece a mitad y ahí sí te enseña el truco.',
+    ],
+  },
   {
     v: '1.7.3',
     fecha: '2026-08-09',
