@@ -392,34 +392,50 @@ function granoBajoElDedo() {
   return null;
 }
 
-/* el mismo trato que en plaga.js: el toque asusta, el primer barrido
-   encima se perdona, el segundo arruina. El primer nivel del juego es
-   el ÚLTIMO que puede ser más cruel que los demás. */
+/* El mismo trato que en plaga.js, y con la regla ya invertida: el
+   dedo que se posa encima APRIETA (y eso sí mata, con un perdón); el
+   dedo que va de paso desgranando solo lo empuja. */
 let perdonado = false;
+let avisadoRoce = false;
 
+/* tocarlo con la yema: eso es apretarlo */
 function tocado(w) {
-  if (!w || w.estado !== 'suelto') return;
-  w.nodo.position.x += 0.06;
-  api.sfx('resist'); api.buzz([18, 14]);
-  api.pista('Así no sale: <b>pellízcalo</b> con dos dedos, o <b>arrastra desde él</b>.', 2800);
-}
-
-function aplastado(w) {
-  if (w && api.reloj - w.t0 < GRACIA) {
+  if (!w || w.estado !== 'suelto') return false;
+  if (w.inmune && api.reloj < w.inmune) return false;
+  if (api.reloj - w.t0 < GRACIA) {
+    w.inmune = api.reloj + 1.0;
+    w.nodo.position.x += 0.06;
     api.sfx('resist'); api.buzz([20, 20]);
-    api.pista('¡Casi! <b>No lo toques</b>: pellízcalo y llévalo a la composta.', 2600);
+    api.pista('¡Casi! <b>No lo aprietes</b>: arrástralo hasta la composta.', 2600);
     return false;
   }
-  if (w && !perdonado) {
+  if (!perdonado) {
     perdonado = true;
     w.t0 = api.reloj + 0.6;
+    w.inmune = api.reloj + 1.4;
     api.sfx('mal'); api.buzz([40, 30, 40]);
     api.destello('rgba(230,57,70,.3)');
-    api.aviso('💛 ¡Uy, casi lo aplastas! Esta te la perdono — a la composta');
+    api.aviso('💛 ¡Casi lo aplastas! Esta te la perdono', 'peligro');
+    api.pista('No lo toques con la yema: <b>arrástralo</b> hasta la composta. A la próxima se arruina la olla.', 3800);
     return false;
   }
   api.arruinar(ARRUINADO.aplastado('gusanito'));
   return true;
+}
+
+/* el dedo que pasa desgranando: se lo lleva por delante, no lo mata */
+function aplastado(w) {
+  if (!w || w.estado !== 'suelto') return false;
+  if (w.inmune && api.reloj < w.inmune) return false;
+  w.inmune = api.reloj + 0.7;
+  w.t0 = api.reloj + 0.3;
+  w.p += 0.5;                       /* rueda hacia abajo de la hilera */
+  api.sfx('resist'); api.buzz(10);
+  if (!avisadoRoce) {
+    avisadoRoce = true;
+    api.pista('Lo empujaste sin querer. <b>Arrástralo</b> a la composta antes de seguir.', 3000);
+  }
+  return false;
 }
 const gusanoDe = (raizTocada) => gusanos.find(x => x.obj === raizTocada && x.estado !== 'ido') || null;
 
@@ -595,7 +611,7 @@ export default {
   ],
 
   construir(ctx) {
-    perdonado = false;
+    perdonado = false; avisadoRoce = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     hechos = 0; choclo = 0; compostaN = 0;
     modo = null; cargado = null; giroObjetivo = null; girando = 0; pellizcando = false;

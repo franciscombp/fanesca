@@ -390,24 +390,35 @@ function bichoEncima() {
 }
 
 let perdonado = false;
+let avisadoRoce = false;
 
+/* posarle la yema encima ES apretarlo: eso mata (con un perdón) */
 function tocarBicho() {
   if (!bicho || bicho.estado !== 'suelto') return;
-  bicho.nodo.position.x += bicho.dir * -0.06;
-  api.sfx('resist'); api.buzz([18, 14]);
-  api.pista('Así no sale: <b>pellízcalo</b> con dos dedos, o <b>arrastra desde él</b>.', 2800);
-}
-
-function aplastarBicho() {
-  if (!bicho || bicho.estado !== 'suelto') return;
+  if (bicho.inmune && api.reloj < bicho.inmune) return;
   if (!perdonado) {
     perdonado = true;
+    bicho.inmune = api.reloj + 1.4;
     api.sfx('mal'); api.buzz([40, 30, 40]);
     api.destello('rgba(230,57,70,.3)');
-    api.aviso('💛 ¡Uy, casi lo aplastas! Esta te la perdono — a la composta');
+    api.aviso('💛 ¡Casi lo aplastas! Esta te la perdono', 'peligro');
+    api.pista('No lo toques con la yema: <b>arrástralo</b> hasta la composta. A la próxima se arruina la olla.', 3800);
     return;
   }
   api.arruinar(ARRUINADO.aplastado('el gusano'));
+}
+
+/* el dedo que pasa cortando o pelando solo lo empuja */
+function aplastarBicho() {
+  if (!bicho || bicho.estado !== 'suelto') return;
+  if (bicho.inmune && api.reloj < bicho.inmune) return;
+  bicho.inmune = api.reloj + 0.7;
+  bicho.x += bicho.dir * -0.18;
+  api.sfx('resist'); api.buzz(10);
+  if (!avisadoRoce) {
+    avisadoRoce = true;
+    api.pista('Lo empujaste sin querer. <b>Arrástralo</b> a la composta antes de seguir.', 3000);
+  }
 }
 
 /* ============================================================
@@ -424,7 +435,7 @@ export default {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     fase = 'partir';
-    perdonado = false;
+    perdonado = false; avisadoRoce = false;
     mitades = []; tajadas = []; guias = []; cortes = new Set(); hechos = 0;
     terminado = false; modo = null; cargado = false; pellizcando = false;
     bicho = null; entero = null; p0 = null;

@@ -743,7 +743,50 @@ svg[width="0"] { width: 0; height: 0; }
 .hud-tiempo { font-size: var(--t-md); }
 
 /* la instrucción del nivel, en letra de leerse sin lentes */
-.juego-pista { font-size: var(--t-md); padding: .5rem 1.1rem; }
+/* ---- QUE LOS MENSAJES SE VEAN ----
+   Los tres canales (pista, alerta, toast) se perdían: letra chica,
+   poco contraste sobre una escena 3D que cambia de color, y entradas
+   por opacidad, que el ojo no detecta cuando está mirando los dedos.
+   Ahora entran con movimiento, pesan más y se distinguen entre sí. */
+.juego-pista {
+  font-size: var(--t-md); padding: .6rem 1.2rem;
+  background: rgba(40, 26, 20, .93);
+  border: 2px solid rgba(255, 235, 200, .3);
+  box-shadow: var(--e-3), 0 0 0 4px rgba(0, 0, 0, .18);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-pop);
+  transform: translateX(-50%) translateY(10px);
+}
+.juego-pista.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* la alerta: más grande, con golpe de entrada y dos tonos */
+.hud-alerta {
+  font-size: var(--t-md); padding: .5rem 1.1rem;
+  border-width: 3px;
+  max-width: 92%;
+}
+.hud-alerta.tono-bien {
+  background: linear-gradient(180deg, var(--hierba-400, #6cbf5a), var(--hierba-600, #3f8b3a));
+  border-color: #eafbe4;
+}
+.hud-alerta.entra { animation: alerta-entra .42s var(--ease-pop); }
+@keyframes alerta-entra {
+  0%   { transform: translateX(-50%) translateY(-14px) scale(.8); }
+  60%  { transform: translateX(-50%) translateY(0) scale(1.06); }
+  100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+/* el toast, que era el más invisible de los tres */
+#toast {
+  font-size: var(--t-md); font-weight: 700;
+  padding: .55rem 1.15rem;
+  border: 2px solid rgba(255, 235, 200, .34);
+  box-shadow: var(--e-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-alerta.entra { animation: none; }
+  .juego-pista, .juego-pista.visible { transform: translateX(-50%); }
+}
 
 /* la tarea del HUD con superficie propia: sobre la escena 3D el
    text-shadow solo aguanta hasta que el fondo cambia de color */

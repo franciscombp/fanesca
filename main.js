@@ -413,12 +413,18 @@ function voz(cita, ms = 9000, opts = {}) {
 }
 
 let alertaId = null;
-function alerta(msg) {
+/* `tono`: 'peligro' (rojo, lo que puede arruinar la olla) o 'bien'
+   (verde, lo que salió). Entra con un golpe de escala para que el ojo
+   lo cace aunque esté mirando los dedos — un aviso que aparece con un
+   fundido suave, sobre una escena en movimiento, no lo ve nadie. */
+function alerta(msg, tono = 'peligro') {
   const a = $('#hud-alerta');
   clearTimeout(alertaId);
   if (!msg) { a.classList.remove('visible'); return; }
   a.textContent = msg;
-  a.classList.add('visible');
+  a.classList.remove('tono-bien', 'tono-peligro', 'entra');
+  void a.offsetWidth;                       /* reinicia la animación */
+  a.classList.add('visible', 'entra', 'tono-' + tono);
   alertaId = setTimeout(() => a.classList.remove('visible'), 4200);
 }
 
@@ -571,6 +577,15 @@ async function jugar(id) {
   if (!n) return;
   nivelActual = n;
   initAudio();
+  /* PARAR ANTES DE PONER EN CERO. Esta función es async: entre el
+     `tiempoMs = 0` de aquí abajo y el `arrancarReloj()` del final hay
+     dos await (el módulo y los modelos). Si el reloj del nivel
+     anterior seguía corriendo —porque saliste a la mesa a medio
+     jugar— su intervalo volvía a escribir `tiempoMs` durante esa
+     espera, y el nivel nuevo empezaba con el tiempo del anterior
+     encima. Con el reloj oculto no se notaba; las cucharas sí lo
+     sufrían. */
+  pararReloj();
   $('#hud-tarea').textContent = `${n.tarea} · ${n.nombre.toLowerCase()}`;
   $('#hud-barra').style.width = '0%';
   tiempoMs = 0; hechosAhora = 0; totalAhora = 1;

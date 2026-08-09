@@ -46,7 +46,8 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   const lista = [];
   let cargado = null;
   let avisados = 0;
-  let perdonado = false;   /* una aplastada perdonada por nivel */
+  let perdonado = false;   /* un apretón perdonado por nivel */
+  let avisadoRoce = false; /* el "lo empujaste" se explica una vez */
 
   const destino = api.BATEA.clone().setY(api.MESA_Y + ALTO);
 
@@ -91,53 +92,66 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     /* ¿este objeto tocado es uno de los nuestros? */
     de(raizTocada) { return lista.find(r => r.nodo === raizTocada && r.estado !== 'ido') || null; },
 
-    /* Un TOQUE deliberado nunca mata. La tensión del juego siempre
-       fue barrer SIN MIRAR — el dedo que va lanzado y no vio al
-       bicho—, no el dedo que fue directo a él. Castigar el toque
-       castigaba justo al jugador atento (y al de setenta años, cuyo
-       gesto natural es tocar). El toque asusta al bicho y enseña el
-       gesto correcto; solo el barrido puede aplastarlo. */
-    tocado(rec) {
-      if (!rec || rec.estado !== 'suelto') return;
-      rec.nodo.position.z += 0.08;
-      rec.inmune = api.reloj + 1.2;
-      api.sfx('resist'); api.buzz([18, 14]);
-      api.pista('Así no sale: <b>pellízcalo</b> con dos dedos, o <b>arrastra desde él</b> hasta la composta.', 2800);
-    },
+    /* EL DEDO QUE APRIETA ES EL QUE MATA.
 
-    /* rozarlo BARRIENDO: se acabó — salvo que acabe de
-       aparecer, que entonces solo pega el susto */
-    aplastar(rec) {
-      /* UN gesto, UNA consecuencia. Sin esta invulnerabilidad breve,
-         un solo barrido continuo llamaba aplastar() muchos cuadros
-         seguidos y se cobraba el susto, el perdón y la derrota en
-         medio segundo — tres avisos que nadie alcanzó a leer. */
-      if (rec && rec.inmune && api.reloj < rec.inmune) return false;
-      if (rec && api.reloj - rec.t0 < GRACIA) {
+       Esta regla estuvo al revés una versión: barrer aplastaba y el
+       toque solo asustaba. Se hizo así para no castigar al barrido
+       distraído, pero dejó el nivel sin riesgo ninguno — apretar al
+       bicho, que es LO ÚNICO que en una cocina de verdad lo revienta,
+       no costaba nada. Ahora manda el gesto: el dedo que se posa
+       encima aprieta; el dedo que va de paso, barriendo, solo lo
+       empuja. Cuidado con el dedo, no puntería. */
+    tocado(rec) {
+      if (!rec || rec.estado !== 'suelto') return false;
+      /* UN gesto, UNA consecuencia: sin esto un toque repetido se
+         cobraba el perdón y la derrota antes de poder leer nada */
+      if (rec.inmune && api.reloj < rec.inmune) return false;
+
+      /* recién salido: todavía no lo viste, no cuenta */
+      if (api.reloj - rec.t0 < GRACIA) {
         rec.nodo.position.z += 0.06;
         rec.inmune = api.reloj + 1.0;
         api.sfx('resist'); api.buzz([20, 20]);
-        api.pista('¡Casi! <b>No lo toques</b>: pellízcalo y llévalo a la composta.', 2600);
+        api.pista('¡Casi! <b>No lo aprietes</b>: arrástralo hasta la composta.', 2600);
         return false;
       }
-      /* EL PERDÓN. La primera aplastada de cada nivel es un susto, no
-         una derrota: el bicho queda mareado dos segundos y el jugador
-         entiende la regla sin perder toda la faena. Perder TODO por
-         un roce es la clase de castigo que en un juego casual vacía
-         la mesa — la regla se aprende igual de bien perdonando una. */
-      if (rec && !perdonado) {
+
+      /* EL PERDÓN: el primer apretón de cada nivel enseña la regla en
+         vez de cobrarla. El segundo sí se paga. */
+      if (!perdonado) {
         perdonado = true;
         rec.t0 = api.reloj + 0.6;          /* mareado: dos segundos sin caminar */
         rec.inmune = api.reloj + 1.4;
         rec.nodo.position.z += 0.1;
         api.sfx('mal'); api.buzz([40, 30, 40]);
         api.destello('rgba(230,57,70,.3)');
-        api.aviso('💛 ¡Uy, casi lo aplastas! Esta te la perdono — a la composta');
-        api.pista('Última: si lo vuelves a tocar, se arruina la olla. <b>Pellízcalo</b> y bótalo.', 3400);
+        api.aviso('💛 ¡Casi lo aplastas! Esta te la perdono', 'peligro');
+        api.pista('No lo toques con la yema: <b>arrástralo</b> hasta la composta. A la próxima se arruina la olla.', 3800);
         return false;
       }
       api.arruinar(ARRUINADO.aplastado(nombre));
       return true;
+    },
+
+    /* EL DEDO DE PASO. Barriendo, el bicho no se aplasta: se lo lleva
+       por delante y queda rodando. Barrer es el gesto de trabajo de
+       media mesa, y castigarlo obligaba a mirar cada grano antes de
+       moverse — lento y frustrante, justo lo contrario de lo que este
+       juego pide. Empujarlo igual estorba: hay que ir a buscarlo. */
+    aplastar(rec) {
+      if (!rec || rec.estado !== 'suelto') return false;
+      if (rec.inmune && api.reloj < rec.inmune) return false;
+      rec.inmune = api.reloj + 0.7;
+      /* rueda un poco en el sentido en que iba el dedo */
+      rec.nodo.position.z += 0.16;
+      rec.nodo.position.x += (Math.random() - 0.5) * 0.22;
+      rec.t0 = api.reloj + 0.3;            /* aturdido un momento */
+      api.sfx('resist'); api.buzz(10);
+      if (!avisadoRoce) {
+        avisadoRoce = true;
+        api.pista('Lo empujaste sin querer. <b>Arrástralo</b> a la composta antes de seguir.', 3000);
+      }
+      return false;
     },
     /* ¿hay algún bicho suelto a menos de `r` de este punto? */
     cercaDe(punto, r) {
