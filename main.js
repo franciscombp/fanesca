@@ -358,11 +358,10 @@ let modActual = null;        /* el módulo cargado */
 let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let hechosAhora = 0, totalAhora = 1;
 
-/* El reloj corre por dentro (las cucharas salen de él) pero no se
-   muestra mientras se juega: un contador corriendo en la esquina es
-   presión pura, y este juego no la necesita — la recompensa por ir
-   rápido ya existe y se cobra al final, con las cucharas. El tiempo
-   se cuenta en el modal de listo, cuando ya no puede angustiar. */
+/* El reloj se ve mientras se juega: de él salen las cucharas, así que
+   esconderlo era pedirle al jugador que corriera contra un número
+   secreto. Se detiene solo mientras se lee una cita —ahí la prisa sí
+   sobra— y se vuelve a contar entero en el modal de listo. */
 function pintarReloj() {
   const el = $('#hud-tiempo');
   el.textContent = tiempoBonito(tiempoMs);

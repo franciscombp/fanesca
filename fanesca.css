@@ -735,10 +735,12 @@ svg[width="0"] { width: 0; height: 0; }
    CALMA Y LEGIBILIDAD (auditoría UX)
    ============================================================ */
 
-/* el reloj corre por dentro; mostrarlo era presión gratis */
-.hud-tiempo { display: none; }
-/* con el reloj fuera, la racha ocupa su esquina */
-.hud-racha { right: var(--sp-4); }
+/* El reloj se ve. Estuvo escondido una versión —la idea era quitarle
+   presión al juego— pero las cucharas se ganan con él: taparlo dejaba
+   al jugador compitiendo contra un número que no podía mirar. Vuelve
+   sin alarmas: nadie le pone la clase `apurado`, así que no se pone
+   rojo nunca, y sigue deteniéndose solo mientras se lee una cita. */
+.hud-tiempo { font-size: var(--t-md); }
 
 /* la instrucción del nivel, en letra de leerse sin lentes */
 .juego-pista { font-size: var(--t-md); padding: .5rem 1.1rem; }

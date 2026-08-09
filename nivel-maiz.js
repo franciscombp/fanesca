@@ -97,8 +97,17 @@ let giroObjetivo = null;   /* a dónde lleva la cámara al bicho */
 let girando = 0;           /* botones de girar mantenidos */
 let tAuto = 0.6;           /* cada cuánto se revisa el giro automático */
 let ultimoPop = 0, avisoCentro = 0, terminado = false;
-let corridaActual = 0, dichaCita = false, citaPendiente = false;
-const CORRIDA_PARA_LA_CITA = 7;
+let corridaActual = 0, mejorCorrida = 0, dichaCita = false, citaPendiente = false;
+/* La cita de Amaguaña —"si se va el grano, se va la fila"— ES la
+   explicación del truco del nivel. Antes salía como premio al
+   encadenar bien, y terminaba diciéndole al jugador algo que acababa
+   de descubrir con los dedos… para repetírselo tal cual en la tarjeta
+   del final, que hasta se titula con esa frase. Ahora solo aparece
+   cuando hace falta: si va grano por grano un buen rato sin que se le
+   suelte nunca una hilera. A quien ya le sale, se le calla y se la
+   guarda para el final. */
+const CORRIDA_QUE_ENTENDIO = 4;   /* con esto ya entendió la cascada */
+const GRANOS_PENANDO = 14;        /* granos a pulso antes de soplarle */
 let reventados = 0, avisadoReventon = false;
 let compostaN = 0;         /* cuánto ha caído a la composta (para pintarla) */
 let velT = 0, velX = 0, velY = 0;   /* medir la fuerza del dedo */
@@ -285,14 +294,20 @@ function sacarGrano(a, p, conCascada, dir) {
 
   if (conCascada && dir) {
     cascadas.push({ a, p: p + dir, dir, t: api.reloj + madurez.cascada });
-    /* La cita llega justo cuando el jugador acaba de comprobarlo con
-       los dedos: se soltó uno de la orilla y se fue la hilera entera. */
     corridaActual++;
-    if (!dichaCita && corridaActual >= CORRIDA_PARA_LA_CITA) {
+    if (corridaActual > mejorCorrida) mejorCorrida = corridaActual;
+    /* se le soltó una hilera entera: ya entendió, y la frase se le
+       guarda para la tarjeta del final */
+    if (mejorCorrida >= CORRIDA_QUE_ENTENDIO) dichaCita = true;
+  } else {
+    corridaActual = 0;
+    /* lleva un montón de granos a pulso y nunca se le fue una fila:
+       aquí la frase de Amaguaña no repite nada, enseña el truco */
+    if (!dichaCita && hechos >= GRANOS_PENANDO && mejorCorrida < CORRIDA_QUE_ENTENDIO) {
       dichaCita = true;
-      citaPendiente = true;   /* se dice cuando la hilera TERMINE de caer */
+      citaPendiente = true;   /* se dice cuando suelte el dedo */
     }
-  } else corridaActual = 0;
+  }
   revisarCob();
   return true;
 }
@@ -585,7 +600,7 @@ export default {
     hechos = 0; choclo = 0; compostaN = 0;
     modo = null; cargado = null; giroObjetivo = null; girando = 0; pellizcando = false;
     terminado = false; ultimoPop = api.reloj; avisoCentro = 0;
-    dichaCita = false; citaPendiente = false;
+    dichaCita = false; citaPendiente = false; mejorCorrida = 0;
     reventados = 0; avisadoReventon = false;
     transToken++;
 
