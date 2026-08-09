@@ -640,6 +640,9 @@ export default {
         return;
       }
       if (r.userData.tipo === 'pelos') { intentarPelos(); return; }
+      /* sin hojas ya, el jalón final no pide acertarle al penacho:
+         cualquier toque del choclo arranca la envoltura entera */
+      if (!hojasQuedan()) { intentarPelos(); return; }
       return;
     }
     if (r.userData.tipo === 'grano' || r.userData.tipo === 'papilla') { intentarGrano(r, false); return; }
@@ -671,6 +674,9 @@ export default {
         if (h && !h.ida) { modo = 'hoja'; hojaActiva = h; return; }
       }
       if (r && r.userData.tipo === 'pelos') { intentarPelos(); modo = null; return; }
+      /* sin hojas, agarrar el choclo por donde sea es el jalón que
+         arranca pelos y envoltura: no hay que apuntarle a la mecha */
+      if (r && !hojasQuedan()) { intentarPelos(); modo = null; return; }
       modo = 'girar';
       giro0 = giro.rotation.y; dx0 = info.dx; giroObjetivo = null;
       return;
