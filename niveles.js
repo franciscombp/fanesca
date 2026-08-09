@@ -81,7 +81,7 @@ export const NIVELES = [
     tarea: 'Partir, pelar y cortar',
     icono: 'zapallo',
     modulo: () => import('./nivel-zapallo.js'),
-    gesto: 'Llega entero. <b>Párte­lo</b> cruzándolo de adelante hacia atrás por la línea gruesa; <b>barre el hueco</b> para sacar pepas y hebras; <b>jala cada tira de cáscara</b> a lo largo; y recién ahí <b>corta las tajadas</b>, una línea por trazo.',
+    gesto: 'Cuatro pasos, todos con el dedo: <b>pártelo</b> de un trazo de arriba a abajo, <b>barre las pepas</b>, <b>despega la cáscara</b> tira por tira, y <b>corta las tajadas</b> — un trazo por línea.',
     nota: 'Un zapallo no llega a la olla en rodajas. Este es el nivel más largo de la mesa y el que más se parece a estar cocinando: cuatro faenas seguidas, cada una con su gesto.',
     bicho: 'el gusano',
     cucharas: [80, 120, 175],

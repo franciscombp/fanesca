@@ -58,7 +58,7 @@ const FRENTE = 0;
 
 const CHOCLOS = 2;         /* choclos por partida */
 const GUSANOS_POR = [1, 2];/* bichos escondidos en cada choclo */
-const GUSANO_VEL = 0.52;   /* posiciones por segundo que BAJA el bicho */
+const GUSANO_VEL = 0.38;   /* posiciones por segundo que BAJA el bicho */
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 const FUERZA = 1600;
 /* El jalón de la hoja, en píxeles. Los primeros no mueven nada: la
@@ -69,12 +69,13 @@ const SUELTA_HOJA = 105;
 /* El bicho sale justo del hueco que acabas de abrir, muchas veces con
    el dedo todavía encima. Sin este respiro, destaparlo sería perder
    sin poder reaccionar. */
-const GRACIA = 1.0;
+const GRACIA = 1.8;
 
 const TOTAL = CHOCLOS * A * P;
 
 let mazorca = null;        /* el choclo de pie: su eje es +Y */
 let giro = null;           /* grupo que rota sobre el eje de la mazorca */
+let velSuave = 0;          /* la velocidad del dedo, con memoria corta */
 let tusa = null;
 let granosGrupo = null, gusanosGrupo = null, hojasGrupo = null, pelos = null;
 let granos = [];           /* granos[a][p] = Group | null (o papilla) */
@@ -541,7 +542,7 @@ function armarChoclo() {
     let a, p, k = 0;
     do {
       a = Math.floor(Math.random() * A);
-      p = 2 + Math.floor(Math.random() * (P - 4));
+      p = 3 + Math.floor(Math.random() * (P - 5));
       k++;
     } while (usados.has(a + ':' + p) && k < 40);
     usados.add(a + ':' + p);
@@ -755,7 +756,11 @@ export default {
       if (r.userData.tipo !== 'grano') return;
       const { a, p } = r.userData;
       /* el tierno cobra la fuerza: el grano revienta en vez de salir */
-      if (madurez.id === 'tierno' && vel > FUERZA) { reventarGrano(a, p); return; }
+      /* la velocidad se suaviza: un solo evento nervioso del navegador
+         no debe reventar un grano — eso castigaba al hardware, no a
+         la mano */
+      velSuave = velSuave * 0.6 + vel * 0.4;
+      if (madurez.id === 'tierno' && velSuave > FUERZA) { reventarGrano(a, p); return; }
       if (suelto(a, p)) sacarGrano(a, p, true, dirActual);
     }
   },
@@ -851,9 +856,18 @@ export default {
       cascadas = vivas;
     }
 
-    /* los bichos caminan hacia la batea */
+    /* Los bichos caminan hacia la batea — y hacia la LUZ. El grupo de
+       gusanos rota con la mazorca, así que al girar el choclo el bicho
+       quedaba en la cara de atrás: invisible, incargable, y aun así
+       corriendo hacia la batea. Una derrota que no se podía ni ver.
+       Ahora el gusano repta de lado hacia la columna que mira a la
+       cámara: gires como gires, siempre lo tienes enfrente. */
+    const aFrente = ((FRENTE - giro.rotation.y) / (Math.PI * 2)) * A;
     for (const w of gusanos) {
       if (w.estado === 'fuera') {
+        let dA = aFrente - w.a;
+        dA = ((dA % A) + A * 1.5) % A - A / 2;   /* el camino corto, con vuelta */
+        if (Math.abs(dA) > 0.15) w.a += Math.sign(dA) * Math.min(Math.abs(dA), 2.4 * dt);
         w.p -= GUSANO_VEL * dt;      /* se descuelga hacia la batea */
         colocarGusano(w);
         if (w.p <= -0.35) {

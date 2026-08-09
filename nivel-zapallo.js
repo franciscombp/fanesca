@@ -94,7 +94,7 @@ function ponerEntero() {
   guias.push({ grupo: g, b: 'lomo' });
 
   api.rotulo('Partir el zapallo');
-  api.pista('Cruza el zapallo <b>de adelante hacia atrás</b>, por la línea. Un trazo largo y decidido.', 4600);
+  api.pista('Córtalo en dos: <b>un trazo de arriba a abajo</b>, por la línea.', 4200);
 }
 
 function partir() {
@@ -161,7 +161,7 @@ function partir() {
 
   sumar(1);
   api.rotulo('Sacar las pepas');
-  api.pista('Ahora <b>barre el hueco</b> con el dedo: las pepas y las hebras van a la composta.', 4200);
+  api.pista('<b>Barre las pepas</b> con el dedo, como limpiando la mesa.', 3600);
   api.toast('¡Se abrió! 🎃');
 }
 
@@ -177,7 +177,7 @@ function despepitarEn(punto) {
     for (const p of m.pepas) {
       if (p.userData.ida) continue;
       const w = p.getWorldPosition(new THREE.Vector3());
-      if (Math.hypot(w.x - punto.x, w.z - punto.z) > 0.3) continue;
+      if (Math.hypot(w.x - punto.x, w.z - punto.z) > 0.38) continue;
       p.userData.ida = true;
       p.userData.tipo = null;
       m.obj.remove(p);
@@ -219,7 +219,7 @@ function despepitarEn(punto) {
 function pasarAPelar() {
   fase = 'pelar';
   api.rotulo('Pelar la cáscara');
-  api.pista('Jala cada tira de cáscara <b>a lo largo</b>, de una punta a la otra.', 4200);
+  api.pista('<b>Pasa el dedo por cada tira</b> de cáscara y se despega.', 3600);
   api.toast('Limpio por dentro ✨');
 
   mitades.forEach(m => {
@@ -246,15 +246,14 @@ function pasarAPelar() {
 
 function pelarEn(punto, dz) {
   if (fase !== 'pelar' || !punto) return;
-  /* pelar es un tirón A LO LARGO: el barrido de lado no despega nada,
-     igual que el cuchillo de pelar no va de través */
-  if (Math.abs(dz) < 0.012) return;
-
+  /* cualquier arrastre que pase por la tira la despega: la regla de
+     "solo a lo largo" era realista y frustrante a la vez, y de las
+     dos, la que importa es la segunda */
   for (const m of mitades) {
     for (const c of m.tiras) {
       if (c.userData.ida) continue;
       const w = c.getWorldPosition(new THREE.Vector3());
-      if (Math.hypot(w.x - punto.x, w.z - punto.z) > 0.34) continue;
+      if (Math.hypot(w.x - punto.x, w.z - punto.z) > 0.42) continue;
       c.userData.ida = true;
       c.userData.tipo = null;
       if (c.parent) c.parent.remove(c);
@@ -282,7 +281,7 @@ function todoPelado() {
 function pasarACortar() {
   fase = 'cortar';
   api.rotulo('Cortar en tajadas');
-  api.pista('Cruza cada línea <b>de un trazo</b>. La tajada cae cuando queda suelta por los dos lados.', 4600);
+  api.pista('<b>Un trazo por línea</b>, de arriba a abajo. La tajada cae al quedar suelta por los dos lados.', 4200);
   api.toast('¡Pelado! 🔪');
 
   mitades.forEach(m => { grupo.remove(m.obj); });
@@ -449,10 +448,10 @@ export default {
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { tocarBicho(); return; }
     if (fase === 'partir') {
       api.sfx('resist');
-      api.pista('No se parte a golpecitos: <b>cruza el zapallo</b> de adelante hacia atrás, de un trazo.', 3200);
+      api.pista('No va a golpecitos: <b>un trazo de arriba a abajo</b>, cruzándolo.', 2800);
     } else if (fase === 'pelar') {
       api.sfx('resist');
-      api.pista('La cáscara se <b>jala a lo largo</b>, no se pellizca.', 3000);
+      api.pista('<b>Arrastra el dedo</b> por la tira y se despega.', 2600);
     }
   },
 
@@ -525,21 +524,27 @@ export default {
       const largo = Math.abs(p1.z - p0.z);
       const torcido = Math.abs(p1.x - p0.x);
       if (fase === 'partir') {
-        if (largo >= LARGO_MIN && torcido < TOL_X * 1.6 && Math.abs((p0.x + p1.x) / 2) < TOL_X * 1.4) {
+        /* Cualquier trazo largo que pase por encima del zapallo lo
+           parte. La regla anterior rechazaba trazos "torcidos" y
+           pedía el medio exacto — puntería disfrazada de realismo.
+           La gracia es la rapidez: si el gesto fue franco, corta. */
+        if (largo >= LARGO_MIN * 0.8 && Math.abs((p0.x + p1.x) / 2) < R_ENTERO) {
           partir();
-        } else if (largo >= LARGO_MIN * 0.6) {
+        } else if (largo >= LARGO_MIN * 0.4) {
           api.sfx('resist'); api.buzz([16, 20]);
-          api.pista('Se te fue el cuchillo. <b>Por el medio</b>, y de adelante hacia atrás.', 3200);
+          api.pista('Más largo: <b>de arriba a abajo</b>, cruzándolo entero.', 2800);
         }
-      } else if (fase === 'cortar' && largo >= LARGO_MIN && torcido < TOL_X) {
+      } else if (fase === 'cortar' && largo >= LARGO_MIN * 0.8) {
+        /* el corte elige SIEMPRE la línea pendiente más cercana al
+           trazo: ningún gesto decidido se queda sin cortar nada */
         const x = (p0.x + p1.x) / 2;
-        let mejor = -1, dMejor = TOL_X;
+        let mejor = -1, dMejor = Infinity;
         for (let b = 1; b < N; b++) {
+          if (cortes.has(b)) continue;
           const d = Math.abs(x - xDeFrontera(b));
           if (d < dMejor) { dMejor = d; mejor = b; }
         }
-        if (mejor > 0) cortar(mejor);
-        else { api.sfx('resist'); api.pista('Sigue <b>la línea punteada</b>: ahí es donde entra el cuchillo.', 2800); }
+        if (mejor > 0 && dMejor < GRUESO * 1.4) cortar(mejor);
       }
     }
     modo = null; p0 = null; this._pz = null;

@@ -127,6 +127,27 @@ function revisarFinal() {
   api.completar();
 }
 
+/* EL DEDO ES GORDO. Recoger haba por haba con raycast exacto pedía
+   puntería de mouse en un juego de pulgar: la mitad de los toques
+   caían en la vaina de al lado y no pasaba nada. Ahora cualquier
+   haba visible a un radio del punto del dedo se viene — la gracia
+   es la rapidez, no la precisión. */
+const RADIO_DEDO = 0.3;
+function habasCerca(punto, r = RADIO_DEDO) {
+  if (!punto) return [];
+  const out = [];
+  const w = new THREE.Vector3();
+  for (const rec of vainas) {
+    if (!rec.abierta) continue;
+    for (const h of rec.habas) {
+      if (!h.visible || h.userData.ida) continue;
+      h.getWorldPosition(w);
+      if (Math.hypot(w.x - punto.x, w.z - punto.z) < r) out.push(h);
+    }
+  }
+  return out;
+}
+
 function bajoElDedo() {
   const hits = api.raycast([vainasGrupo, plaga.grupo], true);
   for (const h of hits) {
@@ -183,6 +204,10 @@ export default {
     const t = info.raiz.userData.tipo;
     if (t === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     if (t === 'haba') { sacarHaba(info.raiz); return; }
+    /* si el rayo no acertó al haba, el área sí: todo lo que esté
+       bajo la yema se viene */
+    const cerca = habasCerca(api.puntoEnPlano(api.MESA_Y + 0.24));
+    if (cerca.length) { cerca.forEach(sacarHaba); return; }
     if (t === 'vaina') {
       const rec = vainas.find(v => v.obj === info.raiz);
       if (rec && !rec.abierta) {
@@ -217,6 +242,9 @@ export default {
     const prev = ultimoPunto;
     ultimoPunto = p;
     const paso = (p && prev) ? Math.hypot(p.x - prev.x, p.z - prev.z) : 0;
+
+    /* el barrido también junta por área: pasar cerca basta */
+    habasCerca(p).forEach(sacarHaba);
 
     const bajo = bajoElDedo();
     if (!bajo) return;

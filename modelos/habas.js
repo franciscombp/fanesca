@@ -99,10 +99,10 @@ registrar('haba', (THREE, opts = {}) => {
       { eje: 'x', hacia: 'z', k: 0.18 },
     ));
   const cuerpo = new THREE.Mesh(geo, mate(THREE, COMIDA.haba));
-  cuerpo.scale.set(0.068, 0.052, 0.06);
+  cuerpo.scale.set(0.086, 0.066, 0.076);
   cuerpo.name = 'cuerpo';
   const ombligo = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.008, 0.012), mate(THREE, COMIDA.haba_ombligo));
-  ombligo.position.set(0, 0.05, 0.045);
+  ombligo.position.set(0, 0.062, 0.056);
   ombligo.name = 'ombligo';
   ombligo.userData.ignorar = true;
   h.add(cuerpo, ombligo);
