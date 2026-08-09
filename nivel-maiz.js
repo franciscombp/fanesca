@@ -305,6 +305,11 @@ function reventarGrano(a, p) {
   if (!g || g.userData.tipo !== 'grano') return;
   reventados++;
   g.userData.tipo = 'papilla';
+  /* si ese grano escondía un bicho, reventarlo lo destapa: sin esto
+     el gusano quedaba sepultado en la papilla y desaparecía del
+     nivel sin que nadie lo viera */
+  const w = gusanos.find(x => x.estado === 'oculto' && x.a === a && x.p === p);
+  if (w) despertarGusano(w);
   while (g.children.length) g.remove(g.children[0]);
   /* el splat SÍ recibe el dedo: limpiarlo es tocarlo */
   g.add(api.pieza('papilla-choclo'));
@@ -325,6 +330,8 @@ function limpiarPapilla(a, p) {
   if (!g || g.userData.tipo !== 'papilla') return;
   granos[a][p] = null;
   hechos++;                       /* limpiarla también es avanzar… tarde */
+  const w = gusanos.find(x => x.estado === 'oculto' && x.a === a && x.p === p);
+  if (w) despertarGusano(w);
   g.userData.escalaBase = 1;
   api.volarA(g, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.45, alto: 0.4 });
   compostaN++; pintarComposta();
