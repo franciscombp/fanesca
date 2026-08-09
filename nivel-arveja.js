@@ -187,6 +187,25 @@ function bajoElDedo() {
   return null;
 }
 
+/* EL DEDO ES GORDO — igual que en las habas. Correr el pulgar por la
+   vaina abierta no puede exigir que el rayo acierte una arveja de un
+   centímetro: lo que se cobra aquí es la rapidez, no la puntería. */
+const RADIO_DEDO = 0.3;
+function arvejasCerca(punto, r = RADIO_DEDO) {
+  if (!punto) return [];
+  const out = [];
+  const w = new THREE.Vector3();
+  for (const rec of vainas) {
+    if (!rec.abierta) continue;
+    for (const a of rec.granos) {
+      if (!a.visible || a.userData.ida) continue;
+      a.getWorldPosition(w);
+      if (Math.hypot(w.x - punto.x, w.z - punto.z) < r) out.push(a);
+    }
+  }
+  return out;
+}
+
 /* de qué vaina es esta malla (la arveja cuelga de su vaina) */
 function vainaDe(obj) {
   let o = obj;
@@ -242,6 +261,10 @@ export default {
     const t = info.raiz.userData.tipo;
     if (t === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     if (t === 'arveja') { cadena = 0; sacarArveja(info.raiz); return; }
+    /* si el rayo falló la arveja, el área no: lo que quede bajo la
+       yema se viene */
+    const cerca = arvejasCerca(api.puntoEnPlano(api.MESA_Y + 0.23));
+    if (cerca.length) { cadena = 0; cerca.forEach(sacarArveja); return; }
     if (t === 'vaina') {
       const rec = vainas.find(v => v.obj === info.raiz);
       if (rec && !rec.deshilada) {
@@ -259,16 +282,18 @@ export default {
        hacía que "arrastrar desde él" fallara la mitad de las veces y
        el dedo terminara barriendo POR ENCIMA del bicho que intentaba
        salvar — el gesto correcto castigado por puntería. */
-    const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
-    if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
+    const bicho = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
+    if (bicho && plaga.agarrar(bicho)) { modo = 'cargar'; return; }
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + 0.23);
     cadena = 0;
 
+    const r = info.raiz;
     const rec = r ? vainaDe(r) : null;
     if (rec && !rec.deshilada) { modo = 'deshilar'; jalando = rec; return; }
 
     modo = 'correr';
     if (r && r.userData.tipo === 'arveja') sacarArveja(r);
+    else if (ultimoPunto) arvejasCerca(ultimoPunto).forEach(sacarArveja);
   },
 
   alArrastrar() {
@@ -296,6 +321,8 @@ export default {
     }
 
     if (modo !== 'correr') return;
+    /* correr el pulgar junta por área: pasar cerca basta */
+    arvejasCerca(p).forEach(sacarArveja);
     const bajo = bajoElDedo();
     if (!bajo) return;
     if (bajo.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(bajo)); return; }

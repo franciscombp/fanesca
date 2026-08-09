@@ -834,6 +834,12 @@ window.Fanesca = {
   Motor, NIVELES,
   get estado() { return estado; },
   get nivel() { return nivelActual; },
+  /* El módulo que REALMENTE se montó. `nivel` es la ficha de la mesa y
+     se fija antes de importar, así que sirve para saber a qué le diste
+     clic — no para saber si abrió. Un nivel con un error de sintaxis
+     dejaba `nivel` puesto y volvía a la mesa con un toast: para una
+     prueba automática eso se veía idéntico a un nivel sano. */
+  get modulo() { return modActual; },
   jugar,
   sondear: (x, y) => Motor.sondear(x, y),
   puntos: () => ({ batea: Motor.proyectar(BATEA), composta: Motor.proyectar(COMPOSTA) }),

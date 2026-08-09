@@ -14,10 +14,19 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.7.2',
+    fecha: '2026-08-09',
+    titulo: 'La arveja vuelve a abrir',
+    cambios: [
+      'Arreglado, y era grave: la arveja no abría. Se le daba clic y el juego devolvía a la mesa con un "no se pudo abrir ese ingrediente" — un error de escritura la tenía rota desde la versión pasada. Ya está.',
+      'Y de paso se le puso el mismo dedo gordo que a las habas: correr el pulgar por la vaina abierta se lleva todo lo que roza, sin apuntarle a cada arveja.',
+    ],
+  },
   {
     v: '1.7.1',
     fecha: '2026-08-09',
