@@ -38,7 +38,11 @@ const GUSANO_VEL = 0.055;
 
 const PEPAS = 5;                /* por mitad */
 const TIRAS = 4;                /* tiras de cáscara por mitad */
-const SEP_MITAD = 0.62;         /* cuánto se separan al partirse */
+/* Cuánto se separan al partirse. Con 0.62 las tiras de cáscara de
+   los flancos caían a 30px del filo de la pantalla: alcanzables, pero
+   pidiendo puntería de borde, que es justo lo que este juego no
+   quiere. Más juntas caben con holgura. */
+const SEP_MITAD = 0.5;
 
 /* el marcador va sumando las cuatro faenas, para que la barra se
    mueva desde el primer gesto y no se quede plana media partida */
@@ -115,7 +119,12 @@ function partir() {
        se veía un disco pálido y plano: parecía una tortilla, no
        medio zapallo. */
     m.position.set(0, ALTO() + R_ENTERO * 0.78, TABLA_Z);
-    m.rotation.y = lado > 0 ? 0 : Math.PI;
+    /* Las dos mitades miran al jugador. Antes una se giraba media
+       vuelta para "reflejarla", que en una cúpula no se nota —pero sí
+       se notaba en las tiras de cáscara: las cuatro de esa mitad
+       quedaban en la cara de ATRÁS, fuera del alcance del dedo y casi
+       fuera de vista. Media faena imposible por un giro decorativo. */
+    m.rotation.y = lado * 0.12;
     m.userData = { tipo: 'mitad', lado };
     grupo.add(m);
 
