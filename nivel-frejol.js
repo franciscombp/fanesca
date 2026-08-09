@@ -31,7 +31,9 @@ const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
 const APRIETE = 0.48;            /* segundos de presión para que reviente */
 const CON_GORGOJO = 2;
-const RADIO_BARRIDO = 0.22;      /* qué tan gordo es el dedo, en el mundo */
+/* el dedo, del mismo grosor que en las habas y el melloco: 0.22 era
+   el más flaco de la mesa y hacía falta puntería para juntar */
+const RADIO_BARRIDO = 0.3;
 
 let vainasGrupo = null, granosGrupo = null;
 let vainas = [];
@@ -39,6 +41,7 @@ let granos = [];                 /* los que quedaron regados */
 let plaga = null;
 let hechos = 0, TOTAL = VAINAS * POR_VAINA;
 let modo = null;
+let ultimoPunto = null;          /* dónde estaba el dedo el cuadro pasado */
 let apretando = null;            /* { rec, t0 } */
 let pellizcando = false;
 let terminado = false;
@@ -116,14 +119,29 @@ function revisarFinal() {
 
 /* el barrido es de área, no de rayo: el dedo tapa varios granos a la
    vez y sería tramposo exigir precisión de puntero */
-function barrerEn(punto) {
+/* distancia de un punto al TRAMO recorrido por el dedo, no al sitio
+   donde el navegador alcanzó a avisar. Sin esto, una barrida rápida
+   saltaba por encima de los granos que había entre un evento y el
+   siguiente: el jugador veía el dedo pasar sobre el fréjol y el
+   fréjol quedarse ahí. Barrer rápido tiene que barrer. */
+function distAlTramo(x, z, ax, az, bx, bz) {
+  const vx = bx - ax, vz = bz - az;
+  const largo2 = vx * vx + vz * vz;
+  if (largo2 < 1e-9) return Math.hypot(x - ax, z - az);
+  let t = ((x - ax) * vx + (z - az) * vz) / largo2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(x - (ax + vx * t), z - (az + vz * t));
+}
+
+function barrerEn(punto, prev) {
   if (!punto) return;
+  const a = prev || punto;
   /* el gorgojo también cae bajo el dedo: por eso hay que mirar antes */
   const bicho = plaga.cercaDe(punto, RADIO_BARRIDO);
   if (bicho) { plaga.aplastar(bicho); return; }
   for (const g of granos) {
     if (g.userData.ido) continue;
-    if (Math.hypot(g.position.x - punto.x, g.position.z - punto.z) < RADIO_BARRIDO) recogerGrano(g);
+    if (distAlTramo(g.position.x, g.position.z, a.x, a.z, punto.x, punto.z) < RADIO_BARRIDO) recogerGrano(g);
   }
 }
 
@@ -134,6 +152,7 @@ export default {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     vainas = []; granos = []; hechos = 0; terminado = false; modo = null; apretando = null; pellizcando = false;
+    ultimoPunto = null;
 
     const tabla = api.pieza('tabla', { ancho: 3.1, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
@@ -205,19 +224,24 @@ export default {
     const rec = plaga.masCercaEnPantalla(info.cliente.x, info.cliente.y, 62);
     if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'barrer';
-    barrerEn(api.puntoEnPlano(api.MESA_Y + 0.14));
+    ultimoPunto = api.puntoEnPlano(api.MESA_Y + 0.14);
+    barrerEn(ultimoPunto, null);
   },
 
   alArrastrar() {
     if (terminado) return;
     if (apretando) return;         /* el pulso apretando no barre */
     if (modo === 'cargar') { plaga.mover(api.puntoEnPlano(api.MESA_Y)); return; }
-    if (modo === 'barrer') barrerEn(api.puntoEnPlano(api.MESA_Y + 0.14));
+    if (modo === 'barrer') {
+      const p = api.puntoEnPlano(api.MESA_Y + 0.14);
+      barrerEn(p, ultimoPunto);
+      ultimoPunto = p;
+    }
   },
 
   alArrastrarFin() {
     if (modo === 'cargar') { plaga.soltarMano(); revisarFinal(); }
-    modo = null; apretando = null;
+    modo = null; apretando = null; ultimoPunto = null;
   },
 
   alPellizcarInicio(info) {

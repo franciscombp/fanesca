@@ -25,6 +25,7 @@ const NOVEDADES = [
     cambios: [
       'El melloco se disparaba casi siempre: medía el apuro por cuadro de animación, así que en un teléfono lento el mismo gesto contaba como más brusco. Ahora mide la velocidad de la mano de verdad, suavizada, y con el dedo el doble de gordo. Raspar rápido raspa; solo el tirón con ansias lo hace resbalar.',
       'Arreglado en el choclo: al pasar de jalar una hoja a girar la mazorca, la animación de la hoja cerrándose reventaba por dentro en cada cuadro. No se veía, pero era un error por gesto.',
+      'El fréjol ya se barre rápido: el dedo junta todo lo que cruza en el camino, no solo lo que había justo donde el navegador alcanzó a avisar. Antes, una barrida ligera pasaba por encima de los granos y los dejaba ahí.',
     ],
   },
   {
