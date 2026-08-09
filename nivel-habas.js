@@ -248,20 +248,27 @@ export default {
     /* el barrido también junta por área: pasar cerca basta */
     habasCerca(p).forEach(sacarHaba);
 
+    /* Y la costura también cede por cercanía: frotar POR la vaina o
+       rozándola cuenta igual — abrir no es la parte arriesgada, así
+       que no hay por qué cobrarla con puntería. La tapa se va
+       levantando sola y el jugador ve que va por buen camino. */
+    if (p && paso) {
+      const w = new THREE.Vector3();
+      for (const rec of vainas) {
+        if (rec.abierta) continue;
+        rec.obj.getWorldPosition(w);
+        if (Math.hypot(w.x - p.x, w.z - p.z) > 0.55) continue;
+        rec.frote = (rec.frote || 0) + paso;
+        const k = Math.min(1, rec.frote / ABRIR);
+        rec.bisagra.rotation.x = -0.55 * k;
+        if (rec.frote >= ABRIR) abrirVaina(rec);
+      }
+    }
+
     const bajo = bajoElDedo();
     if (!bajo) return;
     if (bajo.userData.tipo === 'bicho') { plaga.aplastar(plaga.de(bajo)); return; }
     if (bajo.userData.tipo === 'haba') { sacarHaba(bajo); return; }
-    if (bajo.userData.tipo === 'vaina') {
-      const rec = vainas.find(v => v.obj === bajo);
-      if (!rec || rec.abierta) return;
-      /* la costura cede a medida que el dedo la recorre: la tapa se va
-         levantando sola y el jugador ve que va por buen camino */
-      rec.frote = (rec.frote || 0) + paso;
-      const k = Math.min(1, rec.frote / ABRIR);
-      rec.bisagra.rotation.x = -0.55 * k;
-      if (rec.frote >= ABRIR) abrirVaina(rec);
-    }
   },
 
   alArrastrarFin() {
