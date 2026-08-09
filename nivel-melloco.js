@@ -31,18 +31,23 @@ const HONDO_TABLA = 1.7;
 const ANCHO_TABLA = 3.1;
 let TABLA_Z = 0;
 const ALTO = 0.16;               /* a qué altura descansa un melloco */
-const RADIO_DEDO = 0.17;
+/* el dedo es gordo, igual que en las habas: 0.17 era media yema y
+   raspar se volvía puntería sobre una papa de tres centímetros */
+const RADIO_DEDO = 0.3;
 const CON_GUSANO = 2;
 /* el mismo tope que le puso modelos/melloco.js a la baba */
 const BABA_OPACA = 0.34;
 
 /* Cuánto mundo hay que raspar para dejar uno limpio. */
 const RASPADO = 0.78;
-/* Y el filo de la navaja: si el dedo recorre más que esto en un solo
-   cuadro, el melloco sale disparado. Está calibrado contra el paso
-   de un arrastre cómodo (~0.02-0.05 por cuadro a 60fps); pasarse de
-   aquí es ir con ansias, no ir rápido. */
-const RESBALON = 0.115;
+/* Y el filo de la navaja: pasar de aquí y el melloco sale disparado.
+   Se mide en mundo POR SEGUNDO, no por cuadro: medirlo por cuadro
+   castigaba al teléfono lento (mismo gesto, cuadros más largos, más
+   mundo por cuadro) en vez de castigar la mano ansiosa. Y se mide
+   sobre una velocidad suavizada, para que un solo evento nervioso
+   del navegador no dispare la papa. */
+const RESBALON = 9.5;              /* unidades de mundo por segundo */
+let velSuave = 0, velT = 0;
 
 let mellocosGrupo = null;
 let mellocos = [];               /* {obj, babaza, baba, limpio} */
@@ -120,10 +125,15 @@ function rasparEn(punto, paso, dx, dz) {
   if (!punto) return;
   const bicho = plaga.cercaDe(punto, RADIO_DEDO);
   if (bicho) { plaga.aplastar(bicho); return; }
+  /* velocidad real del dedo, suavizada: mundo por segundo */
+  const ahora = api.reloj;
+  const dt = Math.max(0.008, ahora - velT);
+  velT = ahora;
+  velSuave = velSuave * 0.6 + (paso / dt) * 0.4;
   for (const rec of mellocos) {
     if (rec.limpio || rec.resbalando > 0) continue;
     if (Math.hypot(rec.obj.position.x - punto.x, rec.obj.position.z - punto.z) > RADIO_DEDO) continue;
-    if (paso > RESBALON) { resbalar(rec, dx, dz); continue; }
+    if (velSuave > RESBALON) { resbalar(rec, dx, dz); continue; }
     raspar(rec, paso);
   }
 }
@@ -145,6 +155,7 @@ export default {
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     mellocos = []; hechos = 0; terminado = false;
     modo = null; ultimoPunto = null; resbalados = 0; pellizcando = false;
+    velSuave = 0; velT = 0;
 
     const tabla = api.pieza('tabla', { ancho: ANCHO_TABLA, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
@@ -201,6 +212,9 @@ export default {
     if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = 'raspar';
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + ALTO);
+    /* cada gesto arranca en calma: la velocidad del anterior no se
+       hereda, o el primer roce del nuevo saldría disparado */
+    velSuave = 0; velT = api.reloj;
   },
 
   alArrastrar() {

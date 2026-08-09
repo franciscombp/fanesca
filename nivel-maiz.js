@@ -740,8 +740,13 @@ export default {
       if (!hojaActiva || hojaActiva.ida) return;
       /* de lado, el gesto se vuelve girar: la hoja se vuelve a cerrar */
       if (Math.abs(info.dx) > 55 && Math.abs(info.dx) > Math.abs(info.dy)) {
-        api.tween({ get v() { return hojaActiva.abierta; },
-                    set v(x) { doblarHoja(hojaActiva, x); } }, 'v', 0, 0.18);
+        /* la hoja que se cierra hay que guardarla en una constante: el
+           tween dura 0.18 s y `hojaActiva` se pone en null en la línea
+           siguiente, así que leerla desde dentro reventaba en cada
+           cuadro de la animación */
+        const h = hojaActiva;
+        api.tween({ get v() { return h.abierta; },
+                    set v(x) { doblarHoja(h, x); } }, 'v', 0, 0.18);
         modo = 'girar';
         giro0 = giro.rotation.y; dx0 = info.dx;
         hojaActiva = null;

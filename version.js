@@ -14,10 +14,19 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.7.2';
+const APP_VERSION = '1.7.3';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.7.3',
+    fecha: '2026-08-09',
+    titulo: 'El melloco deja de castigar la prisa',
+    cambios: [
+      'El melloco se disparaba casi siempre: medía el apuro por cuadro de animación, así que en un teléfono lento el mismo gesto contaba como más brusco. Ahora mide la velocidad de la mano de verdad, suavizada, y con el dedo el doble de gordo. Raspar rápido raspa; solo el tirón con ansias lo hace resbalar.',
+      'Arreglado en el choclo: al pasar de jalar una hoja a girar la mazorca, la animación de la hoja cerrándose reventaba por dentro en cada cuadro. No se veía, pero era un error por gesto.',
+    ],
+  },
   {
     v: '1.7.2',
     fecha: '2026-08-09',
