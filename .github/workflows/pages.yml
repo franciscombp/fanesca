@@ -26,7 +26,12 @@ concurrency:
 
 jobs:
   publicar:
-    if: github.ref_name == github.event.repository.default_branch
+    # Sin condición extra a propósito. Antes había un
+    # `if: ref_name == default_branch` que sobraba —el filtro de `on:`
+    # ya restringe a main— y además mentía: mientras la rama por
+    # defecto del repo sea otra, la condición es falsa y el job se
+    # salta en silencio. Un "skipped" verde es peor que un fallo,
+    # porque parece que publicó.
     runs-on: ubuntu-latest
     environment:
       name: github-pages
