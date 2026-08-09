@@ -132,7 +132,7 @@ function revisarFinal() {
    caían en la vaina de al lado y no pasaba nada. Ahora cualquier
    haba visible a un radio del punto del dedo se viene — la gracia
    es la rapidez, no la precisión. */
-const RADIO_DEDO = 0.3;
+const RADIO_DEDO = 0.34;
 function habasCerca(punto, r = RADIO_DEDO) {
   if (!punto) return [];
   const out = [];

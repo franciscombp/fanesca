@@ -693,6 +693,22 @@ export default {
       /* la mazorca rueda HACIA el dedo: la superficie sigue al pulgar,
          como si la hicieras rodar de verdad */
       giro.rotation.y = giro0 + (info.dx - dx0) * 0.013;
+      /* Un arrastre casi vertical que pasa por los granos no es girar:
+         es desgranar que empezó un pelín afuera. El giro solo escucha
+         al eje x, así que este gesto moría sin hacer NADA — y quien
+         barre de arriba a abajo no tiene por qué acertarle al primer
+         grano. A mitad de camino, el gesto cambia de oficio. */
+      if (fase === 'desgranar' && Math.abs(info.dy) > 26 &&
+          Math.abs(info.dy) > Math.abs(info.dx - dx0) * 1.4) {
+        const g = granoBajoElDedo();
+        if (g && (g.userData.tipo === 'grano' || g.userData.tipo === 'papilla')) {
+          modo = 'peinar';
+          dirActual = info.dy > 0 ? -1 : 1;
+          dyPrev = info.dy;
+          velT = api.reloj; velX = info.dx; velY = info.dy;
+          intentarGrano(g, false);
+        }
+      }
       return;
     }
     if (modo === 'cargar' && cargado) {
