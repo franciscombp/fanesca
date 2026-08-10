@@ -175,12 +175,12 @@ registrar('tusa', (THREE, opts = {}) => {
    R·perfil + ~0.14): si no, los granos las atraviesan y el choclo
    nunca se ve cerrado. */
 
-/* Cinco y no siete. Con siete la envoltura abierta se veía una
-   lechuga —y tapaba la batea y la composta al desplegarse—; con
-   cinco quedan hojas anchas y separadas, que es como se ve un
-   choclo pelado de verdad. De paso, deshojar son cinco jalones y
-   no siete: lo mismo contado, sin la repetición de más. */
-export const HOJAS = 5;
+/* Diez hojas: dos vueltas completas para deshojar, más realista.
+   Las cinco de afuera son más verdes (protectoras), y las cinco de
+   adentro son más claras y tienen pelitos que hay que quitar.
+   Esto refleja mejor la estructura real del choclo con varias capas
+   de protección. */
+export const HOJAS = 10;
 /* Sobresale del choclo lo justo para taparlo con margen. Más larga
    y, al abrirse, la punta se acuesta encima de los cuencos. */
 export const LARGO_HOJA = LARGO + 0.8;
@@ -291,8 +291,22 @@ registrar('hoja-choclo', (THREE, opts = {}) => {
   /* con traslape holgado: las hojas se tapan entre sí como en el
      choclo real, y de paso cubren lo que el afinado les quita */
   const arc = (Math.PI * 2 / HOJAS) * 1.46;
-  const paleta = COMIDA.hoja_choclo;
-  const material = mate(THREE, paleta[i % paleta.length], { side: THREE.DoubleSide });
+
+  /* colores según la posición: hojas exteriores más verdes,
+     interiores más claras. Con 10 hojas, las primeras 5 (0-4) son
+     verdes oscuras, y las últimas 5 (5-9) son claras y casi blancas */
+  let color;
+  const esInterior = i >= HOJAS / 2;
+  if (esInterior) {
+    /* hojas interiores: tonos muy claros, casi blancos */
+    const blancos = ['#e8e8dc', '#e2e2d4', '#ebe7dc', '#dfe5d8'];
+    color = blancos[i % blancos.length];
+  } else {
+    /* hojas exteriores: verdes oscuros protectores */
+    const verdes = COMIDA.hoja_choclo;
+    color = verdes[i % verdes.length];
+  }
+  const material = mate(THREE, color, { side: THREE.DoubleSide });
 
   /* la cadena: nudo0 en la base, y cada nudo cuelga del anterior */
   const raizHoja = new THREE.Group();
