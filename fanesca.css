@@ -1146,3 +1146,31 @@ svg[width="0"] { width: 0; height: 0; }
   background:
     radial-gradient(120% 78% at 50% 62%, rgba(0,0,0,0) 34%, rgba(28,14,6,.38) 74%, rgba(20,10,4,.62) 100%);
 }
+
+/* ---- segunda revisión visual ---- */
+
+/* el emoji del riel, que distingue de verdad un ingrediente de otro */
+.riel-emoji { font-size: 1.15rem; line-height: 1; }
+
+/* Los botones eran dos pastillas blancas enormes tapando los cuencos.
+   En la referencia son un panel de vidrio a media altura, a la
+   izquierda, lejos de donde caen las cosas. */
+.juego-controles {
+  top: 46%; bottom: auto; left: 0; right: auto;
+  width: auto;
+  flex-direction: column; align-items: flex-start; gap: .4rem;
+  padding-left: var(--sp-3);
+}
+.ctrl {
+  min-width: 3.5rem; height: 2.9rem; padding: 0 .6rem;
+  font-size: var(--t-lg);
+  color: #fff;
+  background: var(--vidrio);
+  border: 2px solid var(--filo-oro); border-bottom-width: 3px;
+  box-shadow: var(--e-2), var(--oro-glow);
+}
+.ctrl:active, .ctrl.presionado { border-bottom-width: 2px; }
+.ctrl-tip { color: var(--maiz-300); opacity: .95; }
+
+/* con los botones fuera de abajo, la pista baja a su sitio */
+.juego-pista { bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + 1rem); }

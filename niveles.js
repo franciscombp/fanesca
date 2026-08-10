@@ -10,6 +10,7 @@
 export const NIVELES = [
   {
     id: 'maiz',
+    emoji: '🌽',
     cuenta: 'granos',
     pasos: [{ ico: '🌽', txt: 'Arranca las hojas', desde: 0 }, { ico: '🌾', txt: 'Desgrana los granos', desde: 0.18 }],
     nombre: 'El choclo',
@@ -24,6 +25,7 @@ export const NIVELES = [
   },
   {
     id: 'habas',
+    emoji: '🫛',
     cuenta: 'habas',
     pasos: [{ ico: '🫛', txt: 'Abre las vainas', desde: 0 }, { ico: '🟢', txt: 'Saca las habas', desde: 0.15 }],
     nombre: 'Las habas',
@@ -37,6 +39,7 @@ export const NIVELES = [
   },
   {
     id: 'arveja',
+    emoji: '🟩',
     cuenta: 'arvejas',
     pasos: [{ ico: '🧵', txt: 'Jala el hilo', desde: 0 }, { ico: '🫛', txt: 'Corre el pulgar', desde: 0.15 }],
     nombre: 'La arveja',
@@ -50,6 +53,7 @@ export const NIVELES = [
   },
   {
     id: 'chochos',
+    emoji: '⚪',
     cuenta: 'chochos',
     pasos: [{ ico: '🤏', txt: 'Aprieta cada chocho', desde: 0 }],
     nombre: 'Los chochos',
@@ -63,6 +67,7 @@ export const NIVELES = [
   },
   {
     id: 'frejol',
+    emoji: '🫘',
     cuenta: 'fréjoles',
     pasos: [{ ico: '✊', txt: 'Aprieta hasta que truene', desde: 0 }, { ico: '🫘', txt: 'Barre los granos', desde: 0.2 }],
     nombre: 'El fréjol',
@@ -76,6 +81,7 @@ export const NIVELES = [
   },
   {
     id: 'melloco',
+    emoji: '🥔',
     cuenta: 'mellocos',
     pasos: [{ ico: '🥔', txt: 'Raspa la babaza', desde: 0 }],
     nombre: 'El melloco',
@@ -89,6 +95,7 @@ export const NIVELES = [
   },
   {
     id: 'zapallo',
+    emoji: '🎃',
     cuenta: 'tajadas',
     pasos: [{ ico: '🔪', txt: 'Pártelo en dos', desde: 0 }, { ico: '🥄', txt: 'Saca las pepas', desde: 0.1 }, { ico: '🍊', txt: 'Jala la cáscara', desde: 0.35 }, { ico: '🔪', txt: 'Corta en tajadas', desde: 0.62 }],
     nombre: 'El zapallo',
@@ -102,6 +109,7 @@ export const NIVELES = [
   },
   {
     id: 'col',
+    emoji: '🥬',
     cuenta: 'tiras',
     pasos: [{ ico: '🥬', txt: 'Enrolla la hoja', desde: 0 }, { ico: '🔪', txt: 'Corta al través', desde: 0.2 }],
     nombre: 'La col',
@@ -115,6 +123,7 @@ export const NIVELES = [
   },
   {
     id: 'escoger',
+    emoji: '🍚',
     cuenta: 'granos',
     pasos: [{ ico: '🪨', txt: 'Saca las piedritas', desde: 0 }, { ico: '👌', txt: 'Recoge lo bueno', desde: 0.45 }],
     nombre: 'La lenteja',
@@ -128,6 +137,7 @@ export const NIVELES = [
   },
   {
     id: 'quinua',
+    emoji: '🌾',
     cuenta: 'lavadas',
     pasos: [{ ico: '🌀', txt: 'Remueve en círculos', desde: 0 }, { ico: '💧', txt: 'Bota el agua', desde: 0.3 }],
     nombre: 'La quinua',
@@ -141,6 +151,7 @@ export const NIVELES = [
   },
   {
     id: 'mani',
+    emoji: '🥜',
     cuenta: 'maní',
     pasos: [{ ico: '🪨', txt: 'Maja en la piedra', desde: 0 }, { ico: '👐', txt: 'Arrima los granos', desde: 0.25 }],
     nombre: 'El maní',
@@ -154,6 +165,7 @@ export const NIVELES = [
   },
   {
     id: 'bacalao',
+    emoji: '🐟',
     cuenta: 'trozos',
     pasos: [{ ico: '💧', txt: 'Cambia el agua', desde: 0 }, { ico: '🐟', txt: 'Desmenuza', desde: 0.3 }],
     nombre: 'El bacalao',

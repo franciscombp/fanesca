@@ -678,7 +678,11 @@ function renderRiel(actual) {
     const ahora = n.id === actual;
     const cls = ahora ? 'riel-item riel-item--ahora' : hecho ? 'riel-item riel-item--hecho' : 'riel-item riel-item--porvenir';
     const marca = hecho ? '<span class="riel-marca">✓</span>' : '';
-    return `<div class="${cls}"><span class="riel-plato">${icono(n.icono)}</span><span class="riel-txt">${n.nombre.replace(/^(El|La|Los|Las) /, '')}</span>${marca}</div>`;
+    /* el emoji propio del ingrediente: el juego de iconos SVG repite
+       el mismo dibujo para media docena de granos, y en un riel de
+       doce eso se lee como seis casillas iguales */
+    const cara = n.emoji ? `<span class="riel-emoji">${n.emoji}</span>` : icono(n.icono);
+    return `<div class="${cls}"><span class="riel-plato">${cara}</span><span class="riel-txt">${n.nombre.replace(/^(El|La|Los|Las) /, '')}</span>${marca}</div>`;
   }).join('');
   const act = riel.querySelector('.riel-item--ahora');
   if (act) riel.scrollLeft = Math.max(0, act.offsetLeft - riel.clientWidth / 2 + act.offsetWidth / 2);

@@ -139,7 +139,7 @@ export function construirCocina(THREE, MESA_Y) {
      una foto de producto. Se le baja el brillo con un tinte cálido
      —sigue siendo talavera, pero se queda atrás. */
   const pared = new THREE.Mesh(new THREE.PlaneGeometry(11, 9),
-    new THREE.MeshLambertMaterial({ map: tiles, color: '#8a7a6a' }));
+    new THREE.MeshLambertMaterial({ map: tiles, color: '#b3a08b' }));
   pared.position.set(0, 3.4, -1.9);
   pared.name = 'pared';
   grupo.add(pared);
