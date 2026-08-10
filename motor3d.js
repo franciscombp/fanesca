@@ -79,8 +79,17 @@ export const MESA_Y = 0.96;                              /* cara del mesón */
    composta es UNA REGLA del juego, y una regla no se puede pedir
    contra un objetivo que está medio fuera de cuadro. Se acercan al
    centro lo justo para que quepan enteros con margen. */
-export const BATEA = new THREE.Vector3(0.84, MESA_Y, 1.42);    /* lo bueno va aquí */
-export const COMPOSTA = new THREE.Vector3(-0.86, MESA_Y, 1.44); /* cáscaras y bichos */
+/* Adelantados hasta el filo del cuadro. En un teléfono de pie el
+   ángulo vertical SIEMPRE sale ancho (la pantalla es el doble de
+   alta que ancha), así que cerrar la cámara no arregla nada: lo que
+   sobraba eran 0.50 de mundo por debajo de los cuencos —textil,
+   mesón y gabinete— mientras la faena se apretaba en una banda del
+   centro. Traerlos hasta ahí llena ese hueco con algo que SÍ se usa,
+   y de paso arrastra las tablas hacia el jugador (FRENTE_TABLA sale
+   de aquí). La escena se estira en profundidad, que es la dimensión
+   que un teléfono vertical tiene de sobra. */
+export const BATEA = new THREE.Vector3(0.84, MESA_Y, 1.92);    /* lo bueno va aquí */
+export const COMPOSTA = new THREE.Vector3(-0.86, MESA_Y, 1.94); /* cáscaras y bichos */
 export const RADIO_CUENCO = 0.44;
 
 /* Hasta dónde puede acercarse una tabla de picar sin meterse dentro
@@ -123,6 +132,8 @@ let onCuenco = null;
 /* el ajuste de encuadre, guardado: cada nivel mueve la cámara y el
    ángulo depende de a qué distancia quedó */
 let reencuadrar = null;
+/* ángulo vertical pedido por el nivel o por el editor */
+let fovPedido = null;
 
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
@@ -614,7 +625,7 @@ export const Motor = {
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       const rad = THREE.MathUtils.degToRad;
-      let fov = VFOV;
+      let fov = fovPedido || VFOV;
       const dist = camera.position.distanceTo(camMira) || 3.6;
       /* ¿el horizontal que sale de este vertical deja ver los cuencos? */
       const medioH = Math.tan(rad(fov / 2)) * dist * camera.aspect;
@@ -643,19 +654,26 @@ export const Motor = {
      mesón y pide una cámara de mesa; el choclo se sostiene en la mano
      y pide una cámara de frente, vertical, como el teléfono. Por eso
      el encuadre es del nivel, no del motor. */
-  encuadre(pos, mira) {
+  encuadre(pos, mira, fov) {
     if (!camera) return;
     camera.position.set(...(pos || CAM_POR_DEFECTO.pos));
     camMira.set(...(mira || CAM_POR_DEFECTO.mira));
     camera.lookAt(camMira);
     camBase.copy(camera.position);
+    /* un nivel (o el editor) puede fijar su propio ángulo vertical;
+       sin eso manda el del motor */
+    fovPedido = fov || null;
     if (reencuadrar) reencuadrar();
   },
+
+  /* para el editor: mover la cámara en vivo y saber a dónde mira */
+  ponerCamara(pos, mira, fov) { this.encuadre(pos, mira, fov); },
+  miraActual() { return { x: camMira.x, y: camMira.y, z: camMira.z }; },
 
   /* monta un nivel: limpia lo anterior y le entrega el contexto */
   cargar(mod, api) {
     this.descargar();
-    this.encuadre(mod.camara && mod.camara.pos, mod.camara && mod.camara.mira);
+    this.encuadre(mod.camara && mod.camara.pos, mod.camara && mod.camara.mira, mod.camara && mod.camara.fov);
     nivel = mod;
     const ctx = {
       THREE, raiz, api,

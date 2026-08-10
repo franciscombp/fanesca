@@ -12,6 +12,7 @@ import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
 import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niveles.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
+import Editor from './editor.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -603,6 +604,23 @@ function reiniciarRacha() {
   api._medio = false; api._casi = false;
 }
 
+/* el acceso al editor: un botón discreto que solo aparece en modo
+   dev, porque esto es una herramienta de autor, no una opción */
+function pintarBotonEditor() {
+  let b = $('#btn-editor');
+  if (!estado.devMode) { if (b) b.remove(); return; }
+  if (!b) {
+    b = document.createElement('button');
+    b.id = 'btn-editor';
+    b.type = 'button';
+    b.className = 'btn-editor';
+    b.textContent = '🎛';
+    b.title = 'Editor de escena';
+    b.addEventListener('click', () => Editor.alternar());
+    $('#screen-juego').appendChild(b);
+  }
+}
+
 function renderControles(mod) {
   const cont = $('#juego-controles');
   cont.innerHTML = '';
@@ -666,6 +684,8 @@ async function jugar(id) {
   Motor.cargar(modActual, api);
   renderControles(modActual);
   pista(n.gesto, 5200);
+  Editor.nivel(n.id);
+  pintarBotonEditor();
   arrancarReloj();
   estado.intentos++;
   guardar();
@@ -883,6 +903,9 @@ function init() {
   let ok = false;
   try { ok = Motor.init(cont, $('#destello')); } catch (e) { ok = false; }
   if (ok) Motor.escenario(estado.escenario || POR_DEFECTO);
+  /* el editor de escena: solo existe en modo dev, y guarda sus
+     retoques aparte del progreso */
+  if (ok) Editor.init(Motor, { alRearmar: () => { if (nivelActual) jugar(nivelActual.id); } });
   if (!ok) {
     cont.innerHTML = `<div class="panel" style="margin:var(--sp-8) var(--sp-5)">
       <p><b>Este minijuego necesita WebGL.</b></p>

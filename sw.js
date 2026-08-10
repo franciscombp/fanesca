@@ -49,6 +49,8 @@ const PRECACHE = [
   './vendor/addons/utils/BufferGeometryUtils.js',
   './vendor/addons/utils/SkeletonUtils.js',
   './main.js',
+  './escenarios.js',
+  './editor.js',
   './motor3d.js',
   './historia.js',
   './arruinado.js',

@@ -1230,3 +1230,51 @@ svg[width="0"] { width: 0; height: 0; }
   font-style: normal; font-size: var(--t-xs); color: var(--text-muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* ---- el editor de escena (modo dev) ---- */
+.btn-editor {
+  position: absolute; right: var(--sp-3);
+  top: calc(var(--prep-hud-h) + var(--sp-3)); z-index: 6;
+  width: 2.6rem; height: 2.6rem; font-size: 1.2rem;
+  display: grid; place-items: center;
+  background: var(--vidrio); color: #fff;
+  border: 2px solid var(--filo-oro); border-radius: 50%;
+  box-shadow: var(--e-2), var(--oro-glow);
+}
+.editor {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
+  max-height: 72%; overflow-y: auto;
+  padding: var(--sp-3) var(--sp-4) calc(env(safe-area-inset-bottom) + var(--sp-3));
+  background: linear-gradient(180deg, rgba(22,14,10,.97), rgba(12,8,6,.99));
+  border-top: 2px solid var(--filo-oro);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.5);
+  transform: translateY(101%);
+  transition: transform var(--dur) var(--ease-out);
+  color: #fff;
+}
+.editor.abierto { transform: translateY(0); }
+.ed-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.ed-head b { font-family: var(--font-display); font-size: var(--t-md); }
+.ed-nivel {
+  font-size: var(--t-2xs); color: var(--maiz-300);
+  border: 1px solid var(--filo-oro); border-radius: var(--r-pill);
+  padding: .05rem .5rem;
+}
+.ed-x { margin-left: auto; color: #fff; font-size: var(--t-lg); padding: .2rem .5rem; }
+.ed-fila { display: grid; grid-template-columns: 6.4rem 1fr 2.8rem; align-items: center; gap: .5rem; margin-bottom: .3rem; }
+.ed-et { font-size: var(--t-2xs); color: rgba(255,255,255,.8); }
+.ed-fila input[type=range] { width: 100%; accent-color: var(--maiz-300); }
+.ed-fila output { font-family: var(--font-display); font-size: var(--t-2xs); text-align: right; color: var(--maiz-300); }
+.ed-codigo {
+  margin: var(--sp-2) 0; padding: .5rem .6rem;
+  background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.18);
+  border-radius: var(--r-md);
+  font-family: ui-monospace, monospace; font-size: 10px; line-height: 1.4;
+  color: #d8f3c0; white-space: pre-wrap; word-break: break-word;
+}
+.ed-pie { display: flex; gap: var(--sp-2); }
+.ed-btn {
+  flex: 1; padding: .45rem; font-size: var(--t-xs); font-weight: 700;
+  color: var(--tinta-900); background: linear-gradient(180deg, var(--maiz-300), var(--maiz-400));
+  border: 2px solid var(--maiz-600); border-radius: var(--r-pill);
+}
