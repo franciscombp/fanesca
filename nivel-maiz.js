@@ -604,7 +604,7 @@ export default {
   /* De pie y grande, con la batea y la composta dentro del encuadre:
      el gusanito se lleva a la composta, y un cuenco fuera de pantalla
      convierte esa regla en algo imposible. */
-  camara: { pos: [0, 2.95, 3.9], mira: [0, 1.82, 0.14] },
+  camara: { pos: [0.08, 4.2, 4.02], mira: [-0.22, 2.5, 0.1], fov: 75 },
   controles: [
     { id: 'izq', txt: '⟲', tip: 'girar' },
     { id: 'der', txt: '⟳', tip: 'girar' },
