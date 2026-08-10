@@ -22,6 +22,7 @@
    ============================================================ */
 
 import { registrar } from './registro.js';
+import { escenarioDe, POR_DEFECTO } from '../escenarios.js';
 import { token, mate, mateToken } from './paleta.js';
 import { sombraBlob } from './utileria.js';
 
@@ -72,6 +73,66 @@ export function texturaVapor(THREE) {
     g.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
   }, 64);
+}
+
+/* paredes según el escenario: cada una con su grano, porque un
+   plano de color liso se lee como cartón */
+export function texturaPared(THREE, tipo) {
+  if (tipo === 'azulejo') return texturaAzulejos(THREE);
+  if (tipo === 'adobe') {
+    return texturaCanvas(THREE, (ctx, S) => {
+      ctx.fillStyle = '#c9a173'; ctx.fillRect(0, 0, S, S);
+      /* paja y grano del adobe */
+      for (let i = 0; i < 900; i++) {
+        ctx.fillStyle = ['rgba(255,235,190,.5)', 'rgba(120,80,40,.35)', 'rgba(90,60,30,.28)'][i % 3];
+        const x = Math.random() * S, y = Math.random() * S;
+        ctx.fillRect(x, y, 1 + Math.random() * 5, 1 + Math.random() * 1.6);
+      }
+      /* juntas horizontales del bloque */
+      ctx.strokeStyle = 'rgba(90,58,28,.34)'; ctx.lineWidth = 3;
+      for (let y = 0; y <= S; y += S / 3) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(S, y); ctx.stroke(); }
+    });
+  }
+  /* patio: cal verdosa con manchas de humedad */
+  return texturaCanvas(THREE, (ctx, S) => {
+    ctx.fillStyle = '#cddcc0'; ctx.fillRect(0, 0, S, S);
+    for (let i = 0; i < 60; i++) {
+      ctx.fillStyle = `rgba(120,150,100,${0.05 + Math.random() * 0.12})`;
+      ctx.beginPath();
+      ctx.arc(Math.random() * S, Math.random() * S, 8 + Math.random() * 34, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+export function texturaPiso(THREE, tipo, a, b) {
+  if (tipo === 'damero') {
+    return texturaCanvas(THREE, (ctx, S) => {
+      const T = S / 2;
+      for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
+        ctx.fillStyle = (x + y) % 2 ? a : b;
+        ctx.fillRect(x * T, y * T, T, T);
+      }
+    }, 128);
+  }
+  if (tipo === 'tierra') {
+    return texturaCanvas(THREE, (ctx, S) => {
+      ctx.fillStyle = a; ctx.fillRect(0, 0, S, S);
+      for (let i = 0; i < 700; i++) {
+        ctx.fillStyle = `rgba(60,35,15,${0.05 + Math.random() * 0.18})`;
+        ctx.fillRect(Math.random() * S, Math.random() * S, 2 + Math.random() * 6, 2 + Math.random() * 4);
+      }
+    }, 128);
+  }
+  /* piedra de patio: lajas irregulares */
+  return texturaCanvas(THREE, (ctx, S) => {
+    ctx.fillStyle = b; ctx.fillRect(0, 0, S, S);
+    ctx.strokeStyle = 'rgba(90,90,85,.5)'; ctx.lineWidth = 4;
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
+      const T = S / 4, o = (y % 2) * T / 2;
+      ctx.strokeRect(x * T + o - T, y * T, T - 2, T - 2);
+    }
+  }, 128);
 }
 
 /* ---------- el cuenco: batea y composta ----------
@@ -126,31 +187,26 @@ registrar('cuenco', (THREE, opts = {}) => {
    Devuelve { grupo, vapores } — los vapores los anima el motor,
    porque su altura depende del reloj de la escena. */
 
-export function construirCocina(THREE, MESA_Y) {
+export function construirCocina(THREE, MESA_Y, escenarioId) {
+  const E = escenarioDe(escenarioId || POR_DEFECTO);
   const grupo = new THREE.Group();
   grupo.name = 'cocina';
   const vapores = [];
 
-  const tiles = texturaAzulejos(THREE);
+  const tiles = texturaPared(THREE, E.pared.tipo);
   tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping;
-  tiles.repeat.set(4, 3.4);
-  /* El azulejo iba a todo color y se comía la escena: el fondo
-     pesaba más que la comida, que es justo al revés de lo que hace
-     una foto de producto. Se le baja el brillo con un tinte cálido
-     —sigue siendo talavera, pero se queda atrás. */
+  tiles.repeat.set(E.pared.tipo === 'azulejo' ? 4 : 3, E.pared.tipo === 'azulejo' ? 3.4 : 2.6);
+  /* El fondo iba a todo color y se comía la escena: pesaba más que
+     la comida, que es justo al revés de lo que hace una foto de
+     producto. El tinte de cada escenario lo manda hacia atrás. */
   const pared = new THREE.Mesh(new THREE.PlaneGeometry(11, 9),
-    new THREE.MeshLambertMaterial({ map: tiles, color: '#b3a08b' }));
+    new THREE.MeshLambertMaterial({ map: tiles, color: E.pared.tinte }));
   pared.position.set(0, 3.4, -1.9);
   pared.name = 'pared';
   grupo.add(pared);
 
-  const pisoTex = texturaCanvas(THREE, (ctx, S) => {
-    const T = S / 2;
-    for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
-      ctx.fillStyle = (x + y) % 2 ? token('--madera-200', '#e8a469') : token('--peltre-300', '#e3dfd6');
-      ctx.fillRect(x * T, y * T, T, T);
-    }
-  }, 128);
+  const pisoTex = texturaPiso(THREE, E.piso.tipo,
+    token(E.piso.a, '#e8a469'), token(E.piso.b, '#e3dfd6'));
   pisoTex.wrapS = pisoTex.wrapT = THREE.RepeatWrapping;
   pisoTex.repeat.set(7, 5);
   const piso = new THREE.Mesh(new THREE.PlaneGeometry(16, 12), new THREE.MeshLambertMaterial({ map: pisoTex }));
@@ -160,14 +216,14 @@ export function construirCocina(THREE, MESA_Y) {
   grupo.add(piso);
 
   /* el mesón: ancho y hondo, porque aquí se trabaja con las manos */
-  const woodTop = texturaMadera(THREE, token('--madera-300', '#d07c3f'), token('--madera-500', '#93491c'));
+  const woodTop = texturaMadera(THREE, token(E.meson.base, '#d07c3f'), token(E.meson.veta, '#93491c'));
   const meson = new THREE.Mesh(new THREE.BoxGeometry(9, 0.24, 3.9), new THREE.MeshLambertMaterial({ map: woodTop }));
   meson.position.set(0, MESA_Y - 0.12, 0.15);
   meson.name = 'meson';
   grupo.add(meson);
 
   /* frente del gabinete, para que el mesón no flote */
-  const gabinete = new THREE.Mesh(new THREE.BoxGeometry(9, 2.6, 0.1), mateToken(THREE, '--rosa-500', '#e01b6a'));
+  const gabinete = new THREE.Mesh(new THREE.BoxGeometry(9, 2.6, 0.1), mateToken(THREE, E.gabinete, '#e01b6a'));
   gabinete.position.set(0, -0.46, 2.05);
   gabinete.name = 'gabinete';
   grupo.add(gabinete);
@@ -296,6 +352,7 @@ export function construirCocina(THREE, MESA_Y) {
 
   /* la ventana por la izquierda: de ahí viene el sol, y verla
      explica la luz en vez de que caiga de la nada */
+  if (E.ventana) {
   const luzVentana = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.0),
     new THREE.MeshBasicMaterial({ color: '#fff3d6', transparent: true, opacity: 0.9 }));
   luzVentana.position.set(-3.5, 3.1, -1.86);
@@ -305,6 +362,7 @@ export function construirCocina(THREE, MESA_Y) {
   marco.position.set(-3.5, 3.1, -1.9);
   marco.name = 'marco-ventana';
   grupo.add(marco);
+  }
 
   /* ---------- la luz ----------
      Tres luces, y ninguna fuerte. El error fácil es una sola
@@ -316,18 +374,18 @@ export function construirCocina(THREE, MESA_Y) {
      cosas del fondo. */
 
   /* el cielo de la cocina: relleno envolvente, la que más aporta */
-  grupo.add(new THREE.HemisphereLight('#fff3dc', token('--madera-400', '#b4632c'), 1.42));
+  grupo.add(new THREE.HemisphereLight(E.luz.cielo, token(E.luz.suelo, '#b4632c'), E.luz.hemi));
 
   /* la principal: sol de ventana por la izquierda, suave y más cálido
      — la referencia es una cocina de tarde, no un quirófano */
-  const sol = new THREE.DirectionalLight('#ffe6bd', 1.45);
+  const sol = new THREE.DirectionalLight(E.luz.sol, E.luz.solInt);
   sol.position.set(-2.5, 5.5, 4);
   grupo.add(sol);
 
   /* el foco de la faena: un punto tibio justo sobre la tabla, para
      que el ingrediente sea lo más brillante del cuadro y el ojo caiga
      ahí solo. Es el truco que separa "escena 3D" de "producto". */
-  const foco = new THREE.PointLight('#ffd9a0', 1.05, 6.5, 2);
+  const foco = new THREE.PointLight(E.luz.foco, E.luz.focoInt, 6.5, 2);
   foco.position.set(0, MESA_Y + 2.1, 1.5);
   foco.name = 'foco-faena';
   grupo.add(foco);

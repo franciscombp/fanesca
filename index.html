@@ -68,6 +68,11 @@
         <!-- La olla vive UNA vez: como destino, al final del camino.
              El panel que la duplicaba aquí arriba le robaba el papel. -->
         <p id="olla-frase" class="mesa-frase">Todavía está el agua sola. Prepara un ingrediente.</p>
+        <!-- dónde cocinar: la misma mesa, otro sitio -->
+        <div class="escenarios">
+          <p class="escenarios-tit">¿Dónde cocinas hoy?</p>
+          <div id="escenarios-lista" class="escenarios-lista"></div>
+        </div>
         <div id="mesa-lista" class="mesa-lista"></div>
       </div>
     </div>
@@ -126,14 +131,7 @@
     <!-- los puntos que suben al acertar -->
     <div id="hud-flotantes" class="hud-flotantes" aria-hidden="true"></div>
 
-    <!-- lo que va cayendo en cada cuenco -->
-    <div id="hud-cuencos" class="hud-cuencos" aria-hidden="true">
-      <span id="cuenco-batea" class="cuenco-chip cuenco-chip--bueno"><b>0</b><i></i></span>
-      <span id="cuenco-composta" class="cuenco-chip cuenco-chip--malo"><b>0</b><i></i></span>
-    </div>
 
-    <!-- qué toca hacer, siempre a la vista -->
-    <aside id="hud-pasos" class="hud-pasos" aria-hidden="true"></aside>
 
     <p id="hud-alerta" class="hud-alerta" role="status" aria-live="polite"></p>
     <div id="voz" class="voz" role="status" aria-live="polite">
@@ -143,19 +141,6 @@
     <div id="juego-controles" class="juego-controles"></div>
     <p id="juego-pista" class="juego-pista"></p>
 
-    <!-- cómo vas contra el reloj: perfecto / bien / regular -->
-    <div id="hud-ritmo" class="hud-ritmo" aria-hidden="true">
-      <div class="ritmo-barra">
-        <span class="ritmo-tramo ritmo-tramo--perfecto">PERFECTO</span>
-        <span class="ritmo-tramo ritmo-tramo--bien">BIEN</span>
-        <span class="ritmo-tramo ritmo-tramo--regular">REGULAR</span>
-        <span class="ritmo-tramo ritmo-tramo--fallo">LENTO</span>
-      </div>
-      <span id="ritmo-aguja" class="ritmo-aguja"></span>
-    </div>
-
-    <!-- el camino de los doce, en chiquito, mientras juegas -->
-    <nav id="hud-riel" class="hud-riel" aria-label="Ingredientes"></nav>
   </main>
 
   <!-- ================= Modal: cómo se hace ================= -->

@@ -1177,3 +1177,56 @@ svg[width="0"] { width: 0; height: 0; }
 
 /* con los botones fuera de abajo, la pista baja a su sitio */
 .juego-pista { bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + 1rem); }
+
+
+/* ============================================================
+   MENOS INTERFAZ ENCIMA DEL JUEGO
+   Se probó y sobraba: el riel de ingredientes no llevaba a
+   ninguna parte, los contadores de los cuencos y el panel fijo de
+   instrucciones se metían entre el dedo y la mesa, y la barra de
+   ritmo medía algo que al jugador no le decía nada. Fuera los
+   cuatro. Lo que queda —cabecera, combo, pista que va y viene— es
+   lo que informa sin estorbar.
+   ============================================================ */
+.hud-cuencos, .cuenco-chip,
+.hud-pasos, .paso,
+.hud-ritmo, .ritmo-barra, .ritmo-aguja,
+.hud-riel, .riel-item { display: none !important; }
+
+/* sin riel abajo, los botones y la pista vuelven al pie */
+:root { --base-riel: env(safe-area-inset-bottom); --prep-ritmo-h: 0rem; }
+.juego-controles {
+  top: auto; bottom: calc(env(safe-area-inset-bottom) + var(--sp-4));
+  left: 0; right: 0;
+  flex-direction: row; align-items: center; justify-content: center;
+  gap: var(--sp-3); padding: 0 var(--sp-4);
+}
+.juego-pista {
+  bottom: calc(env(safe-area-inset-bottom) + var(--prep-ctrl-h) + var(--sp-4));
+}
+
+/* ---- dónde se cocina: el selector de escenario ---- */
+.escenarios { margin: var(--sp-4) 0 var(--sp-5); }
+.escenarios-tit {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-sm);
+  color: var(--text-muted); margin-bottom: var(--sp-2);
+}
+.escenarios-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
+.escenario {
+  display: flex; align-items: center; gap: var(--sp-3);
+  width: 100%; text-align: left; padding: var(--sp-2) var(--sp-3);
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+  border: var(--ring); border-radius: var(--r-lg);
+  box-shadow: var(--e-1);
+}
+.escenario--activo {
+  border-color: var(--maiz-600);
+  box-shadow: var(--e-2), 0 0 0 3px rgba(255, 201, 60, .3);
+}
+.escenario-emoji { font-size: 1.7rem; flex: 0 0 auto; }
+.escenario-txt { display: flex; flex-direction: column; min-width: 0; }
+.escenario-txt b { font-family: var(--font-display); font-size: var(--t-md); }
+.escenario-txt i {
+  font-style: normal; font-size: var(--t-xs); color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

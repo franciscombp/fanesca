@@ -114,6 +114,9 @@ let bateaGrupo = null, compostaGrupo = null;
 /* cuánto ha caído en cada cuenco en esta partida, para el marcador */
 const cuenta = { batea: 0, composta: 0 };
 let onCuenco = null;
+/* el ajuste de encuadre, guardado: cada nivel mueve la cámara y el
+   ángulo depende de a qué distancia quedó */
+let reencuadrar = null;
 
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
@@ -159,8 +162,9 @@ export const ojitos = (sep, y, z, r) => _ojitos(THREE, sep, y, z, r);
 let vapores = [];
 let modelosListos = Promise.resolve();
 
+let escenarioActual = null;      /* dónde se cocina hoy */
 function armarCocina() {
-  const { grupo, vapores: v } = construirCocina(THREE, MESA_Y);
+  const { grupo, vapores: v } = construirCocina(THREE, MESA_Y, escenarioActual);
   scene.add(grupo);
   vapores = v;
 
@@ -578,15 +582,42 @@ export const Motor = {
        batea y la composta —que están en x ±1.0— tienen que seguir
        cabiendo en cuadro, porque llevar el bicho hasta allá es una
        regla del juego y no se puede pedir a ciegas. */
-    const HFOV = 43;
+    /* EL ENCUADRE EN VERTICAL.
+
+       Antes se fijaba el ángulo HORIZONTAL (43°) y el vertical salía
+       del aspecto. En un teléfono de pie eso da un vertical de ~80°:
+       cabe media cocina de más arriba y de más abajo, y el
+       ingrediente —lo único que se toca— queda chiquito en el
+       centro, con franjas muertas arriba y abajo.
+
+       Ahora manda el VERTICAL, que es la dimensión larga del
+       teléfono: se pide un ángulo cerrado para que la mesa llene la
+       pantalla. El horizontal se deja seguir al aspecto… salvo que
+       se cierre tanto que corte los cuencos, que están a ±0.85 del
+       centro y son destino de juego: ahí se abre lo justo para que
+       quepan. Encuadre apretado en pantallas altas, sin perder nunca
+       nada que el dedo necesite. */
+    const VFOV = 62;              /* grados, el que manda */
+    const MEDIO_ANCHO = 1.18;     /* mundo que SIEMPRE tiene que caber */
     const ajustar = () => {
       const w = cont.clientWidth, h = cont.clientHeight;
       if (!w || !h) return;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
-      camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(HFOV / 2)) / camera.aspect));
+      const rad = THREE.MathUtils.degToRad;
+      let fov = VFOV;
+      const dist = camera.position.distanceTo(camMira) || 3.6;
+      /* ¿el horizontal que sale de este vertical deja ver los cuencos? */
+      const medioH = Math.tan(rad(fov / 2)) * dist * camera.aspect;
+      if (medioH < MEDIO_ANCHO) {
+        /* no: se abre hasta que quepan, y se pierde algo de zoom */
+        const hfov = 2 * Math.atan(MEDIO_ANCHO / dist);
+        fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(hfov / 2) / camera.aspect));
+      }
+      camera.fov = fov;
       camera.updateProjectionMatrix();
     };
+    reencuadrar = ajustar;
     new ResizeObserver(ajustar).observe(cont);
     ajustar();
 
@@ -609,6 +640,7 @@ export const Motor = {
     camMira.set(...(mira || CAM_POR_DEFECTO.mira));
     camera.lookAt(camMira);
     camBase.copy(camera.position);
+    if (reencuadrar) reencuadrar();
   },
 
   /* monta un nivel: limpia lo anterior y le entrega el contexto */
@@ -628,6 +660,19 @@ export const Motor = {
     nivel.construir(ctx);
     return nivel;
   },
+
+  /* CAMBIAR DE COCINA. Se rearma solo el decorado: el nivel que
+     esté montado no se entera, porque su mundo cuelga de `raiz` y
+     la cocina es otro grupo. */
+  escenario(id) {
+    if (!scene || id === escenarioActual) return;
+    escenarioActual = id;
+    const vieja = scene.getObjectByName('cocina');
+    if (vieja) { scene.remove(vieja); tirar(vieja); }
+    vapores = [];
+    armarCocina();
+  },
+  get escenarioId() { return escenarioActual; },
 
   /* quién quiere enterarse de lo que cae en los cuencos (el marcador) */
   alCuenco(fn) { onCuenco = fn; },

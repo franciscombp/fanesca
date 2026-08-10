@@ -11,6 +11,7 @@
 import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
 import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niveles.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
+import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -31,6 +32,8 @@ function nuevoEstado() {
     leidos: [], cuadernoVisto: true, devMode: false,
     /* la racha de días: cocinar algo hoy la mantiene viva */
     dias: { ultima: null, seguidos: 0 },
+    /* dónde se cocina: se elige en la mesa y se recuerda */
+    escenario: POR_DEFECTO,
   };
 }
 let estado = nuevoEstado();
@@ -147,7 +150,32 @@ const FRASES_OLLA = [
   '¡Los doce granos completos! Que hierva despacio.',
 ];
 
+/* ---------- dónde se cocina ----------
+   Cambiar de sitio no cambia ni una regla: es puro gusto, y por eso
+   vive en la mesa y no dentro del nivel. El motor rearma solo el
+   decorado, así que se puede probar sin salir de aquí. */
+function renderEscenarios() {
+  const caja = $('#escenarios-lista');
+  if (!caja) return;
+  const actual = estado.escenario || POR_DEFECTO;
+  caja.innerHTML = ESCENARIOS.map(e => `
+    <button type="button" class="escenario${e.id === actual ? ' escenario--activo' : ''}" data-esc="${e.id}">
+      <span class="escenario-emoji" aria-hidden="true">${e.emoji}</span>
+      <span class="escenario-txt"><b>${e.nombre}</b><i>${e.pie}</i></span>
+    </button>`).join('');
+  caja.querySelectorAll('[data-esc]').forEach(b => {
+    b.addEventListener('click', () => {
+      estado.escenario = b.dataset.esc;
+      guardar();
+      Motor.escenario(estado.escenario);
+      sfx('tab'); buzz(10);
+      renderEscenarios();
+    });
+  });
+}
+
 function renderMesa() {
+  renderEscenarios();
   const hechos = listos();
   const todos = hechos >= NIVELES.length;
   const dias = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
@@ -375,11 +403,6 @@ function arrancarReloj() {
     if (!corriendo) return;
     tiempoMs = performance.now() - t0;
     pintarReloj();
-    /* el marcador vive en este mismo latido: no hace falta meterse en
-       el bucle de render del motor para algo que cambia doce veces
-       por segundo y no es 3D */
-    colocarCuencos();
-    pintarRitmo();
   }, 83);
 }
 function pararReloj() { corriendo = false; clearInterval(relojId); relojId = null; }
@@ -457,7 +480,6 @@ const api = {
     if (subio) {
       racha(cuanto, k);
       puntosFlotantes(cuanto);
-      marcarPasos(k);
     }
   },
   composta(k) { Motor.llenarRecipiente('composta', Math.max(0, Math.min(1, k))); },
@@ -581,113 +603,6 @@ function reiniciarRacha() {
   api._medio = false; api._casi = false;
 }
 
-/* ============================================================
-   EL MARCADOR DE LA COCINA
-   Los cuencos cuentan, los pasos se tachan, el ritmo se mide y el
-   camino de los doce se ve sin salir del nivel. Todo cuelga de datos
-   que el juego ya tenía; ningún nivel tuvo que aprender nada nuevo.
-   ============================================================ */
-
-/* los chips van pegados a los cuencos DEL MUNDO: se reproyectan cada
-   cuadro porque la cámara de cada nivel es distinta */
-function colocarCuencos() {
-  const caja = $('#hud-cuencos');
-  if (!caja || !Motor.camara || !nivelActual) return;
-  const poner = (id, v3) => {
-    const el = $(id);
-    if (!el) return;
-    /* bien por encima del cuenco: a media altura los chips caían
-       sobre el borde y se los comía la pista */
-    const p = Motor.proyectar(v3.clone().setY(MESA_Y + 0.95));
-    /* y dentro de la pantalla: proyectados a pelo se salían por el
-       filo izquierdo y se metían debajo del panel de pasos */
-    const w = el.offsetWidth || 90;
-    const min = w / 2 + 6;
-    const max = (window.innerWidth || 390) - w / 2 - 6;
-    el.style.left = Math.max(min, Math.min(max, p.x)) + 'px';
-    el.style.top = Math.max(56, p.y - 6) + 'px';
-    el.classList.add('visible');
-  };
-  try { poner('#cuenco-batea', BATEA); poner('#cuenco-composta', COMPOSTA); } catch (e) {}
-}
-
-function pintarCuencos(c) {
-  const b = $('#cuenco-batea'), m = $('#cuenco-composta');
-  if (!b || !m || !nivelActual) return;
-  const bueno = (nivelActual.cuenta || 'listo').toUpperCase();
-  b.innerHTML = `<b>${c.batea}</b><i>${bueno}</i>`;
-  m.innerHTML = `<b>${c.composta}</b><i>CÁSCARAS</i>`;
-  [[b, c.batea], [m, c.composta]].forEach(([el, n]) => {
-    if (!n) return;
-    el.classList.remove('brinca'); void el.offsetWidth; el.classList.add('brinca');
-  });
-}
-
-/* PERFECTO / BIEN / REGULAR / LENTO: la aguja corre contra los mismos
-   umbrales con los que se ganan las cucharas, así que el reloj por fin
-   dice algo. Es la mitad buena del "score attack" sin romper que la
-   faena se termina. */
-function pintarRitmo() {
-  const caja = $('#hud-ritmo');
-  if (!caja || !nivelActual || !nivelActual.cucharas) return;
-  const [tres, dos, uno] = nivelActual.cucharas;
-  /* el tiempo que llevas, proyectado a la faena entera: si sigues a
-     este paso, ¿en cuánto acabas? */
-  const k = Math.max(0.06, hechosAhora / (totalAhora || 1));
-  const proyectado = (tiempoMs / 1000) / k;
-  const tramo = proyectado <= tres ? 0 : proyectado <= dos ? 1 : proyectado <= uno ? 2 : 3;
-  const dentro = tramo === 0 ? proyectado / tres
-    : tramo === 1 ? (proyectado - tres) / (dos - tres)
-    : tramo === 2 ? (proyectado - dos) / (uno - dos) : 0.5;
-  const x = (tramo + Math.max(0, Math.min(1, dentro))) * 25;
-  const aguja = $('#ritmo-aguja');
-  if (aguja) aguja.style.left = Math.max(2, Math.min(98, x)) + '%';
-  caja.classList.add('visible');
-}
-
-/* los pasos del nivel, a la derecha, tachándose solos */
-function renderPasos(n) {
-  const caja = $('#hud-pasos');
-  if (!caja) return;
-  const pasos = n.pasos || null;
-  if (!pasos) { caja.classList.remove('visible'); caja.innerHTML = ''; return; }
-  caja.innerHTML = pasos.map((p, i) =>
-    `<div class="paso" data-i="${i}"><span class="paso-ico">${p.ico}</span><span class="paso-txt">${p.txt}</span></div>`).join('');
-  caja.classList.add('visible');
-  marcarPasos(0);
-}
-
-function marcarPasos(k) {
-  const caja = $('#hud-pasos');
-  if (!caja || !nivelActual || !nivelActual.pasos) return;
-  const pasos = nivelActual.pasos;
-  caja.querySelectorAll('.paso').forEach((el, i) => {
-    const desde = pasos[i].desde || 0;
-    const hasta = i + 1 < pasos.length ? (pasos[i + 1].desde || 1) : 1.01;
-    el.classList.toggle('paso--hecho', k >= hasta);
-    el.classList.toggle('paso--activo', k >= desde && k < hasta);
-  });
-}
-
-/* el camino de los doce, en chiquito, mientras cocinas */
-function renderRiel(actual) {
-  const riel = $('#hud-riel');
-  if (!riel) return;
-  riel.innerHTML = NIVELES.map(n => {
-    const hecho = estaListo(n.id);
-    const ahora = n.id === actual;
-    const cls = ahora ? 'riel-item riel-item--ahora' : hecho ? 'riel-item riel-item--hecho' : 'riel-item riel-item--porvenir';
-    const marca = hecho ? '<span class="riel-marca">✓</span>' : '';
-    /* el emoji propio del ingrediente: el juego de iconos SVG repite
-       el mismo dibujo para media docena de granos, y en un riel de
-       doce eso se lee como seis casillas iguales */
-    const cara = n.emoji ? `<span class="riel-emoji">${n.emoji}</span>` : icono(n.icono);
-    return `<div class="${cls}"><span class="riel-plato">${cara}</span><span class="riel-txt">${n.nombre.replace(/^(El|La|Los|Las) /, '')}</span>${marca}</div>`;
-  }).join('');
-  const act = riel.querySelector('.riel-item--ahora');
-  if (act) riel.scrollLeft = Math.max(0, act.offsetLeft - riel.clientWidth / 2 + act.offsetWidth / 2);
-}
-
 function renderControles(mod) {
   const cont = $('#juego-controles');
   cont.innerHTML = '';
@@ -729,9 +644,6 @@ async function jugar(id) {
   $('#hud-barra').style.width = '0%';
   const pct0 = $('#hud-pct'); if (pct0) pct0.textContent = '0%';
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(n.icono);
-  renderPasos(n);
-  renderRiel(n.id);
-  pintarCuencos({ batea: 0, composta: 0 });
   tiempoMs = 0; hechosAhora = 0; totalAhora = 1;
   reiniciarRacha();
   pintarReloj();
@@ -970,8 +882,7 @@ function init() {
   const cont = $('#escena');
   let ok = false;
   try { ok = Motor.init(cont, $('#destello')); } catch (e) { ok = false; }
-  /* el motor avisa qué cayó en cada cuenco y el marcador lo pinta */
-  if (ok) Motor.alCuenco(pintarCuencos);
+  if (ok) Motor.escenario(estado.escenario || POR_DEFECTO);
   if (!ok) {
     cont.innerHTML = `<div class="panel" style="margin:var(--sp-8) var(--sp-5)">
       <p><b>Este minijuego necesita WebGL.</b></p>
