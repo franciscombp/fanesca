@@ -54,11 +54,13 @@ function nuevaVaina(x, z, conGusano) {
   const bisagra = api.parte(v, 'bisagra');
 
   /* las habas van DENTRO de la vaina: así se inclinan con ella y,
-     cuando la cáscara vacía se va a la composta, no queda nada suelto */
+     cuando la cáscara vacía se va a la composta, no queda nada suelto.
+     Se distribuyen en profundidad (Z) en lugar de en ancho (X) para que
+     la vaina quede más vertical y no se salga de pantalla */
   const habas = [];
   for (let i = 0; i < POR_VAINA; i++) {
     const h = api.pieza('haba', { variante: i });
-    h.position.set((i - (POR_VAINA - 1) / 2) * PASO_HABA, -0.008, 0);
+    h.position.set(0, -0.008, (i - (POR_VAINA - 1) / 2) * PASO_HABA);
     h.userData = { tipo: 'haba' };
     h.visible = false;
     habas.push(h);

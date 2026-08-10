@@ -72,7 +72,9 @@ function nuevaVaina(x, z, conGusano) {
   const granos = [];
   for (let i = 0; i < POR_VAINA; i++) {
     const a = api.pieza('arveja', { variante: i });
-    a.position.set((i - (POR_VAINA - 1) / 2) * PASO_ARVEJA, -0.006, 0);
+    /* Cambio de orientación: las arvejas se distribuyen en profundidad (Z)
+       en lugar de en ancho (X) para que la vaina quede más vertical */
+    a.position.set(0, -0.006, (i - (POR_VAINA - 1) / 2) * PASO_ARVEJA);
     a.userData = { tipo: 'arveja', i };
     a.visible = false;
     granos.push(a);
