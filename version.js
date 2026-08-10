@@ -14,10 +14,20 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.10.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.10.0',
+    fecha: '2026-08-10',
+    titulo: 'Menos encima, y una cocina que puedes elegir',
+    cambios: [
+      'Se quitó de la pantalla todo lo que estorbaba: el riel de ingredientes (que no llevaba a ninguna parte), los contadores sobre los cuencos, el panel fijo de instrucciones y la barra de ritmo. Se metían entre el dedo y la mesa. Queda lo que informa sin molestar.',
+      'Elige dónde cocinas: cocina de ciudad con azulejo, casa de campo con pared de adobe y luz de tarde, o el patio a cielo abierto. Cambia la pared, el piso, la madera y la luz — nunca las reglas.',
+      'La cámara aprovecha la pantalla de pie: se encuadra por el alto, y los cuencos se adelantaron hasta el filo de abajo, donde antes solo se veía mesón vacío. Ahora la faena ocupa el centro y llega hasta el borde.',
+    ],
+  },
   {
     v: '1.9.0',
     fecha: '2026-08-10',
