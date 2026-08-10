@@ -1311,3 +1311,35 @@ body.con-editor #stage { margin-right: 340px; }
   .editor, .btn-editor { display: none !important; }
   body.con-editor #stage { margin-right: 0; }
 }
+
+/* ---- que las hojas largas se puedan leer ----
+   `.sheet` no tenía alto máximo: una nota de versión con seis
+   puntos —o un brief largo— crecía más que la pantalla y lo de
+   abajo, incluido el botón para cerrarla, quedaba fuera de
+   alcance sin manera de bajar. */
+.modal .sheet {
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2 * var(--sp-5));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.nota-version-lista {
+  text-align: left; align-self: stretch;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  margin: var(--sp-1) 0 var(--sp-2); padding-left: 1.1rem;
+  font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted);
+}
+
+/* ---- la portada, con sus opciones de siempre ---- */
+.portada-acciones { display: flex; flex-direction: column; gap: var(--sp-2); width: 100%; }
+.portada-secundario {
+  display: flex; gap: var(--sp-2); justify-content: center; align-items: center;
+  flex-wrap: wrap; margin-top: var(--sp-1);
+}
+.portada-link {
+  padding: .25rem .7rem;
+  font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(0,0,0,.05);
+  border: 1.5px solid var(--hairline); border-radius: var(--r-pill);
+}
+.portada-link--peligro { color: var(--chile-600); border-color: rgba(206,32,41,.35); }

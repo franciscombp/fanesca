@@ -26,7 +26,11 @@
 
   function mostrarNovedades() {
     const nota = NOVEDADES[0];
-    if (!nota) return;
+    /* Solo lo del JUGADOR. `internos` es la bitácora de autor —
+       herramientas, arquitectura, cosas que no se notan jugando— y
+       no tiene por qué interrumpir a nadie. Si una versión no le
+       cambió nada al jugador, no hay nota que mostrar. */
+    if (!nota || !nota.cambios || !nota.cambios.length) return;
     const modal = document.createElement('div');
     modal.className = 'modal open';
     modal.setAttribute('role', 'dialog');

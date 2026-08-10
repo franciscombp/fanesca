@@ -123,6 +123,20 @@ function mostrar(pantalla) {
 
 /* ---------- modo dev: todos los niveles abiertos, para probar mecánicas ---------- */
 
+function pintarPortada() {
+  const hechos = listos();
+  const btn = $('#btn-empezar');
+  const avance = $('#portada-avance');
+  const reiniciar = $('#btn-reiniciar');
+  if (btn) btn.textContent = hechos ? 'Seguir cocinando' : 'A la mesa de prep';
+  if (avance) {
+    avance.textContent = hechos ? `${hechos} de ${NIVELES.length} ingredientes listos` : '';
+    avance.classList.toggle('hidden', !hechos);
+  }
+  /* borrar el progreso solo se ofrece si hay progreso que borrar */
+  if (reiniciar) reiniciar.classList.toggle('hidden', !hechos);
+}
+
 function pintarDev() {
   const b = $('#btn-dev');
   if (!b) return;
@@ -798,6 +812,37 @@ function bindEventos() {
   $('#btn-empezar').addEventListener('click', () => {
     initAudio(); sfx('tab');
     estado.vistoPortada = true; guardar();
+
+  /* Empezar de nuevo: dos toques. Borrar doce ingredientes ganados
+     por un dedo mal puesto sería imperdonable, y un confirm() del
+     navegador rompe el tono del juego. El propio botón pregunta. */
+  const btnReset = $('#btn-reiniciar');
+  if (btnReset) {
+    let armado = false, armadoId = null;
+    btnReset.addEventListener('click', () => {
+      if (!armado) {
+        armado = true;
+        btnReset.textContent = '¿Seguro? Toca otra vez';
+        clearTimeout(armadoId);
+        armadoId = setTimeout(() => {
+          armado = false;
+          btnReset.textContent = 'Empezar de nuevo';
+        }, 3500);
+        return;
+      }
+      clearTimeout(armadoId);
+      /* se va el progreso, se queda el gusto: escenario y modo dev */
+      const escenario = estado.escenario, dev = estado.devMode;
+      estado = nuevoEstado();
+      estado.escenario = escenario; estado.devMode = dev;
+      guardar();
+      armado = false;
+      btnReset.textContent = 'Empezar de nuevo';
+      pintarPortada();
+      toast('Olla vacía. A empezar de nuevo 🍲');
+      sfx('tab');
+    });
+  }
     mostrar('mesa');
   });
 
@@ -927,7 +972,14 @@ function init() {
 
   bindEventos();
   pintarDev();
-  mostrar(estado.vistoPortada ? 'mesa' : 'portada');
+  /* LA PORTADA SIEMPRE, como cualquier juego: es la pantalla de
+     casa. Saltarla en cuanto había partida guardada dejaba sin
+     ninguna puerta a "empezar de nuevo" ni al modo dev — había que
+     borrar el almacenamiento del navegador para reiniciar. Con
+     progreso, el botón dice "Seguir cocinando" y debajo se ve por
+     dónde vas; sin progreso, invita a empezar. */
+  pintarPortada();
+  mostrar('portada');
 }
 
 /* una ventanita al juego: sirve para depurar en la consola y para

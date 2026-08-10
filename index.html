@@ -43,9 +43,15 @@
         <p>Le dicen la sopa de los doce apóstoles. Debajo hay una fiesta más vieja: darle gracias a la <b>Pachamama</b> por la cosecha. Y todo pasa por las manos.</p>
         <p class="muted">Desgrana con el dedo, abre las vainas, tiende el bacalao. Y si sale un gusanito: <b>no lo aplastes</b> — sácalo a la composta o se arruina la olla entera.</p>
       </div>
-      <button type="button" id="btn-empezar" class="btn btn--lg btn--block">A la mesa de prep</button>
-      <button type="button" id="btn-dev" class="portada-dev">🛠 modo dev</button>
-      <p class="version-tag" data-version></p>
+      <div class="portada-acciones">
+        <button type="button" id="btn-empezar" class="btn btn--lg btn--block">A la mesa de prep</button>
+        <p id="portada-avance" class="portada-sub hidden"></p>
+      </div>
+      <div class="portada-secundario">
+        <button type="button" id="btn-reiniciar" class="portada-link portada-link--peligro hidden">Empezar de nuevo</button>
+        <button type="button" id="btn-dev" class="portada-link">🛠 modo dev</button>
+        <span class="portada-link" data-version></span>
+      </div>
     </div>
   </main>
 
