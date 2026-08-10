@@ -324,6 +324,30 @@ registrar('hoja-choclo', (THREE, opts = {}) => {
     padre.add(nudo);
     padre = nudo;
   }
+
+  /* las hojas interiores tienen pelitos (silk) pegados: fibras finas
+     que hay que quitar junto con la hoja */
+  if (esInterior) {
+    const pelitosHoja = new THREE.Group();
+    pelitosHoja.name = 'pelitos-hoja';
+    /* 4-5 pelitos pequeños distribuidos por la hoja */
+    const pelitosN = 4 + Math.floor(Math.random() * 2);
+    for (let p = 0; p < pelitosN; p++) {
+      const geo = new THREE.CylinderGeometry(0.0015, 0.004, 0.15 + Math.random() * 0.1, 4, 6);
+      geo.translate(0, 0.075, 0);
+      const hilo = new THREE.Mesh(geo, mate(THREE, '#d4cfc0'));
+      hilo.rotation.z = (Math.random() - 0.5) * 0.8;
+      hilo.position.set(
+        (Math.random() - 0.5) * 0.08,
+        0.2 + Math.random() * LARGO_HOJA * 0.7,
+        0.02
+      );
+      hilo.name = 'pelito' + p;
+      pelitosHoja.add(hilo);
+    }
+    raizHoja.add(pelitosHoja);
+  }
+
   return raizHoja;
 });
 
