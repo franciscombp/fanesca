@@ -599,8 +599,13 @@ function colocarCuencos() {
     /* bien por encima del cuenco: a media altura los chips caían
        sobre el borde y se los comía la pista */
     const p = Motor.proyectar(v3.clone().setY(MESA_Y + 0.95));
-    el.style.left = p.x + 'px';
-    el.style.top = (p.y - 6) + 'px';
+    /* y dentro de la pantalla: proyectados a pelo se salían por el
+       filo izquierdo y se metían debajo del panel de pasos */
+    const w = el.offsetWidth || 90;
+    const min = w / 2 + 6;
+    const max = (window.innerWidth || 390) - w / 2 - 6;
+    el.style.left = Math.max(min, Math.min(max, p.x)) + 'px';
+    el.style.top = Math.max(56, p.y - 6) + 'px';
     el.classList.add('visible');
   };
   try { poner('#cuenco-batea', BATEA); poner('#cuenco-composta', COMPOSTA); } catch (e) {}

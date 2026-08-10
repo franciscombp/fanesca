@@ -1135,10 +1135,14 @@ svg[width="0"] { width: 0; height: 0; }
    más que la comida. Una viñeta cálida hunde las esquinas y deja el
    centro —donde están las manos— como lo más claro del cuadro. Es
    lo que separa "escena 3D" de "producto". */
+/* OJO: `.escena` ya es `position:absolute; inset:0`, así que sirve de
+   contexto para este ::after tal cual. Ponerle `position: relative`
+   —como se hizo en el primer intento— la saca del inset y la
+   colapsa a la altura del contenido: la cocina se quedaba en una
+   franja de arriba y el resto de la pantalla era fondo vacío. */
 .escena::after {
   content: ''; position: absolute; inset: 0; z-index: 1;
   pointer-events: none;
   background:
     radial-gradient(120% 78% at 50% 62%, rgba(0,0,0,0) 34%, rgba(28,14,6,.38) 74%, rgba(20,10,4,.62) 100%);
 }
-.escena { position: relative; }
