@@ -597,7 +597,10 @@ export const Motor = {
        centro y son destino de juego: ahí se abre lo justo para que
        quepan. Encuadre apretado en pantallas altas, sin perder nunca
        nada que el dedo necesite. */
-    const VFOV = 62;              /* grados, el que manda */
+    /* 62° se probó y cortaba: el choclo de pie con sus hojas cerradas
+       se salía por arriba y por abajo. 72 aprieta bastante contra los
+       ~81 que salían antes, sin comerse lo que hay que tocar. */
+    const VFOV = 72;              /* grados, el que manda */
     const MEDIO_ANCHO = 1.18;     /* mundo que SIEMPRE tiene que caber */
     const ajustar = () => {
       const w = cont.clientWidth, h = cont.clientHeight;
