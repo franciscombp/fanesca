@@ -23,6 +23,7 @@
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
+import { ANCHO_SEGURO } from './motor3d.js';
 
 let THREE, raiz, api;
 
@@ -71,7 +72,10 @@ function nuevoMelloco(x, z, i) {
 
 /* que ninguno se escape del mundo jugable: la tabla y un margen */
 function encajar(v) {
-  v.x = Math.max(-ANCHO_TABLA / 2 + 0.16, Math.min(ANCHO_TABLA / 2 - 0.16, v.x));
+  /* la tabla es más ancha que lo que se ve: si el melloco resbala
+     hasta su filo, se sale de la pantalla y ya no hay cómo rasparlo */
+  const tope = Math.min(ANCHO_TABLA / 2 - 0.16, ANCHO_SEGURO - 0.18);
+  v.x = Math.max(-tope, Math.min(tope, v.x));
   v.z = Math.max(TABLA_Z - HONDO_TABLA / 2 + 0.14, Math.min(TABLA_Z + HONDO_TABLA / 2 - 0.14, v.z));
   return v;
 }

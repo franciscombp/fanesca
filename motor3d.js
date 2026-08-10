@@ -103,6 +103,16 @@ export const RADIO_CUENCO = 0.44;
 export const FRENTE_TABLA = Math.min(BATEA.z, COMPOSTA.z) - RADIO_CUENCO - 0.06;
 const UMBRAL_ARRASTRE = 8;                               /* px antes de considerar arrastre */
 
+/* HASTA AQUÍ SE VE, Y NADIE DEBE PONER NADA MÁS ALLÁ.
+   La cámara garantiza este medio ancho de mundo a cada lado del
+   centro (ver `ajustar()`). Antes cada nivel esparcía con su propio
+   número —escoger hasta 1.36, el melloco resbalaba a 1.39, los
+   bichos caminaban a 1.3— y al cerrar el encuadre esas cosas
+   quedaron FUERA de la pantalla: granos que no se podían recoger y
+   niveles que no se podían terminar. Ahora hay un solo número, y
+   sale de quien manda: la cámara. */
+export const ANCHO_SEGURO = 1.18;
+
 let renderer, scene, camera, clock, raf = null, activo = false;
 let raiz = null;                 /* donde el nivel arma lo suyo */
 let nivel = null;                /* módulo de nivel en curso */
@@ -618,7 +628,7 @@ export const Motor = {
        se salía por arriba y por abajo. 72 aprieta bastante contra los
        ~81 que salían antes, sin comerse lo que hay que tocar. */
     const VFOV = 72;              /* grados, el que manda */
-    const MEDIO_ANCHO = 1.18;     /* mundo que SIEMPRE tiene que caber */
+    const MEDIO_ANCHO = ANCHO_SEGURO;   /* mundo que SIEMPRE tiene que caber */
     const ajustar = () => {
       const w = cont.clientWidth, h = cont.clientHeight;
       if (!w || !h) return;
