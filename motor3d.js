@@ -108,7 +108,13 @@ let camMira = new THREE.Vector3();
    el punto de mira llena media pantalla de pared de azulejo, que es
    bonita y no se juega. Bajarlo empuja la mesa hacia el centro del
    cuadro, que es donde están los dedos. */
-const CAM_POR_DEFECTO = { pos: [0, 2.74, 3.62], mira: [0, 0.92, 0.52] };
+/* Este encuadre es para lo que se trabaja SOBRE LA TABLA, que son
+   once de los doce: cosas planas y anchas. Se mira más desde arriba
+   y desde más cerca que antes, para que la tabla y los cuencos
+   llenen el alto del teléfono en vez de dejar media pantalla de
+   pared. El choclo, que va de pie, pide lo contrario y por eso trae
+   su propia cámara en nivel-maiz.js. */
+const CAM_POR_DEFECTO = { pos: [0, 3.05, 2.98], mira: [0, 0.98, 0.30] };
 let destelloEl = null;
 let bateaGrupo = null, compostaGrupo = null;
 /* cuánto ha caído en cada cuenco en esta partida, para el marcador */
