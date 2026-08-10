@@ -35,6 +35,8 @@ function nuevoEstado() {
     dias: { ultima: null, seguidos: 0 },
     /* dónde se cocina: se elige en la mesa y se recuerda */
     escenario: POR_DEFECTO,
+    /* el último nivel jugado: para scrollear a él cuando regresas a la mesa */
+    ultimoNivel: null,
   };
 }
 let estado = nuevoEstado();
@@ -173,19 +175,31 @@ function renderEscenarios() {
   const caja = $('#escenarios-lista');
   if (!caja) return;
   const actual = estado.escenario || POR_DEFECTO;
-  caja.innerHTML = ESCENARIOS.map(e => `
-    <button type="button" class="escenario${e.id === actual ? ' escenario--activo' : ''}" data-esc="${e.id}">
+  caja.innerHTML = '';
+  caja.className = 'escenarios-lista';
+
+  ESCENARIOS.forEach(e => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `escenario${e.id === actual ? ' escenario--activo' : ''}`;
+    btn.dataset.esc = e.id;
+    btn.innerHTML = `
       <span class="escenario-emoji" aria-hidden="true">${e.emoji}</span>
-      <span class="escenario-txt"><b>${e.nombre}</b><i>${e.pie}</i></span>
-    </button>`).join('');
-  caja.querySelectorAll('[data-esc]').forEach(b => {
-    b.addEventListener('click', () => {
-      estado.escenario = b.dataset.esc;
+      <span class="escenario-txt">
+        <b>${e.nombre}</b>
+        <i>${e.pie}</i>
+      </span>
+      ${e.id === actual ? '<span class="escenario-check" aria-hidden="true">✓</span>' : ''}`;
+
+    btn.addEventListener('click', () => {
+      if (estado.escenario === e.id) return;
+      estado.escenario = e.id;
       guardar();
       Motor.escenario(estado.escenario);
       sfx('tab'); buzz(10);
       renderEscenarios();
     });
+    caja.appendChild(btn);
   });
 }
 
@@ -302,12 +316,28 @@ function renderMesa() {
   lista.insertAdjacentElement('afterend', desp);
 
   /* el mapa abre MOSTRANDO el siguiente paso: nadie debería tener
-     que hacer scroll para encontrar dónde seguir */
+     que hacer scroll para encontrar dónde seguir.
+     O, si acabas de jugar un nivel, muestra ese nivel en el que estabas */
   const scrollMesa = document.querySelector('#screen-mesa .scroll');
-  const nodoSig = lista.querySelector('.nodo--siguiente') || lista.querySelector('.nodo--olla');
-  if (scrollMesa && nodoSig) {
+  let nodoTarget = null;
+
+  /* primero busca el último nivel que jugaste, si existe */
+  if (estado.ultimoNivel) {
+    const nivelData = porId(estado.ultimoNivel);
+    if (nivelData) {
+      const idx = NIVELES.findIndex(n => n.id === estado.ultimoNivel);
+      nodoTarget = lista.querySelectorAll('.nodo')[idx];
+    }
+  }
+
+  /* si no hay último nivel, usa el siguiente paso */
+  if (!nodoTarget) {
+    nodoTarget = lista.querySelector('.nodo--siguiente') || lista.querySelector('.nodo--olla');
+  }
+
+  if (scrollMesa && nodoTarget) {
     requestAnimationFrame(() => {
-      scrollMesa.scrollTop = Math.max(0, nodoSig.offsetTop - scrollMesa.clientHeight * 0.45);
+      scrollMesa.scrollTop = Math.max(0, nodoTarget.offsetTop - scrollMesa.clientHeight * 0.45);
     });
   }
   /* si ya había una despensa de un render anterior, fuera */
@@ -665,6 +695,8 @@ async function jugar(id) {
   const n = porId(id);
   if (!n) return;
   nivelActual = n;
+  estado.ultimoNivel = id;
+  guardar();
   initAudio();
   /* PARAR ANTES DE PONER EN CERO. Esta función es async: entre el
      `tiempoMs = 0` de aquí abajo y el `arrancarReloj()` del final hay

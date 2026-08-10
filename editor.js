@@ -49,8 +49,14 @@ export function esEscritorio() {
 function cargar() {
   try {
     const raw = localStorage.getItem(CLAVE);
-    if (raw) retoques = Object.assign({ camaras: {} }, JSON.parse(raw));
+    if (raw) retoques = Object.assign({ camaras: {}, recipientes: null }, JSON.parse(raw));
   } catch (e) {}
+  /* Aplicar posiciones de recipientes guardadas si existen */
+  if (retoques.recipientes && Motor.ponerBatea && Motor.ponerComposta) {
+    const r = retoques.recipientes;
+    if (r.bx !== undefined) Motor.ponerBatea(r.bx, r.by, r.bz);
+    if (r.cx !== undefined) Motor.ponerComposta(r.cx, r.cy, r.cz);
+  }
 }
 function guardar() {
   try { localStorage.setItem(CLAVE, JSON.stringify(retoques)); } catch (e) {}
@@ -68,11 +74,30 @@ const CAMPOS_CAM = [
   { k: 'fov', et: 'ángulo vertical', min: 35, max: 95, paso: 1 },
 ];
 
+const CAMPOS_RECIPIENTES = [
+  { nombre: 'batea', campos: [
+    { k: 'bx', et: 'batea x', min: -2, max: 2, paso: 0.02 },
+    { k: 'by', et: 'batea y', min: 0, max: 2, paso: 0.02 },
+    { k: 'bz', et: 'batea z', min: 0, max: 3, paso: 0.02 },
+  ]},
+  { nombre: 'composta', campos: [
+    { k: 'cx', et: 'composta x', min: -2, max: 2, paso: 0.02 },
+    { k: 'cy', et: 'composta y', min: 0, max: 2, paso: 0.02 },
+    { k: 'cz', et: 'composta z', min: 0, max: 3, paso: 0.02 },
+  ]},
+];
+
 function camaraViva() {
   const c = Motor.camara;
   const m = Motor.miraActual ? Motor.miraActual() : { x: 0, y: 1, z: 0 };
   return { px: c.position.x, py: c.position.y, pz: c.position.z,
            mx: m.x, my: m.y, mz: m.z, fov: c.fov };
+}
+
+function recipientesVivos() {
+  const b = Motor.obtenerBatea ? Motor.obtenerBatea() : { x: 0.84, y: 0, z: 1.92 };
+  const c = Motor.obtenerComposta ? Motor.obtenerComposta() : { x: -0.86, y: 0, z: 1.94 };
+  return { bx: b.x, by: b.y, bz: b.z, cx: c.x, cy: c.y, cz: c.z };
 }
 
 const r2 = (n) => Math.round(n * 100) / 100;
@@ -205,6 +230,41 @@ function pintar() {
     sLuz.appendChild(nota);
     cuerpo.appendChild(sLuz);
   }
+
+  /* --- los recipientes: batea y composta --- */
+  if (Motor.ponerBatea && Motor.ponerComposta) {
+    const sRecip = seccion('Recipientes');
+    const estado = recipientesVivos();
+
+    const refrescar = () => {
+      if (Motor.ponerBatea) Motor.ponerBatea(estado.bx, estado.by, estado.bz);
+      if (Motor.ponerComposta) Motor.ponerComposta(estado.cx, estado.cy, estado.cz);
+      retoques.recipientes = { ...estado };
+      guardar();
+    };
+
+    const subsecBatea = document.createElement('div');
+    subsecBatea.className = 'ed-subsec';
+    subsecBatea.innerHTML = '<p style="font-size:0.9em; margin:8px 0 4px; color:#888;">batea</p>';
+    [
+      { k: 'bx', et: 'x', min: -2, max: 2, paso: 0.02 },
+      { k: 'by', et: 'y', min: 0, max: 2, paso: 0.02 },
+      { k: 'bz', et: 'z', min: 0, max: 3, paso: 0.02 },
+    ].forEach(c => subsecBatea.appendChild(fila(c, estado[c.k], n => { estado[c.k] = n; refrescar(); })));
+    sRecip.appendChild(subsecBatea);
+
+    const subsecComposta = document.createElement('div');
+    subsecComposta.className = 'ed-subsec';
+    subsecComposta.innerHTML = '<p style="font-size:0.9em; margin:8px 0 4px; color:#888;">composta</p>';
+    [
+      { k: 'cx', et: 'x', min: -2, max: 2, paso: 0.02 },
+      { k: 'cy', et: 'y', min: 0, max: 2, paso: 0.02 },
+      { k: 'cz', et: 'z', min: 0, max: 3, paso: 0.02 },
+    ].forEach(c => subsecComposta.appendChild(fila(c, estado[c.k], n => { estado[c.k] = n; refrescar(); })));
+    sRecip.appendChild(subsecComposta);
+
+    cuerpo.appendChild(sRecip);
+  }
 }
 
 function alternar(abrir) {
@@ -222,6 +282,12 @@ export const Editor = {
     Motor = motor;
     ganchos = g;
     cargar();
+    /* Aplicar posiciones guardadas de recipientes al iniciar */
+    if (retoques.recipientes && Motor.ponerBatea && Motor.ponerComposta) {
+      const r = retoques.recipientes;
+      if (r.bx !== undefined) Motor.ponerBatea(r.bx, r.by, r.bz);
+      if (r.cx !== undefined) Motor.ponerComposta(r.cx, r.cy, r.cz);
+    }
   },
   nivel(id) {
     nivelId = id;

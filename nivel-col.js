@@ -213,6 +213,10 @@ function revisarFinal() {
 
 export default {
   id: 'col',
+  /* la hoja de col se enrolla de lado a lado: la cámara ve bien el
+     ancho completo, con una altura media que permite ver el progreso
+     del enrollado y el corte sin forzar la vista */
+  camara: { pos: [0, 3.15, 3.75], mira: [0, 0.98, 0.30] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

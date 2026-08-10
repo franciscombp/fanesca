@@ -154,6 +154,10 @@ const moscaEn = (presa) => moscas.find(m => m.estado === 'posada' && m.presa ===
 
 export default {
   id: 'bacalao',
+  /* las presas se tienden a lo ancho del cordel: la cámara se aleja
+     para que se vea el espacio disponible en el tendedero y las moscas
+     no sorprendan — además necesita verse bien el área de frotado */
+  camara: { pos: [0, 3.3, 3.9], mira: [0, 0.98, 0.30] },
 
   construir(ctx) {
     perdonMosca = false;

@@ -1205,30 +1205,83 @@ svg[width="0"] { width: 0; height: 0; }
   bottom: calc(env(safe-area-inset-bottom) + var(--prep-ctrl-h) + var(--sp-4));
 }
 
-/* ---- dónde se cocina: el selector de escenario ---- */
-.escenarios { margin: var(--sp-4) 0 var(--sp-5); }
-.escenarios-tit {
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-sm);
-  color: var(--text-muted); margin-bottom: var(--sp-2);
+/* ---- dónde se cocina: el selector de escenario ----
+   El escenario es la piel del juego: dónde se cocina la fanesca.
+   Debe ser visible, atractivo, y dejar claro cuál está elegido.
+   Se pone como un panel destacado, no escondido entre los niveles. */
+.escenarios {
+  margin: var(--sp-5) 0 var(--sp-6);
+  padding: var(--sp-4);
+  background: linear-gradient(135deg, var(--surface-raised), var(--surface));
+  border: 2px solid var(--ring);
+  border-radius: var(--r-xl);
+  box-shadow: var(--e-2);
 }
-.escenarios-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
+.escenarios-tit {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-base);
+  color: var(--text-main); margin-bottom: var(--sp-3);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.escenarios-tit::before {
+  content: '🏠';
+  font-size: 1.3rem;
+  display: inline-block;
+}
+.escenarios-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: var(--sp-3);
+}
 .escenario {
-  display: flex; align-items: center; gap: var(--sp-3);
-  width: 100%; text-align: left; padding: var(--sp-2) var(--sp-3);
-  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
-  border: var(--ring); border-radius: var(--r-lg);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  text-align: center; padding: var(--sp-3) var(--sp-2);
+  background: linear-gradient(180deg, var(--surface), var(--surface-sunken));
+  border: 2px solid var(--ring);
+  border-radius: var(--r-md);
   box-shadow: var(--e-1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.escenario:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--e-2);
+  border-color: var(--text-muted);
 }
 .escenario--activo {
   border-color: var(--maiz-600);
-  box-shadow: var(--e-2), 0 0 0 3px rgba(255, 201, 60, .3);
+  background: linear-gradient(180deg, rgba(255, 201, 60, 0.15), rgba(255, 201, 60, 0.08));
+  box-shadow: var(--e-2), 0 0 0 2px rgba(255, 201, 60, .4);
+  font-weight: 600;
 }
-.escenario-emoji { font-size: 1.7rem; flex: 0 0 auto; }
-.escenario-txt { display: flex; flex-direction: column; min-width: 0; }
-.escenario-txt b { font-family: var(--font-display); font-size: var(--t-md); }
+.escenario--activo .escenario-emoji {
+  transform: scale(1.15);
+}
+.escenario-emoji {
+  font-size: 2.2rem;
+  display: block;
+  transition: transform 0.2s ease;
+}
+.escenario-txt {
+  display: flex; flex-direction: column; min-width: 0; flex: 1;
+}
+.escenario-txt b {
+  font-family: var(--font-display); font-size: var(--t-sm);
+  line-height: 1.2;
+  color: var(--text-main);
+}
 .escenario-txt i {
-  font-style: normal; font-size: var(--t-xs); color: var(--text-muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-style: normal; font-size: 0.75rem; color: var(--text-muted);
+  line-height: 1.1; margin-top: var(--sp-1);
+}
+.escenario-check {
+  position: absolute; top: var(--sp-2); right: var(--sp-2);
+  font-size: 1.2rem; color: var(--maiz-600);
+  background: rgba(255, 201, 60, 0.2);
+  width: 1.8rem; height: 1.8rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
 }
 
 /* ---- el editor de escena: de ESCRITORIO ----

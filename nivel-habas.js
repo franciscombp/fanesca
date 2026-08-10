@@ -54,11 +54,13 @@ function nuevaVaina(x, z, conGusano) {
   const bisagra = api.parte(v, 'bisagra');
 
   /* las habas van DENTRO de la vaina: así se inclinan con ella y,
-     cuando la cáscara vacía se va a la composta, no queda nada suelto */
+     cuando la cáscara vacía se va a la composta, no queda nada suelto.
+     Se distribuyen en profundidad (Z) en lugar de en ancho (X) para que
+     la vaina quede más vertical y no se salga de pantalla */
   const habas = [];
   for (let i = 0; i < POR_VAINA; i++) {
     const h = api.pieza('haba', { variante: i });
-    h.position.set((i - (POR_VAINA - 1) / 2) * PASO_HABA, -0.008, 0);
+    h.position.set(0, -0.008, (i - (POR_VAINA - 1) / 2) * PASO_HABA);
     h.userData = { tipo: 'haba' };
     h.visible = false;
     habas.push(h);
@@ -160,6 +162,11 @@ function bajoElDedo() {
 
 export default {
   id: 'habas',
+  /* las vainas están en tres columnas (x = -0.96, 0, 0.96) y las habas
+     se abren hacia los lados: la cámara se aleja más de lo normal para
+     que todo quepa en pantalla. Un poco más de altura ayuda a ver mejor
+     la disposición de las vainas */
+  camara: { pos: [0, 3.2, 3.8], mira: [0, 0.98, 0.30] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

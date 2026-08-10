@@ -37,8 +37,9 @@ const GORGOJOS = 2;
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
 /* el grano tiene su propio bulto: se deja margen para que ninguno
-   quede con medio cuerpo fuera del cuadro */
-const ANCHO = ANCHO_SEGURO - 0.16, HONDO = 0.62;
+   quede con medio cuerpo fuera del cuadro.
+   Se gira la disposición: más en profundidad (Z) que en ancho (X) */
+const ANCHO = 0.62, HONDO = 1.02;
 const RADIO_DEDO = 0.17;         /* fino a propósito, pero no imposible */
 const RADIO_BARRIDO = 0.28;
 

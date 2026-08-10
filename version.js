@@ -30,10 +30,24 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.10.1';
+const APP_VERSION = '1.10.2';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.10.2',
+    fecha: '2026-08-10',
+    titulo: 'La vista que le queda a cada nivel',
+    cambios: [
+      'Las habas, fréjol, arvejas, col y bacalao tienen ahora su propia cámara optimizada. Cada nivel ve exactamente lo que necesita: en los que tienen elementos dispersos a lo ancho, la cámara se aleja un poco más y se levanta para que no se escape nada.',
+      'El resultado es más claro: sin que nada escape, y sin que sobre espacio vacío que distraiga.',
+    ],
+    internos: [
+      'Cámaras personalizadas en nivel-habas, nivel-frejol, nivel-arveja, nivel-col, nivel-bacalao.',
+      'Todas con posición (Z) más alejada (3.75–3.9 vs 2.98 por defecto) y altura (Y) levantada un poco (3.15–3.3 vs 3.05).',
+      'La mira (lookAt) se mantiene en el mismo sitio para que la mesa se vea desde el mismo ángulo, solo que desde más atrás.',
+    ],
+  },
   {
     v: '1.10.1',
     fecha: '2026-08-10',
