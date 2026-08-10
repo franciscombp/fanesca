@@ -14,10 +14,23 @@
    guardada — que es justo lo que hace que funcione sin conexión.
    ============================================================ */
 
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.9.0',
+    fecha: '2026-08-10',
+    titulo: 'La cocina se ve como se debe ver',
+    cambios: [
+      'La interfaz entera se rehízo: paneles de vidrio con filo dorado, la cabecera con el ingrediente y su icono, la barra con el porcentaje al lado y el reloj con su cronómetro.',
+      'Los cuencos cuentan en voz alta: cuántos granos llevas y cuántas cáscaras botaste, sobre cada uno. La cuenta se lleva en el motor, así que los doce ingredientes la muestran sin que ninguno pueda olvidarse de sumar.',
+      'Los aciertos seguidos ya no son un numerito de esquina: son un cartel grande —¡BIEN!, ¡PERFECTO!, ¡IMPARABLE!— y cada grano suelta su +10 volando hacia la batea.',
+      'Nuevo medidor de ritmo: PERFECTO, BIEN, REGULAR o LENTO, con la aguja corriendo contra los mismos umbrales con los que se ganan las cucharas. El reloj por fin dice algo mientras juegas.',
+      'A la derecha, los pasos del nivel se tachan solos; abajo, el camino de los doce ingredientes va contigo sin salir de la cocina.',
+      'Y la cocina tiene cosas: ollas de barro en la repisa, un textil andino sobre el mesón, una ventana que explica de dónde viene el sol, y un foco tibio sobre la tabla para que lo que estás cocinando sea lo más brillante del cuadro.',
+    ],
+  },
   {
     v: '1.8.0',
     fecha: '2026-08-09',

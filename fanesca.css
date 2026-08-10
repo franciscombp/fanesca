@@ -1155,8 +1155,11 @@ svg[width="0"] { width: 0; height: 0; }
 /* Los botones eran dos pastillas blancas enormes tapando los cuencos.
    En la referencia son un panel de vidrio a media altura, a la
    izquierda, lejos de donde caen las cosas. */
+/* a media altura los botones caían justo sobre el chip de la
+   composta; suben al hueco que queda bajo la cabecera, donde no
+   estorban ni a los cuencos ni al ingrediente */
 .juego-controles {
-  top: 46%; bottom: auto; left: 0; right: auto;
+  top: 29%; bottom: auto; left: 0; right: auto;
   width: auto;
   flex-direction: column; align-items: flex-start; gap: .4rem;
   padding-left: var(--sp-3);
