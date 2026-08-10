@@ -596,7 +596,9 @@ function colocarCuencos() {
   const poner = (id, v3) => {
     const el = $(id);
     if (!el) return;
-    const p = Motor.proyectar(v3.clone().setY(MESA_Y + 0.42));
+    /* bien por encima del cuenco: a media altura los chips caían
+       sobre el borde y se los comía la pista */
+    const p = Motor.proyectar(v3.clone().setY(MESA_Y + 0.95));
     el.style.left = p.x + 'px';
     el.style.top = (p.y - 6) + 'px';
     el.classList.add('visible');

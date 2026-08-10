@@ -134,7 +134,12 @@ export function construirCocina(THREE, MESA_Y) {
   const tiles = texturaAzulejos(THREE);
   tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping;
   tiles.repeat.set(4, 3.4);
-  const pared = new THREE.Mesh(new THREE.PlaneGeometry(11, 9), new THREE.MeshLambertMaterial({ map: tiles }));
+  /* El azulejo iba a todo color y se comía la escena: el fondo
+     pesaba más que la comida, que es justo al revés de lo que hace
+     una foto de producto. Se le baja el brillo con un tinte cálido
+     —sigue siendo talavera, pero se queda atrás. */
+  const pared = new THREE.Mesh(new THREE.PlaneGeometry(11, 9),
+    new THREE.MeshLambertMaterial({ map: tiles, color: '#8a7a6a' }));
   pared.position.set(0, 3.4, -1.9);
   pared.name = 'pared';
   grupo.add(pared);

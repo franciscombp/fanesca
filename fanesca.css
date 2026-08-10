@@ -1086,3 +1086,59 @@ svg[width="0"] { width: 0; height: 0; }
   .flota { animation-duration: .01ms; }
   .hud-combo.brinca .hud-combo-x, .cuenco-chip.brinca { animation: none; }
 }
+
+
+/* ============================================================
+   AJUSTES DESPUÉS DE VERLO EN PANTALLA
+   La primera pasada se veía mal por tres razones concretas, y todas
+   se arreglan aquí porque este bloque va último y gana.
+   ============================================================ */
+
+/* 1 · La cabecera se apilaba: había un `flex-direction: column` más
+   arriba que le ganaba a mi `display:flex`. En fila, y con radio de
+   caja —el radio de píldora sobre una caja alta se veía como un
+   huevo. */
+.hud-centro {
+  flex-direction: row; align-items: center;
+  border-radius: var(--r-lg);
+  padding: .34rem .7rem .34rem .34rem;
+  gap: .5rem;
+}
+.hud-centro-txt { display: flex; flex-direction: column; gap: .18rem; }
+/* la barra no se veía: canal oscuro sobre panel oscuro */
+.hud-centro .meter {
+  background: rgba(255, 240, 210, .22);
+  border: 1px solid rgba(0, 0, 0, .35);
+}
+.hud-tarea { font-size: var(--t-sm); }
+
+/* 2 · La pila de abajo se pisaba entre sí. Cada cosa con su altura
+   declarada y su sitio, de abajo hacia arriba:
+   riel → medidor de ritmo → botones → pista. */
+:root {
+  --prep-riel-h: 3.5rem;
+  --prep-ritmo-h: 1.5rem;
+  --base-riel: calc(env(safe-area-inset-bottom) + var(--prep-riel-h));
+}
+.hud-ritmo { bottom: calc(var(--base-riel) + .3rem); width: min(92%, 22rem); }
+.juego-controles {
+  bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + .7rem);
+  align-items: flex-start;
+}
+.juego-pista {
+  bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + var(--prep-ctrl-h) + 1rem);
+  font-size: var(--t-sm); max-width: 82%;
+  padding: .45rem 1rem;
+}
+
+/* 3 · La escena se veía plana y azul: el azulejo del fondo pesaba
+   más que la comida. Una viñeta cálida hunde las esquinas y deja el
+   centro —donde están las manos— como lo más claro del cuadro. Es
+   lo que separa "escena 3D" de "producto". */
+.escena::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 78% at 50% 62%, rgba(0,0,0,0) 34%, rgba(28,14,6,.38) 74%, rgba(20,10,4,.62) 100%);
+}
+.escena { position: relative; }
