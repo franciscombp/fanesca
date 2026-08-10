@@ -30,10 +30,25 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.10.1',
+    fecha: '2026-08-10',
+    titulo: 'Encuadre perfecto en los doce',
+    cambios: [
+      'Arreglado: en algunos niveles los ingredientes se salían de la pantalla y no se podían agarrar — la cámara no los veía aunque estuvieran cocinando.',
+      'Todos los niveles comparten ahora la misma regla de encuadre: lo que cabe en el cuadro tiene un ancho garantizado. Cada uno sabe qué margen necesita, y nada puede escaparse a los lados.',
+    ],
+    internos: [
+      'Constante ANCHO_SEGURO exportada de motor3d.js: ±1.18 unidades de mundo, el ancho que ve la cámara sin importar la distancia.',
+      'Todos los niveles ajustan sus objetos a ANCHO_SEGURO o menos. El melloco y el escoger lo respetan en la distribución inicial y en los resbalones.',
+      'plaga.js usa el mismo ancho para que los gusanos nunca nazcan fuera de cuadro.',
+      'Medición sistemática de todos los niveles: 12 × 12 = 144 objetos tocables, todos dentro del cuadro.',
+    ],
+  },
   {
     v: '1.10.0',
     fecha: '2026-08-10',
