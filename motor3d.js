@@ -111,6 +111,9 @@ let camMira = new THREE.Vector3();
 const CAM_POR_DEFECTO = { pos: [0, 2.74, 3.62], mira: [0, 0.92, 0.52] };
 let destelloEl = null;
 let bateaGrupo = null, compostaGrupo = null;
+/* cuánto ha caído en cada cuenco en esta partida, para el marcador */
+const cuenta = { batea: 0, composta: 0 };
+let onCuenco = null;
 
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
@@ -270,6 +273,13 @@ function pasoVuelos() {
        Sin esto, los aciertos aterrizaban en un cuenco de piedra. */
     const cerca = (g, p) => g && Math.hypot(g.position.x - p.x, g.position.z - p.z) < 0.55;
     const receptor = cerca(bateaGrupo, v.hasta) ? bateaGrupo : (cerca(compostaGrupo, v.hasta) ? compostaGrupo : null);
+    /* LOS CONTADORES DE LOS CUENCOS SE LLEVAN AQUÍ, no en cada nivel:
+       aquí ya se sabe qué cuenco recibió qué, así que los doce
+       ingredientes muestran su cuenta sin escribir una línea propia
+       —y ninguno se puede olvidar de sumar. */
+    if (receptor === bateaGrupo) cuenta.batea++;
+    else if (receptor === compostaGrupo) cuenta.composta++;
+    if (receptor && onCuenco) onCuenco(cuenta);
     if (receptor && !receptor.userData.pop) {
       receptor.userData.pop = true;
       const s0 = receptor.scale.x;
@@ -613,9 +623,15 @@ export const Motor = {
     };
     llenarRecipiente('batea', 0);
     llenarRecipiente('composta', 0);
+    cuenta.batea = 0; cuenta.composta = 0;
+    if (onCuenco) onCuenco(cuenta);
     nivel.construir(ctx);
     return nivel;
   },
+
+  /* quién quiere enterarse de lo que cae en los cuencos (el marcador) */
+  alCuenco(fn) { onCuenco = fn; },
+  get cuenta() { return { ...cuenta }; },
 
   /* El orden importa: PRIMERO se barre y se tira lo que hay colgado,
      DESPUÉS se avisa al nivel. Al revés, un nivel que en su destruir()

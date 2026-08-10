@@ -101,14 +101,39 @@
     <div id="destello" class="destello" aria-hidden="true"></div>
 
     <header id="juego-hud" class="juego-hud">
-      <button type="button" id="btn-salir" class="hud-salir" aria-label="Volver a la mesa">‹</button>
       <div class="hud-centro">
-        <p id="hud-tarea" class="hud-tarea">Desgranar el choclo</p>
-        <div class="meter"><span id="hud-barra" class="meter-fill"></span></div>
+        <span id="hud-icono" class="hud-icono" aria-hidden="true"></span>
+        <div class="hud-centro-txt">
+          <p id="hud-tarea" class="hud-tarea">Desgranar el choclo</p>
+          <div class="hud-barra-fila">
+            <div class="meter"><span id="hud-barra" class="meter-fill"></span></div>
+            <span id="hud-pct" class="hud-pct">0%</span>
+          </div>
+        </div>
       </div>
-      <span id="hud-racha" class="hud-racha" aria-hidden="true"></span>
-      <span id="hud-tiempo" class="pill hud-tiempo">0.0s</span>
+      <span id="hud-tiempo" class="pill hud-tiempo"><span class="hud-crono" aria-hidden="true">⏱</span><span id="hud-tiempo-n">0.0s</span></span>
+      <button type="button" id="btn-salir" class="hud-salir" aria-label="Volver a la mesa">⏸</button>
     </header>
+
+    <!-- el combo, grande, a la izquierda -->
+    <div id="hud-combo" class="hud-combo" aria-hidden="true">
+      <p id="hud-combo-tit" class="hud-combo-tit">¡PERFECTO!</p>
+      <p id="hud-combo-x" class="hud-combo-x">x2</p>
+      <p class="hud-combo-pie">COMBO</p>
+    </div>
+    <span id="hud-racha" class="hud-racha" aria-hidden="true"></span>
+
+    <!-- los puntos que suben al acertar -->
+    <div id="hud-flotantes" class="hud-flotantes" aria-hidden="true"></div>
+
+    <!-- lo que va cayendo en cada cuenco -->
+    <div id="hud-cuencos" class="hud-cuencos" aria-hidden="true">
+      <span id="cuenco-batea" class="cuenco-chip cuenco-chip--bueno"><b>0</b><i></i></span>
+      <span id="cuenco-composta" class="cuenco-chip cuenco-chip--malo"><b>0</b><i></i></span>
+    </div>
+
+    <!-- qué toca hacer, siempre a la vista -->
+    <aside id="hud-pasos" class="hud-pasos" aria-hidden="true"></aside>
 
     <p id="hud-alerta" class="hud-alerta" role="status" aria-live="polite"></p>
     <div id="voz" class="voz" role="status" aria-live="polite">
@@ -117,6 +142,20 @@
     </div>
     <div id="juego-controles" class="juego-controles"></div>
     <p id="juego-pista" class="juego-pista"></p>
+
+    <!-- cómo vas contra el reloj: perfecto / bien / regular -->
+    <div id="hud-ritmo" class="hud-ritmo" aria-hidden="true">
+      <div class="ritmo-barra">
+        <span class="ritmo-tramo ritmo-tramo--perfecto">PERFECTO</span>
+        <span class="ritmo-tramo ritmo-tramo--bien">BIEN</span>
+        <span class="ritmo-tramo ritmo-tramo--regular">REGULAR</span>
+        <span class="ritmo-tramo ritmo-tramo--fallo">LENTO</span>
+      </div>
+      <span id="ritmo-aguja" class="ritmo-aguja"></span>
+    </div>
+
+    <!-- el camino de los doce, en chiquito, mientras juegas -->
+    <nav id="hud-riel" class="hud-riel" aria-label="Ingredientes"></nav>
   </main>
 
   <!-- ================= Modal: cómo se hace ================= -->

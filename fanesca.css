@@ -832,3 +832,257 @@ svg[width="0"] { width: 0; height: 0; }
 
 /* la barra de progreso con canal visible: vacía también se ve */
 .hud-centro .meter { background: rgba(43, 33, 41, .34); border-radius: 5px; }
+
+
+/* ============================================================
+   HUD DE JUEGO, SEGUNDA PASADA
+   La referencia era un juego de móvil "premium": paneles de vidrio
+   oscuro con filo dorado, cifras grandes, y todo lo que importa
+   legible sin buscarlo. La regla al armarlo fue una sola: nada de
+   esto puede tapar el centro de la pantalla, que es donde están
+   las manos trabajando.
+   ============================================================ */
+
+:root {
+  --vidrio: linear-gradient(180deg, rgba(28,18,14,.92), rgba(16,10,8,.95));
+  --filo-oro: rgba(255, 201, 60, .55);
+  --oro-glow: 0 0 16px rgba(255, 201, 60, .28);
+}
+
+/* ---- cabecera ---- */
+.juego-hud { align-items: flex-start; gap: var(--sp-2); }
+
+.hud-centro {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .4rem .8rem .45rem .45rem;
+  background: var(--vidrio);
+  border: 2px solid var(--filo-oro);
+  border-radius: var(--r-pill);
+  box-shadow: var(--e-3), var(--oro-glow);
+  min-width: 0; flex: 1;
+}
+.hud-icono {
+  flex: 0 0 auto; width: 2.5rem; height: 2.5rem;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 40% 32%, rgba(255,210,110,.34), rgba(0,0,0,.28));
+  border: 2px solid var(--filo-oro); border-radius: 50%;
+}
+.hud-icono svg { width: 78%; height: 78%; }
+.hud-centro-txt { min-width: 0; flex: 1; }
+.hud-tarea {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: var(--t-md); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.6);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: .2rem;
+}
+.hud-barra-fila { display: flex; align-items: center; gap: .45rem; }
+.hud-barra-fila .meter { flex: 1; height: 11px; border-radius: 6px; }
+.hud-centro .meter-fill {
+  background: linear-gradient(180deg, #ffe08a, var(--maiz-400));
+  box-shadow: 0 0 10px rgba(255,201,60,.55);
+}
+.hud-pct {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-sm);
+  color: var(--maiz-300); text-shadow: 0 1px 2px rgba(0,0,0,.7);
+  min-width: 2.6rem; text-align: right;
+}
+
+/* el reloj, con su cronómetro */
+.hud-tiempo {
+  display: inline-flex; align-items: center; gap: .34rem;
+  padding: .42rem .8rem;
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-lg);
+  color: #fff;
+  background: var(--vidrio);
+  border: 2px solid var(--filo-oro);
+  box-shadow: var(--e-3), var(--oro-glow);
+  min-width: 0;
+}
+.hud-crono { font-size: 1em; filter: saturate(1.2); }
+
+/* pausa */
+.hud-salir {
+  flex: 0 0 auto;
+  background: var(--vidrio);
+  border: 2px solid var(--filo-oro);
+  color: #fff; font-size: var(--t-lg);
+  box-shadow: var(--e-3), var(--oro-glow);
+}
+
+/* ---- el combo, grande, a la izquierda ---- */
+.hud-combo {
+  position: absolute; left: var(--sp-3);
+  top: calc(var(--prep-hud-h) + var(--sp-5)); z-index: 5;
+  text-align: center; pointer-events: none;
+  opacity: 0; transform: scale(.7) translateY(6px);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-pop);
+}
+.hud-combo.visible { opacity: 1; transform: scale(1) translateY(0); }
+.hud-combo-tit {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-sm);
+  color: var(--nopal-300); letter-spacing: .06em;
+  text-shadow: 0 2px 0 rgba(30,60,10,.6), 0 0 12px rgba(140,198,63,.7);
+}
+.hud-combo-x {
+  font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; line-height: .95;
+  color: #fff;
+  text-shadow: 0 3px 0 rgba(120,70,10,.75), 0 0 20px rgba(255,201,60,.85);
+}
+.hud-combo-pie {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-xs);
+  color: var(--maiz-300); letter-spacing: .16em;
+  text-shadow: 0 2px 3px rgba(0,0,0,.6);
+}
+.hud-combo.brinca .hud-combo-x { animation: combo-brinca .32s var(--ease-pop); }
+@keyframes combo-brinca { 0% { transform: scale(1); } 45% { transform: scale(1.28); } 100% { transform: scale(1); } }
+
+/* ---- los +N que suben ---- */
+.hud-flotantes { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.flota {
+  position: absolute; transform: translate(-50%, -50%);
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-xl);
+  color: var(--nopal-300);
+  text-shadow: 0 2px 0 rgba(30,60,10,.7), 0 0 14px rgba(140,198,63,.8);
+  animation: flota-sube .9s var(--ease-out) forwards;
+}
+@keyframes flota-sube {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  22%  { opacity: 1; transform: translate(-50%, -78%) scale(1.12); }
+  100% { opacity: 0; transform: translate(-50%, -190%) scale(1); }
+}
+
+/* ---- contadores de los cuencos ---- */
+.hud-cuencos { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.cuenco-chip {
+  position: absolute; transform: translate(-50%, 0);
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .22rem .6rem;
+  background: var(--vidrio);
+  border: 2px solid var(--filo-oro); border-radius: var(--r-pill);
+  box-shadow: var(--e-2);
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
+  color: #fff; white-space: nowrap;
+  opacity: 0; transition: opacity var(--dur) var(--ease-out);
+}
+.cuenco-chip.visible { opacity: 1; }
+.cuenco-chip i { font-style: normal; font-size: var(--t-2xs); letter-spacing: .08em; opacity: .8; }
+.cuenco-chip--bueno { border-color: rgba(140,198,63,.65); }
+.cuenco-chip--malo  { border-color: rgba(180,99,44,.7); }
+.cuenco-chip.brinca { animation: combo-brinca .28s var(--ease-pop); }
+
+/* ---- pasos del nivel, a la derecha ---- */
+.hud-pasos {
+  position: absolute; right: var(--sp-3);
+  top: calc(var(--prep-hud-h) + var(--sp-5)); z-index: 5;
+  width: 5.6rem; padding: .5rem .4rem;
+  background: var(--vidrio);
+  border: 2px solid var(--filo-oro); border-radius: var(--r-lg);
+  box-shadow: var(--e-3);
+  opacity: 0; transition: opacity var(--dur) var(--ease-out);
+  pointer-events: none;
+}
+.hud-pasos.visible { opacity: 1; }
+.paso { text-align: center; padding: .34rem .1rem; }
+.paso + .paso { border-top: 1.5px solid rgba(255,255,255,.14); }
+.paso-ico { font-size: 1.35rem; line-height: 1.1; display: block; }
+.paso-txt {
+  font-family: var(--font-text); font-weight: 700; font-size: var(--t-2xs);
+  color: rgba(255,255,255,.86); line-height: 1.18; display: block; margin-top: .12rem;
+}
+.paso--hecho { opacity: .42; }
+.paso--hecho .paso-txt { text-decoration: line-through; }
+.paso--activo .paso-txt { color: var(--maiz-300); }
+.paso--activo { background: rgba(255,201,60,.12); border-radius: var(--r-md); }
+
+/* ---- el ritmo contra el reloj ---- */
+.hud-ritmo {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom) + var(--prep-riel-h) + var(--sp-2));
+  z-index: 4; width: min(88%, 21rem);
+  opacity: 0; transition: opacity var(--dur) var(--ease-out);
+  pointer-events: none;
+}
+.hud-ritmo.visible { opacity: 1; }
+.ritmo-barra {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+  border: 2px solid rgba(255,255,255,.22); border-radius: var(--r-pill);
+  overflow: hidden; box-shadow: var(--e-2);
+}
+.ritmo-tramo {
+  padding: .2rem 0; text-align: center;
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-2xs);
+  letter-spacing: .05em; color: rgba(255,255,255,.92);
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+.ritmo-tramo--perfecto { background: linear-gradient(180deg, #4c8f2a, #2f6417); }
+.ritmo-tramo--bien     { background: linear-gradient(180deg, #7d9b23, #5a7314); }
+.ritmo-tramo--regular  { background: linear-gradient(180deg, #b4632c, #8a4519); }
+.ritmo-tramo--fallo    { background: linear-gradient(180deg, #8e2b22, #641914); }
+.ritmo-aguja {
+  position: absolute; top: -7px; left: 12%;
+  width: 0; height: 0; transform: translateX(-50%);
+  border-left: 7px solid transparent; border-right: 7px solid transparent;
+  border-top: 9px solid #fff;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6));
+  transition: left var(--dur) var(--ease-out);
+}
+
+/* ---- el riel de los doce, mientras juegas ---- */
+:root { --prep-riel-h: 3.6rem; }
+.hud-riel {
+  position: absolute; left: 0; right: 0;
+  bottom: env(safe-area-inset-bottom); z-index: 5;
+  height: var(--prep-riel-h);
+  display: flex; align-items: center; gap: .1rem;
+  padding: 0 var(--sp-2);
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+  background: linear-gradient(180deg, rgba(20,12,9,.0), rgba(20,12,9,.86) 38%);
+  pointer-events: none;
+}
+.hud-riel::-webkit-scrollbar { display: none; }
+.riel-item {
+  flex: 0 0 auto; width: 3.05rem; text-align: center;
+  position: relative;
+}
+.riel-plato {
+  width: 2.2rem; height: 2.2rem; margin: 0 auto;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 40% 32%, rgba(255,225,160,.22), rgba(0,0,0,.42));
+  border: 2px solid rgba(255,255,255,.22); border-radius: 50%;
+}
+.riel-plato svg { width: 74%; height: 74%; }
+.riel-item--hecho .riel-plato { border-color: rgba(140,198,63,.8); }
+.riel-item--ahora .riel-plato {
+  border-color: var(--maiz-300);
+  box-shadow: 0 0 0 3px rgba(255,201,60,.28), 0 0 14px rgba(255,201,60,.6);
+}
+.riel-item--porvenir { opacity: .45; }
+.riel-txt {
+  display: block; margin-top: .1rem;
+  font-family: var(--font-text); font-weight: 700; font-size: 9px;
+  color: rgba(255,255,255,.8); letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.riel-item--ahora .riel-txt { color: var(--maiz-300); }
+.riel-marca {
+  position: absolute; right: .22rem; top: 1.35rem;
+  width: 1rem; height: 1rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 9px; font-weight: 800; color: #10240a;
+  background: var(--nopal-300); border: 1.5px solid rgba(255,255,255,.7);
+}
+.riel-item--porvenir .riel-marca { background: rgba(255,255,255,.55); color: #333; }
+
+/* con el riel abajo, las pistas y los controles suben */
+.juego-controles { bottom: calc(env(safe-area-inset-bottom) + var(--prep-riel-h) + var(--sp-4)); }
+.juego-pista { bottom: calc(env(safe-area-inset-bottom) + var(--prep-riel-h) + var(--prep-ctrl-h) + var(--sp-4)); }
+
+/* los controles, en columna a la izquierda como en la referencia */
+.juego-controles { flex-direction: column; align-items: flex-start; padding-left: var(--sp-3); }
+.ctrl { min-width: 4.4rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flota { animation-duration: .01ms; }
+  .hud-combo.brinca .hud-combo-x, .cuenco-chip.brinca { animation: none; }
+}

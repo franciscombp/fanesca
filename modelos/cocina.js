@@ -226,6 +226,81 @@ export function construirCocina(THREE, MESA_Y) {
     vapores.push(p);
   }
 
+  /* ---------- la cocina que se ve DETRÁS ----------
+     La referencia que pidió el jugador es una cocina de casa con
+     cosas: ollas de barro en la repisa, un textil en el mesón, luz
+     de ventana entrando de lado. Nada de esto se toca ni estorba —
+     está para que el ingrediente tenga dónde estar. */
+
+  /* ollas de barro en la repisa, de tres tamaños */
+  const barro = [
+    [-2.5, 0.20, '--madera-400'], [-1.95, 0.15, '--madera-500'],
+    [-1.5, 0.24, '--madera-300'], [3.05, 0.18, '--madera-500'],
+  ];
+  barro.forEach(([x, r, tok], i) => {
+    const o = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 12), mateToken(THREE, tok, '#b4632c'));
+    o.scale.y = 0.82;
+    o.position.set(x, 2.5 + r * 0.8, -1.76);
+    o.name = 'olla-barro' + i;
+    grupo.add(o);
+    const cuello = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.5, r * 0.62, r * 0.34, 12), mateToken(THREE, '--madera-600', '#723713'));
+    cuello.position.set(x, 2.5 + r * 1.5, -1.76);
+    cuello.name = 'cuello-barro' + i;
+    grupo.add(cuello);
+  });
+  /* la repisa se alarga para sostenerlas */
+  const repisa2 = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.09, 0.42), mateToken(THREE, '--madera-400', '#b4632c'));
+  repisa2.position.set(-2.0, 2.42, -1.78);
+  repisa2.name = 'repisa2';
+  grupo.add(repisa2);
+
+  /* el textil andino sobre el mesón: la franja de color que en la
+     referencia hace que la madera no sea un vacío café */
+  const textilTex = texturaCanvas(THREE, (ctx, S) => {
+    ctx.fillStyle = token('--madera-700', '#4b230b');
+    ctx.fillRect(0, 0, S, S);
+    const franjas = [
+      token('--chile-500', '#ce2029'), token('--maiz-300', '#ffc93c'),
+      token('--talavera-300', '#5f97d8'), token('--nopal-400', '#8cc63f'),
+      token('--rosa-400', '#f53d8a'),
+    ];
+    const h = S / 10;
+    for (let i = 0; i < 10; i++) {
+      ctx.fillStyle = franjas[i % franjas.length];
+      ctx.fillRect(0, i * h, S, h * 0.62);
+      /* el rombo del tejido */
+      ctx.fillStyle = 'rgba(255,255,255,.32)';
+      for (let x = 0; x < S; x += h) {
+        ctx.beginPath();
+        ctx.moveTo(x + h / 2, i * h + h * 0.1);
+        ctx.lineTo(x + h * 0.82, i * h + h * 0.31);
+        ctx.lineTo(x + h / 2, i * h + h * 0.52);
+        ctx.lineTo(x + h * 0.18, i * h + h * 0.31);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+  }, 256);
+  textilTex.wrapS = textilTex.wrapT = THREE.RepeatWrapping;
+  textilTex.repeat.set(3, 1);
+  const textil = new THREE.Mesh(new THREE.PlaneGeometry(9, 0.62),
+    new THREE.MeshLambertMaterial({ map: textilTex }));
+  textil.rotation.x = -Math.PI / 2;
+  textil.position.set(0, MESA_Y + 0.002, 1.72);
+  textil.name = 'textil';
+  grupo.add(textil);
+
+  /* la ventana por la izquierda: de ahí viene el sol, y verla
+     explica la luz en vez de que caiga de la nada */
+  const luzVentana = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.0),
+    new THREE.MeshBasicMaterial({ color: '#fff3d6', transparent: true, opacity: 0.9 }));
+  luzVentana.position.set(-3.5, 3.1, -1.86);
+  luzVentana.name = 'ventana';
+  grupo.add(luzVentana);
+  const marco = new THREE.Mesh(new THREE.BoxGeometry(1.9, 2.2, 0.08), mateToken(THREE, '--madera-600', '#723713'));
+  marco.position.set(-3.5, 3.1, -1.9);
+  marco.name = 'marco-ventana';
+  grupo.add(marco);
+
   /* ---------- la luz ----------
      Tres luces, y ninguna fuerte. El error fácil es una sola
      direccional potente: da un lado quemado y otro casi negro, y eso
@@ -236,12 +311,21 @@ export function construirCocina(THREE, MESA_Y) {
      cosas del fondo. */
 
   /* el cielo de la cocina: relleno envolvente, la que más aporta */
-  grupo.add(new THREE.HemisphereLight('#fff8ec', token('--madera-400', '#b4632c'), 1.55));
+  grupo.add(new THREE.HemisphereLight('#fff3dc', token('--madera-400', '#b4632c'), 1.42));
 
-  /* la principal: sol de ventana por la izquierda, suave */
-  const sol = new THREE.DirectionalLight('#fff4e2', 1.3);
+  /* la principal: sol de ventana por la izquierda, suave y más cálido
+     — la referencia es una cocina de tarde, no un quirófano */
+  const sol = new THREE.DirectionalLight('#ffe6bd', 1.45);
   sol.position.set(-2.5, 5.5, 4);
   grupo.add(sol);
+
+  /* el foco de la faena: un punto tibio justo sobre la tabla, para
+     que el ingrediente sea lo más brillante del cuadro y el ojo caiga
+     ahí solo. Es el truco que separa "escena 3D" de "producto". */
+  const foco = new THREE.PointLight('#ffd9a0', 1.05, 6.5, 2);
+  foco.position.set(0, MESA_Y + 2.1, 1.5);
+  foco.name = 'foco-faena';
+  grupo.add(foco);
 
   /* el relleno del otro lado: sin esto la cara derecha se apaga */
   const relleno = new THREE.DirectionalLight('#e8f0ff', 0.34);

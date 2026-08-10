@@ -10,6 +10,8 @@
 export const NIVELES = [
   {
     id: 'maiz',
+    cuenta: 'granos',
+    pasos: [{ ico: '🌽', txt: 'Arranca las hojas', desde: 0 }, { ico: '🌾', txt: 'Desgrana los granos', desde: 0.18 }],
     nombre: 'El choclo',
     tarea: 'Deshojar y desgranar',
     icono: 'maiz',
@@ -22,6 +24,8 @@ export const NIVELES = [
   },
   {
     id: 'habas',
+    cuenta: 'habas',
+    pasos: [{ ico: '🫛', txt: 'Abre las vainas', desde: 0 }, { ico: '🟢', txt: 'Saca las habas', desde: 0.15 }],
     nombre: 'Las habas',
     tarea: 'Desvainar',
     icono: 'granos_mixtos',
@@ -33,6 +37,8 @@ export const NIVELES = [
   },
   {
     id: 'arveja',
+    cuenta: 'arvejas',
+    pasos: [{ ico: '🧵', txt: 'Jala el hilo', desde: 0 }, { ico: '🫛', txt: 'Corre el pulgar', desde: 0.15 }],
     nombre: 'La arveja',
     tarea: 'Deshilar y correr',
     icono: 'arveja',
@@ -44,6 +50,8 @@ export const NIVELES = [
   },
   {
     id: 'chochos',
+    cuenta: 'chochos',
+    pasos: [{ ico: '🤏', txt: 'Aprieta cada chocho', desde: 0 }],
     nombre: 'Los chochos',
     tarea: 'Pelar',
     icono: 'granos_mixtos',
@@ -55,6 +63,8 @@ export const NIVELES = [
   },
   {
     id: 'frejol',
+    cuenta: 'fréjoles',
+    pasos: [{ ico: '✊', txt: 'Aprieta hasta que truene', desde: 0 }, { ico: '🫘', txt: 'Barre los granos', desde: 0.2 }],
     nombre: 'El fréjol',
     tarea: 'Reventar',
     icono: 'granos_mixtos',
@@ -66,6 +76,8 @@ export const NIVELES = [
   },
   {
     id: 'melloco',
+    cuenta: 'mellocos',
+    pasos: [{ ico: '🥔', txt: 'Raspa la babaza', desde: 0 }],
     nombre: 'El melloco',
     tarea: 'Raspar la babaza',
     icono: 'melloco',
@@ -77,6 +89,8 @@ export const NIVELES = [
   },
   {
     id: 'zapallo',
+    cuenta: 'tajadas',
+    pasos: [{ ico: '🔪', txt: 'Pártelo en dos', desde: 0 }, { ico: '🥄', txt: 'Saca las pepas', desde: 0.1 }, { ico: '🍊', txt: 'Jala la cáscara', desde: 0.35 }, { ico: '🔪', txt: 'Corta en tajadas', desde: 0.62 }],
     nombre: 'El zapallo',
     tarea: 'Partir, pelar y cortar',
     icono: 'zapallo',
@@ -88,6 +102,8 @@ export const NIVELES = [
   },
   {
     id: 'col',
+    cuenta: 'tiras',
+    pasos: [{ ico: '🥬', txt: 'Enrolla la hoja', desde: 0 }, { ico: '🔪', txt: 'Corta al través', desde: 0.2 }],
     nombre: 'La col',
     tarea: 'Enrollar y cortar',
     icono: 'hoja',
@@ -99,6 +115,8 @@ export const NIVELES = [
   },
   {
     id: 'escoger',
+    cuenta: 'granos',
+    pasos: [{ ico: '🪨', txt: 'Saca las piedritas', desde: 0 }, { ico: '👌', txt: 'Recoge lo bueno', desde: 0.45 }],
     nombre: 'La lenteja',
     tarea: 'Escoger el grano',
     icono: 'granos_mixtos',
@@ -110,6 +128,8 @@ export const NIVELES = [
   },
   {
     id: 'quinua',
+    cuenta: 'lavadas',
+    pasos: [{ ico: '🌀', txt: 'Remueve en círculos', desde: 0 }, { ico: '💧', txt: 'Bota el agua', desde: 0.3 }],
     nombre: 'La quinua',
     tarea: 'Lavar la saponina',
     icono: 'quinua',
@@ -121,6 +141,8 @@ export const NIVELES = [
   },
   {
     id: 'mani',
+    cuenta: 'maní',
+    pasos: [{ ico: '🪨', txt: 'Maja en la piedra', desde: 0 }, { ico: '👐', txt: 'Arrima los granos', desde: 0.25 }],
     nombre: 'El maní',
     tarea: 'Majar en la piedra',
     icono: 'mani',
@@ -132,6 +154,8 @@ export const NIVELES = [
   },
   {
     id: 'bacalao',
+    cuenta: 'trozos',
+    pasos: [{ ico: '💧', txt: 'Cambia el agua', desde: 0 }, { ico: '🐟', txt: 'Desmenuza', desde: 0.3 }],
     nombre: 'El bacalao',
     tarea: 'Desalar y tender',
     icono: 'bacalao',
