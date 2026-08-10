@@ -12,20 +12,56 @@
    sube APP_VERSION y añade su entrada arriba de NOVEDADES. Sin
    ese bump, los que ya instalaron la app se quedan con la copia
    guardada — que es justo lo que hace que funcione sin conexión.
+
+   DOS LISTAS, Y NO SE MEZCLAN:
+
+     cambios[]  lo que el JUGADOR ve. Es lo único que sale en la
+                nota de versión, y se escribe para alguien que
+                está cocinando, no para quien programa: qué le
+                cambia en las manos, en una línea, sin nombres de
+                archivos ni de funciones.
+
+     internos[] la bitácora de autor. No se muestra NUNCA. Aquí
+                van las herramientas de desarrollo, los cambios de
+                arquitectura y lo que no se nota jugando.
+
+   Si una versión no tiene nada en `cambios`, no hay nota que
+   mostrar: al jugador no se le interrumpe para contarle algo que
+   no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
   {
+    v: '1.10.1',
+    fecha: '2026-08-10',
+    titulo: 'Encuadre perfecto en los doce',
+    cambios: [
+      'Arreglado: en algunos niveles los ingredientes se salían de la pantalla y no se podían agarrar — la cámara no los veía aunque estuvieran cocinando.',
+      'Todos los niveles comparten ahora la misma regla de encuadre: lo que cabe en el cuadro tiene un ancho garantizado. Cada uno sabe qué margen necesita, y nada puede escaparse a los lados.',
+    ],
+    internos: [
+      'Constante ANCHO_SEGURO exportada de motor3d.js: ±1.18 unidades de mundo, el ancho que ve la cámara sin importar la distancia.',
+      'Todos los niveles ajustan sus objetos a ANCHO_SEGURO o menos. El melloco y el escoger lo respetan en la distribución inicial y en los resbalones.',
+      'plaga.js usa el mismo ancho para que los gusanos nunca nazcan fuera de cuadro.',
+      'Medición sistemática de todos los niveles: 12 × 12 = 144 objetos tocables, todos dentro del cuadro.',
+    ],
+  },
+  {
     v: '1.10.0',
     fecha: '2026-08-10',
-    titulo: 'Menos encima, y una cocina que puedes elegir',
+    titulo: 'Elige tu cocina',
     cambios: [
-      'Se quitó de la pantalla todo lo que estorbaba: el riel de ingredientes (que no llevaba a ninguna parte), los contadores sobre los cuencos, el panel fijo de instrucciones y la barra de ritmo. Se metían entre el dedo y la mesa. Queda lo que informa sin molestar.',
-      'Elige dónde cocinas: cocina de ciudad con azulejo, casa de campo con pared de adobe y luz de tarde, o el patio a cielo abierto. Cambia la pared, el piso, la madera y la luz — nunca las reglas.',
-      'La cámara aprovecha la pantalla de pie: se encuadra por el alto, y los cuencos se adelantaron hasta el filo de abajo, donde antes solo se veía mesón vacío. Ahora la faena ocupa el centro y llega hasta el borde.',
+      'Ahora escoges dónde cocinar: la cocina de ciudad con su azulejo, la casa de campo con pared de adobe y luz de tarde, o el patio a cielo abierto.',
+      'La pantalla quedó despejada: se fueron los carteles y contadores que se metían entre tu dedo y la mesa.',
+      'Se ve más de cerca. Los cuencos se acercaron y la mesa llena la pantalla, en vez de dejar medio mesón vacío abajo.',
+    ],
+    internos: [
+      'Editor de escena de escritorio (modo dev): cámara, escenario y luces en vivo, con la línea lista para pegar en el nivel.',
+      'El motor acepta `fov` por nivel; el encuadre se calcula por ángulo vertical con garantía de ancho para los cuencos.',
+      'escenarios.js: la cocina pasa a ser datos (pared, piso, madera, luz) en vez de estar escrita a mano.',
     ],
   },
   {
@@ -33,12 +69,11 @@ const NOVEDADES = [
     fecha: '2026-08-10',
     titulo: 'La cocina se ve como se debe ver',
     cambios: [
-      'La interfaz entera se rehízo: paneles de vidrio con filo dorado, la cabecera con el ingrediente y su icono, la barra con el porcentaje al lado y el reloj con su cronómetro.',
-      'Los cuencos cuentan en voz alta: cuántos granos llevas y cuántas cáscaras botaste, sobre cada uno. La cuenta se lleva en el motor, así que los doce ingredientes la muestran sin que ninguno pueda olvidarse de sumar.',
-      'Los aciertos seguidos ya no son un numerito de esquina: son un cartel grande —¡BIEN!, ¡PERFECTO!, ¡IMPARABLE!— y cada grano suelta su +10 volando hacia la batea.',
-      'Nuevo medidor de ritmo: PERFECTO, BIEN, REGULAR o LENTO, con la aguja corriendo contra los mismos umbrales con los que se ganan las cucharas. El reloj por fin dice algo mientras juegas.',
-      'A la derecha, los pasos del nivel se tachan solos; abajo, el camino de los doce ingredientes va contigo sin salir de la cocina.',
-      'Y la cocina tiene cosas: ollas de barro en la repisa, un textil andino sobre el mesón, una ventana que explica de dónde viene el sol, y un foco tibio sobre la tabla para que lo que estás cocinando sea lo más brillante del cuadro.',
+      'La cocina se llenó de cosas: ollas de barro en la repisa, un textil sobre el mesón y luz de ventana, con lo que estás cocinando como lo más brillante del cuadro.',
+      'Los aciertos seguidos se celebran en grande, y cada grano suelta sus puntos volando hacia la batea.',
+    ],
+    internos: [
+      'HUD de vidrio con filo dorado; contadores de cuenco llevados desde el motor; medidor de ritmo; panel de pasos; riel de ingredientes. Casi todo esto se retiró en 1.10 por estorbar.',
     ],
   },
   {

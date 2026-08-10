@@ -20,6 +20,7 @@
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
+import { ANCHO_SEGURO } from './motor3d.js';
 
 let THREE, raiz, api;
 
@@ -35,7 +36,9 @@ const GORGOJOS = 2;
    corre sola. */
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const ANCHO = 1.36, HONDO = 0.62;
+/* el grano tiene su propio bulto: se deja margen para que ninguno
+   quede con medio cuerpo fuera del cuadro */
+const ANCHO = ANCHO_SEGURO - 0.16, HONDO = 0.62;
 const RADIO_DEDO = 0.17;         /* fino a propósito, pero no imposible */
 const RADIO_BARRIDO = 0.28;
 

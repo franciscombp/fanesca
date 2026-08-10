@@ -1231,7 +1231,13 @@ svg[width="0"] { width: 0; height: 0; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* ---- el editor de escena (modo dev) ---- */
+/* ---- el editor de escena: de ESCRITORIO ----
+   En un teléfono el panel se acostaba encima de la cocina y tapaba
+   justo lo que estabas afinando. En escritorio no hace falta: el
+   juego se dibuja en una columna del ancho de un móvil y los dos
+   costados están vacíos. El editor vive ahí, al lado y no encima,
+   que es lo que separa afinar mirando de afinar a ciegas. */
+
 .btn-editor {
   position: absolute; right: var(--sp-3);
   top: calc(var(--prep-hud-h) + var(--sp-3)); z-index: 6;
@@ -1241,40 +1247,99 @@ svg[width="0"] { width: 0; height: 0; }
   border: 2px solid var(--filo-oro); border-radius: 50%;
   box-shadow: var(--e-2), var(--oro-glow);
 }
+
 .editor {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
-  max-height: 72%; overflow-y: auto;
-  padding: var(--sp-3) var(--sp-4) calc(env(safe-area-inset-bottom) + var(--sp-3));
-  background: linear-gradient(180deg, rgba(22,14,10,.97), rgba(12,8,6,.99));
-  border-top: 2px solid var(--filo-oro);
-  box-shadow: 0 -10px 30px rgba(0,0,0,.5);
-  transform: translateY(101%);
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 30;
+  width: 340px; max-width: 38vw;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  background: linear-gradient(180deg, rgba(22,14,10,.98), rgba(12,8,6,.99));
+  border-left: 2px solid var(--filo-oro);
+  box-shadow: -10px 0 30px rgba(0,0,0,.45);
+  transform: translateX(101%);
   transition: transform var(--dur) var(--ease-out);
   color: #fff;
 }
-.editor.abierto { transform: translateY(0); }
-.ed-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
-.ed-head b { font-family: var(--font-display); font-size: var(--t-md); }
-.ed-nivel {
-  font-size: var(--t-2xs); color: var(--maiz-300);
-  border: 1px solid var(--filo-oro); border-radius: var(--r-pill);
-  padding: .05rem .5rem;
-}
+.editor.abierto { transform: translateX(0); }
+
+/* con el editor abierto, el juego se corre a la izquierda en vez de
+   quedar debajo del panel */
+body.con-editor #stage { margin-right: 340px; }
+
+.ed-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.ed-head b { font-family: var(--font-display); font-size: var(--t-lg); }
 .ed-x { margin-left: auto; color: #fff; font-size: var(--t-lg); padding: .2rem .5rem; }
-.ed-fila { display: grid; grid-template-columns: 6.4rem 1fr 2.8rem; align-items: center; gap: .5rem; margin-bottom: .3rem; }
-.ed-et { font-size: var(--t-2xs); color: rgba(255,255,255,.8); }
+
+.ed-sec { margin-bottom: var(--sp-4); }
+.ed-sec-tit {
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--maiz-300); margin-bottom: .4rem;
+  border-bottom: 1px solid rgba(255,255,255,.16); padding-bottom: .22rem;
+}
+.ed-sel {
+  width: 100%; padding: .4rem .5rem; margin-bottom: .3rem;
+  font: inherit; font-size: var(--t-xs); color: #fff;
+  background: rgba(0,0,0,.45);
+  border: 1.5px solid rgba(255,255,255,.24); border-radius: var(--r-md);
+}
+.ed-fila { display: grid; grid-template-columns: 6.6rem 1fr 2.9rem; align-items: center; gap: .5rem; margin-bottom: .28rem; }
+.ed-et { font-size: var(--t-2xs); color: rgba(255,255,255,.82); }
 .ed-fila input[type=range] { width: 100%; accent-color: var(--maiz-300); }
 .ed-fila output { font-family: var(--font-display); font-size: var(--t-2xs); text-align: right; color: var(--maiz-300); }
 .ed-codigo {
   margin: var(--sp-2) 0; padding: .5rem .6rem;
-  background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18);
   border-radius: var(--r-md);
-  font-family: ui-monospace, monospace; font-size: 10px; line-height: 1.4;
+  font-family: ui-monospace, monospace; font-size: 10px; line-height: 1.45;
   color: #d8f3c0; white-space: pre-wrap; word-break: break-word;
 }
+.ed-nota { font-size: var(--t-2xs); color: rgba(255,255,255,.55); margin-top: .3rem; line-height: 1.35; }
 .ed-pie { display: flex; gap: var(--sp-2); }
 .ed-btn {
   flex: 1; padding: .45rem; font-size: var(--t-xs); font-weight: 700;
   color: var(--tinta-900); background: linear-gradient(180deg, var(--maiz-300), var(--maiz-400));
   border: 2px solid var(--maiz-600); border-radius: var(--r-pill);
 }
+.ed-btn--flojo {
+  color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.28);
+}
+
+/* por si acaso: en pantalla angosta el editor no existe */
+@media (max-width: 999px) {
+  .editor, .btn-editor { display: none !important; }
+  body.con-editor #stage { margin-right: 0; }
+}
+
+/* ---- que las hojas largas se puedan leer ----
+   `.sheet` no tenía alto máximo: una nota de versión con seis
+   puntos —o un brief largo— crecía más que la pantalla y lo de
+   abajo, incluido el botón para cerrarla, quedaba fuera de
+   alcance sin manera de bajar. */
+.modal .sheet {
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2 * var(--sp-5));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.nota-version-lista {
+  text-align: left; align-self: stretch;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  margin: var(--sp-1) 0 var(--sp-2); padding-left: 1.1rem;
+  font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted);
+}
+
+/* ---- la portada, con sus opciones de siempre ---- */
+.portada-acciones { display: flex; flex-direction: column; gap: var(--sp-2); width: 100%; }
+.portada-secundario {
+  display: flex; gap: var(--sp-2); justify-content: center; align-items: center;
+  flex-wrap: wrap; margin-top: var(--sp-1);
+}
+.portada-link {
+  padding: .25rem .7rem;
+  font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(0,0,0,.05);
+  border: 1.5px solid var(--hairline); border-radius: var(--r-pill);
+}
+.portada-link--peligro { color: var(--chile-600); border-color: rgba(206,32,41,.35); }

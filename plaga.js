@@ -14,6 +14,7 @@
 
 import { nuevoGusano, nuevoGorgojo } from './modelos/bichos.js';
 import { ARRUINADO } from './arruinado.js';
+import { ANCHO_SEGURO } from './motor3d.js';
 
 export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   const nombre = opts.nombre || 'gusanito';
@@ -64,7 +65,10 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     let d = Math.hypot(dx, dz);
     if (d < 0.01) { dx = -1; dz = -0.2; d = Math.hypot(dx, dz); }
     if (d < ARRANQUE) {
-      nodo.position.x = Math.max(-1.3, Math.min(1.3, api.BATEA.x + (dx / d) * ARRANQUE));
+      /* un bicho fuera de cuadro no se puede agarrar, y sin agarrarlo
+         el nivel no se termina: nace siempre donde se le vea */
+      const tope = ANCHO_SEGURO - 0.16;
+      nodo.position.x = Math.max(-tope, Math.min(tope, api.BATEA.x + (dx / d) * ARRANQUE));
       nodo.position.z = Math.max(-0.45, Math.min(1.05, api.BATEA.z + (dz / d) * ARRANQUE));
     }
     nodo.position.y = SUELO(nodo.position.x, nodo.position.z) + ALTO;
