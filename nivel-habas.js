@@ -160,6 +160,11 @@ function bajoElDedo() {
 
 export default {
   id: 'habas',
+  /* las vainas están en tres columnas (x = -0.96, 0, 0.96) y las habas
+     se abren hacia los lados: la cámara se aleja más de lo normal para
+     que todo quepa en pantalla. Un poco más de altura ayuda a ver mejor
+     la disposición de las vainas */
+  camara: { pos: [0, 3.2, 3.8], mira: [0, 0.98, 0.30] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

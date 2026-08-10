@@ -219,6 +219,10 @@ function vainaDe(obj) {
 
 export default {
   id: 'arveja',
+  /* vainas de arveja en dos filas: la cámara se aleja para ver todo
+     el ancho sin que se escape nada. Los hilos necesitan verse bien
+     para poder jalarlos correctamente */
+  camara: { pos: [0, 3.2, 3.8], mira: [0, 0.98, 0.30] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

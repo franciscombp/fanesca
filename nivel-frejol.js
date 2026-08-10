@@ -147,6 +147,10 @@ function barrerEn(punto, prev) {
 
 export default {
   id: 'frejol',
+  /* cinco vainas regadas por la tabla: la cámara se aleja para que se
+     vea bien la dispersión de granos a lo ancho. Un poco más de altura
+     también ayuda a apreciar cómo quedan repartidos */
+  camara: { pos: [0, 3.25, 3.85], mira: [0, 0.98, 0.30] },
 
   construir(ctx) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
