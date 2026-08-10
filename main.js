@@ -12,7 +12,7 @@ import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
 import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niveles.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
-import Editor from './editor.js';
+import Editor, { esEscritorio } from './editor.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -604,11 +604,14 @@ function reiniciarRacha() {
   api._medio = false; api._casi = false;
 }
 
-/* el acceso al editor: un botón discreto que solo aparece en modo
-   dev, porque esto es una herramienta de autor, no una opción */
+/* El acceso al editor. Solo en modo dev —es herramienta de autor, no
+   una opción del juego— y solo en ESCRITORIO: editar pide ratón y
+   ancho, y en un teléfono el panel taparía justo la cocina que
+   estás mirando. En móvil el modo dev sigue sirviendo para lo que
+   ahí tiene sentido: saltar entre niveles. */
 function pintarBotonEditor() {
   let b = $('#btn-editor');
-  if (!estado.devMode) { if (b) b.remove(); return; }
+  if (!estado.devMode || !esEscritorio()) { if (b) b.remove(); return; }
   if (!b) {
     b = document.createElement('button');
     b.id = 'btn-editor';
@@ -905,7 +908,12 @@ function init() {
   if (ok) Motor.escenario(estado.escenario || POR_DEFECTO);
   /* el editor de escena: solo existe en modo dev, y guarda sus
      retoques aparte del progreso */
-  if (ok) Editor.init(Motor, { alRearmar: () => { if (nivelActual) jugar(nivelActual.id); } });
+  if (ok) Editor.init(Motor, {
+    niveles: () => NIVELES,
+    escenarios: () => ESCENARIOS,
+    jugar: (id) => jugar(id),
+    escenario: (id) => { estado.escenario = id; guardar(); Motor.escenario(id); },
+  });
   if (!ok) {
     cont.innerHTML = `<div class="panel" style="margin:var(--sp-8) var(--sp-5)">
       <p><b>Este minijuego necesita WebGL.</b></p>
