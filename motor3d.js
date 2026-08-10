@@ -92,6 +92,10 @@ export const BATEA = new THREE.Vector3(0.84, MESA_Y, 1.92);    /* lo bueno va aq
 export const COMPOSTA = new THREE.Vector3(-0.86, MESA_Y, 1.94); /* cáscaras y bichos */
 export const RADIO_CUENCO = 0.44;
 
+/* Posiciones editables para el editor de escena (modo dev) */
+let bateaPos = BATEA.clone();
+let compostaPos = COMPOSTA.clone();
+
 /* Hasta dónde puede acercarse una tabla de picar sin meterse dentro
    de los cuencos. Se calcula aquí porque los cuencos son del motor:
    así, si mañana la batea se corre, las tablas se corren solas.
@@ -201,7 +205,7 @@ function armarCocina() {
     colorB: token('--madera-500', '#93491c'),
     relleno: token('--maiz-300', '#ffc93c'),
   });
-  bateaGrupo.position.copy(BATEA);
+  bateaGrupo.position.copy(bateaPos);
 
   compostaGrupo = pieza('cuenco', THREE, {
     radio: 0.4,
@@ -209,7 +213,7 @@ function armarCocina() {
     colorB: token('--nopal-600', '#4c7c1f'),
     relleno: token('--nopal-600', '#4c7c1f'),
   });
-  compostaGrupo.position.copy(COMPOSTA);
+  compostaGrupo.position.copy(compostaPos);
 
   scene.add(bateaGrupo, compostaGrupo);
 }
@@ -680,6 +684,18 @@ export const Motor = {
   ponerCamara(pos, mira, fov) { this.encuadre(pos, mira, fov); },
   miraActual() { return { x: camMira.x, y: camMira.y, z: camMira.z }; },
 
+  /* para el editor: mover los cuencos en vivo */
+  obtenerBatea() { return { x: bateaPos.x, y: bateaPos.y, z: bateaPos.z }; },
+  ponerBatea(x, y, z) {
+    bateaPos.set(x, y, z);
+    if (bateaGrupo) bateaGrupo.position.copy(bateaPos);
+  },
+  obtenerComposta() { return { x: compostaPos.x, y: compostaPos.y, z: compostaPos.z }; },
+  ponerComposta(x, y, z) {
+    compostaPos.set(x, y, z);
+    if (compostaGrupo) compostaGrupo.position.copy(compostaPos);
+  },
+
   /* monta un nivel: limpia lo anterior y le entrega el contexto */
   cargar(mod, api) {
     this.descargar();
@@ -687,7 +703,7 @@ export const Motor = {
     nivel = mod;
     const ctx = {
       THREE, raiz, api,
-      MESA_Y, BATEA: BATEA.clone(), COMPOSTA: COMPOSTA.clone(),
+      MESA_Y, BATEA: bateaPos.clone(), COMPOSTA: compostaPos.clone(),
       escena: scene, camara: camera,
     };
     llenarRecipiente('batea', 0);
