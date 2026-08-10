@@ -74,7 +74,10 @@ function nuevoMelloco(x, z, i) {
 function encajar(v) {
   /* la tabla es más ancha que lo que se ve: si el melloco resbala
      hasta su filo, se sale de la pantalla y ya no hay cómo rasparlo */
-  const tope = Math.min(ANCHO_TABLA / 2 - 0.16, ANCHO_SEGURO - 0.18);
+  /* el melloco se juega MÁS CERCA de la cámara que el punto de
+     mira, y ahí el cuadro es más angosto que el ancho garantizado:
+     por eso el margen es mayor que el de otros niveles */
+  const tope = Math.min(ANCHO_TABLA / 2 - 0.16, ANCHO_SEGURO - 0.30);
   v.x = Math.max(-tope, Math.min(tope, v.x));
   v.z = Math.max(TABLA_Z - HONDO_TABLA / 2 + 0.14, Math.min(TABLA_Z + HONDO_TABLA / 2 - 0.14, v.z));
   return v;
@@ -179,11 +182,19 @@ export default {
         ? api.MESA_Y + 0.10 : api.MESA_Y,
     });
 
-    /* regados, no en cuadrícula: vienen de un costal, no de una caja */
+    /* regados, no en cuadrícula: vienen de un costal, no de una caja.
+       Y pasando por `encajar`, que es quien sabe hasta dónde se ve:
+       el reparto inicial llegaba a x=1.14 y el de la orilla quedaba
+       medio fuera de pantalla —imposible de raspar— porque solo los
+       resbalones respetaban el límite. */
     for (let i = 0; i < CUANTOS; i++) {
       const f = Math.floor(i / 4), c = i % 4;
-      const x = (c - 1.5) * 0.62 + (f % 2 ? 0.16 : -0.1) + (Math.random() - 0.5) * 0.1;
-      const z = TABLA_Z + (f - 0.5) * 0.46 + (Math.random() - 0.5) * 0.1;
+      const p = encajar(new THREE.Vector3(
+        (c - 1.5) * 0.62 + (f % 2 ? 0.16 : -0.1) + (Math.random() - 0.5) * 0.1,
+        0,
+        TABLA_Z + (f - 0.5) * 0.46 + (Math.random() - 0.5) * 0.1,
+      ));
+      const x = p.x, z = p.z;
       const rec = nuevoMelloco(x, z, i);
       mellocosGrupo.add(rec.obj);
       mellocos.push(rec);
