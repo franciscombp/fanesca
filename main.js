@@ -135,8 +135,11 @@ function pintarPortada() {
     avance.textContent = hechos ? `${hechos} de ${NIVELES.length} ingredientes listos` : '';
     avance.classList.toggle('hidden', !hechos);
   }
-  /* borrar el progreso solo se ofrece si hay progreso que borrar */
-  if (reiniciar) reiniciar.classList.toggle('hidden', !hechos);
+  /* reiniciar siempre está disponible, aunque no haya progreso */
+  if (reiniciar) {
+    reiniciar.classList.remove('hidden');
+    if (!hechos) reiniciar.textContent = '↻ Empezar desde cero';
+  }
 }
 
 function pintarDev() {
@@ -851,6 +854,7 @@ function bindEventos() {
   const btnReset = $('#btn-reiniciar');
   if (btnReset) {
     let armado = false, armadoId = null;
+    const textoReset = () => listos() ? 'Empezar de nuevo' : '↻ Empezar desde cero';
     btnReset.addEventListener('click', () => {
       if (!armado) {
         armado = true;
@@ -858,7 +862,7 @@ function bindEventos() {
         clearTimeout(armadoId);
         armadoId = setTimeout(() => {
           armado = false;
-          btnReset.textContent = 'Empezar de nuevo';
+          btnReset.textContent = textoReset();
         }, 3500);
         return;
       }
@@ -869,7 +873,7 @@ function bindEventos() {
       estado.escenario = escenario; estado.devMode = dev;
       guardar();
       armado = false;
-      btnReset.textContent = 'Empezar de nuevo';
+      btnReset.textContent = textoReset();
       pintarPortada();
       toast('Olla vacía. A empezar de nuevo 🍲');
       sfx('tab');

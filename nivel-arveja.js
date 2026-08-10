@@ -31,8 +31,10 @@ import { POR_VAINA, PASO_ARVEJA } from './modelos/arveja.js';
 
 let THREE, raiz, api;
 
-const FILAS = [-0.32, 0.32];
-const COLS = [-0.94, 0, 0.94];
+/* Las vainas se distribuyen igual que los granos dentro de ellas:
+   más en profundidad (Z) que en ancho (X), para mantener coherencia visual */
+const FILAS = [-0.7, 0, 0.7];
+const COLS = [-0.35, 0.35];
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;
 const CON_GUSANO = 2;

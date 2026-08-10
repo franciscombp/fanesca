@@ -175,12 +175,12 @@ registrar('tusa', (THREE, opts = {}) => {
    R·perfil + ~0.14): si no, los granos las atraviesan y el choclo
    nunca se ve cerrado. */
 
-/* Cinco y no siete. Con siete la envoltura abierta se veía una
-   lechuga —y tapaba la batea y la composta al desplegarse—; con
-   cinco quedan hojas anchas y separadas, que es como se ve un
-   choclo pelado de verdad. De paso, deshojar son cinco jalones y
-   no siete: lo mismo contado, sin la repetición de más. */
-export const HOJAS = 5;
+/* Diez hojas: dos vueltas completas para deshojar, más realista.
+   Las cinco de afuera son más verdes (protectoras), y las cinco de
+   adentro son más claras y tienen pelitos que hay que quitar.
+   Esto refleja mejor la estructura real del choclo con varias capas
+   de protección. */
+export const HOJAS = 10;
 /* Sobresale del choclo lo justo para taparlo con margen. Más larga
    y, al abrirse, la punta se acuesta encima de los cuencos. */
 export const LARGO_HOJA = LARGO + 0.8;
@@ -291,8 +291,22 @@ registrar('hoja-choclo', (THREE, opts = {}) => {
   /* con traslape holgado: las hojas se tapan entre sí como en el
      choclo real, y de paso cubren lo que el afinado les quita */
   const arc = (Math.PI * 2 / HOJAS) * 1.46;
-  const paleta = COMIDA.hoja_choclo;
-  const material = mate(THREE, paleta[i % paleta.length], { side: THREE.DoubleSide });
+
+  /* colores según la posición: hojas exteriores más verdes,
+     interiores más claras. Con 10 hojas, las primeras 5 (0-4) son
+     verdes oscuras, y las últimas 5 (5-9) son claras y casi blancas */
+  let color;
+  const esInterior = i >= HOJAS / 2;
+  if (esInterior) {
+    /* hojas interiores: tonos muy claros, casi blancos */
+    const blancos = ['#e8e8dc', '#e2e2d4', '#ebe7dc', '#dfe5d8'];
+    color = blancos[i % blancos.length];
+  } else {
+    /* hojas exteriores: verdes oscuros protectores */
+    const verdes = COMIDA.hoja_choclo;
+    color = verdes[i % verdes.length];
+  }
+  const material = mate(THREE, color, { side: THREE.DoubleSide });
 
   /* la cadena: nudo0 en la base, y cada nudo cuelga del anterior */
   const raizHoja = new THREE.Group();
@@ -310,6 +324,30 @@ registrar('hoja-choclo', (THREE, opts = {}) => {
     padre.add(nudo);
     padre = nudo;
   }
+
+  /* las hojas interiores tienen pelitos (silk) pegados: fibras finas
+     que hay que quitar junto con la hoja */
+  if (esInterior) {
+    const pelitosHoja = new THREE.Group();
+    pelitosHoja.name = 'pelitos-hoja';
+    /* 4-5 pelitos pequeños distribuidos por la hoja */
+    const pelitosN = 4 + Math.floor(Math.random() * 2);
+    for (let p = 0; p < pelitosN; p++) {
+      const geo = new THREE.CylinderGeometry(0.0015, 0.004, 0.15 + Math.random() * 0.1, 4, 6);
+      geo.translate(0, 0.075, 0);
+      const hilo = new THREE.Mesh(geo, mate(THREE, '#d4cfc0'));
+      hilo.rotation.z = (Math.random() - 0.5) * 0.8;
+      hilo.position.set(
+        (Math.random() - 0.5) * 0.08,
+        0.2 + Math.random() * LARGO_HOJA * 0.7,
+        0.02
+      );
+      hilo.name = 'pelito' + p;
+      pelitosHoja.add(hilo);
+    }
+    raizHoja.add(pelitosHoja);
+  }
+
   return raizHoja;
 });
 
