@@ -183,7 +183,7 @@ function construirPelos() {
 function nuevoBicho(a, p) {
   const g = nuevoGusano(THREE, { eje: 'y' });
   g.obj.userData = { tipo: 'gusano' };
-  return { obj: g.obj, bicho: g, aro: g.aro, a, p, estado: 'oculto', t0: 0 };
+  return { obj: g.obj, bicho: g, aro: g.aro, a, p, estado: 'oculto', t0: 0, enTransicion: false };
 }
 
 function colocarGusano(w) {
@@ -196,6 +196,7 @@ function colocarGusano(w) {
 function despertarGusano(w) {
   w.estado = 'fuera';
   w.t0 = api.reloj;
+  w.enTransicion = false;
   w.obj.visible = true;
   gusanosGrupo.add(w.obj);
   colocarGusano(w);
@@ -586,6 +587,7 @@ function armarChoclo() {
     usados.add(a + ':' + p);
     const w = nuevoBicho(a, p);
     w.obj.visible = false;
+    w.enTransicion = false;
     gusanos.push(w);
   }
 
@@ -847,6 +849,7 @@ export default {
       } else {
         /* se te cayó: vuelve a la mazorca y sigue caminando */
         w.estado = 'fuera';
+        w.enTransicion = false;
         w.aro.visible = true;
         gusanosGrupo.add(w.obj);
         colocarGusano(w);
@@ -930,15 +933,42 @@ export default {
     const aFrente = ((FRENTE - giro.rotation.y) / (Math.PI * 2)) * A;
     for (const w of gusanos) {
       if (w.estado === 'fuera') {
-        let dA = aFrente - w.a;
-        dA = ((dA % A) + A * 1.5) % A - A / 2;   /* el camino corto, con vuelta */
-        if (Math.abs(dA) > 0.15) w.a += Math.sign(dA) * Math.min(Math.abs(dA), 2.4 * dt);
-        w.p -= GUSANO_VEL * dt;      /* se descuelga hacia la batea */
-        colocarGusano(w);
-        if (w.p <= -0.35) {
-          w.estado = 'ido';
-          api.arruinar(ARRUINADO.enLaBatea('gusanito'));
-          return;
+        /* Cuando el gusano llega a la base de la tusa (p < 0), cambia de
+           transición: se mueve directamente hacia la batea en el espacio
+           mundial en lugar de seguir descendiendo por la mazorca. */
+        if (w.p < 0 && !w.enTransicion) {
+          w.enTransicion = true;
+          raiz.attach(w.obj);           /* sale del grupo girado */
+          w.aro.visible = false;
+        }
+
+        if (w.enTransicion) {
+          /* Mueve el gusano hacia la batea mundialmente */
+          const suelo = api.MESA_Y;
+          const pos = w.obj.position;
+          const dx = api.COMPOSTA.x - pos.x;
+          const dz = api.COMPOSTA.z - pos.z;
+          const dist = Math.hypot(dx, dz);
+          const vel = GUSANO_VEL * 1.2;
+
+          if (dist < vel * dt) {
+            /* Llegó a la batea */
+            w.estado = 'ido';
+            api.arruinar(ARRUINADO.enLaBatea('gusanito'));
+            return;
+          } else {
+            /* Avanza hacia la batea */
+            pos.x += (dx / dist) * vel * dt;
+            pos.z += (dz / dist) * vel * dt;
+            pos.y = suelo + 0.35 + Math.sin(t * 4) * 0.05;  /* rebota levemente */
+          }
+        } else {
+          /* Movimiento original: reptar por la mazorca */
+          let dA = aFrente - w.a;
+          dA = ((dA % A) + A * 1.5) % A - A / 2;   /* el camino corto, con vuelta */
+          if (Math.abs(dA) > 0.15) w.a += Math.sign(dA) * Math.min(Math.abs(dA), 2.4 * dt);
+          w.p -= GUSANO_VEL * dt;      /* se descuelga hacia la batea */
+          colocarGusano(w);
         }
       }
       if (w.estado === 'fuera' || w.estado === 'cargado') w.bicho.animar(t);
