@@ -844,9 +844,12 @@ function salirDelNivel() {
 function cerrarModales() { $$('.modal').forEach(m => m.classList.remove('open')); }
 
 function bindEventos() {
+  /* Botón empezar: va a la mesa de prep */
   $('#btn-empezar').addEventListener('click', () => {
     initAudio(); sfx('tab');
     estado.vistoPortada = true; guardar();
+    mostrar('mesa');
+  });
 
   /* Empezar de nuevo: dos toques. Borrar doce ingredientes ganados
      por un dedo mal puesto sería imperdonable, y un confirm() del
@@ -879,8 +882,6 @@ function bindEventos() {
       sfx('tab');
     });
   }
-    mostrar('mesa');
-  });
 
   const btnDev = $('#btn-dev');
   if (btnDev) btnDev.addEventListener('click', () => {
