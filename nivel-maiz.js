@@ -961,6 +961,8 @@ export default {
             pos.x += (dx / dist) * vel * dt;
             pos.z += (dz / dist) * vel * dt;
             pos.y = suelo + 0.35 + Math.sin(t * 4) * 0.05;  /* rebota levemente */
+            /* Gira para mirar hacia donde va */
+            w.obj.rotation.y = Math.atan2(dx, dz);
           }
         } else {
           /* Movimiento original: reptar por la mazorca */
