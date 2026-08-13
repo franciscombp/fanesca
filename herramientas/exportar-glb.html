@@ -3,29 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exportar los modelos a .glb — La fanesca</title>
+<title>Exportador de modelos — La fanesca</title>
 <link rel="stylesheet" href="../design-system.css">
 <style>
   body { font-family: var(--font-text); background: var(--peltre-200); color: var(--text); margin: 0; padding: var(--sp-5); }
-  .caja { max-width: 720px; margin: 0 auto; }
-  h1 { font-family: var(--font-display); font-size: var(--t-2xl); margin-bottom: var(--sp-2); }
+  .caja { max-width: 960px; margin: 0 auto; }
+  h1 { font-family: var(--font-display); font-size: var(--t-2xl); margin-bottom: var(--sp-1); }
   .lede { color: var(--text-muted); line-height: var(--lead); margin-bottom: var(--sp-4); }
   .lede code { background: rgba(0,0,0,.07); padding: .1em .35em; border-radius: 4px; }
+
   .fila { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-4); }
-  #lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-2); }
+  .filtros { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-4); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--hairline); }
+  .filtro-btn { padding: .4rem .8rem; border: 1px solid var(--hairline); border-radius: var(--r-pill); background: transparent; cursor: pointer; font-size: var(--t-xs); font-weight: 600; transition: all 0.2s; }
+  .filtro-btn:hover, .filtro-btn.activo { background: var(--surface); border-color: var(--text-muted); }
+
+  .categoria { margin-bottom: var(--sp-5); }
+  .categoria-titulo { font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; color: var(--text-muted); margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: 0.05em; }
+  .lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--sp-2); }
+
   .pieza {
-    background: var(--surface); border: var(--ring); border-radius: var(--r-md);
-    padding: var(--sp-2); text-align: center;
+    background: var(--surface); border: 1px solid var(--ring); border-radius: var(--r-md);
+    padding: var(--sp-2); text-align: center; transition: all 0.2s;
   }
+  .pieza:hover { border-color: var(--text-muted); box-shadow: var(--e-1); }
+  .pieza.oculto { display: none; }
   .pieza canvas { width: 100%; aspect-ratio: 1; border-radius: var(--r-sm); background: var(--peltre-300); display: block; }
-  .pieza b { display: block; font-family: var(--font-display); font-size: var(--t-xs); margin-top: .35rem; word-break: break-all; }
-  .pieza small { display: block; color: var(--text-muted); font-size: var(--t-2xs); }
+  .pieza-titulo { display: block; font-family: var(--font-display); font-size: var(--t-xs); margin: .4rem 0 .2rem; word-break: break-all; line-height: 1.2; }
+  .pieza-archivo { display: block; color: var(--text-muted); font-size: var(--t-2xs); word-break: break-all; margin-bottom: .3rem; }
+  .pieza-claves { display: block; color: var(--chile-600); font-size: var(--t-3xs); margin: .2rem 0; font-weight: 600; }
+  .pieza-btn { width: 100%; margin-top: .4rem; padding: .3rem 0; font-size: var(--t-2xs); }
+
   #log {
     margin-top: var(--sp-4); padding: var(--sp-3); border-radius: var(--r-md);
     background: var(--pizarra-700); color: #cfe3b0;
     font-family: ui-monospace, monospace; font-size: var(--t-xs); line-height: 1.6;
     white-space: pre-wrap; max-height: 240px; overflow: auto;
   }
+
+  .estadisticas { margin-top: var(--sp-3); padding: var(--sp-2); background: rgba(0,0,0,.05); border-radius: var(--r-md); font-size: var(--t-xs); color: var(--text-muted); }
 </style>
 <script type="importmap">
   { "imports": { "three": "../vendor/three.module.min.js", "three/addons/": "../vendor/addons/" } }
@@ -33,65 +48,55 @@
 </head>
 <body>
 <div class="caja">
-  <h1>Exportar los modelos a <code>.glb</code></h1>
+  <h1>🎨 Exportador de modelos 3D</h1>
   <p class="lede">
-    Cada pieza del juego, tal como está hoy en código, lista para abrirla en
-    <b>Blender</b>. Descárgalas, edítalas, y devuélvelas a
-    <code>modelos/glb/</code> — el juego usa el <code>.glb</code> en
-    lugar del código en cuanto lo encuentre listado en <code>indice.json</code>.
+    Descarga cada pieza del juego, edítala en <b>Blender</b>, y devuélvela a
+    <code>modelos/glb/</code>. El juego usará automáticamente el <code>.glb</code>
+    en lugar del código generado.
     <br><br>
-    <b>Ojo con los nombres.</b> El juego busca las partes que anima o modifica
-    <em>por nombre de objeto</em> (la <code>pepa</code> del chocho, la
-    <code>carne</code> del bacalao, los <code>seg0…segN</code> del gusano). Si
-    en Blender los renombras, el juego deja de encontrarlas. Están anotados
-    debajo de cada pieza y en <code>modelos/README.md</code>.
+    <strong style="color: var(--chile-600);">⚠️ No renombres los objetos.</strong>
+    El juego busca partes por nombre: <code>cuerpo</code>, <code>bisagra</code>, <code>seg0…segN</code>, etc.
+    Si las renombras en Blender, el juego no las encontrará.
   </p>
 
   <div class="fila">
-    <button type="button" id="todo" class="btn btn--nopal">Descargar todas</button>
-    <button type="button" id="indice" class="btn btn--peltre btn--sm">Descargar indice.json</button>
+    <button type="button" id="todo" class="btn btn--nopal btn--lg">⬇ Descargar todas</button>
+    <button type="button" id="indice" class="btn btn--peltre">📋 Indice.json</button>
+    <button type="button" id="limpiar" class="btn btn--peltre btn--sm">Limpiar filtros</button>
   </div>
 
-  <div id="lista"></div>
+  <div class="filtros" id="filtros"></div>
+
+  <div id="contenedor-piezas"></div>
   <div id="log">listo.</div>
 </div>
 
 <script type="module">
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
-import { pieza, registradas } from '../modelos/index.js';
+import { pieza } from '../modelos/index.js';
+import { CATEGORIAS, piezasPorCategoria, variantesDe, datosExportacion, listadoExportacion } from '../modelos/builders.js';
 
 const log = (m) => { const l = document.getElementById('log'); l.textContent += '\n' + m; l.scrollTop = l.scrollHeight; };
 
-/* Algunas piezas se piden con opciones (el grano de choclo tiene dos
-   madureces). Se exporta una variante por cada una que valga la pena
-   editar aparte; el resto sale con sus opciones por defecto. */
-const VARIANTES = {
-  'grano-choclo': [
-    { sufijo: '-tierno', opts: { madurez: 'tierno' } },
-    { sufijo: '-duro', opts: { madurez: 'duro' } },
-  ],
-  'tusa': [
-    { sufijo: '-tierno', opts: { madurez: 'tierno' } },
-    { sufijo: '-duro', opts: { madurez: 'duro' } },
-  ],
-};
-
-/* qué partes nombradas busca el juego en cada pieza: se muestran
-   debajo del preview para que nadie las renombre por accidente */
-const CLAVES = {
-  'gusano': 'seg0…segN',
-  'gorgojo': 'pata0…pata5, cuerpo',
-  'mosca': 'ala0, ala1',
-  'chocho': 'pepa, piel',
-  'presa-bacalao': 'carne',
-  'vaina-haba': 'bisagra',
-  'cuenco': 'relleno',
-};
-
 const exportador = new GLTFExporter();
 const generados = [];
+let filtroActivo = null;
 
+/**
+ * Mapea nombres de categorías a etiquetas amigables
+ */
+const NOMBRES_CATEGORIAS = {
+  [CATEGORIAS.CHOCLO]: '🌽 Choclo',
+  [CATEGORIAS.GRANOS]: '🫘 Granos',
+  [CATEGORIAS.VAINAS]: '🫛 Vainas',
+  [CATEGORIAS.BICHOS]: '🐛 Bichos',
+  [CATEGORIAS.VARIOS]: '✨ Varios',
+};
+
+/**
+ * Descarga un archivo
+ */
 function bajar(nombre, buffer) {
   const url = URL.createObjectURL(new Blob([buffer], { type: 'model/gltf-binary' }));
   const a = document.createElement('a');
@@ -100,11 +105,11 @@ function bajar(nombre, buffer) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/**
+ * Exporta un objeto Three.js a GLB
+ */
 function aGLB(obj) {
   return new Promise((listo, falla) => {
-    /* la escena tiene que ser una raíz limpia: si exportáramos el
-       objeto con la transformación que le puso el nivel, en Blender
-       aparecería desplazado y rotado sin razón */
     const escena = new THREE.Scene();
     const copia = obj.clone(true);
     copia.position.set(0, 0, 0);
@@ -115,16 +120,14 @@ function aGLB(obj) {
   });
 }
 
-/* Una miniatura de cada pieza, para saber qué se está bajando.
-   UN SOLO renderer para todas y se copia el resultado a cada lienzo
-   2D: el navegador solo aguanta ~16 contextos WebGL vivos, y con una
-   pieza por contexto los primeros se apagaban solos y quedaban en
-   blanco justo cuando terminabas de cargar la página. */
+/**
+ * Genera preview de una pieza
+ */
 let rend = null;
 function preview(lienzo, obj) {
   if (!rend) {
     rend = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    rend.setSize(150, 150, false);
+    rend.setSize(140, 140, false);
     rend.outputColorSpace = THREE.SRGBColorSpace;
   }
   const esc = new THREE.Scene();
@@ -135,7 +138,6 @@ function preview(lienzo, obj) {
   luz.position.set(2, 3, 4);
   esc.add(luz);
 
-  /* encuadre automático: cada pieza tiene su tamaño */
   const caja = new THREE.Box3().setFromObject(copia);
   const centro = caja.getCenter(new THREE.Vector3());
   const tam = caja.getSize(new THREE.Vector3()).length() || 1;
@@ -143,60 +145,143 @@ function preview(lienzo, obj) {
   cam.position.set(centro.x + tam * 0.7, centro.y + tam * 0.5, centro.z + tam * 0.9);
   cam.lookAt(centro);
   rend.render(esc, cam);
-  /* del contexto compartido al lienzo de esta pieza */
   lienzo.getContext('2d').drawImage(rend.domElement, 0, 0);
 }
 
-async function construir() {
-  const lista = document.getElementById('lista');
-  const ids = registradas();
-  log(`${ids.length} piezas registradas`);
-
-  for (const id of ids) {
-    const vars = VARIANTES[id] || [{ sufijo: '', opts: {} }];
-    for (const v of vars) {
-      const nombre = id + v.sufijo;
-      const obj = pieza(id, THREE, v.opts);
-      generados.push({ nombre, obj });
-
-      const div = document.createElement('div');
-      div.className = 'pieza';
-      const cv = document.createElement('canvas');
-      cv.width = cv.height = 150;
-      div.appendChild(cv);
-      const b = document.createElement('b');
-      b.textContent = nombre + '.glb';
-      div.appendChild(b);
-      if (CLAVES[id]) {
-        const s = document.createElement('small');
-        s.textContent = 'no renombrar: ' + CLAVES[id];
-        div.appendChild(s);
-      }
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn--peltre btn--sm';
-      btn.style.marginTop = '.4rem';
-      btn.textContent = 'descargar';
-      btn.addEventListener('click', async () => {
-        bajar(nombre + '.glb', await aGLB(obj));
-        log('↓ ' + nombre + '.glb');
-      });
-      div.appendChild(btn);
-      lista.appendChild(div);
-
-      try { preview(cv, obj); } catch (e) { log('preview falló en ' + nombre + ': ' + e.message); }
+/**
+ * Aplica/limpia filtro de categoría
+ */
+function aplicarFiltro(cat) {
+  filtroActivo = filtroActivo === cat ? null : cat;
+  document.querySelectorAll('.pieza').forEach(p => {
+    if (!filtroActivo) {
+      p.classList.remove('oculto');
+    } else {
+      p.classList.toggle('oculto', p.dataset.categoria !== filtroActivo);
     }
-  }
-  log('listo — ' + generados.length + ' archivos por bajar');
+  });
+  document.querySelectorAll('.filtro-btn').forEach(b => {
+    b.classList.toggle('activo', b.dataset.categoria === filtroActivo);
+  });
 }
 
+/**
+ * Construye la interfaz
+ */
+async function construir() {
+  const listado = listadoExportacion();
+  log(`${listado.length} piezas registradas`);
+
+  // Crear botones de filtro
+  const filtros = document.getElementById('filtros');
+  Object.entries(CATEGORIAS).forEach(([_, cat]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filtro-btn';
+    btn.dataset.category = cat;
+    btn.textContent = NOMBRES_CATEGORIAS[cat];
+    btn.addEventListener('click', () => aplicarFiltro(cat));
+    filtros.appendChild(btn);
+  });
+
+  // Agrupar piezas por categoría
+  const porCategoria = {};
+  Object.values(CATEGORIAS).forEach(cat => { porCategoria[cat] = []; });
+  listado.forEach(item => {
+    porCategoria[item.categoria].push(item);
+  });
+
+  // Renderizar categorías y piezas
+  const contenedor = document.getElementById('contenedor-piezas');
+  Object.entries(porCategoria).forEach(([cat, piezas]) => {
+    if (piezas.length === 0) return;
+
+    const seccion = document.createElement('div');
+    seccion.className = 'categoria';
+
+    const titulo = document.createElement('div');
+    titulo.className = 'categoria-titulo';
+    titulo.textContent = NOMBRES_CATEGORIAS[cat];
+    seccion.appendChild(titulo);
+
+    const grid = document.createElement('div');
+    grid.className = 'lista';
+
+    piezas.forEach(datos => {
+      const div = document.createElement('div');
+      div.className = 'pieza';
+      div.dataset.categoria = cat;
+
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 140;
+      div.appendChild(cv);
+
+      const titulo = document.createElement('div');
+      titulo.className = 'pieza-titulo';
+      titulo.textContent = datos.titulo;
+      div.appendChild(titulo);
+
+      const archivo = document.createElement('div');
+      archivo.className = 'pieza-archivo';
+      archivo.textContent = datos.archivo;
+      div.appendChild(archivo);
+
+      if (datos.claves && datos.claves !== 'ninguna') {
+        const claves = document.createElement('div');
+        claves.className = 'pieza-claves';
+        claves.textContent = '🔑 ' + datos.claves;
+        claves.title = 'No renombres estos objetos en Blender';
+        div.appendChild(claves);
+      }
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn--peltre btn--sm pieza-btn';
+      btn.textContent = '⬇ Bajar';
+      btn.addEventListener('click', async () => {
+        const obj = pieza(datos.id, THREE, datos.opts);
+        bajar(datos.archivo, await aGLB(obj));
+        log(`↓ ${datos.archivo}`);
+        btn.textContent = '✓ Listo';
+        setTimeout(() => { btn.textContent = '⬇ Bajar'; }, 2000);
+      });
+      div.appendChild(btn);
+
+      grid.appendChild(div);
+      generados.push(datos);
+
+      try { preview(cv, pieza(datos.id, THREE, datos.opts)); }
+      catch (e) { log(`preview falló en ${datos.archivo}: ${e.message}`); }
+    });
+
+    seccion.appendChild(grid);
+    contenedor.appendChild(seccion);
+  });
+
+  const stats = document.createElement('div');
+  stats.className = 'estadisticas';
+  stats.innerHTML = `
+    📊 <strong>${generados.length}</strong> piezas listas para exportar
+    (${Object.keys(porCategoria).filter(c => porCategoria[c].length > 0).length} categorías)
+  `;
+  contenedor.appendChild(stats);
+
+  log(`listo — ${generados.length} piezas cargadas`);
+}
+
+/**
+ * Event listeners
+ */
 document.getElementById('todo').addEventListener('click', async () => {
+  const antes = Date.now();
   for (const g of generados) {
-    bajar(g.nombre + '.glb', await aGLB(g.obj));
-    log('↓ ' + g.nombre + '.glb');
-    await new Promise(r => setTimeout(r, 220));   /* el navegador se atora si van todas de golpe */
+    const obj = pieza(g.id, THREE, g.opts);
+    bajar(g.archivo, await aGLB(obj));
+    log(`↓ ${g.archivo}`);
+    await new Promise(r => setTimeout(r, 220));
   }
-  log('todas listas. Ponlas en modelos/glb/');
+  const tiempo = ((Date.now() - antes) / 1000).toFixed(1);
+  log(`✅ Todas listas en ${tiempo}s. Cópialas a modelos/glb/`);
 });
 
 document.getElementById('indice').addEventListener('click', () => {
@@ -208,13 +293,20 @@ document.getElementById('indice').addEventListener('click', () => {
   log('↓ indice.json');
 });
 
-/* para poder generarlas sin navegador (Playwright, guiones) */
+document.getElementById('limpiar').addEventListener('click', () => {
+  filtroActivo = null;
+  document.querySelectorAll('.pieza').forEach(p => p.classList.remove('oculto'));
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+});
+
+/* API para automatización sin navegador */
 window.Exportador = {
   lista: () => generados.map(g => g.nombre),
   glb: async (nombre) => {
     const g = generados.find(x => x.nombre === nombre);
     if (!g) throw new Error('no existe: ' + nombre);
-    const buf = await aGLB(g.obj);
+    const obj = pieza(g.id, THREE, g.opts);
+    const buf = await aGLB(obj);
     return Array.from(new Uint8Array(buf));
   },
 };
