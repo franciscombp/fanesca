@@ -56,11 +56,15 @@ const CENTRO = [0, 1.78, 0.12];  /* el choclo en alto, relativo al mesón */
    colgadas en el borde de la silueta, casi imposibles de tocar.) */
 const FRENTE = 0;
 
-const CHOCLOS = 2;         /* choclos por partida */
-const GUSANOS_POR = [1, 2];/* bichos escondidos en cada choclo */
 const GUSANO_VEL = 0.38;   /* posiciones por segundo que BAJA el bicho */
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 const FUERZA = 1600;
+
+/* Parámetros que se leen de la config métrica */
+let CHOCLOS = 2;           /* se sobrescribe en construir() */
+let GUSANOS_POR = [1, 2];  /* se sobrescribe en construir() */
+let PODRIDOS_TOTAL = 0;    /* se sobrescribe en construir() */
+let posicionesPodridas = new Set(); /* (a,p) de granos podridos */
 /* El jalón de la hoja, en píxeles. Los primeros no mueven nada: la
    hoja está pegada y hay que vencerla, y ese arranque duro es la
    mitad de lo que hace que se sienta fibrosa en vez de floja. */
@@ -71,7 +75,7 @@ const SUELTA_HOJA = 105;
    sin poder reaccionar. */
 const GRACIA = 1.8;
 
-const TOTAL = CHOCLOS * A * P;
+let TOTAL = 0;  /* se calcula en construir() después de leer config */
 
 let mazorca = null;        /* el choclo de pie: su eje es +Y */
 let giro = null;           /* grupo que rota sobre el eje de la mazorca */
@@ -122,13 +126,23 @@ let transToken = 0;
 function nuevoGrano(a, p) {
   const { th, r, h } = posicionDe(a, p);
   const punta = (p === 0 || p === P - 1);
-  const g = api.pieza('grano-choclo', {
-    madurez: madurez.id, punta, variante: a * 7 + p * 3,
+
+  /* ¿es este grano uno de los podridos? */
+  const esPodrido = posicionesPodridas.has(`${a},${p}`);
+
+  const g = api.pieza(esPodrido ? 'grano-podrido' : 'grano-choclo', {
+    madurez: esPodrido ? 'podrido' : madurez.id,
+    punta,
+    variante: a * 7 + p * 3,
   });
   /* apenas asomados: el grano se sienta EN la tusa, no flota sobre ella */
   g.position.set(Math.sin(th) * (r + 0.03), h, Math.cos(th) * (r + 0.03));
   g.rotation.y = th;
-  g.userData = { tipo: 'grano', a, p, golpes: 0 };
+  g.userData = {
+    tipo: esPodrido ? 'grano-podrido' : 'grano',
+    a, p, golpes: 0,
+    fragil: esPodrido,
+  };
   return g;
 }
 
@@ -459,6 +473,19 @@ function gusanoMasCercaEnPantalla(clienteX, clienteY, radioPx = 70) {
 function intentarGrano(raizGrano, esArrastre) {
   const { a, p } = raizGrano.userData;
   if (raizGrano.userData.tipo === 'papilla') { limpiarPapilla(a, p); return; }
+
+  /* GRANO PODRIDO: TOQUE DELICADO */
+  if (raizGrano.userData.tipo === 'grano-podrido') {
+    if (velSuave > FUERZA) {
+      /* ¡Lo rompiste! Se va a la olla y se arruina el nivel */
+      api.arruinar(ARRUINADO.granoPodrido?.() || ARRUINADO.aplastado('grano dañado'));
+      return;
+    }
+    /* toque delicado: sale limpio */
+    sacarGrano(a, p, esArrastre, esArrastre ? dirActual : 0);
+    return;
+  }
+
   if (suelto(a, p)) {
     sacarGrano(a, p, esArrastre, esArrastre ? dirActual : 0);
     return;
@@ -612,7 +639,7 @@ export default {
     { id: 'der', txt: '⟳', tip: 'girar' },
   ],
 
-  construir(ctx) {
+  construir(ctx, levelConfig = {}) {
     perdonado = false; avisadoRoce = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     hechos = 0; choclo = 0; compostaN = 0;
@@ -622,8 +649,37 @@ export default {
     reventados = 0; avisadoReventon = false;
     transToken++;
 
-    /* uno tierno y uno duro, en el orden que salga del costal */
-    orden = Math.random() < 0.5 ? ['tierno', 'duro'] : ['duro', 'tierno'];
+    /* Leer parámetros de la configuración métrica */
+    CHOCLOS = levelConfig.choclos ?? 2;
+    PODRIDOS_TOTAL = levelConfig.podridos ?? 0;
+    GUSANOS_POR = levelConfig.gusanos ?? [1, 2];
+    const MADUREZ_ORDEN = levelConfig.madurez ?? ['tierno', 'duro'];
+
+    /* Calcular TOTAL después de leer CHOCLOS */
+    TOTAL = CHOCLOS * A * P;
+
+    /* uno tierno y uno duro, en el orden especificado en config */
+    orden = MADUREZ_ORDEN.slice();
+
+    /* Seleccionar posiciones aleatorias para los granos podridos */
+    posicionesPodridas.clear();
+    if (PODRIDOS_TOTAL > 0) {
+      const totalGranos = CHOCLOS * A * P;
+      const posicionesDisponibles = [];
+      for (let a = 0; a < A; a++) {
+        for (let p = 0; p < P; p++) {
+          posicionesDisponibles.push(`${a},${p}`);
+        }
+      }
+      /* barajar y seleccionar los primeros N podridos */
+      for (let i = posicionesDisponibles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [posicionesDisponibles[i], posicionesDisponibles[j]] = [posicionesDisponibles[j], posicionesDisponibles[i]];
+      }
+      for (let i = 0; i < Math.min(PODRIDOS_TOTAL, posicionesDisponibles.length); i++) {
+        posicionesPodridas.add(posicionesDisponibles[i]);
+      }
+    }
 
     mazorca = new THREE.Group();
     mazorca.position.set(CENTRO[0], api.MESA_Y + CENTRO[1], CENTRO[2]);
@@ -685,7 +741,7 @@ export default {
       if (!hojasQuedan()) { intentarPelos(); return; }
       return;
     }
-    if (r.userData.tipo === 'grano' || r.userData.tipo === 'papilla') { intentarGrano(r, false); return; }
+    if (r.userData.tipo === 'grano' || r.userData.tipo === 'papilla' || r.userData.tipo === 'grano-podrido') { intentarGrano(r, false); return; }
     if (r.userData.tipo === 'tusa') api.pista('Ahí ya no hay grano. Busca uno que tenga un hueco al lado.', 2600);
   },
 
@@ -747,7 +803,7 @@ export default {
       if (fase === 'desgranar' && Math.abs(info.dy) > 26 &&
           Math.abs(info.dy) > Math.abs(info.dx - dx0) * 1.4) {
         const g = granoBajoElDedo();
-        if (g && (g.userData.tipo === 'grano' || g.userData.tipo === 'papilla')) {
+        if (g && (g.userData.tipo === 'grano' || g.userData.tipo === 'papilla' || g.userData.tipo === 'grano-podrido')) {
           modo = 'peinar';
           dirActual = info.dy > 0 ? -1 : 1;
           dyPrev = info.dy;
@@ -820,7 +876,7 @@ export default {
       if (!r) return;
       if (r.userData.tipo === 'gusano') { aplastado(gusanoDe(r)); return; }
       if (r.userData.tipo === 'papilla') { limpiarPapilla(r.userData.a, r.userData.p); return; }
-      if (r.userData.tipo !== 'grano') return;
+      if (r.userData.tipo !== 'grano' && r.userData.tipo !== 'grano-podrido') return;
       const { a, p } = r.userData;
       /* el tierno cobra la fuerza: el grano revienta en vez de salir */
       /* la velocidad se suaviza: un solo evento nervioso del navegador

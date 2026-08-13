@@ -145,6 +145,45 @@ registrar('papilla-choclo', (THREE) => {
   return splat;
 });
 
+/* ---------- el grano podrido ----------
+   Grano dañado, de color café oscuro. Es frágil: si lo tocas con
+   fuerza se va a la olla y arruina el nivel. Requiere un toque
+   delicado para removerse. Nuevo desafío en niveles de dificultad
+   alta. */
+
+registrar('grano-podrido', (THREE, opts = {}) => {
+  const variante = opts.variante || 0;
+
+  const g = new THREE.Group();
+  g.name = 'grano-podrido';
+
+  /* Mismo molde que grano normal, pero color café dañado */
+  const geo = formaVariada('grano-podrido', 6, variante, (k) =>
+    achatar(
+      abollar(new THREE.SphereGeometry(1, 12, 9), { fuerza: 0.09, escala: 2.2, semilla: k }),
+      { desde: -0.55, dureza: 0.4 },
+    ));
+
+  /* Color café oscuro para indicar que está dañado */
+  const cuerpo = new THREE.Mesh(geo, brillante(THREE, '#6b4423'));
+
+  /* Escala similar al grano normal para que se mezcle en la rejilla */
+  const e = 1.0 * (0.96 + Math.random() * 0.08);
+  cuerpo.scale.set(0.124 * e, 0.132 * e, 0.126 * e);
+  cuerpo.rotation.z = (Math.random() - 0.5) * 0.14;
+  cuerpo.name = 'cuerpo';
+  g.add(cuerpo);
+
+  /* Marcas de userData para el nivel: tipo y fragilidad */
+  g.userData = {
+    tipo: 'grano-podrido',
+    fragil: true,
+    velocidad_critica: 1200,  /* px/s — por encima, se daña */
+  };
+
+  return g;
+});
+
 /* ---------- la tusa ----------
    El corazón de la mazorca, con su tallito corto abajo para que
    se lea como choclo y no como mango de escoba. */
