@@ -28,6 +28,7 @@ import './mani.js';
 import './bacalao.js';
 
 export { registrar, pieza, parte, partes, cargarGLB, tieneGLB, registradas } from './registro.js';
+export { PIEZAS, CATEGORIAS, piezasPorCategoria, variantesDe, datosExportacion, listadoExportacion } from './builders.js';
 export { token, COMIDA, mate, brillante, mateToken } from './paleta.js';
 export { sombraBlob, ojitos, GROSOR_TABLA, ALTO_TABLA } from './utileria.js';
 export { nuevoGusano, nuevoGorgojo, nuevaMosca, aroDeAlarma } from './bichos.js';

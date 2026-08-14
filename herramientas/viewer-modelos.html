@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viewer de modelos — La fanesca</title>
+<link rel="stylesheet" href="../design-system.css">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: var(--font-text); background: var(--peltre-200); color: var(--text); margin: 0; padding: 0; }
+
+  .contenedor { display: flex; height: 100vh; }
+
+  /* Panel izquierdo: controles */
+  .panel-izq {
+    width: 320px; background: var(--surface); border-right: 1px solid var(--ring);
+    overflow-y: auto; padding: var(--sp-4); flex-direction: column; display: flex;
+  }
+
+  /* Lienzo 3D */
+  #canvas {
+    flex: 1; background: linear-gradient(135deg, #87ceeb 0%, #e0f6ff 100%);
+    cursor: grab;
+  }
+  #canvas:active { cursor: grabbing; }
+
+  h1 { font-family: var(--font-display); font-size: var(--t-xl); margin: 0 0 var(--sp-2) 0; }
+  .subtitulo { color: var(--text-muted); font-size: var(--t-xs); margin-bottom: var(--sp-4); }
+
+  .seccion { margin-bottom: var(--sp-4); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--hairline); }
+  .seccion:last-child { border-bottom: none; }
+  .seccion-titulo { font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; margin-bottom: var(--sp-2); }
+
+  .selector { display: flex; flex-direction: column; gap: var(--sp-1); }
+  select { padding: var(--sp-2); border: 1px solid var(--ring); border-radius: var(--r-md); background: var(--surface-raised); color: var(--text); font-size: var(--t-sm); }
+  select:focus { outline: none; border-color: var(--text-muted); }
+
+  .opciones { display: flex; flex-direction: column; gap: var(--sp-1); }
+  .opcion { display: flex; align-items: center; gap: var(--sp-1); }
+  .opcion input[type="checkbox"] { cursor: pointer; }
+  .opcion label { cursor: pointer; font-size: var(--t-sm); }
+
+  .controles-3d { display: flex; flex-direction: column; gap: var(--sp-2); }
+  .control-fila { display: flex; gap: var(--sp-1); align-items: center; }
+  .control-fila label { flex: 0 0 60px; font-size: var(--t-xs); font-weight: 600; }
+  .control-fila input[type="range"] { flex: 1; }
+  .control-valor { flex: 0 0 40px; text-align: right; font-size: var(--t-xs); font-weight: 600; }
+
+  .btn-reset { width: 100%; padding: var(--sp-2); border: 1px solid var(--ring); border-radius: var(--r-md); background: var(--surface-raised); color: var(--text); cursor: pointer; font-size: var(--t-xs); font-weight: 600; }
+  .btn-reset:hover { background: var(--surface); }
+
+  .info { font-size: var(--t-xs); color: var(--text-muted); line-height: 1.6; }
+  code { background: rgba(0,0,0,.07); padding: .1em .3em; border-radius: 3px; }
+
+  .escenas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-1); }
+  .btn-escena { padding: var(--sp-1) var(--sp-2); border: 1px solid var(--ring); border-radius: var(--r-md); background: var(--surface-raised); color: var(--text); cursor: pointer; font-size: var(--t-2xs); font-weight: 600; transition: all 0.2s; }
+  .btn-escena:hover { background: var(--surface); }
+  .btn-escena.activo { border-color: var(--maiz-600); background: rgba(255, 201, 60, 0.1); }
+
+  .log { max-height: 120px; overflow-y: auto; padding: var(--sp-2); background: rgba(0,0,0,.05); border-radius: var(--r-md); font-size: var(--t-2xs); color: var(--text-muted); font-family: monospace; }
+
+  @media (max-width: 768px) {
+    .panel-izq { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--ring); }
+    .contenedor { flex-direction: column; }
+  }
+</style>
+<script type="importmap">
+  { "imports": { "three": "../vendor/three.module.min.js", "three/addons/": "../vendor/addons/" } }
+</script>
+</head>
+<body>
+
+<div class="contenedor">
+  <!-- Panel de controles -->
+  <div class="panel-izq">
+    <h1>👁️ Viewer</h1>
+    <p class="subtitulo">Mira cómo se ven los modelos combinados en contexto</p>
+
+    <!-- Escenas predefinidas -->
+    <div class="seccion">
+      <div class="seccion-titulo">📦 Escenas</div>
+      <div class="escenas" id="escenas-botones"></div>
+    </div>
+
+    <!-- Selector de elemento -->
+    <div class="seccion">
+      <div class="seccion-titulo">🎨 Elemento</div>
+      <div class="selector">
+        <select id="selector-elemento">
+          <option value="">-- Selecciona --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Estados/poses -->
+    <div class="seccion" id="seccion-estados" style="display: none;">
+      <div class="seccion-titulo">🔄 Estado</div>
+      <div class="selector">
+        <select id="selector-estado"></select>
+      </div>
+    </div>
+
+    <!-- Opciones visuales -->
+    <div class="seccion">
+      <div class="seccion-titulo">🔧 Visualización</div>
+      <div class="opciones">
+        <div class="opcion">
+          <input type="checkbox" id="opt-rejilla" checked>
+          <label for="opt-rejilla">Mostrar rejilla</label>
+        </div>
+        <div class="opcion">
+          <input type="checkbox" id="opt-sombra" checked>
+          <label for="opt-sombra">Sombra</label>
+        </div>
+        <div class="opcion">
+          <input type="checkbox" id="opt-rotar" checked>
+          <label for="opt-rotar">Rotación automática</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles 3D -->
+    <div class="seccion">
+      <div class="seccion-titulo">🎛️ Cámara</div>
+      <div class="controles-3d">
+        <div class="control-fila">
+          <label>Zoom</label>
+          <input type="range" id="ctrl-zoom" min="0.5" max="5" step="0.1" value="2">
+          <span class="control-valor" id="val-zoom">2.0</span>
+        </div>
+        <button class="btn-reset" id="btn-reset-cam">Resetear vista</button>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="seccion">
+      <div class="seccion-titulo">ℹ️ Información</div>
+      <div class="info">
+        <p><strong>Uso:</strong></p>
+        <p>• Selecciona una escena o elemento<br>
+        • Arrastra para rotar<br>
+        • Scroll para zoom<br>
+        • Cambia estado para ver poses<br>
+        • Interactúa con los controles</p>
+      </div>
+    </div>
+
+    <div class="log" id="log" style="margin-top: auto;"></div>
+  </div>
+
+  <!-- Canvas 3D -->
+  <canvas id="canvas"></canvas>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { pieza, parte, partes } from '../modelos/index.js';
+import { CATEGORIAS, piezasPorCategoria } from '../modelos/builders.js';
+
+const canvas = document.getElementById('canvas');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+// Cámara
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 1.5, 2.5);
+camera.lookAt(0, 0.8, 0);
+
+// Luces
+const hemiluz = new THREE.HemisphereLight('#ffffff', '#8a7a5a', 2);
+scene.add(hemiluz);
+const solLuz = new THREE.DirectionalLight('#fff2d8', 1.5);
+solLuz.position.set(3, 3, 4);
+solLuz.castShadow = true;
+solLuz.shadow.mapSize.width = 2048;
+solLuz.shadow.mapSize.height = 2048;
+scene.add(solLuz);
+
+// Rejilla
+const rejilla = new THREE.GridHelper(4, 8, 0xcccccc, 0xeeeeee);
+rejilla.position.y = -0.01;
+scene.add(rejilla);
+
+// Plano para sombras
+const plano = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 10),
+  new THREE.ShadowMaterial({ opacity: 0.3 })
+);
+plano.rotation.x = -Math.PI / 2;
+plano.receiveShadow = true;
+scene.add(plano);
+
+const log = (msg) => {
+  const l = document.getElementById('log');
+  l.textContent += msg + '\n';
+  l.scrollTop = l.scrollHeight;
+};
+
+log('✓ Viewer cargado');
+
+/**
+ * ESCENAS PREDEFINIDAS
+ */
+const ESCENAS = {
+  choclo_cerrado: {
+    nombre: '🌽 Choclo cerrado',
+    construir: (scene) => {
+      const tusa = pieza('tusa', THREE, { madurez: 'tierno' });
+      tusa.castShadow = true;
+      tusa.receiveShadow = true;
+
+      // Granos
+      for (let a = 0; a < 14; a++) {
+        for (let p = 0; p < 9; p++) {
+          const g = pieza('grano-choclo', THREE, { madurez: 'tierno', punta: p === 0 || p === 8 });
+          const posicion = new THREE.Vector3();
+          const th = (a / 14) * Math.PI * 2;
+          const r = 0.46 * (0.80 + 0.20 * Math.sin(Math.PI * ((p + 0.5) / 9)));
+          const h = (p - 4) * 0.208;
+          posicion.set(Math.sin(th) * r, h, Math.cos(th) * r);
+          g.position.copy(posicion);
+          g.rotation.y = th;
+          g.castShadow = true;
+          g.receiveShadow = true;
+          tusa.add(g);
+        }
+      }
+
+      // Hojas cerradas
+      for (let i = 0; i < 10; i++) {
+        const hoja = pieza('hoja-choclo', THREE, { indice: i });
+        const th = (i / 10) * Math.PI * 2;
+        hoja.rotation.y = th;
+        hoja.position.y = -1.88;
+        hoja.castShadow = true;
+        hoja.receiveShadow = true;
+        tusa.add(hoja);
+      }
+
+      // Pelos
+      const pelos = pieza('pelos-choclo', THREE);
+      pelos.castShadow = true;
+      pelos.receiveShadow = true;
+      tusa.add(pelos);
+
+      tusa.position.y = 0.1;
+      scene.add(tusa);
+      return tusa;
+    }
+  },
+
+  choclo_despelado: {
+    nombre: '🌽 Choclo sin pelos',
+    construir: (scene) => {
+      const tusa = pieza('tusa', THREE, { madurez: 'tierno' });
+      tusa.castShadow = true;
+
+      // Granos
+      for (let a = 0; a < 14; a++) {
+        for (let p = 0; p < 9; p++) {
+          const g = pieza('grano-choclo', THREE, { madurez: 'tierno', punta: p === 0 || p === 8 });
+          const posicion = new THREE.Vector3();
+          const th = (a / 14) * Math.PI * 2;
+          const r = 0.46 * (0.80 + 0.20 * Math.sin(Math.PI * ((p + 0.5) / 9)));
+          const h = (p - 4) * 0.208;
+          posicion.set(Math.sin(th) * r, h, Math.cos(th) * r);
+          g.position.copy(posicion);
+          g.rotation.y = th;
+          g.castShadow = true;
+          tusa.add(g);
+        }
+      }
+
+      // Hojas parcialmente abiertas
+      for (let i = 0; i < 10; i++) {
+        const hoja = pieza('hoja-choclo', THREE, { indice: i });
+        const th = (i / 10) * Math.PI * 2;
+        hoja.rotation.y = th;
+        hoja.position.y = -1.88;
+
+        // Abrir las hojas parcialmente
+        const nudo0 = parte(hoja, 'nudo0');
+        const nudo1 = parte(hoja, 'nudo1');
+        if (nudo0) nudo0.rotation.z = 0.3;
+        if (nudo1) nudo1.rotation.z = 0.5;
+
+        hoja.castShadow = true;
+        tusa.add(hoja);
+      }
+
+      tusa.position.y = 0.1;
+      scene.add(tusa);
+      return tusa;
+    }
+  },
+
+  choclo_desojado: {
+    nombre: '🌽 Choclo desojado',
+    construir: (scene) => {
+      const tusa = pieza('tusa', THREE, { madurez: 'tierno' });
+      tusa.castShadow = true;
+
+      // Granos
+      for (let a = 0; a < 14; a++) {
+        for (let p = 0; p < 9; p++) {
+          const g = pieza('grano-choclo', THREE, { madurez: 'tierno', punta: p === 0 || p === 8 });
+          const posicion = new THREE.Vector3();
+          const th = (a / 14) * Math.PI * 2;
+          const r = 0.46 * (0.80 + 0.20 * Math.sin(Math.PI * ((p + 0.5) / 9)));
+          const h = (p - 4) * 0.208;
+          posicion.set(Math.sin(th) * r, h, Math.cos(th) * r);
+          g.position.copy(posicion);
+          g.rotation.y = th;
+          g.castShadow = true;
+          tusa.add(g);
+        }
+      }
+
+      // Hojas completamente abiertas (caidas)
+      for (let i = 0; i < 10; i++) {
+        const hoja = pieza('hoja-choclo', THREE, { indice: i });
+        const th = (i / 10) * Math.PI * 2;
+        hoja.rotation.y = th;
+        hoja.position.y = -1.88;
+
+        // Abrir las hojas completamente
+        const nudo0 = parte(hoja, 'nudo0');
+        const nudo1 = parte(hoja, 'nudo1');
+        const nudo2 = parte(hoja, 'nudo2');
+        if (nudo0) nudo0.rotation.z = 1.2;
+        if (nudo1) nudo1.rotation.z = 1.0;
+        if (nudo2) nudo2.rotation.z = 0.8;
+
+        hoja.castShadow = true;
+        tusa.add(hoja);
+      }
+
+      tusa.position.y = 0.1;
+      scene.add(tusa);
+      return tusa;
+    }
+  },
+
+  vaina_arveja_cerrada: {
+    nombre: '🫛 Arveja cerrada',
+    construir: (scene) => {
+      const vaina = pieza('vaina-arveja', THREE);
+      vaina.castShadow = true;
+      vaina.position.y = 0.3;
+      scene.add(vaina);
+      return vaina;
+    }
+  },
+
+  vaina_arveja_abierta: {
+    nombre: '🫛 Arveja abierta',
+    construir: (scene) => {
+      const vaina = pieza('vaina-arveja', THREE);
+      vaina.castShadow = true;
+      vaina.position.y = 0.3;
+
+      // Abrir la vaina
+      const bisagra = parte(vaina, 'bisagra');
+      if (bisagra) bisagra.rotation.x = -2.0;
+
+      // Mostrar arvejas
+      const granos = partes(vaina, 'arveja');
+      granos.forEach(g => { g.visible = true; });
+
+      scene.add(vaina);
+      return vaina;
+    }
+  },
+
+  vaina_haba_cerrada: {
+    nombre: '🫛 Haba cerrada',
+    construir: (scene) => {
+      const vaina = pieza('vaina-haba', THREE);
+      vaina.castShadow = true;
+      vaina.position.y = 0.3;
+      scene.add(vaina);
+      return vaina;
+    }
+  },
+
+  vaina_haba_abierta: {
+    nombre: '🫛 Haba abierta',
+    construir: (scene) => {
+      const vaina = pieza('vaina-haba', THREE);
+      vaina.castShadow = true;
+      vaina.position.y = 0.3;
+
+      // Abrir la vaina
+      const bisagra = parte(vaina, 'bisagra');
+      if (bisagra) bisagra.rotation.x = -2.0;
+
+      scene.add(vaina);
+      return vaina;
+    }
+  },
+};
+
+// UI
+const selectorEscena = {};
+const botonsEscenas = document.getElementById('escenas-botones');
+
+Object.entries(ESCENAS).forEach(([id, escena]) => {
+  const btn = document.createElement('button');
+  btn.className = 'btn-escena';
+  btn.textContent = escena.nombre;
+  btn.addEventListener('click', () => {
+    // Limpiar scene
+    scene.children = scene.children.filter(o =>
+      o === rejilla || o === plano || o === hemiluz || o === solLuz
+    );
+
+    // Construir escena
+    const obj = escena.construir(scene);
+
+    // Actualizar botones
+    document.querySelectorAll('.btn-escena').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+
+    // Resetear cámara
+    camera.position.set(0, 1.5, 2.5);
+
+    log(`📦 Cargada: ${escena.nombre}`);
+  });
+  botonsEscenas.appendChild(btn);
+  selectorEscena[id] = btn;
+});
+
+// Seleccionar primera escena por defecto
+const primerBtn = botonsEscenas.querySelector('.btn-escena');
+if (primerBtn) primerBtn.click();
+
+// Controles
+let rotacionAuto = true;
+let posX = 0, posY = 0, rotX = 0, rotY = 0;
+let isDragging = false;
+let zoomActual = 2;
+
+document.getElementById('opt-rejilla').addEventListener('change', (e) => {
+  rejilla.visible = e.target.checked;
+});
+
+document.getElementById('opt-rotar').addEventListener('change', (e) => {
+  rotacionAuto = e.target.checked;
+});
+
+document.getElementById('btn-reset-cam').addEventListener('click', () => {
+  camera.position.set(0, 1.5, 2.5);
+  zoomActual = 2;
+  document.getElementById('ctrl-zoom').value = 2;
+  document.getElementById('val-zoom').textContent = '2.0';
+});
+
+document.getElementById('ctrl-zoom').addEventListener('input', (e) => {
+  zoomActual = parseFloat(e.target.value);
+  document.getElementById('val-zoom').textContent = zoomActual.toFixed(1);
+  camera.position.multiplyScalar(zoomActual / camera.position.length());
+});
+
+// Interacción con mouse/touch
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  posX = e.clientX;
+  posY = e.clientY;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - posX;
+  const dy = e.clientY - posY;
+  rotY += dx * 0.01;
+  rotX += dy * 0.01;
+  posX = e.clientX;
+  posY = e.clientY;
+});
+
+canvas.addEventListener('mouseup', () => { isDragging = false; });
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  zoomActual += e.deltaY * 0.001;
+  zoomActual = Math.max(0.5, Math.min(5, zoomActual));
+  document.getElementById('ctrl-zoom').value = zoomActual;
+  document.getElementById('val-zoom').textContent = zoomActual.toFixed(1);
+}, { passive: false });
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Animación
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Rotación automática
+  if (rotacionAuto && !isDragging) {
+    rotY += 0.005;
+  }
+
+  // Aplicar rotaciones a la cámara
+  const dist = camera.position.length();
+  camera.position.x = Math.sin(rotY) * Math.cos(rotX) * dist;
+  camera.position.y = Math.sin(rotX) * dist + 1.5;
+  camera.position.z = Math.cos(rotY) * Math.cos(rotX) * dist;
+  camera.lookAt(0, 0.8, 0);
+
+  renderer.render(scene, camera);
+}
+
+animate();
+log('✓ Animación iniciada');
+</script>
+
+</body>
+</html>

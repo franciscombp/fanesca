@@ -697,7 +697,7 @@ export const Motor = {
   },
 
   /* monta un nivel: limpia lo anterior y le entrega el contexto */
-  cargar(mod, api) {
+  cargar(mod, api, nivelConfig = {}) {
     this.descargar();
     this.encuadre(mod.camara && mod.camara.pos, mod.camara && mod.camara.mira, mod.camara && mod.camara.fov);
     nivel = mod;
@@ -710,7 +710,7 @@ export const Motor = {
     llenarRecipiente('composta', 0);
     cuenta.batea = 0; cuenta.composta = 0;
     if (onCuenco) onCuenco(cuenta);
-    nivel.construir(ctx);
+    nivel.construir(ctx, nivelConfig);
     return nivel;
   },
 

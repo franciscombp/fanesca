@@ -13,6 +13,7 @@ import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niv
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
+import { TODOS_NIVELES, NIVELES_ORDENADO } from './niveles-config.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -58,6 +59,53 @@ const listos = () => NIVELES.filter(n => estaListo(n.id)).length;
    dev, todo está abierto: para probar una mecánica no hace falta
    jugarse los ingredientes anteriores primero. */
 function desbloqueado(i) { return estado.devMode || i === 0 || estaListo(NIVELES[i - 1].id); }
+
+/* -------- sistema métrico de niveles -------- */
+/* Obtiene la configuración para un nivel. Si el ID es del sistema antiguo
+   (como 'maiz'), busca el primer nivel del nuevo sistema. Si es del nuevo
+   sistema (como 'maiz-1-introduccion'), busca directamente. */
+function obtenerConfigNivel(id) {
+  /* buscar en NIVELES_ORDENADO (sistema nuevo) */
+  let nivel = NIVELES_ORDENADO.find(n => {
+    for (const [_, nivelesBloque] of Object.entries(TODOS_NIVELES)) {
+      for (const [key, cfg] of Object.entries(nivelesBloque)) {
+        if (key === id) return true;
+      }
+    }
+    return false;
+  });
+  if (nivel) return nivel.config;
+
+  /* si no encuentra en el nuevo sistema, buscar en el antiguo e intentar
+     mapear al primer nivel del nuevo sistema (dev mode) */
+  const nivelAntiguo = porId(id);
+  if (nivelAntiguo) {
+    /* mapeo de IDs antiguos a IDs nuevos (primer nivel de cada ingrediente) */
+    const mapeo = {
+      'maiz': 'maiz-1-introduccion',
+      'habas': 'habas-1-facil',
+      'arveja': 'arveja-1-facil',
+      'chochos': 'chochos-1-facil',
+      'frejol': 'frejol-1-facil',
+      'melloco': 'melloco-1-facil',
+      'zapallo': 'zapallo-1-facil',
+      'col': 'col-1-facil',
+      'escoger': 'escoger-1-facil',
+      'quinua': 'quinua-1-facil',
+      'mani': 'mani-1-facil',
+      'bacalao': 'bacalao-1-facil',
+    };
+    const nuevoId = mapeo[id];
+    if (nuevoId) {
+      for (const [_, nivelesBloque] of Object.entries(TODOS_NIVELES)) {
+        if (nivelesBloque[nuevoId]) return nivelesBloque[nuevoId].config;
+      }
+    }
+  }
+
+  /* fallback: configuración por defecto si no encuentra nada */
+  return {};
+}
 
 /* ---------- sonido y vibración ---------- */
 
@@ -733,7 +781,8 @@ async function jugar(id) {
      armar el nivel: si no, la primera partida saldría con los de
      código y la segunda con los de Blender */
   await Motor.modelosListos();
-  Motor.cargar(modActual, api);
+  const nivelConfig = obtenerConfigNivel(id);
+  Motor.cargar(modActual, api, nivelConfig);
   renderControles(modActual);
   pista(n.gesto, 5200);
   Editor.nivel(n.id);
@@ -844,9 +893,12 @@ function salirDelNivel() {
 function cerrarModales() { $$('.modal').forEach(m => m.classList.remove('open')); }
 
 function bindEventos() {
+  /* Botón empezar: va a la mesa de prep */
   $('#btn-empezar').addEventListener('click', () => {
     initAudio(); sfx('tab');
     estado.vistoPortada = true; guardar();
+    mostrar('mesa');
+  });
 
   /* Empezar de nuevo: dos toques. Borrar doce ingredientes ganados
      por un dedo mal puesto sería imperdonable, y un confirm() del
@@ -879,8 +931,6 @@ function bindEventos() {
       sfx('tab');
     });
   }
-    mostrar('mesa');
-  });
 
   const btnDev = $('#btn-dev');
   if (btnDev) btnDev.addEventListener('click', () => {
