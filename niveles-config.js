@@ -23,6 +23,7 @@
 export const MAIZ = {
   'maiz-1-introduccion': {
     nombre: 'El choclo · primeros granos',
+    corto: 'Primeros granos',
     dificultad: 1, bloque: 'DESGRANAR', orden: 1,
     tiempoBase: 140,
     config: {
@@ -35,6 +36,7 @@ export const MAIZ = {
   },
   'maiz-2-tierno': {
     nombre: 'El choclo tierno',
+    corto: 'Tierno',
     dificultad: 2, bloque: 'DESGRANAR', orden: 2,
     tiempoBase: 120,
     config: {
@@ -47,6 +49,7 @@ export const MAIZ = {
   },
   'maiz-3-duro': {
     nombre: 'El choclo duro',
+    corto: 'Duro',
     dificultad: 3, bloque: 'DESGRANAR', orden: 3,
     tiempoBase: 115,
     config: {
@@ -59,6 +62,7 @@ export const MAIZ = {
   },
   'maiz-4-mix': {
     nombre: 'El choclo mixto',
+    corto: 'Mixto',
     dificultad: 4, bloque: 'DESGRANAR', orden: 4,
     tiempoBase: 100,
     config: {
@@ -71,6 +75,7 @@ export const MAIZ = {
   },
   'maiz-5-podrido': {
     nombre: 'El choclo dañado',
+    corto: 'Dañado',
     dificultad: 5, bloque: 'DESGRANAR', orden: 5,
     tiempoBase: 90,
     config: {

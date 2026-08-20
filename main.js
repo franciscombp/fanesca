@@ -119,6 +119,7 @@ function construirRuta() {
       id: v.id,
       base: ing.id,
       nombre: v.nombre,
+      corto: v.corto,
       dificultad: v.dificultad,
       config: v.config,
       cucharas: cucharasDeTiempo(v.tiempoBase),
@@ -339,7 +340,7 @@ function renderMesa() {
       <span class="nodo-plato">${icono(n.icono)}</span>
       ${!abierto && !mejor ? '<span class="nodo-candado" aria-hidden="true">🔒</span>' : ''}
       ${mejor ? `<span class="nodo-cucharas">${cucharasHTML(mejor.cucharas)}</span>` : ''}
-      <span class="nodo-nombre">${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>
+      <span class="nodo-nombre">${n.corto || n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>
       ${dif}`;
     b.setAttribute('aria-label', n.nombre + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
     b.addEventListener('click', () => {

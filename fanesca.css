@@ -628,8 +628,13 @@ svg[width="0"] { width: 0; height: 0; }
   border-radius: var(--r-pill);
   padding: .12rem .6rem;
   box-shadow: var(--e-1);
-  white-space: nowrap;
-  max-width: 130px; overflow: hidden; text-overflow: ellipsis;
+  /* Parte en dos líneas antes que cortarse con puntos. Con las
+     variantes del choclo, el recorte dejaba cinco nodos que decían
+     todos "choclo · prime…" y no se distinguían entre sí. */
+  text-align: center;
+  line-height: 1.15;
+  max-width: 122px;
+  overflow-wrap: anywhere;
 }
 
 /* Los chiles de dificultad, debajo del nombre. Van chiquitos y sin
