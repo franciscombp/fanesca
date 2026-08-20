@@ -85,6 +85,18 @@ export const MADUREZ = {
     cascada: 0.08,
     presenta: 'Este está <b>duro</b>: no revienta, pero los trabados pelean.',
   },
+  /* EL MAÍZ SECO. Ya no es choclo: es el maíz de la tonga, el que se
+     guardó colgado hasta que perdió el agua. El grano se agarra a la
+     tusa con todo y la cascada corre pesadísima — desgranarlo es de
+     puño, no de dedo. Es el final de la temporada por algo. */
+  seco: {
+    id: 'seco', resistencia: 8, escala: 0.88,
+    paleta: COMIDA.choclo_seco,
+    punta: COMIDA.choclo_seco_punta,
+    tusa: COMIDA.choclo_seco_tusa,
+    cascada: 0.14,
+    presenta: 'Este es <b>maíz seco</b>: se agarra con todo y la fila corre pesada.',
+  },
 };
 
 /* ---------- el grano ----------

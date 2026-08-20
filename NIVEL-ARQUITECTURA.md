@@ -94,17 +94,57 @@ una lista con el valor de cada una.
 
 ---
 
-## El choclo, en cinco
+## La temporada del choclo y el maíz
 
-| Orden | Id | Dif | Choclos | Hojas | Madurez | Podridos/mazorca | Gusanos | tiempoBase |
-|---|---|---|---|---|---|---|---|---|
-| 1 | `maiz-1-introduccion` | 🌶️ | 1 | 5 | tierno | 0 | 0 | 140s |
-| 2 | `maiz-2-tierno` | 🌶️🌶️ | 2 | 10 | tierno, tierno | 0 | 1, 1 | 120s |
-| 3 | `maiz-3-duro` | 🌶️🌶️🌶️ | 2 | 10 | duro, duro | 2 | 1, 1 | 115s |
-| 4 | `maiz-4-mix` | 🌶️🌶️🌶️🌶️ | 2 | 10 | tierno, duro | 4 | 1, 2 | 100s |
-| 5 | `maiz-5-podrido` | 🌶️🌶️🌶️🌶️🌶️ | 2 | 10 | duro, duro | 6 | 2, 2 | 90s |
+Quince paradas. No son quince veces lo mismo: la temporada recorre el
+maíz como lo recorre el año — del **choclo tierno** de la mata, al
+**duro**, al **maíz seco** de la tonga colgada. Cada tres o cuatro
+paradas entra algo nuevo y las siguientes lo mezclan con lo anterior.
+
+| # | Id | Dif | Mazorcas | Madurez | Dañados | Gusanos | t |
+|---|---|---|---|---|---|---|---|
+| 1 | `maiz-1-introduccion` | 🌶️ | 1 | tierno | 0 | 0 | 140s |
+| 2 | `maiz-2-cascada` | 🌶️ | 1 | tierno | 0 | 0 | 125s |
+| 3 | `maiz-3-dos` | 🌶️🌶️ | 2 | tierno·2 | 0 | 1,1 | 120s |
+| 4 | `maiz-4-primer-duro` | 🌶️🌶️ | 2 | tierno, duro | 0 | 1,1 | 115s |
+| 5 | `maiz-5-duro` | 🌶️🌶️🌶️ | 2 | duro·2 | 0 | 1,1 | 110s |
+| 6 | `maiz-6-primer-danado` | 🌶️🌶️🌶️ | 2 | tierno·2 | 1 | 1,1 | 110s |
+| 7 | `maiz-7-danado-duro` | 🌶️🌶️🌶️🌶️ | 2 | duro·2 | 2 | 1,1 | 105s |
+| 8 | `maiz-8-picada` | 🌶️🌶️🌶️🌶️ | 2 | tierno, duro | 4 | 1,2 | 100s |
+| 9 | `maiz-9-tres` | 🌶️🌶️🌶️🌶️ | 3 | tierno, duro, tierno | 2 | 1,1,1 | 150s |
+| 10 | `maiz-10-costal` | 🌶️🌶️🌶️🌶️🌶️ | 3 | duro·2, tierno | 4 | 1,2,1 | 140s |
+| 11 | `maiz-11-seco` | 🌶️🌶️🌶️ | 1 | **seco** | 0 | 0 | 125s |
+| 12 | `maiz-12-seco-tierno` | 🌶️🌶️🌶️🌶️ | 2 | seco, tierno | 2 | 1,1 | 120s |
+| 13 | `maiz-13-tonga` | 🌶️🌶️🌶️🌶️🌶️ | 2 | seco·2 | 3 | 1,2 | 115s |
+| 14 | `maiz-14-morocho` | 🌶️🌶️🌶️🌶️🌶️ | 2 | seco, duro | 6 | 2,2 | 110s |
+| 15 | `maiz-15-ultima` | 🌶️🌶️🌶️🌶️🌶️ | 3 | seco·2, duro | 6 | 2,2,2 | 160s |
+
+Los dos hitos —el dañado en la 6, el seco en la 11— entran **solos y
+en fácil**: `maiz-6` baja a tierno para que el dañado sea lo único
+nuevo, y `maiz-11` es una sola mazorca sin bichos ni dañados. Un
+mecanismo nuevo presentado a la vez que un pico de dificultad no se
+aprende, se sufre.
 
 De `tiempoBase` salen los tres cortes de cuchara: `[t, t×1.5, t×2.2]`.
+
+### Las tres madureces
+
+| | resistencia | cascada | qué se siente |
+|---|---|---|---|
+| `tierno` | 2 | 0.038 | cede solo, pero revienta con fuerza |
+| `duro` | 5 | 0.08 | no revienta; los trabados pelean |
+| `seco` | 7 | 0.14 | se agarra con todo; la fila corre pesada |
+
+`seco` es el maíz de la tonga, el que se guardó colgado hasta perder
+el agua. Su paleta (`choclo_seco` en `paleta.js`) es mate y
+blanquecina: ya no brilla, y por eso se lee duro antes de tocarlo.
+
+### El orden no se escribe
+
+`orden` se deriva del orden en que los niveles están declarados. Antes
+cada uno llevaba su `orden: N` a mano: meter una parada en medio
+obligaba a renumerar todo lo de abajo, y el primer olvido dejaba la
+temporada desordenada sin que nada fallara.
 
 ---
 
@@ -156,10 +196,18 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
 
 ---
 
-## Progreso
+## Progreso — dos candados, y no son el mismo
 
-- **Un nodo** se abre cuando el anterior de la ruta ya fue a la olla.
-  En `devMode`, todo abierto.
+- **Dentro de la temporada** de un ingrediente se va en fila: el
+  choclo duro se abre cuando pasaste el tierno, y así hasta la última
+  tonga. Eso es lo que hace que quince paradas se sientan una
+  temporada y no un menú.
+- **Al cambiar de ingrediente** basta con haber cocinado el anterior
+  una vez. Si no, las habas quedarían detrás de las quince paradas del
+  maíz y la olla detrás de la campaña entera: quien quisiera ver la
+  fanesca tendría que agotar el maíz primero. Terminado el primer
+  choclo se abren a la vez el segundo choclo y las primeras habas.
+- En `devMode`, todo abierto.
 - **La olla** se abre con los **doce ingredientes**, no con las
   variantes: `ingredienteListo(base)` es cierto en cuanto una
   cualquiera de sus variantes está hecha. Las de más arriba son para

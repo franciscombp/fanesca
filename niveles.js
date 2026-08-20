@@ -17,7 +17,7 @@ export const NIVELES = [
     tarea: 'Deshojar y desgranar',
     icono: 'maiz',
     modulo: () => import('./nivel-maiz.js'),
-    gesto: 'Primero <b>deshoja</b>: jala cada hoja hacia abajo y arranca los pelos. Luego toca un grano de la punta y <b>arrastra</b> a lo largo: la fila se va en cascada. Van dos choclos, y no son iguales: el <b>tierno</b> revienta si pasas el dedo con fuerza; el <b>duro</b> pelea grano a grano.',
+    gesto: 'Primero <b>deshoja</b>: jala cada hoja hacia abajo y arranca los pelos. Luego toca un grano de la punta y <b>arrastra</b> a lo largo: la fila se va en cascada. No todas las mazorcas son iguales — el <b>tierno</b> revienta si pasas el dedo con fuerza, el <b>duro</b> pelea grano a grano y el <b>seco</b> se agarra con todo. Y si ves granos <b>cafés</b>, están dañados: <b>no los toques</b> — traban la fila, se rodean, y al final se van con la tusa.',
     nota: 'Doce granos, doce apóstoles. El choclo se compra con hoja —así se sabe que es de hoy— y se desgrana con el pulgar, empezando siempre por una orilla.',
     bicho: 'el gusanito',
     /* segundos para 3, 2 y 1 cuchara */

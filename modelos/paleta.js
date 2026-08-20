@@ -40,6 +40,11 @@ export const COMIDA = {
   choclo_duro: ['#eaa92e', '#e09d24', '#efb84a', '#d99a20', '#f0c25e'],
   choclo_duro_punta: '#f3cf7f',
   choclo_duro_tusa: '#efe3c0',
+  /* maíz seco: el morocho de la tonga, mate y blanquecino. Ya no
+     brilla —perdió el agua— y por eso pelea grano a grano. */
+  choclo_seco: ['#e8dcbb', '#ded0a8', '#f0e6cb', '#d6c69a', '#eadfc0'],
+  choclo_seco_punta: '#f2ead4',
+  choclo_seco_tusa: '#e2d5b4',
   choclo_papilla: '#eedda0',
   hoja_choclo: ['#7fa851', '#6f9c47', '#8bb15f'],
   pelo_choclo: ['#d9b06a', '#c59a55'],

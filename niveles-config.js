@@ -8,83 +8,148 @@
    Estructura:
    - dificultad: 1-5 (progresión global)
    - bloque: categoría de gesto
-   - orden: progresión lineal
    - tiempoBase: segundos para 3 cucharas
    - [tipo]: objeto con parámetros específicos del nivel
 
    ============================================================ */
 
-/* DESGRANAR — Choclo
+/* ============================================================
+   DESGRANAR — LA TEMPORADA DEL CHOCLO Y EL MAÍZ
+
+   Quince paradas, y no son quince veces lo mismo: la temporada
+   recorre el maíz como lo recorre el año. Empieza en el CHOCLO
+   tierno —el de la mata, que cede solo—, pasa al DURO, y termina en
+   el MAÍZ SECO, el de la tonga colgada, que se agarra con todo y
+   hay que desgranar de puño.
+
+   Cada tres o cuatro paradas entra algo nuevo y las siguientes lo
+   mezclan con lo anterior:
+
+     1–3    el gesto: deshojar, desgranar, la cascada
+     4–5    el duro: el grano que pelea
+     6–8    los dañados: lo que NO hay que tocar
+     9–10   el volumen: tres mazorcas
+     11–15  el maíz seco: la temporada se cierra donde se guarda
 
    `hojas` son las que hay que arrancar; `podridos` y `gusanos` van
    POR MAZORCA (un número los reparte igual a todas, una lista da el
    de cada una). Cuántos granos trae un choclo no se pone aquí: son
-   A×P de modelos/choclo.js, la forma de la mazorca. */
+   A×P de modelos/choclo.js, la forma de la mazorca.
+   ============================================================ */
 export const MAIZ = {
+  /* --- el gesto --- */
   'maiz-1-introduccion': {
     nombre: 'El choclo · primeros granos',
     corto: 'Primeros granos',
-    dificultad: 1, bloque: 'DESGRANAR', orden: 1,
+    dificultad: 1, bloque: 'DESGRANAR',
     tiempoBase: 140,
-    config: {
-      choclos: 1,
-      hojas: 5,
-      madurez: ['tierno'],
-      podridos: 0,
-      gusanos: 0,
-    }
+    config: { choclos: 1, hojas: 5, madurez: ['tierno'], podridos: 0, gusanos: 0 }
   },
-  'maiz-2-tierno': {
-    nombre: 'El choclo tierno',
-    corto: 'Tierno',
-    dificultad: 2, bloque: 'DESGRANAR', orden: 2,
+  'maiz-2-cascada': {
+    nombre: 'El choclo · la fila entera',
+    corto: 'La cascada',
+    dificultad: 1, bloque: 'DESGRANAR',
+    tiempoBase: 125,
+    config: { choclos: 1, hojas: 8, madurez: ['tierno'], podridos: 0, gusanos: 0 }
+  },
+  'maiz-3-dos': {
+    nombre: 'Dos choclos tiernos',
+    corto: 'Dos choclos',
+    dificultad: 2, bloque: 'DESGRANAR',
     tiempoBase: 120,
-    config: {
-      choclos: 2,
-      hojas: 10,
-      madurez: ['tierno', 'tierno'],
-      podridos: 0,
-      gusanos: [1, 1],
-    }
+    config: { choclos: 2, hojas: 10, madurez: ['tierno', 'tierno'], podridos: 0, gusanos: [1, 1] }
   },
-  'maiz-3-duro': {
-    nombre: 'El choclo duro',
-    corto: 'Duro',
-    dificultad: 3, bloque: 'DESGRANAR', orden: 3,
+
+  /* --- el duro --- */
+  'maiz-4-primer-duro': {
+    nombre: 'El primero duro',
+    corto: 'El primer duro',
+    dificultad: 2, bloque: 'DESGRANAR',
     tiempoBase: 115,
-    config: {
-      choclos: 2,
-      hojas: 10,
-      madurez: ['duro', 'duro'],
-      podridos: 2,
-      gusanos: [1, 1],
-    }
+    config: { choclos: 2, hojas: 10, madurez: ['tierno', 'duro'], podridos: 0, gusanos: [1, 1] }
   },
-  'maiz-4-mix': {
-    nombre: 'El choclo mixto',
-    corto: 'Mixto',
-    dificultad: 4, bloque: 'DESGRANAR', orden: 4,
+  'maiz-5-duro': {
+    nombre: 'Los dos duros',
+    corto: 'Los dos duros',
+    dificultad: 3, bloque: 'DESGRANAR',
+    tiempoBase: 110,
+    config: { choclos: 2, hojas: 10, madurez: ['duro', 'duro'], podridos: 0, gusanos: [1, 1] }
+  },
+
+  /* --- los dañados: lo que NO hay que tocar --- */
+  'maiz-6-primer-danado': {
+    nombre: 'El primer dañado',
+    corto: 'Un dañado',
+    dificultad: 3, bloque: 'DESGRANAR',
+    tiempoBase: 110,
+    config: { choclos: 2, hojas: 10, madurez: ['tierno', 'tierno'], podridos: 1, gusanos: [1, 1] }
+  },
+  'maiz-7-danado-duro': {
+    nombre: 'Dañados en el duro',
+    corto: 'Dañado y duro',
+    dificultad: 4, bloque: 'DESGRANAR',
+    tiempoBase: 105,
+    config: { choclos: 2, hojas: 10, madurez: ['duro', 'duro'], podridos: 2, gusanos: [1, 1] }
+  },
+  'maiz-8-picada': {
+    nombre: 'La mazorca picada',
+    corto: 'La picada',
+    dificultad: 4, bloque: 'DESGRANAR',
     tiempoBase: 100,
-    config: {
-      choclos: 2,
-      hojas: 10,
-      madurez: ['tierno', 'duro'],
-      podridos: 4,
-      gusanos: [1, 2],
-    }
+    config: { choclos: 2, hojas: 10, madurez: ['tierno', 'duro'], podridos: 4, gusanos: [1, 2] }
   },
-  'maiz-5-podrido': {
-    nombre: 'El choclo dañado',
-    corto: 'Dañado',
-    dificultad: 5, bloque: 'DESGRANAR', orden: 5,
-    tiempoBase: 90,
-    config: {
-      choclos: 2,
-      hojas: 10,
-      madurez: ['duro', 'duro'],
-      podridos: 6,
-      gusanos: [2, 2],
-    }
+
+  /* --- el volumen: tres mazorcas --- */
+  'maiz-9-tres': {
+    nombre: 'Tres mazorcas',
+    corto: 'Tres mazorcas',
+    dificultad: 4, bloque: 'DESGRANAR',
+    tiempoBase: 150,
+    config: { choclos: 3, hojas: 10, madurez: ['tierno', 'duro', 'tierno'], podridos: 2, gusanos: [1, 1, 1] }
+  },
+  'maiz-10-costal': {
+    nombre: 'El costal entero',
+    corto: 'El costal',
+    dificultad: 5, bloque: 'DESGRANAR',
+    tiempoBase: 140,
+    config: { choclos: 3, hojas: 12, madurez: ['duro', 'duro', 'tierno'], podridos: 4, gusanos: [1, 2, 1] }
+  },
+
+  /* --- el maíz seco: donde se guarda la temporada --- */
+  'maiz-11-seco': {
+    nombre: 'El maíz seco',
+    corto: 'El maíz seco',
+    dificultad: 3, bloque: 'DESGRANAR',
+    tiempoBase: 125,
+    config: { choclos: 1, hojas: 6, madurez: ['seco'], podridos: 0, gusanos: 0 }
+  },
+  'maiz-12-seco-tierno': {
+    nombre: 'Seco y tierno',
+    corto: 'Seco y tierno',
+    dificultad: 4, bloque: 'DESGRANAR',
+    tiempoBase: 120,
+    config: { choclos: 2, hojas: 10, madurez: ['seco', 'tierno'], podridos: 2, gusanos: [1, 1] }
+  },
+  'maiz-13-tonga': {
+    nombre: 'La tonga',
+    corto: 'La tonga',
+    dificultad: 5, bloque: 'DESGRANAR',
+    tiempoBase: 115,
+    config: { choclos: 2, hojas: 10, madurez: ['seco', 'seco'], podridos: 3, gusanos: [1, 2] }
+  },
+  'maiz-14-morocho': {
+    nombre: 'El morocho picado',
+    corto: 'El morocho',
+    dificultad: 5, bloque: 'DESGRANAR',
+    tiempoBase: 110,
+    config: { choclos: 2, hojas: 12, madurez: ['seco', 'duro'], podridos: 6, gusanos: [2, 2] }
+  },
+  'maiz-15-ultima': {
+    nombre: 'La última tonga',
+    corto: 'La última',
+    dificultad: 5, bloque: 'DESGRANAR',
+    tiempoBase: 160,
+    config: { choclos: 3, hojas: 12, madurez: ['seco', 'seco', 'duro'], podridos: 6, gusanos: [2, 2, 2] }
   },
 };
 
@@ -92,7 +157,7 @@ export const MAIZ = {
 export const VAINAS = {
   'arveja-1-facil': {
     nombre: 'La arveja · primer hilo',
-    dificultad: 2, bloque: 'DESVAINAR', orden: 6,
+    dificultad: 2, bloque: 'DESVAINAR',
     tiempoBase: 85,
     config: {
       tipo: 'arveja',
@@ -104,7 +169,7 @@ export const VAINAS = {
   },
   'arveja-2-normal': {
     nombre: 'La arveja natural',
-    dificultad: 3, bloque: 'DESVAINAR', orden: 7,
+    dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 75,
     config: {
       tipo: 'arveja',
@@ -116,7 +181,7 @@ export const VAINAS = {
   },
   'arveja-3-dificil': {
     nombre: 'La arveja apretada',
-    dificultad: 4, bloque: 'DESVAINAR', orden: 8,
+    dificultad: 4, bloque: 'DESVAINAR',
     tiempoBase: 65,
     config: {
       tipo: 'arveja',
@@ -129,7 +194,7 @@ export const VAINAS = {
 
   'habas-1-facil': {
     nombre: 'Las habas · apertura suave',
-    dificultad: 2, bloque: 'DESVAINAR', orden: 9,
+    dificultad: 2, bloque: 'DESVAINAR',
     tiempoBase: 80,
     config: {
       tipo: 'haba',
@@ -140,7 +205,7 @@ export const VAINAS = {
   },
   'habas-2-normal': {
     nombre: 'Las habas apretadas',
-    dificultad: 3, bloque: 'DESVAINAR', orden: 10,
+    dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 70,
     config: {
       tipo: 'haba',
@@ -155,7 +220,7 @@ export const VAINAS = {
 export const MELLOCO_NIVELES = {
   'melloco-1-facil': {
     nombre: 'El melloco · raspe suave',
-    dificultad: 2, bloque: 'RASPAR', orden: 11,
+    dificultad: 2, bloque: 'RASPAR',
     tiempoBase: 95,
     config: {
       cantidad: 1,
@@ -166,7 +231,7 @@ export const MELLOCO_NIVELES = {
   },
   'melloco-2-normal': {
     nombre: 'El melloco normal',
-    dificultad: 3, bloque: 'RASPAR', orden: 12,
+    dificultad: 3, bloque: 'RASPAR',
     tiempoBase: 80,
     config: {
       cantidad: 1,
@@ -181,7 +246,7 @@ export const MELLOCO_NIVELES = {
 export const QUINUA_NIVELES = {
   'quinua-1-facil': {
     nombre: 'La quinua · primer lavado',
-    dificultad: 2, bloque: 'LAVAR', orden: 13,
+    dificultad: 2, bloque: 'LAVAR',
     tiempoBase: 100,
     config: {
       cantidad: 1,
@@ -192,7 +257,7 @@ export const QUINUA_NIVELES = {
   },
   'quinua-2-normal': {
     nombre: 'La quinua espumosa',
-    dificultad: 3, bloque: 'LAVAR', orden: 14,
+    dificultad: 3, bloque: 'LAVAR',
     tiempoBase: 85,
     config: {
       cantidad: 1,
@@ -207,7 +272,7 @@ export const QUINUA_NIVELES = {
 export const COL_NIVELES = {
   'col-1-facil': {
     nombre: 'La col · primer rollo',
-    dificultad: 2, bloque: 'ENROLLAR', orden: 15,
+    dificultad: 2, bloque: 'ENROLLAR',
     tiempoBase: 105,
     config: {
       cantidad: 1,
@@ -218,7 +283,7 @@ export const COL_NIVELES = {
   },
   'col-2-fino': {
     nombre: 'La col cortadita',
-    dificultad: 3, bloque: 'ENROLLAR', orden: 16,
+    dificultad: 3, bloque: 'ENROLLAR',
     tiempoBase: 90,
     config: {
       cantidad: 1,
@@ -233,7 +298,7 @@ export const COL_NIVELES = {
 export const MANI_NIVELES = {
   'mani-1-facil': {
     nombre: 'El maní · primer majado',
-    dificultad: 2, bloque: 'MAJAR', orden: 17,
+    dificultad: 2, bloque: 'MAJAR',
     tiempoBase: 110,
     config: {
       cantidad: 1,
@@ -244,7 +309,7 @@ export const MANI_NIVELES = {
   },
   'mani-2-rapido': {
     nombre: 'El maní majado',
-    dificultad: 3, bloque: 'MAJAR', orden: 18,
+    dificultad: 3, bloque: 'MAJAR',
     tiempoBase: 95,
     config: {
       cantidad: 1,
@@ -259,7 +324,7 @@ export const MANI_NIVELES = {
 export const ESCOGER_NIVELES = {
   'escoger-1-facil': {
     nombre: 'La lenteja · poquitas piedras',
-    dificultad: 2, bloque: 'ESCOGER', orden: 19,
+    dificultad: 2, bloque: 'ESCOGER',
     tiempoBase: 95,
     config: {
       cantidad: 1,
@@ -270,7 +335,7 @@ export const ESCOGER_NIVELES = {
   },
   'escoger-2-normal': {
     nombre: 'La lenteja normal',
-    dificultad: 3, bloque: 'ESCOGER', orden: 20,
+    dificultad: 3, bloque: 'ESCOGER',
     tiempoBase: 75,
     config: {
       cantidad: 1,
@@ -281,7 +346,7 @@ export const ESCOGER_NIVELES = {
   },
   'escoger-3-dificil': {
     nombre: 'La lenteja sucia',
-    dificultad: 4, bloque: 'ESCOGER', orden: 21,
+    dificultad: 4, bloque: 'ESCOGER',
     tiempoBase: 65,
     config: {
       cantidad: 1,
@@ -296,7 +361,7 @@ export const ESCOGER_NIVELES = {
 export const CHOCHOS_NIVELES = {
   'chochos-1-facil': {
     nombre: 'Los chochos · pelada suave',
-    dificultad: 2, bloque: 'PELAR', orden: 22,
+    dificultad: 2, bloque: 'PELAR',
     tiempoBase: 85,
     config: {
       cantidad: 1,
@@ -307,7 +372,7 @@ export const CHOCHOS_NIVELES = {
   },
   'chochos-2-normal': {
     nombre: 'Los chochos pelados',
-    dificultad: 3, bloque: 'PELAR', orden: 23,
+    dificultad: 3, bloque: 'PELAR',
     tiempoBase: 70,
     config: {
       cantidad: 1,
@@ -322,7 +387,7 @@ export const CHOCHOS_NIVELES = {
 export const FREJOL_NIVELES = {
   'frejol-1-facil': {
     nombre: 'El fréjol · revientas fácil',
-    dificultad: 2, bloque: 'REVENTAR', orden: 24,
+    dificultad: 2, bloque: 'REVENTAR',
     tiempoBase: 90,
     config: {
       cantidad: 1,
@@ -333,7 +398,7 @@ export const FREJOL_NIVELES = {
   },
   'frejol-2-normal': {
     nombre: 'El fréjol reventado',
-    dificultad: 3, bloque: 'REVENTAR', orden: 25,
+    dificultad: 3, bloque: 'REVENTAR',
     tiempoBase: 75,
     config: {
       cantidad: 1,
@@ -348,7 +413,7 @@ export const FREJOL_NIVELES = {
 export const BACALAO_NIVELES = {
   'bacalao-1-facil': {
     nombre: 'El bacalao · primer desale',
-    dificultad: 2, bloque: 'DESALAR', orden: 26,
+    dificultad: 2, bloque: 'DESALAR',
     tiempoBase: 100,
     config: {
       cantidad: 1,
@@ -360,7 +425,7 @@ export const BACALAO_NIVELES = {
   },
   'bacalao-2-normal': {
     nombre: 'El bacalao desalado',
-    dificultad: 3, bloque: 'DESALAR', orden: 27,
+    dificultad: 3, bloque: 'DESALAR',
     tiempoBase: 85,
     config: {
       cantidad: 1,
@@ -376,7 +441,7 @@ export const BACALAO_NIVELES = {
 export const ZAPALLO_NIVELES = {
   'zapallo-1-facil': {
     nombre: 'El zapallo · introducción',
-    dificultad: 2, bloque: 'MULTIGESTOS', orden: 28,
+    dificultad: 2, bloque: 'MULTIGESTOS',
     tiempoBase: 125,
     config: {
       cantidad: 1,
@@ -386,7 +451,7 @@ export const ZAPALLO_NIVELES = {
   },
   'zapallo-2-normal': {
     nombre: 'El zapallo completo',
-    dificultad: 3, bloque: 'MULTIGESTOS', orden: 29,
+    dificultad: 3, bloque: 'MULTIGESTOS',
     tiempoBase: 100,
     config: {
       cantidad: 1,
@@ -396,7 +461,7 @@ export const ZAPALLO_NIVELES = {
   },
   'zapallo-3-rapido': {
     nombre: 'El zapallo a la carrera',
-    dificultad: 4, bloque: 'MULTIGESTOS', orden: 30,
+    dificultad: 4, bloque: 'MULTIGESTOS',
     tiempoBase: 75,
     config: {
       cantidad: 1,
@@ -431,8 +496,12 @@ export const TODOS_NIVELES = {
 export const NIVELES_ORDENADO = Object.entries(TODOS_NIVELES)
   .flatMap(([_, niveles]) => Object.entries(niveles))
   .map(([id, n]) => ({ ...n, id, base: id.split('-')[0] }))
-  .sort((a, b) => a.orden - b.orden)
-  .map((n, i) => ({ ...n, index: i }));
+  /* El orden ES el orden en que están escritos. Antes cada nivel
+     llevaba un `orden: N` a mano y había treinta números que mantener
+     sincronizados: meter un nivel en medio obligaba a renumerar todo
+     lo de abajo, y el primero que se olvidara dejaba la temporada
+     desordenada sin que nada fallara. */
+  .map((n, i) => ({ ...n, orden: i + 1, index: i }));
 
 /* índice plano por id: la búsqueda por nombre no servía y la que
    había recorría TODOS_NIVELES ignorando cuál nivel estaba mirando,

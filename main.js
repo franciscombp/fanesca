@@ -76,11 +76,28 @@ const estaListo = (id) => !!estado.mejores[id];
 const ingredienteListo = (base) => RUTA.some(n => n.base === base && estaListo(n.id));
 const listos = () => NIVELES.filter(n => ingredienteListo(n.id)).length;
 
-/* el siguiente se abre cuando el anterior ya fue a la olla; los
-   ya hechos quedan siempre abiertos para bajarse el tiempo. En modo
-   dev, todo está abierto: para probar una mecánica no hace falta
-   jugarse los ingredientes anteriores primero. */
-function desbloqueado(i) { return estado.devMode || i === 0 || estaListo(RUTA[i - 1].id); }
+/* DOS CANDADOS, Y NO SON EL MISMO.
+
+   Dentro de la temporada de un ingrediente se va EN FILA: el choclo
+   duro se abre cuando pasaste el tierno, y así hasta la última tonga.
+   Eso es lo que hace que quince paradas de maíz se sientan una
+   temporada y no un menú.
+
+   Pero al CAMBIAR de ingrediente basta con haber cocinado el anterior
+   una vez. Si no, las habas quedarían detrás de las quince paradas del
+   maíz, y la olla —que pide los doce— detrás de la campaña entera:
+   quien quisiera ver la fanesca tendría que agotar el maíz primero.
+   Así, terminado el primer choclo se abren a la vez el segundo choclo
+   y la primera arveja, y cada quien elige si profundiza o avanza.
+
+   En modo dev, todo abierto: probar una mecánica no debería costar
+   jugarse la campaña. */
+function desbloqueado(i) {
+  if (estado.devMode || i === 0) return true;
+  const n = RUTA[i], previo = RUTA[i - 1];
+  if (previo.base === n.base) return estaListo(previo.id);
+  return ingredienteListo(previo.base);
+}
 
 /* ============================================================
    LA RUTA — los nodos que se dibujan en la mesa.

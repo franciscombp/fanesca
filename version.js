@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.13.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.13.0',
+    fecha: '2026-08-20',
+    titulo: 'La temporada del choclo y el maíz',
+    cambios: [
+      'El choclo pasa de cinco paradas a quince, y no son quince veces lo mismo: la temporada recorre el maíz como lo recorre el año. Empieza en el choclo tierno de la mata, pasa al duro, y termina en el MAÍZ SECO — el de la tonga colgada, que se agarra con todo y hay que desgranar de puño.',
+      'Nuevo: el maíz seco. Mate, blanquecino, sin brillo — ya perdió el agua. Sus granos aguantan mucho más y la fila corre pesada.',
+      'Aparecen mazorcas de tres en tres, y los dañados se mezclan con todo lo anterior.',
+      'Ya no hay que agotar el maíz para seguir: terminado el primer choclo se abren a la vez el segundo choclo y las primeras habas. Dentro de la temporada se va en fila; entre ingredientes, basta con haber cocinado el anterior una vez.',
+      'El brief del choclo ya cuenta las tres madureces y los granos dañados — antes hablaba solo de tierno y duro, y de "dos choclos" cuando ya podían ser uno o tres.',
+    ],
+    internos: [
+      'MADUREZ gana "seco" (resistencia 7, cascada 0.14) con paleta propia choclo_seco en paleta.js.',
+      'MAIZ pasa a 15 entradas en niveles-config.js; los hitos entran solos y en fácil (maiz-6 baja a tierno para que el dañado sea lo único nuevo; maiz-11 es una mazorca sin bichos ni dañados).',
+      'Fuera el campo `orden` a mano: se deriva del orden de declaración. Eran 40 números que renumerar a mano al meter un nivel en medio.',
+      'desbloqueado() distingue dentro-de-temporada (en fila) de cambio-de-ingrediente (basta una variante hecha).',
+    ],
+  },
   {
     v: '1.12.0',
     fecha: '2026-08-20',

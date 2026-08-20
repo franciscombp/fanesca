@@ -436,7 +436,7 @@ function revisarCob() {
   api.aviso(null);
   api.toast(llevados
     ? `La tusa se va con ${llevados === 1 ? 'el dañado' : 'los ' + llevados + ' dañados'} 🌿`
-    : (choclo < CHOCLOS - 1 ? '¡Choclo listo! 🌽 Va el siguiente' : '¡Choclo listo! 🌽'));
+    : (choclo < CHOCLOS - 1 ? `¡${comoSeLlama() === 'maíz' ? 'Maíz' : 'Choclo'} listo! 🌽 Va el siguiente` : `¡${comoSeLlama() === 'maíz' ? 'Maíz' : 'Choclo'} listo! 🌽`));
 
   const token = ++transToken;
   if (choclo < CHOCLOS - 1) {
@@ -667,7 +667,7 @@ function intentarPelos() {
   compostaN += 2; pintarComposta();
   api.sfx('pop2'); api.buzz([8, 10]);
   fase = 'desgranar';
-  if (api.rotulo) api.rotulo(`Desgranar · choclo ${choclo + 1} de ${CHOCLOS}`);
+  if (api.rotulo) api.rotulo(`Desgranar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
   api.pista(`${madurez.presenta} Empieza por una <b>punta</b>.`, 4600);
   /* Los dañados hay que PRESENTARLOS. Un grano café en medio de
      ciento veinte amarillos no se lee solo como "a este trátalo
@@ -727,6 +727,12 @@ function avisarPodridos() {
 }
 
 /* ---------- armar un choclo ---------- */
+
+/* Cómo se llama lo que tienes en la mano. El tierno y el duro son
+   CHOCLO —maíz de la mata, todavía con agua—; el seco ya es MAÍZ, el
+   de la tonga. Llamarle choclo a un maíz seco es de las cosas que
+   delatan que quien escribió el texto no cocinó nunca. */
+const comoSeLlama = () => (madurez.id === 'seco' ? 'maíz' : 'choclo');
 
 function armarChoclo() {
   madurez = MADUREZ[orden[choclo]];
@@ -807,7 +813,7 @@ function armarChoclo() {
   mazorca.scale.setScalar(0.01);
   api.tween(mazorca.scale, 'x', 1, 0.4); api.tween(mazorca.scale, 'y', 1, 0.4); api.tween(mazorca.scale, 'z', 1, 0.4);
 
-  if (api.rotulo) api.rotulo(`Deshojar · choclo ${choclo + 1} de ${CHOCLOS}`);
+  if (api.rotulo) api.rotulo(`Deshojar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
   api.pista('Pela las hojas: agarra una y <b>jala hacia abajo</b>.', 4200);
 }
 
