@@ -14,7 +14,12 @@
 
    ============================================================ */
 
-// DESGRANAR — Choclo
+/* DESGRANAR — Choclo
+
+   `hojas` son las que hay que arrancar; `podridos` y `gusanos` van
+   POR MAZORCA (un número los reparte igual a todas, una lista da el
+   de cada una). Cuántos granos trae un choclo no se pone aquí: son
+   A×P de modelos/choclo.js, la forma de la mazorca. */
 export const MAIZ = {
   'maiz-1-introduccion': {
     nombre: 'El choclo · primeros granos',
@@ -23,7 +28,6 @@ export const MAIZ = {
     config: {
       choclos: 1,
       hojas: 5,
-      grano_total: 63,
       madurez: ['tierno'],
       podridos: 0,
       gusanos: 0,
@@ -36,7 +40,6 @@ export const MAIZ = {
     config: {
       choclos: 2,
       hojas: 10,
-      grano_total: 126,
       madurez: ['tierno', 'tierno'],
       podridos: 0,
       gusanos: [1, 1],
@@ -49,7 +52,6 @@ export const MAIZ = {
     config: {
       choclos: 2,
       hojas: 10,
-      grano_total: 126,
       madurez: ['duro', 'duro'],
       podridos: 2,
       gusanos: [1, 1],
@@ -62,7 +64,6 @@ export const MAIZ = {
     config: {
       choclos: 2,
       hojas: 10,
-      grano_total: 126,
       madurez: ['tierno', 'duro'],
       podridos: 4,
       gusanos: [1, 2],
@@ -75,7 +76,6 @@ export const MAIZ = {
     config: {
       choclos: 2,
       hojas: 10,
-      grano_total: 126,
       madurez: ['duro', 'duro'],
       podridos: 6,
       gusanos: [2, 2],
@@ -416,25 +416,32 @@ export const TODOS_NIVELES = {
   MULTIGESTOS: ZAPALLO_NIVELES,
 };
 
-// LISTA PLANA ORDENADA (para menú)
-export const NIVELES_ORDENADO = [
-  ...Object.values(MAIZ),
-  ...Object.values(VAINAS),
-  ...Object.values(MELLOCO_NIVELES),
-  ...Object.values(QUINUA_NIVELES),
-  ...Object.values(COL_NIVELES),
-  ...Object.values(MANI_NIVELES),
-  ...Object.values(ESCOGER_NIVELES),
-  ...Object.values(CHOCHOS_NIVELES),
-  ...Object.values(FREJOL_NIVELES),
-  ...Object.values(BACALAO_NIVELES),
-  ...Object.values(ZAPALLO_NIVELES),
-].map((n, i) => ({ ...n, index: i }));
+/* LISTA PLANA ORDENADA (para menú)
+
+   Cada entrada se queda con su `id` (la clave del objeto) y con el
+   `base`: el ingrediente del que sale, que es lo que decide qué
+   `nivel-<id>.js` se carga. El id ya lo dice —'maiz-3-duro' viene de
+   'maiz'— y derivarlo del prefijo evita una segunda tabla que un día
+   deja de coincidir con la primera. */
+export const NIVELES_ORDENADO = Object.entries(TODOS_NIVELES)
+  .flatMap(([_, niveles]) => Object.entries(niveles))
+  .map(([id, n]) => ({ ...n, id, base: id.split('-')[0] }))
+  .sort((a, b) => a.orden - b.orden)
+  .map((n, i) => ({ ...n, index: i }));
+
+/* índice plano por id: la búsqueda por nombre no servía y la que
+   había recorría TODOS_NIVELES ignorando cuál nivel estaba mirando,
+   así que devolvía siempre el primero de la lista */
+export const POR_ID = Object.fromEntries(NIVELES_ORDENADO.map(n => [n.id, n]));
 
 // HELPERS
 export function nivelPor(id) {
-  return NIVELES_ORDENADO.find(n => n.nombre === id || Object.entries(TODOS_NIVELES)
-    .some(([_, levels]) => levels[id])) || null;
+  return POR_ID[id] || null;
+}
+
+/* las variantes de un ingrediente, en orden de dificultad */
+export function variantesDe(base) {
+  return NIVELES_ORDENADO.filter(n => n.base === base);
 }
 
 export function proximoNivel(ordenActual) {

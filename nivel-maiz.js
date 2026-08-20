@@ -60,11 +60,18 @@ const GUSANO_VEL = 0.38;   /* posiciones por segundo que BAJA el bicho */
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 const FUERZA = 1600;
 
-/* Parámetros que se leen de la config métrica */
-let CHOCLOS = 2;           /* se sobrescribe en construir() */
-let GUSANOS_POR = [1, 2];  /* se sobrescribe en construir() */
-let PODRIDOS_TOTAL = 0;    /* se sobrescribe en construir() */
-let posicionesPodridas = new Set(); /* (a,p) de granos podridos */
+/* ---------- parámetros, de niveles-config.js ----------
+   Todos se sobrescriben en construir() a partir de la config del
+   nivel. Los valores de aquí son solo el choclo "de siempre", para
+   que el módulo siga funcionando si alguien lo monta sin config. */
+let CHOCLOS = 2;            /* cuántas mazorcas van */
+let GUSANOS_POR = [1, 2];   /* bichos escondidos, por mazorca */
+let PODRIDOS_POR = [0, 0];  /* granos dañados, POR MAZORCA */
+let HOJAS_N = HOJAS;        /* hojas que hay que arrancar */
+/* (a,p) de los granos dañados de la mazorca en curso. Se rebaraja en
+   cada una: si se eligieran una sola vez, el segundo choclo traería
+   los podridos exactamente en los mismos huecos que el primero. */
+let posicionesPodridas = new Set();
 /* El jalón de la hoja, en píxeles. Los primeros no mueven nada: la
    hoja está pegada y hay que vencerla, y ese arranque duro es la
    mitad de lo que hace que se sienta fibrosa en vez de floja. */
@@ -152,8 +159,10 @@ function construirTusa() {
   return m;
 }
 
-function nuevaHoja(i) {
-  const th = (i / HOJAS) * Math.PI * 2;
+/* `total` y no la constante HOJAS: un choclo de cinco hojas tiene que
+   repartirlas por toda la vuelta, no dejarlas apiñadas en media. */
+function nuevaHoja(i, total = HOJAS) {
+  const th = (i / total) * Math.PI * 2;
   const pivot = new THREE.Group();
   pivot.rotation.y = th;
   pivot.position.y = BASE_HOJA;
@@ -583,6 +592,22 @@ function armarChoclo() {
   hojasGrupo = new THREE.Group();
   giro.add(tusa, granosGrupo, gusanosGrupo, hojasGrupo);
 
+  /* los dañados de ESTA mazorca, barajados aparte. Nunca en las
+     puntas: ahí el grano sale con solo rozarlo, y un podrido que se
+     rompe sin que hayas tenido oportunidad de ir despacio no enseña
+     nada — solo se siente injusto. */
+  posicionesPodridas.clear();
+  const cuantosPod = PODRIDOS_POR[Math.min(choclo, PODRIDOS_POR.length - 1)] || 0;
+  if (cuantosPod > 0) {
+    const libres = [];
+    for (let a = 0; a < A; a++) for (let p = 1; p < P - 1; p++) libres.push(a + ',' + p);
+    for (let i = libres.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [libres[i], libres[j]] = [libres[j], libres[i]];
+    }
+    libres.slice(0, Math.min(cuantosPod, libres.length)).forEach(k => posicionesPodridas.add(k));
+  }
+
   for (let a = 0; a < A; a++) {
     granos[a] = [];
     for (let p = 0; p < P; p++) {
@@ -592,8 +617,8 @@ function armarChoclo() {
     }
   }
 
-  for (let i = 0; i < HOJAS; i++) {
-    const h = nuevaHoja(i);
+  for (let i = 0; i < HOJAS_N; i++) {
+    const h = nuevaHoja(i, HOJAS_N);
     hojas.push(h);
     hojasGrupo.add(h.pivot);
   }
@@ -649,37 +674,23 @@ export default {
     reventados = 0; avisadoReventon = false;
     transToken++;
 
-    /* Leer parámetros de la configuración métrica */
+    /* Los parámetros del nivel. `porChoclo` acepta tanto un número
+       —el mismo para todas las mazorcas— como una lista con el valor
+       de cada una, que es como ya venían los gusanos. */
+    const porChoclo = (v, sinEso) => {
+      if (Array.isArray(v)) return v;
+      if (typeof v === 'number') return Array(Math.max(1, CHOCLOS)).fill(v);
+      return sinEso;
+    };
     CHOCLOS = levelConfig.choclos ?? 2;
-    PODRIDOS_TOTAL = levelConfig.podridos ?? 0;
-    GUSANOS_POR = levelConfig.gusanos ?? [1, 2];
-    const MADUREZ_ORDEN = levelConfig.madurez ?? ['tierno', 'duro'];
+    GUSANOS_POR = porChoclo(levelConfig.gusanos, [1, 2]);
+    PODRIDOS_POR = porChoclo(levelConfig.podridos, [0, 0]);
+    HOJAS_N = levelConfig.hojas ?? HOJAS;
+    orden = (levelConfig.madurez ?? ['tierno', 'duro']).slice();
 
-    /* Calcular TOTAL después de leer CHOCLOS */
+    /* el total sale de la rejilla del modelo (A×P) por mazorca: no es
+       un parámetro, es la forma del choclo */
     TOTAL = CHOCLOS * A * P;
-
-    /* uno tierno y uno duro, en el orden especificado en config */
-    orden = MADUREZ_ORDEN.slice();
-
-    /* Seleccionar posiciones aleatorias para los granos podridos */
-    posicionesPodridas.clear();
-    if (PODRIDOS_TOTAL > 0) {
-      const totalGranos = CHOCLOS * A * P;
-      const posicionesDisponibles = [];
-      for (let a = 0; a < A; a++) {
-        for (let p = 0; p < P; p++) {
-          posicionesDisponibles.push(`${a},${p}`);
-        }
-      }
-      /* barajar y seleccionar los primeros N podridos */
-      for (let i = posicionesDisponibles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [posicionesDisponibles[i], posicionesDisponibles[j]] = [posicionesDisponibles[j], posicionesDisponibles[i]];
-      }
-      for (let i = 0; i < Math.min(PODRIDOS_TOTAL, posicionesDisponibles.length); i++) {
-        posicionesPodridas.add(posicionesDisponibles[i]);
-      }
-    }
 
     mazorca = new THREE.Group();
     mazorca.position.set(CENTRO[0], api.MESA_Y + CENTRO[1], CENTRO[2]);

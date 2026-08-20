@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.10.2';
+const APP_VERSION = '1.11.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.11.0',
+    fecha: '2026-08-20',
+    titulo: 'El choclo, en cinco',
+    cambios: [
+      'El choclo ya no es una parada: son cinco, y suben. Empieza con uno solo y pocas hojas, y termina con dos choclos duros, más gusanos y el tiempo apretado. Los chiles debajo de cada nodo dicen qué tan brava está la que sigue.',
+      'Granos podridos: cafés, dañados, quietos. No revientan como el tierno — se rompen si les pasas el dedo con fuerza, y lo que sale de ahí se va a la olla y la arruina. Hay que sacarlos despacio.',
+      'Tu récord del choclo no se pierde: pasa al primero de los cinco.',
+    ],
+    internos: [
+      'niveles-config.js: 30 niveles como puro dato (dificultad, tiempoBase, parámetros). Índice plano POR_ID y variantesDe(base); el prefijo del id es el ingrediente.',
+      'main.js arma RUTA = ingredientes de niveles.js × variantes de la config. CON_VARIANTES marca qué módulos ya leen sus parámetros — hoy solo maiz — para no pintar nodos que jugarían igual.',
+      'Motor.cargar(mod, api, config) pasa la config al construir(ctx, config) del nivel. nivel-maiz lee choclos, madurez, gusanos y podridos, y calcula TOTAL de ahí.',
+      'Granos podridos: modelo grano-podrido en modelos/choclo.js, umbral de velocidad FUERZA en intentarGrano, ARRUINADO.granoPodrido.',
+      'migrar() mueve mejores.maiz a maiz-1-introduccion. niveles-config.js entra al PRECACHE del sw.',
+    ],
+  },
   {
     v: '1.10.2',
     fecha: '2026-08-10',

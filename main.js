@@ -13,7 +13,7 @@ import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niv
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
-import { TODOS_NIVELES, NIVELES_ORDENADO } from './niveles-config.js';
+import { variantesDe, nivelPor as configPor } from './niveles-config.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -47,64 +47,95 @@ function cargar() {
     const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem(SAVE_KEY_VIEJA);
     if (!raw) return null;
     const s = JSON.parse(raw);
-    return (s && typeof s === 'object') ? Object.assign(nuevoEstado(), s) : null;
+    if (!s || typeof s !== 'object') return null;
+    return migrar(Object.assign(nuevoEstado(), s));
   } catch (e) { return null; }
 }
 
+/* Los ingredientes que se abrieron en variantes cambiaron de id: el
+   choclo era 'maiz' y ahora su primer nivel es 'maiz-1-introduccion'.
+   Sin esto, a quien ya lo cocinó se le borraba el récord y se le
+   volvía a cerrar el camino entero detrás. */
+function migrar(s) {
+  if (!s.mejores) s.mejores = {};
+  CON_VARIANTES.forEach(base => {
+    const viejo = s.mejores[base];
+    if (!viejo) return;
+    const primera = variantesDe(base)[0];
+    if (primera && !s.mejores[primera.id]) s.mejores[primera.id] = viejo;
+    delete s.mejores[base];
+    if (s.ultimoNivel === base && primera) s.ultimoNivel = primera.id;
+  });
+  return s;
+}
+
 const estaListo = (id) => !!estado.mejores[id];
-const listos = () => NIVELES.filter(n => estaListo(n.id)).length;
+/* Un INGREDIENTE está listo cuando alguna de sus variantes ya fue a
+   la olla: la olla se abre con los doce ingredientes, no con las
+   treinta variantes. Las de más arriba son para bajarse el tiempo. */
+const ingredienteListo = (base) => RUTA.some(n => n.base === base && estaListo(n.id));
+const listos = () => NIVELES.filter(n => ingredienteListo(n.id)).length;
 
 /* el siguiente se abre cuando el anterior ya fue a la olla; los
    ya hechos quedan siempre abiertos para bajarse el tiempo. En modo
    dev, todo está abierto: para probar una mecánica no hace falta
    jugarse los ingredientes anteriores primero. */
-function desbloqueado(i) { return estado.devMode || i === 0 || estaListo(NIVELES[i - 1].id); }
+function desbloqueado(i) { return estado.devMode || i === 0 || estaListo(RUTA[i - 1].id); }
 
-/* -------- sistema métrico de niveles -------- */
-/* Obtiene la configuración para un nivel. Si el ID es del sistema antiguo
-   (como 'maiz'), busca el primer nivel del nuevo sistema. Si es del nuevo
-   sistema (como 'maiz-1-introduccion'), busca directamente. */
-function obtenerConfigNivel(id) {
-  /* buscar en NIVELES_ORDENADO (sistema nuevo) */
-  let nivel = NIVELES_ORDENADO.find(n => {
-    for (const [_, nivelesBloque] of Object.entries(TODOS_NIVELES)) {
-      for (const [key, cfg] of Object.entries(nivelesBloque)) {
-        if (key === id) return true;
-      }
+/* ============================================================
+   LA RUTA — los nodos que se dibujan en la mesa.
+
+   `niveles.js` tiene los INGREDIENTES (doce: su módulo, su icono,
+   su gesto, su bicho). `niveles-config.js` tiene las VARIANTES de
+   dificultad de cada uno. La mesa se dibuja de la mezcla de los
+   dos, y esa mezcla es esta lista.
+
+   Un ingrediente se abre en varios nodos solo si su módulo LEE la
+   config. Hoy es el choclo y nadie más: pintar cinco nodos de
+   arveja que juegan exactamente igual sería prometer una campaña
+   que no existe. A medida que cada `nivel-*.js` aprenda a leer sus
+   parámetros, se agrega su id aquí y sus variantes aparecen solas.
+   ============================================================ */
+
+const CON_VARIANTES = new Set(['maiz']);
+
+/* de `tiempoBase` (segundos para 3 cucharas) salen los tres cortes,
+   con la misma proporción que traían los ingredientes a mano */
+const cucharasDeTiempo = (base) => [base, Math.round(base * 1.5), Math.round(base * 2.2)];
+
+function construirRuta() {
+  const ruta = [];
+  NIVELES.forEach(ing => {
+    const variantes = CON_VARIANTES.has(ing.id) ? variantesDe(ing.id) : [];
+    if (!variantes.length) {
+      /* un nodo, como siempre. Si tiene config la lleva igual: el
+         módulo puede empezar a leerla sin tocar nada de aquí. */
+      const v = variantesDe(ing.id)[0];
+      ruta.push({ ...ing, base: ing.id, config: (v && v.config) || {} });
+      return;
     }
-    return false;
+    variantes.forEach(v => ruta.push({
+      ...ing,
+      id: v.id,
+      base: ing.id,
+      nombre: v.nombre,
+      dificultad: v.dificultad,
+      config: v.config,
+      cucharas: cucharasDeTiempo(v.tiempoBase),
+    }));
   });
-  if (nivel) return nivel.config;
+  return ruta;
+}
 
-  /* si no encuentra en el nuevo sistema, buscar en el antiguo e intentar
-     mapear al primer nivel del nuevo sistema (dev mode) */
-  const nivelAntiguo = porId(id);
-  if (nivelAntiguo) {
-    /* mapeo de IDs antiguos a IDs nuevos (primer nivel de cada ingrediente) */
-    const mapeo = {
-      'maiz': 'maiz-1-introduccion',
-      'habas': 'habas-1-facil',
-      'arveja': 'arveja-1-facil',
-      'chochos': 'chochos-1-facil',
-      'frejol': 'frejol-1-facil',
-      'melloco': 'melloco-1-facil',
-      'zapallo': 'zapallo-1-facil',
-      'col': 'col-1-facil',
-      'escoger': 'escoger-1-facil',
-      'quinua': 'quinua-1-facil',
-      'mani': 'mani-1-facil',
-      'bacalao': 'bacalao-1-facil',
-    };
-    const nuevoId = mapeo[id];
-    if (nuevoId) {
-      for (const [_, nivelesBloque] of Object.entries(TODOS_NIVELES)) {
-        if (nivelesBloque[nuevoId]) return nivelesBloque[nuevoId].config;
-      }
-    }
-  }
+const RUTA = construirRuta();
+const rutaPorId = (id) => RUTA.find(n => n.id === id) || null;
 
-  /* fallback: configuración por defecto si no encuentra nada */
-  return {};
+/* La config de un nivel: del nodo de la ruta, que ya la trae. */
+function obtenerConfigNivel(id) {
+  const n = rutaPorId(id);
+  if (n && n.config) return n.config;
+  const c = configPor(id);
+  return (c && c.config) || {};
 }
 
 /* ---------- sonido y vibración ---------- */
@@ -295,20 +326,25 @@ function renderMesa() {
     return b;
   };
 
-  NIVELES.forEach((n, i) => {
+  RUTA.forEach((n, i) => {
     const abierto = desbloqueado(i);
     const mejor = estado.mejores[n.id];
     const esSiguiente = abierto && !mejor;
     const b = nodoDe(n, i, mejor ? 'nodo--hecho' : (esSiguiente ? 'nodo--siguiente' : 'nodo--bloqueado'));
+    /* las variantes llevan sus chiles de dificultad: de un vistazo se
+       ve que el camino sube, que es lo que hace que se lea como
+       campaña y no como doce paradas sueltas */
+    const dif = n.dificultad ? `<span class="nodo-dif" aria-hidden="true">${'🌶️'.repeat(n.dificultad)}</span>` : '';
     b.innerHTML = `
       <span class="nodo-plato">${icono(n.icono)}</span>
       ${!abierto && !mejor ? '<span class="nodo-candado" aria-hidden="true">🔒</span>' : ''}
       ${mejor ? `<span class="nodo-cucharas">${cucharasHTML(mejor.cucharas)}</span>` : ''}
-      <span class="nodo-nombre">${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
-    b.setAttribute('aria-label', n.nombre + (abierto ? '' : ' (bloqueado)'));
+      <span class="nodo-nombre">${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>
+      ${dif}`;
+    b.setAttribute('aria-label', n.nombre + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
     b.addEventListener('click', () => {
       sfx('tab');
-      if (!abierto) { toast('Primero ' + NIVELES[i - 1].nombre.toLowerCase() + ' 👆'); return; }
+      if (!abierto) { toast('Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆'); return; }
       /* rejugarlo no necesita instrucciones: directo a la mesa. El
          brief queda para la primera vez, que es cuando enseña algo */
       if (mejor) jugar(n.id);
@@ -318,7 +354,7 @@ function renderMesa() {
   });
 
   /* la olla, al final del camino */
-  const olla = nodoDe(OLLA, NIVELES.length, todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado');
+  const olla = nodoDe(OLLA, RUTA.length, todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado');
   olla.innerHTML = `
     <span class="nodo-plato nodo-plato--olla">${icono(OLLA.icono)}</span>
     ${todos ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
@@ -374,11 +410,8 @@ function renderMesa() {
 
   /* primero busca el último nivel que jugaste, si existe */
   if (estado.ultimoNivel) {
-    const nivelData = porId(estado.ultimoNivel);
-    if (nivelData) {
-      const idx = NIVELES.findIndex(n => n.id === estado.ultimoNivel);
-      nodoTarget = lista.querySelectorAll('.nodo')[idx];
-    }
+    const idx = RUTA.findIndex(n => n.id === estado.ultimoNivel);
+    if (idx >= 0) nodoTarget = lista.querySelectorAll('.nodo')[idx];
   }
 
   /* si no hay último nivel, usa el siguiente paso */
@@ -460,7 +493,8 @@ function marcaCuaderno() {
 let nivelPendiente = null;
 
 function abrirBrief(id) {
-  const n = porId(id);
+  const n = rutaPorId(id);
+  if (!n) return;
   nivelPendiente = id;
   const mejor = estado.mejores[id];
   $('#brief-art').innerHTML = `<span class="plate">${icono(n.icono)}</span>`;
@@ -743,7 +777,7 @@ function renderControles(mod) {
 }
 
 async function jugar(id) {
-  const n = porId(id);
+  const n = rutaPorId(id);
   if (!n) return;
   nivelActual = n;
   estado.ultimoNivel = id;
@@ -849,7 +883,7 @@ function terminarNivel() {
       [].concat(tarjeta.abre || []).forEach(abrirCapitulo);
     } else caja.classList.add('hidden');
 
-    const quedan = NIVELES.some(x => !estaListo(x.id));
+    const quedan = NIVELES.some(x => !ingredienteListo(x.id));
     $('#listo-seguir').textContent = quedan ? 'Siguiente ingrediente' : 'Servir la fanesca';
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
@@ -969,7 +1003,7 @@ function bindEventos() {
 
   $('#listo-seguir').addEventListener('click', () => {
     cerrarModales();
-    const sig = NIVELES.find(x => !estaListo(x.id));
+    const sig = RUTA.find(x => !estaListo(x.id));
     Motor.descargar();
     nivelActual = null; modActual = null;
     if (!sig) { mostrar('mesa'); setTimeout(mostrarFinal, 300); return; }
@@ -1014,11 +1048,11 @@ function bindEventos() {
 }
 
 function mostrarFinal() {
-  const total = NIVELES.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
-  const cuch = NIVELES.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
+  const total = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
+  const cuch = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
   $('#final-cierre').textContent = CIERRE;
   $('#final-voz').innerHTML = `«${CACUANGO_PARAMO.texto}»<span>${CACUANGO_PARAMO.quien}</span>`;
-  $('#final-total').textContent = `${cuch} de ${NIVELES.length * 3} cucharas · ${tiempoBonito(total)} en total`;
+  $('#final-total').textContent = `${cuch} de ${RUTA.length * 3} cucharas · ${tiempoBonito(total)} en total`;
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
   sfx('fiesta');
@@ -1040,7 +1074,7 @@ function init() {
   /* el editor de escena: solo existe en modo dev, y guarda sus
      retoques aparte del progreso */
   if (ok) Editor.init(Motor, {
-    niveles: () => NIVELES,
+    niveles: () => RUTA,
     escenarios: () => ESCENARIOS,
     jugar: (id) => jugar(id),
     escenario: (id) => { estado.escenario = id; guardar(); Motor.escenario(id); },

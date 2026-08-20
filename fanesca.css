@@ -632,6 +632,17 @@ svg[width="0"] { width: 0; height: 0; }
   max-width: 130px; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* Los chiles de dificultad, debajo del nombre. Van chiquitos y sin
+   caja: son una temperatura, no un dato que haya que leer. */
+.nodo-dif {
+  font-size: .58rem;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-top: 2px;
+  filter: saturate(.9);
+}
+.nodo--bloqueado .nodo-dif { opacity: .45; filter: grayscale(1); }
+
 .nodo-cucharas {
   position: absolute; top: -8px; right: 2px;
   display: flex; gap: 1px;
