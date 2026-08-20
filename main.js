@@ -56,8 +56,24 @@ function cargar() {
    choclo era 'maiz' y ahora su primer nivel es 'maiz-1-introduccion'.
    Sin esto, a quien ya lo cocinó se le borraba el récord y se le
    volvía a cerrar el camino entero detrás. */
+/* Paradas que cambiaron de nombre al reordenarse la temporada. El
+   número del id dice en qué puesto va, así que meter una parada en
+   medio corre los de abajo — y sin esta tabla, a quien ya las jugó se
+   le borran los récords y se le vuelve a cerrar el camino. */
+const RENOMBRADOS = {
+  'maiz-3-dos': 'maiz-4-dos',
+  'maiz-4-primer-duro': 'maiz-5-primer-duro',
+  'maiz-5-duro': 'maiz-6-duro',
+  'maiz-6-primer-danado': 'maiz-7-primer-danado',
+  'maiz-7-danado-duro': 'maiz-8-danado-duro',
+  'maiz-8-picada': 'maiz-9-picada',
+  'maiz-12-seco-tierno': 'maiz-12-seco-duro',
+};
+
 function migrar(s) {
   if (!s.mejores) s.mejores = {};
+  /* el ingrediente entero pasó a ser una temporada: su récord es el
+     de la primera parada */
   CON_VARIANTES.forEach(base => {
     const viejo = s.mejores[base];
     if (!viejo) return;
@@ -66,6 +82,12 @@ function migrar(s) {
     delete s.mejores[base];
     if (s.ultimoNivel === base && primera) s.ultimoNivel = primera.id;
   });
+  for (const [viejo, nuevo] of Object.entries(RENOMBRADOS)) {
+    if (!s.mejores[viejo]) continue;
+    if (!s.mejores[nuevo]) s.mejores[nuevo] = s.mejores[viejo];
+    delete s.mejores[viejo];
+    if (s.ultimoNivel === viejo) s.ultimoNivel = nuevo;
+  }
   return s;
 }
 

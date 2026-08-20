@@ -30,10 +30,29 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.14.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.14.0',
+    fecha: '2026-08-20',
+    titulo: 'La temporada del maíz, medida',
+    cambios: [
+      'La curva de dificultad del maíz estaba mal y ahora está medida. Había un salto brutal en la tercera parada, y la parada 11 —donde entra el maíz seco— te devolvía a un nivel más fácil que la 2.',
+      'Ninguna parada se alarga para hacerse difícil. La final duraba 5:37; ahora dura 4:11, y ninguna otra pasa de 3:40. Un nivel largo que además puedes perder por tocar un gusano no es difícil, es cruel.',
+      'Las tres mazorcas aparecen una sola vez, en la última, y son lo que queda del costal: una seca, una dura y una tierna. Las demás paradas van de dos, y la dificultad sale de la madurez, los dañados, los bichos y el reloj.',
+      'Cada mecánica nueva entra con un respiro y sola: la parada del primer dañado baja a tierno, y la del maíz seco quita los dañados. Aprender algo nuevo a la vez que un pico de dificultad no se aprende, se sufre.',
+      'Nueva parada al principio: el gusanito ahora se presenta en una mazorca sola, antes de que aparezcan dos.',
+      'Tus récords no se pierden aunque las paradas se hayan reordenado.',
+    ],
+    internos: [
+      'Los tiempoBase ya no se escriben a ojo: se derivan de t = carga / presión objetivo. La carga se mide en granos equivalentes (tierno 1.00, duro 1.18, seco 1.42 según su cascada y resistencia; hoja 3, gusano 10, dañado 5).',
+      'La curva es un diente de sierra con valles y picos crecientes; salto máximo entre paradas 45% (era 130%). Los dos valles son -0.18 y -0.50 (el cráter del seco era -2.84).',
+      'El tierno con reloj apretado es una trampa —revienta en papilla y limpiarla cuesta más—, así que las paradas de más presión van de duro y seco.',
+      'RENOMBRADOS en main.js migra los ids de las paradas que corrieron de puesto.',
+    ],
+  },
   {
     v: '1.13.0',
     fecha: '2026-08-20',

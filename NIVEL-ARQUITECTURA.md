@@ -96,55 +96,101 @@ una lista con el valor de cada una.
 
 ## La temporada del choclo y el maíz
 
-Quince paradas. No son quince veces lo mismo: la temporada recorre el
-maíz como lo recorre el año — del **choclo tierno** de la mata, al
-**duro**, al **maíz seco** de la tonga colgada. Cada tres o cuatro
-paradas entra algo nuevo y las siguientes lo mezclan con lo anterior.
+Quince paradas que recorren el maíz como lo recorre el año: del
+**choclo tierno** de la mata, al **duro**, al **maíz seco** de la tonga
+colgada.
 
-| # | Id | Dif | Mazorcas | Madurez | Dañados | Gusanos | t |
-|---|---|---|---|---|---|---|---|
-| 1 | `maiz-1-introduccion` | 🌶️ | 1 | tierno | 0 | 0 | 140s |
-| 2 | `maiz-2-cascada` | 🌶️ | 1 | tierno | 0 | 0 | 125s |
-| 3 | `maiz-3-dos` | 🌶️🌶️ | 2 | tierno·2 | 0 | 1,1 | 120s |
-| 4 | `maiz-4-primer-duro` | 🌶️🌶️ | 2 | tierno, duro | 0 | 1,1 | 115s |
-| 5 | `maiz-5-duro` | 🌶️🌶️🌶️ | 2 | duro·2 | 0 | 1,1 | 110s |
-| 6 | `maiz-6-primer-danado` | 🌶️🌶️🌶️ | 2 | tierno·2 | 1 | 1,1 | 110s |
-| 7 | `maiz-7-danado-duro` | 🌶️🌶️🌶️🌶️ | 2 | duro·2 | 2 | 1,1 | 105s |
-| 8 | `maiz-8-picada` | 🌶️🌶️🌶️🌶️ | 2 | tierno, duro | 4 | 1,2 | 100s |
-| 9 | `maiz-9-tres` | 🌶️🌶️🌶️🌶️ | 3 | tierno, duro, tierno | 2 | 1,1,1 | 150s |
-| 10 | `maiz-10-costal` | 🌶️🌶️🌶️🌶️🌶️ | 3 | duro·2, tierno | 4 | 1,2,1 | 140s |
-| 11 | `maiz-11-seco` | 🌶️🌶️🌶️ | 1 | **seco** | 0 | 0 | 125s |
-| 12 | `maiz-12-seco-tierno` | 🌶️🌶️🌶️🌶️ | 2 | seco, tierno | 2 | 1,1 | 120s |
-| 13 | `maiz-13-tonga` | 🌶️🌶️🌶️🌶️🌶️ | 2 | seco·2 | 3 | 1,2 | 115s |
-| 14 | `maiz-14-morocho` | 🌶️🌶️🌶️🌶️🌶️ | 2 | seco, duro | 6 | 2,2 | 110s |
-| 15 | `maiz-15-ultima` | 🌶️🌶️🌶️🌶️🌶️ | 3 | seco·2, duro | 6 | 2,2,2 | 160s |
+### Los tiempos no están escritos a ojo: se derivaron
 
-Los dos hitos —el dañado en la 6, el seco en la 11— entran **solos y
-en fácil**: `maiz-6` baja a tierno para que el dañado sea lo único
-nuevo, y `maiz-11` es una sola mazorca sin bichos ni dañados. Un
-mecanismo nuevo presentado a la vez que un pico de dificultad no se
-aprende, se sufre.
+Para cada parada se calcula su **carga** en granos equivalentes y de
+ahí sale el tiempo: `t = carga / presión objetivo`.
 
-De `tiempoBase` salen los tres cortes de cuchara: `[t, t×1.5, t×2.2]`.
+```
+carga = Σ_mazorcas (A×P − dañados) × factor(madurez)
+      + hojas × mazorcas × 3        (un jalón de hoja ≈ 3 granos)
+      + gusanos × 10                (pellizcar y llevar a la composta)
+      + dañados × 5                 (rompe la fila: hay que rodearla)
+
+factor: tierno 1.00 · duro 1.18 · seco 1.42   ← de su cascada y resistencia
+```
+
+Al revés —escribiendo el tiempo y dejando que la presión saliera de
+rebote— la curva subía y bajaba sin patrón. Medida, tenía un salto del
+**130%** en la parada 3 y un **cráter** en la 11 que la dejaba más
+fácil que la 2.
+
+### La curva es un diente de sierra, no una rampa
+
+| # | corto | dif | maz | madurez | dañ | gus | t | presión | dura |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Primeros granos | 🌶️ | 1 | tierno | 0 | 0 | 140 | 1.01 | 1:04 |
+| 2 | La cascada | 🌶️ | 1 | tierno | 0 | 0 | 120 | 1.25 | 1:08 |
+| 3 | El gusanito | 🌶️🌶️ | 1 | tierno | 0 | 1 | 105 | 1.52 | 1:13 |
+| 4 | Dos choclos | 🌶️🌶️ | 2 | tierno·2 | 0 | 0 | 130 | 2.22 | 2:11 |
+| 5 | El primer duro | 🌶️🌶️🌶️ | 2 | tierno, duro | 0 | 1,1 | 140 | 2.53 | 2:41 |
+| 6 | Los dos duros | 🌶️🌶️🌶️ | 2 | duro·2 | 0 | 1,1 | 130 | **2.90** ▲ | 2:52 |
+| 7 | Un dañado | 🌶️🌶️🌶️ | 2 | tierno·2 | 1 | 1,1 | 125 | *2.72* ▼ | 2:35 |
+| 8 | Dañado y duro | 🌶️🌶️🌶️ | 2 | duro·2 | 2 | 1,1 | 125 | 3.14 | 2:58 |
+| 9 | La picada | 🌶️🌶️🌶️🌶️ | 2 | tierno, duro | 4 | 1,2 | 115 | 3.44 | 3:00 |
+| 10 | La plaga | 🌶️🌶️🌶️🌶️ | 2 | duro·2 | 5 | 2,2 | 115 | **3.89** ▲ | 3:23 |
+| 11 | El maíz seco | 🌶️🌶️🌶️🌶️ | 2 | seco, tierno | 0 | 1,1 | 110 | *3.39* ▼ | 2:50 |
+| 12 | Seco y duro | 🌶️🌶️🌶️🌶️ | 2 | seco, duro | 2 | 1,1 | 110 | 3.84 | 3:12 |
+| 13 | La tonga | 🌶️🌶️🌶️🌶️🌶️ | 2 | seco·2 | 3 | 1,2 | 110 | 4.27 | 3:33 |
+| 14 | El morocho | 🌶️🌶️🌶️🌶️🌶️ | 2 | seco, duro | 6 | 2,2 | 105 | 4.61 | 3:40 |
+| 15 | La última | 🌶️🌶️🌶️🌶️🌶️ | 3 | seco, duro, tierno | 2 | 1,1,1 | 110 | **5.01** | 4:11 |
+
+Cada mecánica nueva entra con un **respiro** (▼ 7 el dañado, ▼ 11 el
+seco), pero cada valle queda más alto que el anterior y cada pico más
+alto que el anterior. Salto máximo entre paradas: **45%**.
+
+Los hitos entran además **solos**: la 7 baja a tierno para que el
+dañado sea lo único nuevo, y la 11 quita los dañados para que lo sea
+el seco. Un mecanismo nuevo presentado a la vez que un pico de
+dificultad no se aprende, se sufre.
+
+### No se alargan para hacerse difíciles
+
+Meter más mazorcas hace los niveles **largos, no difíciles**, y un
+nivel largo que además puedes perder por tocar un gusano no es
+difícil: es cruel. La primera versión de esta temporada usaba tres
+mazorcas dos veces y la final duraba **5:37**.
+
+Por eso doce de las quince van a **dos mazorcas** y la dificultad sale
+de la madurez, los dañados, los bichos y el reloj. Las tres mazorcas
+aparecen **una** vez, en la última, como lo que son: la gran faena —
+y son *lo que queda del costal* (una seca, una dura, una tierna), no
+tres secas, que daban casi cinco minutos.
 
 ### Las tres madureces
 
-| | resistencia | cascada | qué se siente |
-|---|---|---|---|
-| `tierno` | 2 | 0.038 | cede solo, pero revienta con fuerza |
-| `duro` | 5 | 0.08 | no revienta; los trabados pelean |
-| `seco` | 7 | 0.14 | se agarra con todo; la fila corre pesada |
+| | resistencia | cascada | factor | qué se siente |
+|---|---|---|---|---|
+| `tierno` | 2 | 0.038 | 1.00 | cede solo, pero revienta con fuerza |
+| `duro` | 5 | 0.08 | 1.18 | no revienta; los trabados pelean |
+| `seco` | 7 | 0.14 | 1.42 | se agarra con todo; la fila corre pesada |
+
+El **tierno con el reloj apretado es una trampa**: pasar el dedo
+rápido lo revienta en papilla, y limpiarla cuesta más que sacarlo
+despacio. Por eso las paradas de más presión (10, 13, 14) van de duro
+y seco, que no revientan, y el tierno se queda donde el reloj deja
+respirar.
 
 `seco` es el maíz de la tonga, el que se guardó colgado hasta perder
-el agua. Su paleta (`choclo_seco` en `paleta.js`) es mate y
-blanquecina: ya no brilla, y por eso se lee duro antes de tocarlo.
+el agua. Su paleta (`choclo_seco`) es mate y blanquecina: ya no
+brilla, y por eso se lee duro antes de tocarlo. De regalo, los granos
+dañados se distinguen mucho mejor sobre el pálido que sobre el
+amarillo del tierno.
 
 ### El orden no se escribe
 
-`orden` se deriva del orden en que los niveles están declarados. Antes
-cada uno llevaba su `orden: N` a mano: meter una parada en medio
-obligaba a renumerar todo lo de abajo, y el primer olvido dejaba la
-temporada desordenada sin que nada fallara.
+`orden` se deriva del orden de declaración. Antes cada nivel llevaba
+su `orden: N` a mano: meter una parada en medio obligaba a renumerar
+todo lo de abajo, y el primer olvido dejaba la temporada desordenada
+sin que nada fallara.
+
+Lo que sí hay que mantener a mano es `RENOMBRADOS` en `main.js`: el
+número del id dice el puesto, así que reordenar la temporada renombra
+paradas, y sin esa tabla a quien ya las jugó se le borran los récords.
 
 ---
 

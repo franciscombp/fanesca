@@ -16,20 +16,36 @@
 /* ============================================================
    DESGRANAR — LA TEMPORADA DEL CHOCLO Y EL MAÍZ
 
-   Quince paradas, y no son quince veces lo mismo: la temporada
-   recorre el maíz como lo recorre el año. Empieza en el CHOCLO
-   tierno —el de la mata, que cede solo—, pasa al DURO, y termina en
-   el MAÍZ SECO, el de la tonga colgada, que se agarra con todo y
-   hay que desgranar de puño.
+   Quince paradas que recorren el maíz como lo recorre el año: del
+   CHOCLO tierno de la mata, al DURO, al MAÍZ SECO de la tonga
+   colgada — que ya perdió el agua, se agarra con todo y hay que
+   desgranar de puño.
 
-   Cada tres o cuatro paradas entra algo nuevo y las siguientes lo
-   mezclan con lo anterior:
+   LOS TIEMPOS NO ESTÁN ESCRITOS A OJO: SE DERIVARON.
 
-     1–3    el gesto: deshojar, desgranar, la cascada
-     4–5    el duro: el grano que pelea
-     6–8    los dañados: lo que NO hay que tocar
-     9–10   el volumen: tres mazorcas
-     11–15  el maíz seco: la temporada se cierra donde se guarda
+   Para cada parada se calcula su CARGA en granos equivalentes —un
+   grano tierno en cascada vale 1; el duro 1.18 y el seco 1.42, que
+   es lo que dicen su resistencia y su cascada; una hoja vale 3, un
+   gusano 10 y un dañado 5, porque rompe la fila y hay que rodearla—
+   y de ahí sale el tiempo: t = carga / presión objetivo.
+
+   Al revés —escribiendo el tiempo y dejando que la presión salga de
+   rebote— la curva subía y bajaba sin patrón: había un salto del
+   130% en la parada 3 y un cráter en la 11 que la dejaba más fácil
+   que la 2.
+
+   LA CURVA ES UN DIENTE DE SIERRA, no una rampa. Cada mecánica
+   nueva entra con un respiro (7 el dañado, 11 el seco), pero cada
+   valle queda MÁS ALTO que el anterior y cada pico más alto que el
+   anterior. El salto máximo entre paradas es del 45%.
+
+   Y NO SE ALARGAN PARA HACERSE DIFÍCILES. Meter más mazorcas hace
+   los niveles largos, no difíciles, y un nivel largo que además
+   puedes perder por tocar un gusano no es difícil: es cruel. Por
+   eso doce de las quince van a dos mazorcas y la dificultad sale de
+   la madurez, los dañados, los bichos y el reloj. Las tres
+   mazorcas aparecen UNA vez, en la última, como lo que son: la
+   gran faena.
 
    `hojas` son las que hay que arrancar; `podridos` y `gusanos` van
    POR MAZORCA (un número los reparte igual a todas, una lista da el
@@ -37,7 +53,7 @@
    A×P de modelos/choclo.js, la forma de la mazorca.
    ============================================================ */
 export const MAIZ = {
-  /* --- el gesto --- */
+  /* --- el gesto: deshojar, desgranar, y el bicho --- */
   'maiz-1-introduccion': {
     nombre: 'El choclo · primeros granos',
     corto: 'Primeros granos',
@@ -49,107 +65,107 @@ export const MAIZ = {
     nombre: 'El choclo · la fila entera',
     corto: 'La cascada',
     dificultad: 1, bloque: 'DESGRANAR',
-    tiempoBase: 125,
+    tiempoBase: 120,
     config: { choclos: 1, hojas: 8, madurez: ['tierno'], podridos: 0, gusanos: 0 }
   },
-  'maiz-3-dos': {
+  'maiz-3-gusanito': {
+    nombre: 'El choclo con gusanito',
+    corto: 'El gusanito',
+    dificultad: 2, bloque: 'DESGRANAR',
+    tiempoBase: 105,
+    config: { choclos: 1, hojas: 8, madurez: ['tierno'], podridos: 0, gusanos: 1 }
+  },
+
+  /* --- dos mazorcas, y la segunda pelea --- */
+  'maiz-4-dos': {
     nombre: 'Dos choclos tiernos',
     corto: 'Dos choclos',
     dificultad: 2, bloque: 'DESGRANAR',
-    tiempoBase: 120,
-    config: { choclos: 2, hojas: 10, madurez: ['tierno', 'tierno'], podridos: 0, gusanos: [1, 1] }
+    tiempoBase: 130,
+    config: { choclos: 2, hojas: 6, madurez: ['tierno', 'tierno'], podridos: 0, gusanos: 0 }
   },
-
-  /* --- el duro --- */
-  'maiz-4-primer-duro': {
-    nombre: 'El primero duro',
+  'maiz-5-primer-duro': {
+    nombre: 'El segundo está duro',
     corto: 'El primer duro',
-    dificultad: 2, bloque: 'DESGRANAR',
-    tiempoBase: 115,
+    dificultad: 3, bloque: 'DESGRANAR',
+    tiempoBase: 140,
     config: { choclos: 2, hojas: 10, madurez: ['tierno', 'duro'], podridos: 0, gusanos: [1, 1] }
   },
-  'maiz-5-duro': {
+  'maiz-6-duro': {
     nombre: 'Los dos duros',
     corto: 'Los dos duros',
     dificultad: 3, bloque: 'DESGRANAR',
-    tiempoBase: 110,
+    tiempoBase: 130,
     config: { choclos: 2, hojas: 10, madurez: ['duro', 'duro'], podridos: 0, gusanos: [1, 1] }
   },
 
   /* --- los dañados: lo que NO hay que tocar --- */
-  'maiz-6-primer-danado': {
+  'maiz-7-primer-danado': {
     nombre: 'El primer dañado',
     corto: 'Un dañado',
     dificultad: 3, bloque: 'DESGRANAR',
-    tiempoBase: 110,
+    tiempoBase: 125,
     config: { choclos: 2, hojas: 10, madurez: ['tierno', 'tierno'], podridos: 1, gusanos: [1, 1] }
   },
-  'maiz-7-danado-duro': {
+  'maiz-8-danado-duro': {
     nombre: 'Dañados en el duro',
     corto: 'Dañado y duro',
-    dificultad: 4, bloque: 'DESGRANAR',
-    tiempoBase: 105,
+    dificultad: 3, bloque: 'DESGRANAR',
+    tiempoBase: 125,
     config: { choclos: 2, hojas: 10, madurez: ['duro', 'duro'], podridos: 2, gusanos: [1, 1] }
   },
-  'maiz-8-picada': {
+  'maiz-9-picada': {
     nombre: 'La mazorca picada',
     corto: 'La picada',
     dificultad: 4, bloque: 'DESGRANAR',
-    tiempoBase: 100,
+    tiempoBase: 115,
     config: { choclos: 2, hojas: 10, madurez: ['tierno', 'duro'], podridos: 4, gusanos: [1, 2] }
   },
-
-  /* --- el volumen: tres mazorcas --- */
-  'maiz-9-tres': {
-    nombre: 'Tres mazorcas',
-    corto: 'Tres mazorcas',
+  'maiz-10-plaga': {
+    nombre: 'El choclo con plaga',
+    corto: 'La plaga',
     dificultad: 4, bloque: 'DESGRANAR',
-    tiempoBase: 150,
-    config: { choclos: 3, hojas: 10, madurez: ['tierno', 'duro', 'tierno'], podridos: 2, gusanos: [1, 1, 1] }
-  },
-  'maiz-10-costal': {
-    nombre: 'El costal entero',
-    corto: 'El costal',
-    dificultad: 5, bloque: 'DESGRANAR',
-    tiempoBase: 140,
-    config: { choclos: 3, hojas: 12, madurez: ['duro', 'duro', 'tierno'], podridos: 4, gusanos: [1, 2, 1] }
+    tiempoBase: 115,
+    config: { choclos: 2, hojas: 12, madurez: ['duro', 'duro'], podridos: 5, gusanos: [2, 2] }
   },
 
-  /* --- el maíz seco: donde se guarda la temporada --- */
+  /* --- el maíz seco: la temporada se cierra donde se guarda --- */
   'maiz-11-seco': {
-    nombre: 'El maíz seco',
+    nombre: 'Entra el maíz seco',
     corto: 'El maíz seco',
-    dificultad: 3, bloque: 'DESGRANAR',
-    tiempoBase: 125,
-    config: { choclos: 1, hojas: 6, madurez: ['seco'], podridos: 0, gusanos: 0 }
-  },
-  'maiz-12-seco-tierno': {
-    nombre: 'Seco y tierno',
-    corto: 'Seco y tierno',
     dificultad: 4, bloque: 'DESGRANAR',
-    tiempoBase: 120,
-    config: { choclos: 2, hojas: 10, madurez: ['seco', 'tierno'], podridos: 2, gusanos: [1, 1] }
+    tiempoBase: 110,
+    config: { choclos: 2, hojas: 8, madurez: ['seco', 'tierno'], podridos: 0, gusanos: [1, 1] }
+  },
+  'maiz-12-seco-duro': {
+    nombre: 'Seco y duro',
+    corto: 'Seco y duro',
+    dificultad: 4, bloque: 'DESGRANAR',
+    tiempoBase: 110,
+    config: { choclos: 2, hojas: 10, madurez: ['seco', 'duro'], podridos: 2, gusanos: [1, 1] }
   },
   'maiz-13-tonga': {
     nombre: 'La tonga',
     corto: 'La tonga',
     dificultad: 5, bloque: 'DESGRANAR',
-    tiempoBase: 115,
+    tiempoBase: 110,
     config: { choclos: 2, hojas: 10, madurez: ['seco', 'seco'], podridos: 3, gusanos: [1, 2] }
   },
   'maiz-14-morocho': {
     nombre: 'El morocho picado',
     corto: 'El morocho',
     dificultad: 5, bloque: 'DESGRANAR',
-    tiempoBase: 110,
+    tiempoBase: 105,
     config: { choclos: 2, hojas: 12, madurez: ['seco', 'duro'], podridos: 6, gusanos: [2, 2] }
   },
+
+  /* --- la gran faena --- */
   'maiz-15-ultima': {
     nombre: 'La última tonga',
     corto: 'La última',
     dificultad: 5, bloque: 'DESGRANAR',
-    tiempoBase: 160,
-    config: { choclos: 3, hojas: 12, madurez: ['seco', 'seco', 'duro'], podridos: 6, gusanos: [2, 2, 2] }
+    tiempoBase: 110,
+    config: { choclos: 3, hojas: 5, madurez: ['seco', 'duro', 'tierno'], podridos: 2, gusanos: [1, 1, 1] }
   },
 };
 
