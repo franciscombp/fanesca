@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.11.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.11.1',
+    fecha: '2026-08-20',
+    titulo: 'El gusanito se queda en la mano',
+    cambios: [
+      'Arreglado: al agarrar el gusanito se iba hacia atrás y se hacía chiquito, como si se escapara al fondo. Ahora viene hacia adelante y se queda del mismo tamaño, pegado al dedo — se siente que lo tienes cogido.',
+      'Los granos dañados ahora se explican. Al aparecer la rejilla te dicen cuántos hay y qué hacerles; laten despacio para que se distingan de un vistazo; y la primera vez que rompas uno se te perdona, con el aviso de qué pasó.',
+      'Una hilera en cascada ya no se lleva por delante un grano dañado: se para ahí. Esos salen a mano y despacio.',
+    ],
+    internos: [
+      'motor3d: puntoAnteCamara(dist) — punto sobre el rayo del dedo a distancia fija de la cámara. puntoEnPlano servía mientras lo cargado iba sobre el mesón; con la mazorca de pie el dedo apunta alto y el rayo tardaba 7 unidades en bajar al plano de la mesa.',
+      'nivel-maiz: llevarALaMano() dibuja con puntoAnteCamara y guarda el punto del mesón aparte para juzgar dónde cae. agarrarBicho() salta a la mano al iniciar el arrastre, no al primer movimiento.',
+      'Granos dañados: umbral propio FUERZA_PODRIDO (950 px/s, más exigente que el tierno), un perdón antes de arruinar, latido en actualizar(), y esPodrido() traba la cascada como ya hacía la papilla.',
+      'velSuave se reinicia en alTocar y alArrastrarInicio: un toque heredaba la velocidad del arrastre anterior y podía romper un dañado sin que el gesto fuera rápido.',
+      'window.__maiz gana pelar(), despertar(), velSuave, podridos y perdonadoPodrido para poder probar lo que pasa después del deshojado.',
+    ],
+  },
   {
     v: '1.11.0',
     fecha: '2026-08-20',

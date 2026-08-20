@@ -59,6 +59,10 @@ const FRENTE = 0;
 const GUSANO_VEL = 0.38;   /* posiciones por segundo que BAJA el bicho */
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 const FUERZA = 1600;
+/* El dañado pide MÁS calma que el tierno: si los dos umbrales fueran
+   iguales, "delicado" y "no revientes" serían el mismo gesto y el
+   grano café no enseñaría nada nuevo. */
+const FUERZA_PODRIDO = 950;
 
 /* ---------- parámetros, de niveles-config.js ----------
    Todos se sobrescriben en construir() a partir de la config del
@@ -81,6 +85,9 @@ const SUELTA_HOJA = 105;
    el dedo todavía encima. Sin este respiro, destaparlo sería perder
    sin poder reaccionar. */
 const GRACIA = 1.8;
+/* a qué altura sobre el mesón se lleva el bicho en la mano. Es la
+   misma que usa plaga.js: el bicho va en alto, no arrastrándose. */
+const ALTO_CARGA = 0.45;
 
 let TOTAL = 0;  /* se calcula en construir() después de leer config */
 
@@ -120,6 +127,7 @@ let corridaActual = 0, mejorCorrida = 0, dichaCita = false, citaPendiente = fals
 const CORRIDA_QUE_ENTENDIO = 4;   /* con esto ya entendió la cascada */
 const GRANOS_PENANDO = 14;        /* granos a pulso antes de soplarle */
 let reventados = 0, avisadoReventon = false;
+let avisadoTrabaPodrido = false;
 let compostaN = 0;         /* cuánto ha caído a la composta (para pintarla) */
 let velT = 0, velX = 0, velY = 0;   /* medir la fuerza del dedo */
 let ultimoRasgue = 0;               /* para espaciar el sonido de rasgado */
@@ -134,11 +142,10 @@ function nuevoGrano(a, p) {
   const { th, r, h } = posicionDe(a, p);
   const punta = (p === 0 || p === P - 1);
 
-  /* ¿es este grano uno de los podridos? */
-  const esPodrido = posicionesPodridas.has(`${a},${p}`);
+  const danado = posicionesPodridas.has(a + ',' + p);
 
-  const g = api.pieza(esPodrido ? 'grano-podrido' : 'grano-choclo', {
-    madurez: esPodrido ? 'podrido' : madurez.id,
+  const g = api.pieza(danado ? 'grano-podrido' : 'grano-choclo', {
+    madurez: danado ? 'podrido' : madurez.id,
     punta,
     variante: a * 7 + p * 3,
   });
@@ -146,9 +153,12 @@ function nuevoGrano(a, p) {
   g.position.set(Math.sin(th) * (r + 0.03), h, Math.cos(th) * (r + 0.03));
   g.rotation.y = th;
   g.userData = {
-    tipo: esPodrido ? 'grano-podrido' : 'grano',
+    tipo: danado ? 'grano-podrido' : 'grano',
     a, p, golpes: 0,
-    fragil: esPodrido,
+    fragil: danado,
+    /* desfase del latido: si todos respiraran a la vez parecería un
+       parpadeo de la pantalla, no seis granos enfermos */
+    faseLatido: danado ? (a * 1.7 + p * 0.9) : 0,
   };
   return g;
 }
@@ -282,6 +292,7 @@ function autoGirar() {
 
 const existe = (a, p) => p >= 0 && p < P && !!granos[a][p];
 const esPapilla = (a, p) => existe(a, p) && granos[a][p].userData.tipo === 'papilla';
+const esPodrido = (a, p) => existe(a, p) && granos[a][p].userData.tipo === 'grano-podrido';
 
 function suelto(a, p) {
   if (!existe(a, p)) return false;
@@ -421,6 +432,7 @@ function granoBajoElDedo() {
    dedo que va de paso desgranando solo lo empuja. */
 let perdonado = false;
 let avisadoRoce = false;
+let perdonadoPodrido = false;
 
 /* tocarlo con la yema: eso es apretarlo */
 function tocado(w) {
@@ -483,15 +495,15 @@ function intentarGrano(raizGrano, esArrastre) {
   const { a, p } = raizGrano.userData;
   if (raizGrano.userData.tipo === 'papilla') { limpiarPapilla(a, p); return; }
 
-  /* GRANO PODRIDO: TOQUE DELICADO */
+  /* EL GRANO DAÑADO: TOQUE DELICADO.
+
+     No pide puntería ni fuerza, pide FRENAR — es el único grano que
+     castiga la prisa sin castigar el error. Por eso sale aunque esté
+     trabado: la dificultad es ir despacio, no encontrarle el hueco. */
   if (raizGrano.userData.tipo === 'grano-podrido') {
-    if (velSuave > FUERZA) {
-      /* ¡Lo rompiste! Se va a la olla y se arruina el nivel */
-      api.arruinar(ARRUINADO.granoPodrido?.() || ARRUINADO.aplastado('grano dañado'));
-      return;
-    }
-    /* toque delicado: sale limpio */
+    if (velSuave > FUERZA_PODRIDO) { romperPodrido(a, p); return; }
     sacarGrano(a, p, esArrastre, esArrastre ? dirActual : 0);
+    if (!quedanPodridos()) api.aviso(null);
     return;
   }
 
@@ -523,6 +535,56 @@ function intentarGrano(raizGrano, esArrastre) {
     const cuanto = madurez.id === 'duro' ? ' Y este choclo está duro.' : '';
     api.pista('Ese está trabado por los cuatro lados. Empieza por una <b>punta</b> y arrastra a lo largo.' + cuanto, 4000);
   }
+}
+
+/* EL BICHO A LA MANO. Se llama al agarrarlo y en cada paso del
+   arrastre — al agarrarlo también, y no solo al mover, porque si el
+   primer salto a la mano espera al primer movimiento, el instante de
+   agarrarlo no se siente.
+
+   DOS PUNTOS, Y CADA UNO SIRVE PARA UNA COSA:
+
+   · dónde se DIBUJA: sobre el rayo del dedo, a una distancia fija de
+     la cámara. Antes se usaba el corte contra el plano del mesón y se
+     subía el resultado en Y, y eso aquí sale mal por una razón que no
+     tienen los otros niveles: la mazorca va DE PIE, así que el dedo
+     apunta ALTO, y un rayo que apunta alto tarda muchísimo en bajar
+     hasta la altura de la mesa. El gusanito terminaba pegado al dedo
+     en píxeles pero SIETE UNIDADES detrás de la escena — diminuto y
+     al fondo. En pantalla eso no se lee como "lo tengo en la mano":
+     se lee como que se escapó hacia atrás. A distancia fija se queda
+     del mismo tamaño y delante de todo, que es lo que hace algo que
+     de verdad llevas en la mano.
+
+   · dónde CAE al soltarlo: el corte contra el plano del mesón, que
+     sigue siendo el bueno para eso — soltar se juzga contra la mesa
+     y no contra el aire. Cuando lo llevas a la composta el dedo baja,
+     el rayo apunta al mesón y ese punto vuelve a ser de fiar. */
+const DIST_MANO = 3.1;   /* a cuánto de la cámara va lo que se carga */
+
+function llevarALaMano(w) {
+  if (!w) return null;
+  const suelo = api.puntoEnPlano(api.MESA_Y);
+  if (suelo) w.suelo = { x: suelo.x, z: suelo.z };
+  const enMano = api.puntoAnteCamara ? api.puntoAnteCamara(DIST_MANO) : null;
+  const d = enMano || suelo;
+  if (d) w.obj.position.copy(d);
+  return suelo;
+}
+
+/* lo mismo, pero con el respingo de "lo tengo": el bicho salta a la
+   mano y se encoge un pelín, que es lo que convierte el agarrón en
+   un gesto con acuse de recibo */
+function agarrarBicho(w) {
+  w.estado = 'cargado';
+  w.enTransicion = false;
+  raiz.attach(w.obj);
+  w.aro.visible = false;
+  llevarALaMano(w);
+  w.obj.scale.setScalar(0.82);
+  api.tween(w.obj.scale, 'x', 1, 0.18); api.tween(w.obj.scale, 'y', 1, 0.18); api.tween(w.obj.scale, 'z', 1, 0.18);
+  api.sfx('tab'); api.buzz(12);
+  api.aviso('Llévalo a la composta 🌿');
 }
 
 /* ---------- las hojas: pelar ---------- */
@@ -573,6 +635,49 @@ function intentarPelos() {
   fase = 'desgranar';
   if (api.rotulo) api.rotulo(`Desgranar · choclo ${choclo + 1} de ${CHOCLOS}`);
   api.pista(`${madurez.presenta} Empieza por una <b>punta</b>.`, 4600);
+  /* Los dañados hay que PRESENTARLOS. Un grano café en medio de
+     ciento veinte amarillos no se lee solo como "a este trátalo
+     distinto": se lee como decoración, y el jugador se entera de que
+     eran otra cosa cuando ya arruinó la olla. */
+  if (posicionesPodridas.size) avisarPodridos();
+}
+
+/* ---------- los granos dañados ---------- */
+
+function quedanPodridos() {
+  return granos.some(f => f.some(g => g && g.userData.tipo === 'grano-podrido'));
+}
+
+/* Se rompió uno. La primera vez se perdona —igual que al gusanito—
+   porque enterarse de una regla perdiendo la partida no es enseñarla:
+   es cobrarla. La segunda ya se sabía. */
+function romperPodrido(a, p) {
+  const g = granos[a][p];
+  if (!g) return;
+  const mundo = new THREE.Vector3();
+  g.getWorldPosition(mundo);
+  api.chispas(mundo, '#6b4423', 10, 0.8);
+  api.sfx('crack'); api.sacudir(0.3);
+
+  if (!perdonadoPodrido) {
+    perdonadoPodrido = true;
+    /* el grano aguanta: se quedó ahí, magullado pero entero */
+    api.buzz([40, 30, 40]);
+    api.destello('rgba(107,68,35,.34)');
+    api.aviso('💛 ¡Casi lo revientas! Esta te la perdono', 'peligro');
+    api.pista('Ese está <b>dañado</b>. Con el dedo así de rápido se rompe y se va a la olla: pásale <b>despacio</b>, o tócalo y suelta.', 5200);
+    const base = g.rotation.z;
+    api.tween(g.rotation, 'z', base + 0.3, 0.07, undefined, () => api.tween(g.rotation, 'z', base, 0.14));
+    velSuave = 0;          /* que el mismo arrastre no lo cobre dos veces */
+    return;
+  }
+  api.arruinar(ARRUINADO.granoPodrido());
+}
+
+function avisarPodridos() {
+  const n = posicionesPodridas.size;
+  api.aviso(`🟤 ${n === 1 ? 'Hay un grano dañado' : `Hay ${n} granos dañados`} — sácalos despacio`);
+  api.pista('Los <b>cafés están dañados</b>: se rompen si les pasas el dedo con fuerza, y lo que sale se va a la olla. <b>Tócalos suave</b>, uno por uno, y salen enteros.', 6000);
 }
 
 /* ---------- armar un choclo ---------- */
@@ -665,13 +770,13 @@ export default {
   ],
 
   construir(ctx, levelConfig = {}) {
-    perdonado = false; avisadoRoce = false;
+    perdonado = false; avisadoRoce = false; perdonadoPodrido = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     hechos = 0; choclo = 0; compostaN = 0;
     modo = null; cargado = null; giroObjetivo = null; girando = 0; pellizcando = false;
     terminado = false; ultimoPop = api.reloj; avisoCentro = 0;
     dichaCita = false; citaPendiente = false; mejorCorrida = 0;
-    reventados = 0; avisadoReventon = false;
+    reventados = 0; avisadoReventon = false; avisadoTrabaPodrido = false;
     transToken++;
 
     /* Los parámetros del nivel. `porChoclo` acepta tanto un número
@@ -722,6 +827,31 @@ export default {
           return f;
         },
         get gusanos() { return gusanos.map(w => w.estado); },
+        get velSuave() { return Math.round(velSuave); },
+        get podridos() {
+          const r = [];
+          for (let a = 0; a < A; a++) for (let p = 0; p < P; p++) {
+            if (esPodrido(a, p)) r.push(a + ',' + p);
+          }
+          return r;
+        },
+        get perdonadoPodrido() { return perdonadoPodrido; },
+        /* Saltarse el deshojado. Pelar diez hojas a mano cada vez que
+           se quiere mirar la rejilla vuelve imposible probar nada de
+           lo que pasa DESPUÉS — que es donde vive el nivel. */
+        pelar() {
+          hojas.forEach(h => { if (!h.ida) pelarHoja(h); });
+          intentarPelos();
+          return fase;
+        },
+        /* sacar un bicho sin tener que adivinar bajo qué grano está */
+        despertar() {
+          const w = gusanos.find(x => x.estado === 'oculto');
+          if (!w) return null;
+          granos[w.a][w.p] = null;
+          despertarGusano(w);
+          return w.a + ',' + w.p;
+        },
       };
     }
   },
@@ -732,6 +862,7 @@ export default {
 
   alTocar(info) {
     if (terminado || fase === 'transicion') return;
+    velSuave = 0;      /* un toque no trae velocidad: es un toque */
     const r = info.raiz;
     if (!r) return;
     if (r.userData.tipo === 'gusano') { tocado(gusanoDe(r)); return; }
@@ -761,17 +892,13 @@ export default {
     const r = info.raiz;
     dyPrev = info.dy;
     velT = api.reloj; velX = info.dx; velY = info.dy;
+    velSuave = 0;      /* el arrastre nuevo no hereda la prisa del viejo */
     if (r && r.userData.tipo === 'gusano') {
       const w = gusanos.find(x => x.obj === r);
       if (w && w.estado === 'fuera') {
         modo = 'cargar';
         cargado = w;
-        w.estado = 'cargado';
-        /* pasa a manos del mundo: así el giro de la mazorca no se lo lleva */
-        raiz.attach(r);
-        w.aro.visible = false;
-        api.sfx('tab'); api.buzz(12);
-        api.aviso('Llévalo a la composta 🌿');
+        agarrarBicho(w);
       }
       return;
     }
@@ -825,9 +952,7 @@ export default {
       return;
     }
     if (modo === 'cargar' && cargado) {
-      /* el punto que manda es el del mesón, no el de la mano en alto */
-      const p = api.puntoEnPlano(api.MESA_Y);
-      if (p) { cargado.suelo = { x: p.x, z: p.z }; cargado.obj.position.set(p.x, api.MESA_Y + 0.45, p.z); }
+      const p = llevarALaMano(cargado);
       const cerca = p && Math.hypot(p.x - api.COMPOSTA.x, p.z - api.COMPOSTA.z) < 0.75;
       cargado.obj.rotation.z = Math.sin(api.reloj * 12) * 0.3;
       if (cerca !== cargado.cerca) {
@@ -947,11 +1072,7 @@ export default {
     pellizcando = true;
     modo = 'cargar';
     cargado = w;
-    w.estado = 'cargado';
-    raiz.attach(w.obj);
-    w.aro.visible = false;
-    api.sfx('tab'); api.buzz(12);
-    api.aviso('Llévalo a la composta 🌿');
+    agarrarBicho(w);
   },
   /* Solo si el pellizco agarró un gusanito se sigue el ciclo de
      cargar; si no agarró nada, el gesto no hace nada. */
@@ -985,10 +1106,41 @@ export default {
         if (c.p < 0 || c.p >= P) continue;
         if (!existe(c.a, c.p)) continue;
         if (esPapilla(c.a, c.p)) continue;   /* la papilla traba la hilera */
+        /* El dañado también traba la hilera, y por la misma razón que
+           enseña: una cascada que se lo lleva de paso sería la manera
+           de sacarlos SIN cuidado, y el grano café dejaría de pedir
+           calma justo cuando mejor te está saliendo el nivel. */
+        if (esPodrido(c.a, c.p)) {
+          if (!avisadoTrabaPodrido) {
+            avisadoTrabaPodrido = true;
+            api.sfx('resist'); api.buzz(10);
+            api.pista('La hilera se paró en un <b>grano dañado</b>. Ese sale a mano y <b>despacio</b>.', 4200);
+          }
+          continue;
+        }
         if (!suelto(c.a, c.p)) continue;
         sacarGrano(c.a, c.p, true, c.dir);
       }
       cascadas = vivas;
+    }
+
+    /* EL LATIDO DE LOS DAÑADOS. El café los distingue si te fijas;
+       esto los distingue si NO te fijas, que es el caso que importa.
+       Un grano que respira despacio entre ciento veinte quietos se
+       lee como "este es otra cosa" antes de leer ningún cartel — y
+       lento a propósito: si latiera rápido pediría prisa, que es
+       justo lo contrario de lo que hay que hacerle. */
+    if (fase === 'desgranar' && posicionesPodridas.size) {
+      for (let a = 0; a < A; a++) {
+        const fila = granos[a];
+        if (!fila) continue;
+        for (let p = 0; p < P; p++) {
+          const g = fila[p];
+          if (!g || g.userData.tipo !== 'grano-podrido') continue;
+          const k = 1 + Math.sin(t * 2.1 + g.userData.faseLatido) * 0.055;
+          g.scale.setScalar(k);
+        }
+      }
     }
 
     /* Los bichos caminan hacia la batea — y hacia la LUZ. El grupo de

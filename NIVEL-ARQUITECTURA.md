@@ -121,11 +121,24 @@ if (raizGrano.userData.tipo === 'grano-podrido') {
 }
 ```
 
+Se explican solos en pantalla: al aparecer la rejilla un aviso dice
+cuántos hay y qué hacerles, **laten despacio** para distinguirse de un
+vistazo entre ciento veinte granos quietos, y **la primera vez que
+rompes uno se te perdona** — enterarse de una regla perdiendo la
+partida no es enseñarla, es cobrarla.
+
+Su umbral es propio y más exigente que el del tierno
+(`FUERZA_PODRIDO = 950` px/s contra `FUERZA = 1600`): si fueran
+iguales, "delicado" y "no revientes" serían el mismo gesto.
+
 Dos detalles que importan:
 
 - **Nunca en las puntas.** Ahí el grano sale con solo rozarlo, y un
   podrido que se rompe sin darte oportunidad de ir despacio no enseña
   nada: solo se siente injusto.
+- **Traban la cascada**, como la papilla. Una hilera que se los lleva
+  de paso sería la manera de sacarlos SIN cuidado, y el grano café
+  dejaría de pedir calma justo cuando mejor te está saliendo.
 - **Se rebarajan en cada mazorca.** La selección vive en
   `armarChoclo()`, no en `construir()`. Si se eligieran una sola vez,
   el segundo choclo traería los dañados en los mismos huecos que el
@@ -179,3 +192,38 @@ dibujan como un solo nodo. Para abrir uno:
 3. Comprobar que `migrar()` le pase el récord viejo.
 
 Ese orden importa: el paso 2 sin el 1 pinta nodos que juegan igual.
+
+
+---
+
+## Llevar algo en la mano (`puntoAnteCamara`)
+
+Un detalle del motor que se paga caro si se ignora.
+
+`api.puntoEnPlano(y)` corta el rayo del dedo contra un **plano
+horizontal**. Sirve mientras lo que se carga va sobre el mesón: ahí el
+dedo apunta hacia abajo y el rayo cruza el plano cerca.
+
+Con la mazorca **de pie** —a 1.78 sobre la mesa— el dedo apunta ALTO, y
+un rayo que apunta alto tarda muchísimo en bajar a la altura de la
+mesa. El gusanito salía pegado al dedo *en píxeles* pero **siete
+unidades detrás de la escena**: diminuto y al fondo. En pantalla eso no
+se lee como "lo tengo en la mano", se lee como que se escapó.
+
+```js
+const DIST_MANO = 3.1;
+function llevarALaMano(w) {
+  const suelo = api.puntoEnPlano(api.MESA_Y);      // dónde CAE al soltarlo
+  if (suelo) w.suelo = { x: suelo.x, z: suelo.z };
+  const enMano = api.puntoAnteCamara(DIST_MANO);   // dónde se DIBUJA
+  if (enMano) w.obj.position.copy(enMano);
+  return suelo;
+}
+```
+
+Medido: distancia a la cámara **constante en 3.10** durante todo el
+arrastre (mismo tamaño aparente) y **0 px** de desfase con el dedo.
+
+Cualquier nivel que cargue algo por encima del mesón necesita
+`puntoAnteCamara`. Los que trabajan sobre la tabla pueden seguir con
+`puntoEnPlano`.

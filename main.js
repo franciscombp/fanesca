@@ -637,6 +637,7 @@ const api = {
   volarA: (...a) => Motor.volarA(...a),
   raycast: (...a) => Motor.raycast(...a),
   puntoEnPlano: (...a) => Motor.puntoEnPlano(...a),
+  puntoAnteCamara: (...a) => Motor.puntoAnteCamara(...a),
   proyectar: (...a) => Motor.proyectar(...a),
   sombraBlob: (...a) => Motor.sombraBlob(...a),
   ojitos: (...a) => Motor.ojitos(...a),

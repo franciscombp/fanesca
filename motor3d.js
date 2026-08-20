@@ -436,6 +436,24 @@ export function puntoEnPlano(y) {
   return ray.ray.intersectPlane(planoAux, puntoAux) ? puntoAux.clone() : null;
 }
 
+/* EL PUNTO A UNA DISTANCIA FIJA DE LA CÁMARA, sobre el rayo del dedo.
+
+   `puntoEnPlano` sirve mientras lo que se lleva en la mano va por
+   encima del MESÓN: ahí el dedo apunta hacia abajo y el rayo corta el
+   plano cerca. Pero cuando el nivel pasa arriba —la mazorca va de pie,
+   a metro y medio del mesón— el dedo apunta ALTO, y el rayo tarda
+   muchísimo en bajar hasta la altura de la mesa: el objeto sale
+   pegado al dedo en píxeles y a siete unidades detrás de la escena.
+   En pantalla eso no se lee como "lo tengo en la mano", se lee como
+   que se escapó hacia el fondo.
+
+   Con la distancia fija, lo que se agarra se queda del mismo tamaño y
+   delante de todo, que es lo que hace un objeto que está en tu mano. */
+const puntoAux2 = new THREE.Vector3();
+export function puntoAnteCamara(dist) {
+  return puntoAux2.copy(ray.ray.origin).addScaledVector(ray.ray.direction, dist).clone();
+}
+
 /* raycast a voluntad del nivel, con el rayo del último evento.
    Devuelve solo lo que el jugador realmente puede ver y tocar. */
 export function raycast(objetos, recursivo = true) {
@@ -797,7 +815,7 @@ export const Motor = {
   /* el pintor, para calibrar luz y exposición desde la consola sin
      recargar: `Fanesca.Motor.pintor.toneMappingExposure = 0.9` */
   get pintor() { return renderer; },
-  tween, chispas, volarA, sacudir, destello, raycast, puntoEnPlano,
+  tween, chispas, volarA, sacudir, destello, raycast, puntoEnPlano, puntoAnteCamara,
   llenarRecipiente, sombraBlob, ojitos,
   /* el catálogo de modelos, para que un nivel pida sus piezas sin
      saber si vienen de código o de un .glb hecho en Blender */
