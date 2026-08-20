@@ -56,6 +56,7 @@ const PRECACHE = [
   './arruinado.js',
   './plaga.js',
   './niveles.js',
+  './niveles-config.js',
   /* los modelos: la forma de cada ingrediente. Sin esto el juego
      abre sin conexión pero no puede armar un solo nivel. */
   './modelos/index.js',
