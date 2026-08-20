@@ -23,7 +23,7 @@ export const ARRUINADO = {
     texto: `El ${bicho} llegó hasta la batea y se mezcló con lo bueno. Ya no se puede separar: toca botar todo y empezar de nuevo.`,
   }),
   granoPodrido: () => ({
-    titulo: 'El grano se rompió',
-    texto: `Ese grano estaba dañado y revienta con un toque fuerte. Se fue a la olla y la arruinó. Hay que empezar de nuevo y tratar los dañados con más cuidado.`,
+    titulo: 'Picaste un grano dañado',
+    texto: `Los granos cafés están podridos y no se sacan: se dejan en la tusa y se van con ella a la composta. Este lo reventaste encima de lo bueno, y con eso se bota todo.`,
   }),
 };

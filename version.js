@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.11.1';
+const APP_VERSION = '1.12.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.12.0',
+    fecha: '2026-08-20',
+    titulo: 'Los granos dañados no se sacan',
+    cambios: [
+      'Cambia la regla: los granos cafés ya no hay que sacarlos con cuidado — hay que DEJARLOS. No salen, traban la hilera y toca rodearlos, y al terminar el choclo se van montados en la tusa a la composta. Es como se hace de verdad: nadie despica una mazorca grano podrido por grano podrido, se bota el olote.',
+      'Antes la regla era sacarlos con el dedo suave, y además estaban rotos: no salían de ninguna manera, por mucho cuidado que les pusieras.',
+      'Rozarlos mientras barres una hilera ya no castiga — barriendo es imposible no tocarlos. Lo que se cobra es picotearlos a propósito, y la primera vez se perdona.',
+    ],
+    internos: [
+      'sacarGrano() solo acepta tipo "grano", así que los podridos nunca podían salir: el camino de "toque delicado" era inalcanzable. Se quita el umbral FUERZA_PODRIDO y con él la mecánica de velocidad.',
+      'cobLimpio() ignora los podridos; botarTusa() los cuelga de la tusa con attach() y los manda a la composta con ella; revisarCob() la bota también en el último choclo, con 720 ms antes de completar para que se vea.',
+      'TOTAL descuenta los dañados: contarlos dejaba la barra clavada bajo el 100% para siempre.',
+      'La selección nunca los pone pegados entre sí: cuatro en cruz encerrarían un grano bueno sin vecino ausente y el choclo no se podría terminar.',
+      'topeDePodrido() (barrido y cascada, sin castigo) y picotearPodrido() (toque deliberado, un perdón y luego arruina). alTocar pasa deliberado=true.',
+    ],
+  },
   {
     v: '1.11.1',
     fecha: '2026-08-20',

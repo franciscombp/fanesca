@@ -108,44 +108,51 @@ De `tiempoBase` salen los tres cortes de cuchara: `[t, t×1.5, t×2.2]`.
 
 ---
 
-## Los granos podridos
+## Los granos dañados
 
-Cafés, dañados, quietos. **No revientan como el tierno**: el tierno se
-hace papilla y se limpia — es un desvío. El podrido se rompe y lo que
-sale de ahí **se va a la olla y la arruina**.
+Cafés, podridos, quietos. **No son una tarea: son un estorbo.**
+
+La regla cabe en una línea: **no se sacan, se dejan**. Traban la
+hilera y hay que rodearlos, y al terminar el choclo se van **montados
+en la tusa** a la composta. Es como se hace de verdad — nadie despica
+una mazorca grano podrido por grano podrido, se bota el olote.
 
 ```js
-if (raizGrano.userData.tipo === 'grano-podrido') {
-  if (velSuave > FUERZA) { api.arruinar(ARRUINADO.granoPodrido()); return; }
-  sacarGrano(a, p, esArrastre, dirActual);   // toque delicado: sale limpio
+function botarTusa() {
+  for (...) if (g.userData.tipo === 'grano-podrido') { tusa.attach(g); fila[p] = null; }
+  api.volarA(tusa, api.COMPOSTA..., { dur: 0.55, alto: 0.6 });
 }
 ```
 
-Se explican solos en pantalla: al aparecer la rejilla un aviso dice
-cuántos hay y qué hacerles, **laten despacio** para distinguirse de un
-vistazo entre ciento veinte granos quietos, y **la primera vez que
-rompes uno se te perdona** — enterarse de una regla perdiendo la
-partida no es enseñarla, es cobrarla.
+Dos gestos, dos tratos:
 
-Su umbral es propio y más exigente que el del tierno
-(`FUERZA_PODRIDO = 950` px/s contra `FUERZA = 1600`): si fueran
-iguales, "delicado" y "no revientes" serían el mismo gesto.
+| gesto | qué pasa |
+|---|---|
+| **rozarlo barriendo** una hilera | la hilera se para ahí. Sin castigo: barriendo es imposible no tocarlos, y perder por un roce que el gesto no puede evitar es perder por algo que no hiciste |
+| **picotearlo** a propósito (toque suelto) | lo revienta dentro de la olla. La primera se perdona |
 
-Dos detalles que importan:
+Sólo `alTocar` pasa `deliberado = true`; el barrido y la cascada
+llaman a `topeDePodrido()`, que solo empuja y avisa.
 
-- **Nunca en las puntas.** Ahí el grano sale con solo rozarlo, y un
-  podrido que se rompe sin darte oportunidad de ir despacio no enseña
-  nada: solo se siente injusto.
-- **Traban la cascada**, como la papilla. Una hilera que se los lleva
-  de paso sería la manera de sacarlos SIN cuidado, y el grano café
-  dejaría de pedir calma justo cuando mejor te está saliendo.
-- **Se rebarajan en cada mazorca.** La selección vive en
-  `armarChoclo()`, no en `construir()`. Si se eligieran una sola vez,
-  el segundo choclo traería los dañados en los mismos huecos que el
-  primero.
+Tres detalles que sostienen la regla:
+
+- **Nunca en las puntas.** Ahí el grano sale con solo rozarlo.
+- **Nunca pegados entre sí.** Un grano sale si tiene un vecino
+  ausente, y los dañados no se van nunca: cuatro en cruz encerrarían
+  un grano bueno que ya no habría cómo sacar, y el choclo quedaría
+  imposible de terminar.
+- **`TOTAL` los descuenta.** Contarlos dejaba la barra clavada bajo el
+  100% para siempre: se leería como un nivel que no se puede cerrar.
 
 El modelo es `grano-podrido` en `modelos/choclo.js`: la misma
-geometría del grano, en café `#6b4423`.
+geometría del grano, en café `#6b4423`, y late despacio para
+distinguirse de un vistazo entre ciento veinte granos quietos.
+
+> **Historia:** la primera versión pedía sacarlos con el dedo suave,
+> con un umbral de velocidad. Además de ser el gesto equivocado, no
+> funcionaba: `sacarGrano()` solo acepta `tipo === 'grano'`, así que
+> el camino del "toque delicado" era inalcanzable y los dañados no
+> salían por mucho cuidado que se les pusiera.
 
 ---
 

@@ -28,6 +28,13 @@
      · el DURO no revienta nunca, pero sus granos trabados
        aguantan el doble de golpes y la cascada corre pesada.
 
+   Y puede venir con GRANOS DAÑADOS: cafés, podridos, quietos. Esos
+   no son una tarea — son un estorbo. No se sacan: traban la hilera y
+   hay que rodearlos, y al final se van montados en la tusa, que es
+   como se hace de verdad (nadie despica una mazorca grano podrido
+   por grano podrido: se bota el olote). Picotearlos los revienta
+   dentro de la olla.
+
    La mazorca va DE PIE: el teléfono en vertical es la mano.
    Girarla es pasar el dedo de lado, y rueda HACIA el dedo, como
    rodaría de verdad. Y debajo de algún grano hay un gusanito:
@@ -59,10 +66,6 @@ const FRENTE = 0;
 const GUSANO_VEL = 0.38;   /* posiciones por segundo que BAJA el bicho */
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 const FUERZA = 1600;
-/* El dañado pide MÁS calma que el tierno: si los dos umbrales fueran
-   iguales, "delicado" y "no revientes" serían el mismo gesto y el
-   grano café no enseñaría nada nuevo. */
-const FUERZA_PODRIDO = 950;
 
 /* ---------- parámetros, de niveles-config.js ----------
    Todos se sobrescriben en construir() a partir de la config del
@@ -127,7 +130,7 @@ let corridaActual = 0, mejorCorrida = 0, dichaCita = false, citaPendiente = fals
 const CORRIDA_QUE_ENTENDIO = 4;   /* con esto ya entendió la cascada */
 const GRANOS_PENANDO = 14;        /* granos a pulso antes de soplarle */
 let reventados = 0, avisadoReventon = false;
-let avisadoTrabaPodrido = false;
+let avisadoTrabaPodrido = false, avisoTope = 0;
 let compostaN = 0;         /* cuánto ha caído a la composta (para pintarla) */
 let velT = 0, velX = 0, velY = 0;   /* medir la fuerza del dedo */
 let ultimoRasgue = 0;               /* para espaciar el sonido de rasgado */
@@ -301,8 +304,11 @@ function suelto(a, p) {
       || !existe((a + 1) % A, p) || !existe((a - 1 + A) % A, p);
 }
 
+/* Limpio = sin granos BUENOS. Los dañados se quedan puestos: no se
+   sacan uno a uno, se van montados en la tusa cuando toca botarla. */
 function cobLimpio() {
-  return granos.length && granos.every(fila => fila.every(g => !g));
+  return granos.length && granos.every(fila =>
+    fila.every(g => !g || g.userData.tipo === 'grano-podrido'));
 }
 
 function pintarComposta() { api.composta(Math.min(1, compostaN / 20)); }
@@ -390,20 +396,50 @@ function limpiarPapilla(a, p) {
   revisarCob();
 }
 
+/* LA TUSA SE VA CON LOS DAÑADOS ENCIMA.
+
+   Nadie despica una mazorca grano podrido por grano podrido: se bota
+   el olote y ya. Por eso los dañados no se sacan — se dejan puestos,
+   y aquí se cuelgan de la tusa para que se vayan con ella de un
+   viaje. Es el pago de haberlos respetado toda la partida: no eran
+   una tarea pendiente, eran algo que no había que tocar. */
+function botarTusa() {
+  let llevados = 0;
+  for (let a = 0; a < A; a++) {
+    const fila = granos[a];
+    if (!fila) continue;
+    for (let p = 0; p < P; p++) {
+      const g = fila[p];
+      if (!g || g.userData.tipo !== 'grano-podrido') continue;
+      g.scale.setScalar(1);        /* que no se vaya a mitad de latido */
+      tusa.attach(g);              /* attach: se cuelga sin dar un salto */
+      fila[p] = null;
+      llevados++;
+    }
+  }
+  tusa.userData.tipo = null;
+  tusa.userData.escalaBase = 1;
+  api.volarA(tusa, api.COMPOSTA.clone().setY(api.MESA_Y + 0.18), { dur: 0.55, alto: 0.6 });
+  compostaN += 2 + llevados; pintarComposta();
+  return llevados;
+}
+
 function revisarCob() {
   if (terminado || fase !== 'desgranar') return;
   if (!cobLimpio()) return;
   const vivos = gusanos.some(w => w.estado === 'fuera' || w.estado === 'cargado');
   if (vivos) { api.aviso('Falta sacar el gusanito antes de seguir'); return; }
+
+  fase = 'transicion';
+  api.sfx('bien'); api.buzz([15, 25]);
+  const llevados = botarTusa();
+  api.aviso(null);
+  api.toast(llevados
+    ? `La tusa se va con ${llevados === 1 ? 'el dañado' : 'los ' + llevados + ' dañados'} 🌿`
+    : (choclo < CHOCLOS - 1 ? '¡Choclo listo! 🌽 Va el siguiente' : '¡Choclo listo! 🌽'));
+
+  const token = ++transToken;
   if (choclo < CHOCLOS - 1) {
-    fase = 'transicion';
-    api.sfx('bien'); api.buzz([15, 25]);
-    api.toast('¡Choclo listo! 🌽 Va el siguiente');
-    /* la tusa pelada, a la composta: así se hace en la cocina */
-    tusa.userData.tipo = null;
-    api.volarA(tusa, api.COMPOSTA.clone().setY(api.MESA_Y + 0.18), { dur: 0.55, alto: 0.6 });
-    compostaN += 2; pintarComposta();
-    const token = ++transToken;
     setTimeout(() => {
       if (token !== transToken || !giro) return;
       choclo++;
@@ -412,7 +448,9 @@ function revisarCob() {
     return;
   }
   terminado = true;
-  api.completar();
+  /* que se vea irse la tusa antes de la tarjeta del final: si no, el
+     pago de haber respetado los dañados se lo come el corte */
+  setTimeout(() => { if (token === transToken) api.completar(); }, 720);
 }
 
 /* ---------- gestos ---------- */
@@ -491,19 +529,15 @@ function gusanoMasCercaEnPantalla(clienteX, clienteY, radioPx = 70) {
   return mejor;
 }
 
-function intentarGrano(raizGrano, esArrastre) {
+function intentarGrano(raizGrano, esArrastre, deliberado) {
   const { a, p } = raizGrano.userData;
   if (raizGrano.userData.tipo === 'papilla') { limpiarPapilla(a, p); return; }
 
-  /* EL GRANO DAÑADO: TOQUE DELICADO.
-
-     No pide puntería ni fuerza, pide FRENAR — es el único grano que
-     castiga la prisa sin castigar el error. Por eso sale aunque esté
-     trabado: la dificultad es ir despacio, no encontrarle el hueco. */
+  /* EL GRANO DAÑADO NO SE SACA. Es un estorbo, no una tarea: se queda
+     puesto y se va montado en la tusa. Tocarlo a propósito lo revienta
+     dentro de la olla; rozarlo barriendo solo para la hilera. */
   if (raizGrano.userData.tipo === 'grano-podrido') {
-    if (velSuave > FUERZA_PODRIDO) { romperPodrido(a, p); return; }
-    sacarGrano(a, p, esArrastre, esArrastre ? dirActual : 0);
-    if (!quedanPodridos()) api.aviso(null);
+    if (deliberado) picotearPodrido(a, p); else topeDePodrido(a, p);
     return;
   }
 
@@ -644,31 +678,43 @@ function intentarPelos() {
 
 /* ---------- los granos dañados ---------- */
 
-function quedanPodridos() {
-  return granos.some(f => f.some(g => g && g.userData.tipo === 'grano-podrido'));
+/* EL DEDO PASÓ POR ENCIMA BARRIENDO. Eso NO se castiga: al arrastrar
+   una hilera es imposible no rozarlos, y perder la olla por un roce
+   que el gesto no puede evitar es perder por algo que no hiciste.
+   La hilera se para ahí, y se dice por qué. */
+function topeDePodrido(a, p) {
+  const g = granos[a] && granos[a][p];
+  if (!g) return;
+  if (api.reloj - avisoTope < 1.1) return;   /* que no zumbe en cada cuadro */
+  avisoTope = api.reloj;
+  api.sfx('resist'); api.buzz(8);
+  const base = g.rotation.z;
+  api.tween(g.rotation, 'z', base + 0.16, 0.07, undefined, () => api.tween(g.rotation, 'z', base, 0.13));
+  if (!avisadoTrabaPodrido) {
+    avisadoTrabaPodrido = true;
+    api.pista('Ese está <b>dañado</b>: no sale, y traba la hilera. <b>Déjalo</b> y rodéalo — se va con la tusa al final.', 5200);
+  }
 }
 
-/* Se rompió uno. La primera vez se perdona —igual que al gusanito—
-   porque enterarse de una regla perdiendo la partida no es enseñarla:
-   es cobrarla. La segunda ya se sabía. */
-function romperPodrido(a, p) {
-  const g = granos[a][p];
+/* UN TOQUE A PROPÓSITO ES PICOTEARLO, y eso sí lo revienta: lo que
+   sale de un grano dañado cae en la olla. La primera se perdona,
+   porque la regla se aprende con el aviso y no perdiendo la partida. */
+function picotearPodrido(a, p) {
+  const g = granos[a] && granos[a][p];
   if (!g) return;
   const mundo = new THREE.Vector3();
   g.getWorldPosition(mundo);
-  api.chispas(mundo, '#6b4423', 10, 0.8);
-  api.sfx('crack'); api.sacudir(0.3);
-
+  api.chispas(mundo, '#6b4423', 8, 0.7);
+  api.sfx('crack');
   if (!perdonadoPodrido) {
     perdonadoPodrido = true;
-    /* el grano aguanta: se quedó ahí, magullado pero entero */
     api.buzz([40, 30, 40]);
-    api.destello('rgba(107,68,35,.34)');
-    api.aviso('💛 ¡Casi lo revientas! Esta te la perdono', 'peligro');
-    api.pista('Ese está <b>dañado</b>. Con el dedo así de rápido se rompe y se va a la olla: pásale <b>despacio</b>, o tócalo y suelta.', 5200);
+    api.destello('rgba(107,68,35,.3)');
+    api.sacudir(0.2);
+    api.aviso('💛 ¡No lo toques! Esta te la perdono', 'peligro');
+    api.pista('Los dañados <b>no se sacan</b>: se quedan puestos y se van con la tusa cuando termines. Picotearlos los revienta dentro de la olla.', 5400);
     const base = g.rotation.z;
     api.tween(g.rotation, 'z', base + 0.3, 0.07, undefined, () => api.tween(g.rotation, 'z', base, 0.14));
-    velSuave = 0;          /* que el mismo arrastre no lo cobre dos veces */
     return;
   }
   api.arruinar(ARRUINADO.granoPodrido());
@@ -676,8 +722,8 @@ function romperPodrido(a, p) {
 
 function avisarPodridos() {
   const n = posicionesPodridas.size;
-  api.aviso(`🟤 ${n === 1 ? 'Hay un grano dañado' : `Hay ${n} granos dañados`} — sácalos despacio`);
-  api.pista('Los <b>cafés están dañados</b>: se rompen si les pasas el dedo con fuerza, y lo que sale se va a la olla. <b>Tócalos suave</b>, uno por uno, y salen enteros.', 6000);
+  api.aviso(`🟤 ${n === 1 ? 'Un grano dañado' : n + ' granos dañados'} — no los toques`);
+  api.pista('Los <b>cafés están dañados</b>. No se sacan: <b>déjalos ahí</b> y se van con la tusa al terminar. Eso sí, traban la hilera — toca rodearlos.', 6400);
 }
 
 /* ---------- armar un choclo ---------- */
@@ -705,12 +751,21 @@ function armarChoclo() {
   const cuantosPod = PODRIDOS_POR[Math.min(choclo, PODRIDOS_POR.length - 1)] || 0;
   if (cuantosPod > 0) {
     const libres = [];
-    for (let a = 0; a < A; a++) for (let p = 1; p < P - 1; p++) libres.push(a + ',' + p);
+    for (let a = 0; a < A; a++) for (let p = 1; p < P - 1; p++) libres.push([a, p]);
     for (let i = libres.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [libres[i], libres[j]] = [libres[j], libres[i]];
     }
-    libres.slice(0, Math.min(cuantosPod, libres.length)).forEach(k => posicionesPodridas.add(k));
+    /* NUNCA PEGADOS ENTRE SÍ. Un grano sale si tiene un vecino
+       ausente, y los dañados no se van nunca: cuatro dañados en cruz
+       encerrarían un grano bueno que ya no habría cómo sacar, y el
+       choclo no se podría terminar. Separados, eso no puede pasar. */
+    for (const [a, p] of libres) {
+      if (posicionesPodridas.size >= cuantosPod) break;
+      const pegado = posicionesPodridas.has(a + ',' + (p - 1)) || posicionesPodridas.has(a + ',' + (p + 1))
+        || posicionesPodridas.has(((a + 1) % A) + ',' + p) || posicionesPodridas.has(((a - 1 + A) % A) + ',' + p);
+      if (!pegado) posicionesPodridas.add(a + ',' + p);
+    }
   }
 
   for (let a = 0; a < A; a++) {
@@ -776,7 +831,7 @@ export default {
     modo = null; cargado = null; giroObjetivo = null; girando = 0; pellizcando = false;
     terminado = false; ultimoPop = api.reloj; avisoCentro = 0;
     dichaCita = false; citaPendiente = false; mejorCorrida = 0;
-    reventados = 0; avisadoReventon = false; avisadoTrabaPodrido = false;
+    reventados = 0; avisadoReventon = false; avisadoTrabaPodrido = false; avisoTope = 0;
     transToken++;
 
     /* Los parámetros del nivel. `porChoclo` acepta tanto un número
@@ -793,9 +848,13 @@ export default {
     HOJAS_N = levelConfig.hojas ?? HOJAS;
     orden = (levelConfig.madurez ?? ['tierno', 'duro']).slice();
 
-    /* el total sale de la rejilla del modelo (A×P) por mazorca: no es
-       un parámetro, es la forma del choclo */
-    TOTAL = CHOCLOS * A * P;
+    /* El total sale de la rejilla del modelo (A×P) por mazorca — no es
+       un parámetro, es la forma del choclo — MENOS los dañados, que no
+       se sacan nunca. Contarlos dejaba la barra clavada abajo del
+       100% para siempre: se leería como un nivel imposible de cerrar. */
+    let danados = 0;
+    for (let i = 0; i < CHOCLOS; i++) danados += PODRIDOS_POR[Math.min(i, PODRIDOS_POR.length - 1)] || 0;
+    TOTAL = CHOCLOS * A * P - danados;
 
     mazorca = new THREE.Group();
     mazorca.position.set(CENTRO[0], api.MESA_Y + CENTRO[1], CENTRO[2]);
@@ -883,7 +942,7 @@ export default {
       if (!hojasQuedan()) { intentarPelos(); return; }
       return;
     }
-    if (r.userData.tipo === 'grano' || r.userData.tipo === 'papilla' || r.userData.tipo === 'grano-podrido') { intentarGrano(r, false); return; }
+    if (r.userData.tipo === 'grano' || r.userData.tipo === 'papilla' || r.userData.tipo === 'grano-podrido') { intentarGrano(r, false, true); return; }
     if (r.userData.tipo === 'tusa') api.pista('Ahí ya no hay grano. Busca uno que tenga un hueco al lado.', 2600);
   },
 
@@ -1012,7 +1071,8 @@ export default {
       if (!r) return;
       if (r.userData.tipo === 'gusano') { aplastado(gusanoDe(r)); return; }
       if (r.userData.tipo === 'papilla') { limpiarPapilla(r.userData.a, r.userData.p); return; }
-      if (r.userData.tipo !== 'grano' && r.userData.tipo !== 'grano-podrido') return;
+      if (r.userData.tipo === 'grano-podrido') { topeDePodrido(r.userData.a, r.userData.p); return; }
+      if (r.userData.tipo !== 'grano') return;
       const { a, p } = r.userData;
       /* el tierno cobra la fuerza: el grano revienta en vez de salir */
       /* la velocidad se suaviza: un solo evento nervioso del navegador
@@ -1110,14 +1170,7 @@ export default {
            enseña: una cascada que se lo lleva de paso sería la manera
            de sacarlos SIN cuidado, y el grano café dejaría de pedir
            calma justo cuando mejor te está saliendo el nivel. */
-        if (esPodrido(c.a, c.p)) {
-          if (!avisadoTrabaPodrido) {
-            avisadoTrabaPodrido = true;
-            api.sfx('resist'); api.buzz(10);
-            api.pista('La hilera se paró en un <b>grano dañado</b>. Ese sale a mano y <b>despacio</b>.', 4200);
-          }
-          continue;
-        }
+        if (esPodrido(c.a, c.p)) { topeDePodrido(c.a, c.p); continue; }
         if (!suelto(c.a, c.p)) continue;
         sacarGrano(c.a, c.p, true, c.dir);
       }
