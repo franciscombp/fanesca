@@ -122,7 +122,7 @@ function desbloqueado(i) {
      juego completo y la olla es su final: pasar de largo hacia las
      variantes bravas sin haberla cocinado se saltaría el único
      momento en que este juego cierra. */
-  if (n.acto === 2 && previo.acto === 1) return listos() >= NIVELES.length;
+  if (n.acto === 2 && previo.acto === 1) return estado.ollaVista || false;
   return estaListo(previo.id);
 }
 
@@ -703,15 +703,56 @@ function arrancarReloj() {
 }
 function pararReloj() { corriendo = false; clearInterval(relojId); relojId = null; }
 
+/* ---------- las pistas ----------
+
+   UNA PISTA QUE NO SE PUEDE LEER NO ENSEÑA. Desde que se quitó la
+   ficha previa, la pista sobre el mesón es toda la enseñanza que
+   existe — y estaba rota por dos lados: cada mensaje duraba un
+   tiempo fijo sin mirar cuántas palabras traía (había pistas de 20
+   palabras en 2,6 s: se van antes de la segunda línea), y la de un
+   nivel PISABA a la anterior en el mismo tick, así que la pista que
+   el propio nivel ponía en construir() no llegaba a dibujarse nunca.
+
+   Ahora la duración sale del texto (~340 ms por palabra, con piso y
+   techo), y las pistas de arranque van EN FILA: el gesto del
+   ingrediente, luego la del nivel, luego el aviso del bicho. Una
+   pista reactiva del juego (un "¡casi lo aplastas!") corta la fila
+   entera: si el jugador ya está metiendo mano, el resto del tutorial
+   llega tarde por definición. */
 let pistaId = null;
-function pista(msg, ms = 3200) {
+let pistaFila = [];        /* timeouts de la secuencia de arranque */
+const duracionDe = (msg) => {
+  const palabras = String(msg).replace(/<[^>]*>/g, ' ').trim().split(/\s+/).length;
+  return Math.max(2600, Math.min(12000, 1400 + palabras * 340));
+};
+function cortarFila() { pistaFila.forEach(clearTimeout); pistaFila = []; }
+function pistaAhora(msg, dur) {
   const p = $('#juego-pista');
-  if (!msg) { p.classList.remove('visible'); return; }
   p.innerHTML = msg;
   p.classList.add('visible');
   clearTimeout(pistaId);
-  if (ms) pistaId = setTimeout(() => p.classList.remove('visible'), ms);
+  pistaId = setTimeout(() => p.classList.remove('visible'), dur);
 }
+function pista(msg, ms) {
+  cortarFila();
+  if (!msg) { clearTimeout(pistaId); $('#juego-pista').classList.remove('visible'); return; }
+  /* el ms explícito es un mínimo de urgencia, no una sentencia: nunca
+     por debajo de lo que se tarda en leer el propio texto */
+  pistaAhora(msg, Math.max(ms || 0, duracionDe(msg)));
+}
+/* la fila del arranque: cada una espera a que la anterior se lea */
+function pistasEnFila(items) {
+  cortarFila();
+  let t = 0;
+  items.filter(x => x && x.msg).forEach(x => {
+    const dur = Math.max(x.ms || 0, duracionDe(x.msg));
+    pistaFila.push(setTimeout(() => pistaAhora(x.msg, dur), t));
+    t += dur + 260;
+  });
+}
+/* mientras un nivel se construye, sus pistas se guardan para la fila
+   en vez de pelearse con el gesto por el único cartel que hay */
+let capturaPista = null;
 
 let vozId = null;
 let vozPauso = false;   /* la voz detuvo el reloj */
@@ -801,7 +842,7 @@ const api = {
     if (corriendo) arruinarNivel(motivo);
   },
   aviso: alerta,
-  pista,
+  pista: (msg, ms) => { if (capturaPista && msg) capturaPista(msg, ms); else pista(msg, ms); },
   /* los pops suben de tono con la racha: la escalerita sonora es la
      recompensa más barata y más efectiva que existe — el jugador la
      persigue sin darse cuenta, y se reinicia sola al parar */
@@ -1002,17 +1043,23 @@ async function jugar(id) {
      código y la segunda con los de Blender */
   await Motor.modelosListos();
   const nivelConfig = obtenerConfigNivel(id);
+  const capturadas = [];
+  capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   Motor.cargar(modActual, api, nivelConfig);
+  capturaPista = null;
   renderControles(modActual);
-  /* La primera vez que se toca un ingrediente se avisa del bicho: es
-     lo único que decía el brief y no dice el gesto, y perderlo sería
-     dejar que alguien arruine su primera olla sin haber sido
-     advertido. A la segunda ya se sabe y sólo estorbaría. */
-  const primeraVez = !estado.mejores[n.id];
-  pista(n.gesto, 5200);
-  if (primeraVez && n.bicho) {
-    setTimeout(() => pista(`🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>`, 4200), 5400);
-  }
+  /* La fila del arranque: el gesto del ingrediente, las pistas que el
+     nivel dejó al construirse, y —la primera vez— el aviso del bicho,
+     que era lo único que decía la ficha eliminada y no dice el gesto.
+     Cada una espera a que la anterior se lea. */
+  const primeraVez = !ingredienteListo(n.base || n.id);
+  pistasEnFila([
+    { msg: n.gesto },
+    ...capturadas,
+    primeraVez && n.bicho
+      ? { msg: `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>` }
+      : null,
+  ]);
   Editor.nivel(n.id);
   pintarBotonEditor();
   arrancarReloj();
@@ -1059,9 +1106,24 @@ async function montarRacion(base, config) {
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE ingrediente y no del que se estaba jugando */
   Apuro.activar();
+  const capturadas = [];
+  capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   Motor.cargar(modActual, api, config);
+  capturaPista = null;
   renderControles(modActual);
   Editor.nivel(ficha.id);
+  /* EL APURO TAMBIÉN ENSEÑA. Seis de los doce llegaban mudos: sin la
+     regla del modo (que la tapaba la pista del nivel) y sin el gesto
+     del ingrediente. La regla va primero y sólo la primera partida de
+     la vida; el gesto, siempre — un modo rápido no es excusa para
+     soltar a alguien en las habas sin decirle qué se hace. */
+  const fila = [];
+  if (!estado.apuroJugado) {
+    estado.apuroJugado = true; guardar();
+    fila.push({ msg: '<b>El Apuro:</b> haz una parte de cada ingrediente y el reloj te <b>devuelve segundos</b>. Los bichos te los quitan.' });
+  }
+  fila.push({ msg: ficha.gesto }, ...capturadas);
+  pistasEnFila(fila);
 }
 
 const GANCHOS_APURO = {
@@ -1118,7 +1180,6 @@ function arrancarApuro() {
   mostrar('juego');
   Apuro.arrancar(GANCHOS_APURO);
   arrancarReloj();
-  pista('<b>El Apuro:</b> termina cada ración y el reloj te devuelve segundos. Los bichos te los quitan.', 4200);
   estado.intentos++;
   guardar();
 }
@@ -1224,7 +1285,12 @@ function terminarNivel() {
     $('#listo-mejor').textContent = esRecord
       ? (previo ? '¡Nuevo récord! antes: ' + tiempoBonito(previo.ms) : 'Primera vez que lo preparas')
       : 'Tu mejor sigue siendo ' + tiempoBonito(previo.ms);
-    const tarjeta = TARJETAS[n.id];
+    /* por el INGREDIENTE, no por la variante: TARJETAS está indexado
+       por base ('maiz'), y n.id es 'maiz-1-introduccion'. Buscar por
+       el id dejaba las doce tarjetas mudas y —peor— el cuaderno
+       cerrado para siempre, porque tarjeta.abre es el único
+       desbloqueo de capítulos que tiene la campaña. */
+    const tarjeta = TARJETAS[n.base || n.id];
     const caja = $('#listo-tarjeta');
     if (tarjeta) {
       caja.classList.remove('hidden');
@@ -1239,8 +1305,10 @@ function terminarNivel() {
       [].concat(tarjeta.abre || []).forEach(abrirCapitulo);
     } else caja.classList.add('hidden');
 
-    const quedan = NIVELES.some(x => !ingredienteListo(x.id));
-    $('#listo-seguir').textContent = quedan ? 'Siguiente ingrediente' : 'Servir la fanesca';
+    const quedanIngredientes = NIVELES.some(x => !ingredienteListo(x.id));
+    $('#listo-seguir').textContent = quedanIngredientes
+      ? 'Siguiente ingrediente'
+      : (estado.ollaVista ? 'Siguiente parada' : 'Servir la fanesca');
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
   }, 620);
@@ -1364,17 +1432,24 @@ function bindEventos() {
 
   $('#listo-seguir').addEventListener('click', () => {
     cerrarModales();
-    const sig = RUTA.find(x => !estaListo(x.id));
     Motor.descargar();
     nivelActual = null; modActual = null;
-    if (!sig) { mostrar('mesa'); setTimeout(mostrarFinal, 300); return; }
-    /* DIRECTO al siguiente, sin escala en la mesa. La escala rompía
-       la seguidilla — que es exactamente lo que un juego casual debe
-       proteger: terminar un nivel tiene que desembocar en el
-       siguiente sin darle a la mano dónde soltarse. Si el nivel es
-       nuevo, su brief ES la transición; si ya se jugó, ni eso. */
-    if (estado.mejores[sig.id]) { jugar(sig.id); }
-    else { jugar(sig.id); }
+    /* CUANDO EL BOTÓN DICE "SERVIR LA FANESCA", SIRVE LA FANESCA.
+       Antes buscaba la siguiente parada sin hacer en TODA la ruta, y
+       con los doce listos esa era la primera variante del Acto II —
+       todavía cerrada—: el único final del juego, después de media
+       hora, desembocaba en otro choclo. */
+    if (!NIVELES.some(x => !ingredienteListo(x.id)) && !estado.ollaVista) {
+      mostrar('mesa');
+      setTimeout(mostrarFinal, 350);
+      return;
+    }
+    /* DIRECTO al siguiente, sin escala en la mesa — pero sólo a una
+       parada que de verdad esté abierta: saltar a una cerrada era
+       colarse por detrás del candado. */
+    const sig = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
+    if (!sig) { mostrar('mesa'); return; }
+    jugar(sig.id);
   });
   $('#listo-repetir').addEventListener('click', () => {
     const id = nivelActual ? nivelActual.id : null;
@@ -1409,11 +1484,21 @@ function bindEventos() {
 }
 
 function mostrarFinal() {
-  const total = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
-  const cuch = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
+  /* cocinar la olla deja huella: es lo que abre el Acto II, y sin
+     este registro el candado de la temporada decía "cocina la olla"
+     mientras en realidad miraba otra cosa */
+  if (!estado.ollaVista) { estado.ollaVista = true; guardar(); }
+  /* La cuenta del final es sobre el ACTO I: la olla es el cierre de
+     los doce, y medirla contra las cuarenta paradas —veintiocho de
+     ellas opcionales y aún cerradas— convertía la celebración en un
+     "24 de 120" que suena a suspenso. La temporada lleva su propio
+     marcador en cada parada. */
+  const actoI = RUTA.filter(n => n.acto === 1);
+  const total = actoI.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
+  const cuch = actoI.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
   $('#final-cierre').textContent = CIERRE;
   $('#final-voz').innerHTML = `«${CACUANGO_PARAMO.texto}»<span>${CACUANGO_PARAMO.quien}</span>`;
-  $('#final-total').textContent = `${cuch} de ${RUTA.length * 3} cucharas · ${tiempoBonito(total)} en total`;
+  $('#final-total').textContent = `${cuch} de ${actoI.length * 3} cucharas · ${tiempoBonito(total)} en total`;
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
   sfx('fiesta');

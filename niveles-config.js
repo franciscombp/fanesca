@@ -635,7 +635,11 @@ export const APURO = {
     { base: 'frejol',  porcion: 0.70 },
     { base: 'melloco', porcion: 0.60 },
     { base: 'col',     porcion: 0.55 },
-    { base: 'escoger', porcion: 0.50 },
+    /* sin gorgojo: en escoger el bicho TRABA la fase de barrer —no se
+       puede puntuar hasta sacarlo— y camina solo a la batea en ~18 s.
+       Una ración que te cobra 30 s hagas lo que hagas no es brava,
+       es una tómbola. */
+    { base: 'escoger', porcion: 0.50, ajustes: { gusanos: 0 } },
     { base: 'quinua',  porcion: 0.50 },
     { base: 'mani',    porcion: 0.50 },
     { base: 'bacalao', porcion: 0.55 },
