@@ -139,6 +139,14 @@ function abrirVaina(rec) {
   if (rec.abierta) return;
   rec.abierta = true;
   api.tween(rec.bisagra.rotation, 'x', -2.15, 0.32);
+  /* LOS BULTOS SE VAN CON LA VAINA CERRADA. Son el relieve que marca
+     los granos POR FUERA — la promesa de lo que hay dentro. Dejarlos
+     puestos hacía que la tapa abierta girara hacia el jugador con sus
+     cinco bolas encima: cada vaina abierta mostraba DIEZ "arvejas",
+     cinco de verdad y cinco falsas, más oscuras y que no respondían
+     al dedo. Abierta la vaina, la promesa ya se cumplió: la tapa
+     queda vacía, como queda de verdad. */
+  rec.bisagra.children.forEach(c => { if (c.name && c.name.startsWith('bulto')) c.visible = false; });
   rec.granos.forEach((a, i) => {
     a.visible = true;
     a.scale.setScalar(0.01);

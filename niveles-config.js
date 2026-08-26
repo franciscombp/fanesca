@@ -169,6 +169,23 @@ export const MAIZ = {
   },
 };
 
+/* LOS TIEMPOS DE ESTOS ONCE TAMBIÉN SE DERIVAN, no se escriben.
+
+   El ancla de cada ingrediente es el primer corte de cucharas de su
+   nivel original (niveles.js) — un número PROBADO CON LOS DEDOS — que
+   corresponde a la variante cuyas cuentas igualan las constantes de
+   siempre. De ahí: t = ancla × (carga / carga_ancla) ÷ presión, con
+   la carga en unidades del ingrediente (vainas, presas, lavadas…)
+   encarecida un 12% por punto de resistencia, y la presión relajada
+   en la intro (0.85) y apretada en la difícil (1.15).
+
+   Antes estaban a ojo y regalaban las cucharas: la haba normal daba
+   70 s para un trabajo que lo probado pedía en 50, y el chocho fácil
+   85 s donde el gesto real toma 30. Un marcador que siempre da tres
+   cucharas no mide nada.
+
+   El detalle de la derivación: scratchpad/derivar-tiempos.mjs. */
+
 /* DESVAINAR — Vainas
 
    `cantidad` son VAINAS de verdad. Estaba a 1 en todas: era un
@@ -178,7 +195,7 @@ export const VAINAS = {
   'arveja-1-facil': {
     nombre: 'La arveja · primer hilo',
     dificultad: 2, bloque: 'DESVAINAR',
-    tiempoBase: 85,
+    tiempoBase: 45,
     config: {
       cantidad: 4,
       resistencia: 0,       // 0=suave, 1=normal, 2=apretada
@@ -190,7 +207,7 @@ export const VAINAS = {
     nombre: 'La arveja natural',
     corto: 'La arveja',
     dificultad: 3, bloque: 'DESVAINAR',
-    tiempoBase: 75,
+    tiempoBase: 65,
     config: {
       cantidad: 6,
       resistencia: 1,
@@ -214,7 +231,7 @@ export const VAINAS = {
   'habas-1-facil': {
     nombre: 'Las habas · apertura suave',
     dificultad: 2, bloque: 'DESVAINAR',
-    tiempoBase: 80,
+    tiempoBase: 35,
     config: {
       cantidad: 4,
       resistencia: 0,
@@ -225,7 +242,7 @@ export const VAINAS = {
     nombre: 'Las habas apretadas',
     corto: 'Apretadas',
     dificultad: 3, bloque: 'DESVAINAR',
-    tiempoBase: 70,
+    tiempoBase: 50,
     config: {
       cantidad: 6,
       resistencia: 1,
@@ -239,7 +256,7 @@ export const MELLOCO_NIVELES = {
   'melloco-1-facil': {
     nombre: 'El melloco · raspe suave',
     dificultad: 2, bloque: 'RASPAR',
-    tiempoBase: 95,
+    tiempoBase: 45,
     config: {
       cantidad: 6,
       resistencia: 0,
@@ -250,7 +267,7 @@ export const MELLOCO_NIVELES = {
     nombre: 'El melloco normal',
     corto: 'Con babaza',
     dificultad: 3, bloque: 'RASPAR',
-    tiempoBase: 80,
+    tiempoBase: 55,
     config: {
       cantidad: 8,
       resistencia: 1,
@@ -264,7 +281,7 @@ export const QUINUA_NIVELES = {
   'quinua-1-facil': {
     nombre: 'La quinua · primer lavado',
     dificultad: 2, bloque: 'LAVAR',
-    tiempoBase: 100,
+    tiempoBase: 40,
     config: {
       saponina_nivel: 0.4,    // densidad de saponina (0-1)
       lavadas_requeridas: 2,
@@ -275,7 +292,7 @@ export const QUINUA_NIVELES = {
     nombre: 'La quinua espumosa',
     corto: 'Espumosa',
     dificultad: 3, bloque: 'LAVAR',
-    tiempoBase: 85,
+    tiempoBase: 50,
     config: {
       saponina_nivel: 0.7,
       lavadas_requeridas: 3,
@@ -289,7 +306,7 @@ export const COL_NIVELES = {
   'col-1-facil': {
     nombre: 'La col · primer rollo',
     dificultad: 2, bloque: 'ENROLLAR',
-    tiempoBase: 105,
+    tiempoBase: 65,
     config: {
       cantidad: 1,
       resistencia: 0,
@@ -301,7 +318,7 @@ export const COL_NIVELES = {
     nombre: 'La col cortadita',
     corto: 'Cortadita',
     dificultad: 3, bloque: 'ENROLLAR',
-    tiempoBase: 90,
+    tiempoBase: 60,
     config: {
       cantidad: 1,
       resistencia: 1,
@@ -316,7 +333,7 @@ export const MANI_NIVELES = {
   'mani-1-facil': {
     nombre: 'El maní · primer majado',
     dificultad: 2, bloque: 'MAJAR',
-    tiempoBase: 110,
+    tiempoBase: 55,
     config: {
       cantidad: 12,
       velocidad_minima: 0.2,
@@ -328,7 +345,7 @@ export const MANI_NIVELES = {
     nombre: 'El maní majado',
     corto: 'Majado',
     dificultad: 3, bloque: 'MAJAR',
-    tiempoBase: 95,
+    tiempoBase: 70,
     config: {
       cantidad: 16,
       velocidad_minima: 0.4,
@@ -343,7 +360,7 @@ export const ESCOGER_NIVELES = {
   'escoger-1-facil': {
     nombre: 'La lenteja · poquitas piedras',
     dificultad: 2, bloque: 'ESCOGER',
-    tiempoBase: 95,
+    tiempoBase: 70,
     config: {
       cantidad: 26,
       piedras_pct: 0.05,     // 5% de piedras
@@ -355,7 +372,7 @@ export const ESCOGER_NIVELES = {
     nombre: 'La lenteja normal',
     corto: 'Con piedras',
     dificultad: 3, bloque: 'ESCOGER',
-    tiempoBase: 75,
+    tiempoBase: 70,
     config: {
       cantidad: 31,
       piedras_pct: 0.10,
@@ -367,7 +384,7 @@ export const ESCOGER_NIVELES = {
     nombre: 'La lenteja sucia',
     corto: 'La sucia',
     dificultad: 4, bloque: 'ESCOGER',
-    tiempoBase: 65,
+    tiempoBase: 70,
     config: {
       cantidad: 36,
       piedras_pct: 0.15,
@@ -382,7 +399,7 @@ export const CHOCHOS_NIVELES = {
   'chochos-1-facil': {
     nombre: 'Los chochos · pelada suave',
     dificultad: 2, bloque: 'PELAR',
-    tiempoBase: 85,
+    tiempoBase: 30,
     config: {
       cantidad: 9,
       resistencia: 0,
@@ -394,7 +411,7 @@ export const CHOCHOS_NIVELES = {
     nombre: 'Los chochos pelados',
     corto: 'Pelados',
     dificultad: 3, bloque: 'PELAR',
-    tiempoBase: 70,
+    tiempoBase: 40,
     config: {
       cantidad: 12,
       resistencia: 1,
@@ -409,7 +426,7 @@ export const FREJOL_NIVELES = {
   'frejol-1-facil': {
     nombre: 'El fréjol · revientas fácil',
     dificultad: 2, bloque: 'REVENTAR',
-    tiempoBase: 90,
+    tiempoBase: 40,
     config: {
       cantidad: 4,
       resistencia: 0,
@@ -421,7 +438,7 @@ export const FREJOL_NIVELES = {
     nombre: 'El fréjol reventado',
     corto: 'Reventado',
     dificultad: 3, bloque: 'REVENTAR',
-    tiempoBase: 75,
+    tiempoBase: 50,
     config: {
       cantidad: 5,
       resistencia: 1,
@@ -436,7 +453,7 @@ export const BACALAO_NIVELES = {
   'bacalao-1-facil': {
     nombre: 'El bacalao · primer desale',
     dificultad: 2, bloque: 'DESALAR',
-    tiempoBase: 100,
+    tiempoBase: 50,
     config: {
       cantidad: 4,
       sal_nivel: 0.4,
@@ -449,7 +466,7 @@ export const BACALAO_NIVELES = {
     nombre: 'El bacalao desalado',
     corto: 'Desalado',
     dificultad: 3, bloque: 'DESALAR',
-    tiempoBase: 85,
+    tiempoBase: 55,
     config: {
       cantidad: 5,
       sal_nivel: 0.7,
@@ -465,7 +482,7 @@ export const ZAPALLO_NIVELES = {
   'zapallo-1-facil': {
     nombre: 'El zapallo · introducción',
     dificultad: 2, bloque: 'MULTIGESTOS',
-    tiempoBase: 125,
+    tiempoBase: 60,
     config: {
       cantidad: 5,
       resistencia: 0,
@@ -476,7 +493,7 @@ export const ZAPALLO_NIVELES = {
     nombre: 'El zapallo completo',
     corto: 'Completo',
     dificultad: 3, bloque: 'MULTIGESTOS',
-    tiempoBase: 100,
+    tiempoBase: 80,
     config: {
       cantidad: 7,
       resistencia: 1,

@@ -90,6 +90,10 @@ function abrirVaina(rec) {
   rec.abierta = true;
   rec.obj.userData.abierta = true;
   api.tween(rec.bisagra.rotation, 'x', -2.1, 0.34);
+  /* los bultos marcan las habas POR FUERA de la vaina cerrada; en la
+     tapa abierta girada hacia el jugador se leían como una segunda
+     fila de habas falsas (mismo arreglo que en la arveja) */
+  rec.bisagra.children.forEach(c => { if (c.name && c.name.startsWith('bulto')) c.visible = false; });
   api.sfx('crack'); api.buzz(14);
   rec.habas.forEach((h, i) => {
     h.visible = true;
