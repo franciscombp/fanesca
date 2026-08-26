@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.16.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.16.0',
+    fecha: '2026-08-26',
+    titulo: 'Dos actos, y la olla en su sitio',
+    cambios: [
+      'La mesa se reordenó en dos actos. El primero son los doce ingredientes, uno cada uno, en el orden en que conviene aprenderlos — y termina en la olla. Eso ya es un juego entero con final.',
+      'El segundo acto es la temporada: las veintiocho paradas bravas, ordenadas de menos a más y repartidas entre ingredientes. Antes había quince paradas de choclo seguidas antes de ver otra cosa.',
+      'La olla dejó de estar escondida al final de cuarenta paradas. Se abre con los doce, que es como fue siempre, y ahora se ve donde le toca.',
+      'Las paradas del primer acto se llaman por su ingrediente —"Las habas", "El zapallo"— en vez de por su variante.',
+    ],
+    internos: [
+      'construirRuta() arma Acto I (la variante más suave de cada ingrediente, en orden de gesto) + Acto II (el resto por dificultad, en rueda entre ingredientes dentro de cada banda).',
+      'Medido antes: la dificultad bajaba 11 veces de 39 y el juego hacía pico en la parada 15. Ahora el Acto II no baja ni una vez en 27, y el máximo de paradas seguidas del mismo ingrediente pasó de 15 a 6.',
+      'El Acto II se abre al cocinar la olla, no al terminar la parada anterior.',
+      'El alto del camino salía del ÚLTIMO centro empujado, que ahora es la olla —en medio—, así que las 28 paradas del Acto II se salían del contenedor encima de la despensa. Sale del más profundo.',
+    ],
+  },
   {
     v: '1.15.0',
     fecha: '2026-08-26',

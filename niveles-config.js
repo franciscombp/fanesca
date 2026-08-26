@@ -188,6 +188,7 @@ export const VAINAS = {
   },
   'arveja-2-normal': {
     nombre: 'La arveja natural',
+    corto: 'La arveja',
     dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 75,
     config: {
@@ -199,6 +200,7 @@ export const VAINAS = {
   },
   'arveja-3-dificil': {
     nombre: 'La arveja apretada',
+    corto: 'La apretada',
     dificultad: 4, bloque: 'DESVAINAR',
     tiempoBase: 65,
     config: {
@@ -221,6 +223,7 @@ export const VAINAS = {
   },
   'habas-2-normal': {
     nombre: 'Las habas apretadas',
+    corto: 'Apretadas',
     dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 70,
     config: {
@@ -245,6 +248,7 @@ export const MELLOCO_NIVELES = {
   },
   'melloco-2-normal': {
     nombre: 'El melloco normal',
+    corto: 'Con babaza',
     dificultad: 3, bloque: 'RASPAR',
     tiempoBase: 80,
     config: {
@@ -269,6 +273,7 @@ export const QUINUA_NIVELES = {
   },
   'quinua-2-normal': {
     nombre: 'La quinua espumosa',
+    corto: 'Espumosa',
     dificultad: 3, bloque: 'LAVAR',
     tiempoBase: 85,
     config: {
@@ -294,6 +299,7 @@ export const COL_NIVELES = {
   },
   'col-2-fino': {
     nombre: 'La col cortadita',
+    corto: 'Cortadita',
     dificultad: 3, bloque: 'ENROLLAR',
     tiempoBase: 90,
     config: {
@@ -320,6 +326,7 @@ export const MANI_NIVELES = {
   },
   'mani-2-rapido': {
     nombre: 'El maní majado',
+    corto: 'Majado',
     dificultad: 3, bloque: 'MAJAR',
     tiempoBase: 95,
     config: {
@@ -346,6 +353,7 @@ export const ESCOGER_NIVELES = {
   },
   'escoger-2-normal': {
     nombre: 'La lenteja normal',
+    corto: 'Con piedras',
     dificultad: 3, bloque: 'ESCOGER',
     tiempoBase: 75,
     config: {
@@ -357,6 +365,7 @@ export const ESCOGER_NIVELES = {
   },
   'escoger-3-dificil': {
     nombre: 'La lenteja sucia',
+    corto: 'La sucia',
     dificultad: 4, bloque: 'ESCOGER',
     tiempoBase: 65,
     config: {
@@ -383,6 +392,7 @@ export const CHOCHOS_NIVELES = {
   },
   'chochos-2-normal': {
     nombre: 'Los chochos pelados',
+    corto: 'Pelados',
     dificultad: 3, bloque: 'PELAR',
     tiempoBase: 70,
     config: {
@@ -409,6 +419,7 @@ export const FREJOL_NIVELES = {
   },
   'frejol-2-normal': {
     nombre: 'El fréjol reventado',
+    corto: 'Reventado',
     dificultad: 3, bloque: 'REVENTAR',
     tiempoBase: 75,
     config: {
@@ -436,6 +447,7 @@ export const BACALAO_NIVELES = {
   },
   'bacalao-2-normal': {
     nombre: 'El bacalao desalado',
+    corto: 'Desalado',
     dificultad: 3, bloque: 'DESALAR',
     tiempoBase: 85,
     config: {
@@ -462,6 +474,7 @@ export const ZAPALLO_NIVELES = {
   },
   'zapallo-2-normal': {
     nombre: 'El zapallo completo',
+    corto: 'Completo',
     dificultad: 3, bloque: 'MULTIGESTOS',
     tiempoBase: 100,
     config: {
@@ -472,6 +485,7 @@ export const ZAPALLO_NIVELES = {
   },
   'zapallo-3-rapido': {
     nombre: 'El zapallo a la carrera',
+    corto: 'A la carrera',
     dificultad: 4, bloque: 'MULTIGESTOS',
     tiempoBase: 75,
     config: {

@@ -118,8 +118,12 @@ const listos = () => NIVELES.filter(n => ingredienteListo(n.id)).length;
 function desbloqueado(i) {
   if (estado.devMode || i === 0) return true;
   const n = RUTA[i], previo = RUTA[i - 1];
-  if (previo.base === n.base) return estaListo(previo.id);
-  return ingredienteListo(previo.base);
+  /* EL ACTO II SE ABRE CON LA OLLA. Los doce ingredientes son el
+     juego completo y la olla es su final: pasar de largo hacia las
+     variantes bravas sin haberla cocinado se saltaría el único
+     momento en que este juego cierra. */
+  if (n.acto === 2 && previo.acto === 1) return listos() >= NIVELES.length;
+  return estaListo(previo.id);
 }
 
 /* ============================================================
@@ -151,27 +155,93 @@ const cucharasDeTiempo = (base) => [base, Math.round(base * 1.5), Math.round(bas
 
 function construirRuta() {
   const ruta = [];
-  NIVELES.forEach(ing => {
-    const variantes = CON_VARIANTES.has(ing.id) ? variantesDe(ing.id) : [];
-    if (!variantes.length) {
-      /* un nodo, como siempre. Si tiene config la lleva igual: el
-         módulo puede empezar a leerla sin tocar nada de aquí. */
-      const v = variantesDe(ing.id)[0];
-      ruta.push({ ...ing, base: ing.id, config: (v && v.config) || {} });
-      return;
-    }
-    variantes.forEach(v => ruta.push({
-      ...ing,
-      id: v.id,
-      base: ing.id,
-      nombre: v.nombre,
-      corto: v.corto,
-      dificultad: v.dificultad,
-      config: v.config,
-      cucharas: cucharasDeTiempo(v.tiempoBase),
-    }));
+
+  /* ACTO I — LA PRIMERA OLLA. La variante más suave de cada uno de los
+     doce, ordenada por lo difícil que es APRENDER su gesto, no por lo
+     que cuesta ejecutarlo. Aquí la dificultad es descubrir qué te
+     pide el ingrediente: el choclo se desgrana, la arveja hay que
+     deshilarla primero, el zapallo son cuatro faenas seguidas.
+
+     Doce paradas y la olla. Eso ya es un juego entero y con final —
+     media hora larga— y es lo que ve alguien que lo abre por primera
+     vez. */
+  const ACTO_I = [
+    'maiz', 'habas', 'chochos', 'frejol', 'arveja', 'melloco',
+    'escoger', 'col', 'quinua', 'mani', 'bacalao', 'zapallo',
+  ];
+  const usados = new Set();
+  ACTO_I.forEach(base => {
+    const ing = NIVELES.find(n => n.id === base);
+    if (!ing) return;
+    const v = variantesDe(base)[0];
+    if (!v) { ruta.push({ ...ing, base, acto: 1, config: {} }); return; }
+    usados.add(v.id);
+    ruta.push(nodoDeVariante(ing, base, v, 1));
   });
+
+  /* ACTO II — LA TEMPORADA. Todo lo que queda, ordenado por
+     DIFICULTAD y no por ingrediente.
+
+     Agrupado por ingrediente, el camino ponía las quince paradas de
+     maíz seguidas y luego bajaba de golpe a la arveja fácil: el juego
+     hacía pico en la parada 15 y ya no volvía a subir en las
+     veinticinco restantes. Medido, la dificultad bajaba once veces de
+     treinta y nueve. Ordenado por dificultad sube de verdad, y de
+     paso el maíz deja de ser un muro de quince y se reparte por toda
+     la temporada.
+
+     El orden dentro de un ingrediente se respeta solo: sus variantes
+     ya vienen de suave a brava, y ordenar por dificultad de forma
+     estable no las puede adelantar. */
+  const porIngrediente = new Map();
+  NIVELES.forEach(ing => {
+    const suyas = variantesDe(ing.id).filter(v => !usados.has(v.id))
+      .map(v => nodoDeVariante(ing, ing.id, v, 2));
+    if (suyas.length) porIngrediente.set(ing.id, suyas);
+  });
+
+  /* Dentro de cada banda de dificultad se reparte EN RUEDA, un
+     ingrediente por turno. Ordenar sólo por dificultad dejaba las
+     siete paradas de maíz de las bandas bajas una detrás de otra: el
+     mismo muro que se venía a deshacer, sólo que más adelante. En
+     rueda, la temporada alterna choclo, arveja, habas… y aun así sube.
+
+     Se agota por bandas y no de una vez para que la rueda no adelante
+     una parada brava por el mero hecho de que a su ingrediente le
+     tocaba turno. */
+  const bandas = [...new Set([...porIngrediente.values()].flat().map(n => n.dificultad))].sort((a, b) => a - b);
+  bandas.forEach(dif => {
+    const colas = [...porIngrediente.entries()]
+      .map(([id, ns]) => [id, ns.filter(n => n.dificultad === dif)])
+      .filter(([, ns]) => ns.length);
+    let quedan = true;
+    for (let vuelta = 0; quedan; vuelta++) {
+      quedan = false;
+      colas.forEach(([, ns]) => {
+        if (vuelta < ns.length) { ruta.push(ns[vuelta]); quedan = true; }
+      });
+    }
+  });
+
   return ruta;
+}
+
+function nodoDeVariante(ing, base, v, acto) {
+  return {
+    ...ing,
+    id: v.id,
+    base,
+    acto,
+    nombre: v.nombre,
+    /* En el Acto I la parada PRESENTA al ingrediente, así que se llama
+       como él: "Las habas", no "habas · apertura suave". El nombre de
+       variante es información de dificultad, y en el acto donde sólo
+       hay una variante de cada uno no distingue nada — sólo alarga. */
+    corto: acto === 1 ? ing.nombre : (v.corto || null),
+    dificultad: v.dificultad,
+    config: v.config,
+    cucharas: cucharasDeTiempo(v.tiempoBase),
+  };
 }
 
 const RUTA = construirRuta();
@@ -377,11 +447,33 @@ function renderMesa() {
     return b;
   };
 
+  /* La olla ocupa un puesto en la serpiente, así que las paradas del
+     Acto II van corridas una posición. `puesto` es dónde se DIBUJA;
+     `i` sigue siendo el índice en RUTA, que es lo que manda para el
+     candado y para el nombre de la anterior. */
+  const ACTO_I_N = RUTA.filter(n => n.acto === 1).length;
+  /* +2 y no +1: la olla ocupa un puesto y el siguiente se deja VACÍO
+     para el rótulo del Acto II. Pegados, el nombre de la olla —que
+     va a dos líneas cuando dice cuántos faltan— se metía debajo del
+     rótulo y las dos cosas se leían mal. */
+  const puestoDe = (i) => i < ACTO_I_N ? i : i + 2;
+
+  /* Los rótulos de acto. Sin ellos, cuarenta nodos son una lista
+     larga; con ellos son dos tramos con nombre, y el jugador sabe
+     que los doce primeros se acaban en algún sitio. */
+  const rotulo = (puesto, sobre, titulo, pie) => {
+    const el = document.createElement('p');
+    el.className = 'camino-acto';
+    el.style.top = (puesto * PASO + 76 - sobre) + 'px';
+    el.innerHTML = `<strong>${titulo}</strong><span>${pie}</span>`;
+    lista.appendChild(el);
+  };
+
   RUTA.forEach((n, i) => {
     const abierto = desbloqueado(i);
     const mejor = estado.mejores[n.id];
     const esSiguiente = abierto && !mejor;
-    const b = nodoDe(n, i, mejor ? 'nodo--hecho' : (esSiguiente ? 'nodo--siguiente' : 'nodo--bloqueado'));
+    const b = nodoDe(n, puestoDe(i), mejor ? 'nodo--hecho' : (esSiguiente ? 'nodo--siguiente' : 'nodo--bloqueado'));
     /* las variantes llevan sus chiles de dificultad: de un vistazo se
        ve que el camino sube, que es lo que hace que se lea como
        campaña y no como doce paradas sueltas */
@@ -395,7 +487,15 @@ function renderMesa() {
     b.setAttribute('aria-label', n.nombre + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
     b.addEventListener('click', () => {
       sfx('tab');
-      if (!abierto) { toast('Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆'); return; }
+      if (!abierto) {
+        /* el Acto II no está cerrado por la parada anterior sino por la
+           olla, y decir "primero la última tonga" sería mandar al
+           jugador a un sitio que tampoco puede abrir */
+        toast(n.acto === 2 && RUTA[i - 1].acto === 1
+          ? 'Primero cocina la olla 🍲'
+          : 'Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
+        return;
+      }
       /* DIRECTO AL MESÓN, siempre. Había en medio una ficha con el
          gesto, la nota y el bicho, y quitarla es lo que más fluidez
          le devolvió al juego: eran dos toques y una pantalla de
@@ -411,12 +511,23 @@ function renderMesa() {
     lista.appendChild(b);
   });
 
-  /* la olla, al final del camino */
-  const olla = nodoDe(OLLA, RUTA.length, todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado');
+  /* LA OLLA VA EN MEDIO, no al final. Se abre con los doce
+     ingredientes —eso no cambió nunca— pero se dibujaba en la parada
+     41, después de veintiocho variantes que no hacen falta para
+     cocinarla. El jugador la veía a una distancia que no era la suya
+     y el final del juego quedaba escondido detrás del contenido
+     opcional. */
+  const olla = nodoDe(OLLA, ACTO_I_N, todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado');
   olla.innerHTML = `
     <span class="nodo-plato nodo-plato--olla">${icono(OLLA.icono)}</span>
     ${todos ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
     <span class="nodo-nombre">${todos ? '¡A cocinar!' : `La olla · faltan ${NIVELES.length - hechos}`}</span>`;
+  olla.setAttribute('aria-label', todos ? 'Cocinar la olla' : `La olla, faltan ${NIVELES.length - hechos} ingredientes`);
+  rotulo(0, 72, 'Acto I · La primera olla', 'los doce ingredientes, uno por uno');
+  if (RUTA.some(n => n.acto === 2)) {
+    rotulo(ACTO_I_N + 1, 30, 'Acto II · La temporada', 'los mismos doce, cuando se ponen bravos');
+  }
+
   olla.addEventListener('click', () => {
     sfx('tab');
     if (!todos) { toast(`La olla se abre con los doce — faltan ${NIVELES.length - hechos}`); return; }
@@ -426,7 +537,11 @@ function renderMesa() {
 
   /* el sendero dibujado: un tramo por par de nodos, y los tramos ya
      recorridos van en dorado — el progreso se ve en el propio camino */
-  const alto = centros[centros.length - 1].y + 120;
+  /* el MÁS PROFUNDO, no el último empujado. La olla se dibuja en medio
+     del camino pero se añade al final, así que tomar el último dejaba
+     el contenedor a la altura de la olla y las veintiocho paradas del
+     Acto II se salían por abajo, encima de la despensa. */
+  const alto = Math.max(...centros.map(c => c.y)) + 140;
   lista.style.height = alto + 'px';
   const tramos = centros.slice(1).map((c, i) => {
     const a = centros[i];
@@ -1361,6 +1476,7 @@ window.Fanesca = {
      prueba automática eso se veía idéntico a un nivel sano. */
   get modulo() { return modActual; },
   jugar,
+  get ruta() { return RUTA.map(n => ({ id: n.id, acto: n.acto, dif: n.dificultad, base: n.base })); },
   api,
   Apuro,
   sondear: (x, y) => Motor.sondear(x, y),
