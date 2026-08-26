@@ -62,6 +62,7 @@ const PRECACHE = [
      abre sin conexión pero no puede armar un solo nivel. */
   './modelos/index.js',
   './modelos/registro.js',
+  './modelos/builders.js',
   './modelos/paleta.js',
   './modelos/organico.js',
   './modelos/utileria.js',
