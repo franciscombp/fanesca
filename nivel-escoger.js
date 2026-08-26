@@ -26,10 +26,20 @@ let THREE, raiz, api;
 
 /* la mitad de lentejas, del doble de tamaño: escoger es mirar, y
    mirar no puede depender de tener buena vista */
-const BUENAS = 22;
-const PIEDRAS = 5;
-const PICADOS = 4;
-const GORGOJOS = 2;
+let BUENAS = 22;
+let PIEDRAS = 5;
+let PICADOS = 4;
+let GORGOJOS = 2;
+/* Esa mesa deja de ser fija, pero sigue siendo la parada por defecto,
+   así que se guarda tal como nace y de ella salen los valores por
+   defecto de la config: `cantidad` se cuenta en granos y arranca en
+   estos 31, y los dos porcentajes arrancan en la proporción exacta que
+   la mesa de siempre ya tenía. Escribir 0.16 y 0.13 a mano habría dado
+   casi lo mismo, y ese "casi" es un grano de diferencia con lo que se
+   juega hoy. */
+const GRANOS_HOY = BUENAS + PIEDRAS + PICADOS;
+const PIEDRAS_PCT_HOY = PIEDRAS / GRANOS_HOY;
+const PICADOS_PCT_HOY = PICADOS / GRANOS_HOY;
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
    ahí se resta media tabla. Si mañana la batea se mueve, la tabla se
@@ -171,11 +181,32 @@ export default {
      no hay dónde soltar el gorgojo */
   camara: { pos: [0, 2.9, 3.75], mira: [0, 1.08, 0.42] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     granos = []; sacados = 0; recogidas = 0; perdidas = 0;
     fase = 'escoger'; modo = null; pellizcando = false; terminado = false;
+
+    /* La mesa se arma en este orden y no en otro: primero cuánto grano
+       hay —`cantidad` se cuenta en granos, que es la unidad que el dedo
+       toca— y sobre ese montón muerden los dos porcentajes. Las buenas
+       son lo que sobra, no un tercer número escrito aparte: así una
+       parada mal sumada no puede dejar más basura que lenteja, y
+       `piedras_pct` significa de verdad "de cada diez granos, uno".
+       Redondeando, porque media piedra no existe. */
+    const cuantos = Math.max(1, Math.round(cfg.cantidad ?? GRANOS_HOY));
+    PIEDRAS = Math.round(cuantos * (cfg.piedras_pct ?? PIEDRAS_PCT_HOY));
+    PICADOS = Math.round(cuantos * (cfg.defectos_pct ?? PICADOS_PCT_HOY));
+    /* nunca menos de una lenteja buena: sin nada que llevar a la batea
+       el nivel no tendría final al que llegar */
+    BUENAS = Math.max(1, cuantos - PIEDRAS - PICADOS);
+    GORGOJOS = Math.max(0, Math.round(cfg.gusanos ?? 2));
+    /* Una mesa sin piedras, sin picados y sin gorgojos nace trabada: a
+       'barrer' sólo se pasa sacando la última impureza, y si no hubo
+       ninguna esa transición no llega nunca — el jugador tendría que
+       sacrificar una lenteja buena para desbloquear su propia mesa. Si
+       nace limpia, que nazca en fase de barrer. */
+    if (!SUCIAS() && !GORGOJOS) fase = 'barrer';
 
     const tabla = api.pieza('tabla', { ancho: 3.1, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
@@ -190,14 +221,28 @@ export default {
         ? api.MESA_Y + 0.10 : api.MESA_Y,
     });
 
+    /* El cuadro donde se riegan crece con la raíz del número de granos,
+       porque lo que se reparte es superficie. En el cuadro de siempre,
+       al doble de grano el sorteo de posiciones se queda sin hueco
+       libre —pide 0.115 de separación y se rinde a los 60 intentos— y
+       termina montando unos granos sobre otros; un grano tapado no se
+       puede escoger, que es hacer trampa contra el jugador. La otra
+       salida, achicarlos, es precisamente la que este nivel tiene
+       prohibida. El ancho topa donde la cámara deja de garantizar
+       mundo; el fondo sigue de largo, que es hacia donde la regada ya
+       estaba estirada a propósito. */
+    const crece = Math.sqrt(cuantos / GRANOS_HOY);
+    const anchoRegada = Math.min(ANCHO * crece, ANCHO_SEGURO - 0.20);
+    const hondoRegada = HONDO * crece;
+
     /* regadas de verdad, no en rejilla: si estuvieran alineadas se
        verían de un golpe y no habría nada que escoger */
     const puestos = [];
     const meter = (clase) => {
       let x, z, k = 0;
       do {
-        x = (Math.random() - 0.5) * 2 * ANCHO;
-        z = TABLA_Z + (Math.random() - 0.5) * 2 * HONDO;
+        x = (Math.random() - 0.5) * 2 * anchoRegada;
+        z = TABLA_Z + (Math.random() - 0.5) * 2 * hondoRegada;
         k++;
       } while (k < 60 && puestos.some(p => Math.hypot(p.x - x, p.z - z) < 0.115));
       puestos.push({ x, z });
@@ -210,13 +255,28 @@ export default {
     for (let i = 0; i < PICADOS; i++) meter('picado');
 
     /* los gorgojos están desde el principio: son parte de lo que hay
-       que encontrar, no una sorpresa a mitad de camino */
+       que encontrar, no una sorpresa a mitad de camino.
+       Salen entre el grano, con la regada que le haya tocado a esta
+       parada, pero sin pasar del filo de la madera aunque la regada
+       crezca: fuera de la tabla el bicho camina a otra altura y deja de
+       confundirse con una piedrita, que es todo lo que lo hace temible.
+       El tope va medido en la misma vara que la regada, con el 0.8 sin
+       aplicar todavía, para que la mesa de siempre siga saliendo de la
+       misma cuenta de siempre y no de una equivalente. */
+    const hondoBicho = Math.min(hondoRegada, HONDO_TABLA / 2 / 0.8);
     for (let i = 0; i < GORGOJOS; i++) {
-      const x = (Math.random() - 0.5) * 2 * ANCHO * 0.8;
-      const z = TABLA_Z + (Math.random() - 0.5) * 2 * HONDO * 0.8;
+      const x = (Math.random() - 0.5) * 2 * anchoRegada * 0.8;
+      const z = TABLA_Z + (Math.random() - 0.5) * 2 * hondoBicho * 0.8;
       plaga.soltar('gorgojo', new THREE.Vector3(x, api.MESA_Y, z));
     }
-    api.aviso('Saca piedritas y granos picados. Ojo: hay gorgojos');
+    /* El aviso describe ESTA mesa, no la de siempre: prometer gorgojos
+       donde no hay ninguno enseña a desconfiar del aviso, y en un nivel
+       que se gana mirando antes de tocar, el aviso es parte de lo que
+       se mira. */
+    const ojo = GORGOJOS === 0 ? '' : GORGOJOS === 1 ? '. Ojo: hay un gorgojo' : '. Ojo: hay gorgojos';
+    api.aviso(fase === 'barrer'
+      ? 'Ni una piedra: barre las lentejas a la batea'
+      : 'Saca piedritas y granos picados' + ojo);
     api.progreso(0, TOTAL());
   },
 

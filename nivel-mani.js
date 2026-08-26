@@ -27,19 +27,30 @@ import { LARGO_PIEDRA, ANCHO_PIEDRA } from './modelos/mani.js';
 
 let THREE, raiz, api;
 
-const CUANTOS = 16;              /* granos de maní sobre la piedra */
+let CUANTOS = 16;                /* granos de maní sobre la piedra */
 let PIEDRA_Z = 0;
 const ALTO_LOSA = 0.2;           /* la cara de la losa sobre el mesón */
 const HONDO_PIEDRA = ANCHO_PIEDRA;
 
 const RADIO_MANO = 0.26;         /* lo que la mano de piedra abarca */
 /* cuánto vaivén aguanta un grano antes de rendirse */
-const MOLIENDA = 1.15;
+let MOLIENDA = 1.15;
+/* Las tres piedras de la campaña. La dureza se sube por aguante y no
+   por el radio de la mano ni por el empuje: una molienda difícil es la
+   que pide más pasadas, no la que vuelve el gesto torpe. Tocar el radio
+   habría hecho lo segundo — el jugador fallaría el grano en vez de
+   insistir sobre él, que es justo lo que este nivel quiere enseñar. */
+const MOLIENDAS = [0.7, 1.15, 1.7];
+/* Por debajo de esto el dedo no muele: tiembla. Hoy sólo descarta el
+   ruido del puntero, pero es el mismo umbral con el que se le puede
+   exigir un vaivén de verdad, porque manda sobre las dos cosas que un
+   arrastre lento no debería regalar: la molida y la cuenta de pasadas. */
+let PASO_MINIMO = 1e-5;
 /* la orilla donde ya no muerde: el grano queda ahí, a la vista y
    fuera de juego, hasta que se lo arrime */
 const ORILLA_X = LARGO_PIEDRA * 0.4;
 const ORILLA_Z = ANCHO_PIEDRA * 0.3;
-const CON_GORGOJO = 2;
+let CON_GORGOJO = 2;
 
 let piedra = null, mano = null, granosGrupo = null;
 let granos = [];                 /* {obj, molido, hecho} */
@@ -115,7 +126,7 @@ function pasar(p, dx, dz) {
   mano.rotation.z -= dx * 2.2;   /* rueda: no se desliza como un jabón */
 
   const paso = Math.hypot(dx, dz);
-  if (paso < 1e-5) return;
+  if (paso < PASO_MINIMO) return;
 
   /* la pasada: cada vez que el vaivén cambia de sentido suma una, y
      con ella sube el tono. Es el metrónomo del nivel. */
@@ -162,8 +173,22 @@ export default {
   id: 'mani',
   camara: { pos: [0, 2.76, 3.48], mira: [0, 0.97, 0.44] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+    CUANTOS = cfg.cantidad ?? 16;
+    MOLIENDA = MOLIENDAS[cfg.resistencia ?? 1] ?? 1.15;
+    /* el umbral viaja en unidades de la losa por evento de arrastre, no
+       en metros por segundo: es la misma vara con la que se mide el
+       avance de la molienda, y compararlas en escalas distintas sería
+       prometer una exigencia que el nivel no aplicaría */
+    /* `velocidad_minima` viene como un dial de 0 a 1, no en unidades
+       de mundo. Tomarla cruda ponía el umbral en 0.2 —lo que el dedo
+       recorre en SEIS eventos de cruzar la losa entera— y la parada
+       rápida habría sido literalmente injugable. Se mapea a un rango
+       que sí quiere decir algo aquí, y sin config se queda en el
+       filtro de ruido de siempre. */
+    PASO_MINIMO = 1e-5 + (cfg.velocidad_minima ?? 0) * 0.05;
+    CON_GORGOJO = cfg.gusanos ?? 2;
     PIEDRA_Z = api.FRENTE_TABLA - HONDO_PIEDRA / 2;
     granos = []; hechos = 0; pasadas = 0; sentido = 0;
     modo = null; ultimoPunto = null; avisadoOrilla = false;
@@ -265,7 +290,15 @@ export default {
     if (plaga && plaga.actualizar(dt, t)) return;
 
     if (this._sueltos < CON_GORGOJO) {
-      const umbral = this._sueltos === 0 ? CUANTOS * 0.3 : CUANTOS * 0.65;
+      /* los dos gorgojos de siempre salían a un tercio y a dos tercios
+         de la molienda; con más bichos se reparten dentro de esa misma
+         franja en vez de estirarse hacia el final, donde el jugador ya
+         tiene la pasta lista y un bicho tardío sólo es peaje. Los
+         extremos se escriben tal cual y no salen de la interpolación
+         porque 0.3 + 0.35 no da 0.65 en coma flotante, y el nivel de
+         hoy debe soltarlos en el mismo grano que soltaba ayer. */
+      const reparto = CON_GORGOJO > 1 ? this._sueltos / (CON_GORGOJO - 1) : 0;
+      const umbral = CUANTOS * (reparto === 0 ? 0.3 : reparto === 1 ? 0.65 : 0.3 + 0.35 * reparto);
       if (hechos >= umbral) {
         this._sueltos++;
         const vivos = granos.filter(g => !g.hecho);

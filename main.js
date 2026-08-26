@@ -131,13 +131,19 @@ function desbloqueado(i) {
    dos, y esa mezcla es esta lista.
 
    Un ingrediente se abre en varios nodos solo si su módulo LEE la
-   config. Hoy es el choclo y nadie más: pintar cinco nodos de
-   arveja que juegan exactamente igual sería prometer una campaña
-   que no existe. A medida que cada `nivel-*.js` aprenda a leer sus
-   parámetros, se agrega su id aquí y sus variantes aparecen solas.
+   config: pintar tres nodos de arveja que juegan exactamente igual
+   sería prometer una campaña que no existe.
+
+   Ya están los doce. Que un id esté en esta lista es una PROMESA de
+   que sus variantes se juegan distinto, y hay que comprobarla nivel
+   a nivel antes de escribirlo aquí — el pecado no es que falte uno,
+   es que sobre.
    ============================================================ */
 
-const CON_VARIANTES = new Set(['maiz']);
+const CON_VARIANTES = new Set([
+  'maiz', 'arveja', 'habas', 'melloco', 'quinua', 'col',
+  'mani', 'escoger', 'chochos', 'frejol', 'bacalao', 'zapallo',
+]);
 
 /* de `tiempoBase` (segundos para 3 cucharas) salen los tres cortes,
    con la misma proporción que traían los ingredientes a mano */
@@ -1022,6 +1028,23 @@ function cerrarApuro(resumen) {
     $('#apuro-mejor').textContent = esRecord
       ? (mejor.raciones ? `¡Nuevo récord! antes: ${mejor.raciones}` : 'Tu primera vez en El Apuro')
       : `Tu récord sigue siendo ${mejor.raciones}`;
+
+    /* LOS LOGROS, y sólo los NUEVOS. Repetir "Primera ración" en cada
+       partida los convertiría en decorado: un logro vale porque marca
+       un día concreto en que pasó algo por primera vez. */
+    const ya = estado.logrosApuro || (estado.logrosApuro = []);
+    const nuevos = (resumen.logros || []).filter(l => !ya.includes(l.id));
+    const cajaL = $('#apuro-logros');
+    if (nuevos.length) {
+      nuevos.forEach(l => ya.push(l.id));
+      guardar();
+      cajaL.classList.remove('hidden');
+      cajaL.innerHTML = nuevos.map(l =>
+        `<li class="logro"><strong>${l.titulo}</strong><span>${l.texto}</span></li>`).join('');
+      /* uno por uno y con su campanita: seis logros apareciendo de
+         golpe se leen como una lista; de uno en uno se sienten */
+      nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
+    } else { cajaL.classList.add('hidden'); cajaL.innerHTML = ''; }
 
     /* LA PARTE DIDÁCTICA. El Apuro va tan rápido que no da tiempo de
        leer nada mientras se juega — así que lo que se aprende se

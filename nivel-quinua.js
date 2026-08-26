@@ -19,6 +19,11 @@
 
    Tres aguas bastan si se remueve bien. Botar antes de tiempo no
    está prohibido: solo cuesta otra agua, y el reloj corre.
+
+   Cuánta saponina trae el grano, cuánto aguanta cada agua y cuántos
+   gorgojos vienen escondidos los pone la config de la parada. La
+   batea es la misma para el primer lavado flojo y para la quinua
+   que espuma tres veces; lo que cambia es el jabón que trae encima.
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
@@ -30,14 +35,30 @@ const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;
 const ALTO_BATEA = 0.1;
 
-/* Cuánta saponina hay, en vueltas completas de dedo. Tres aguas
-   bien removidas: cada agua aguanta una vuelta y pico antes de
-   colmarse de espuma. */
-const VUELTAS = 3.2;
-const TOTAL_RAD = VUELTAS * Math.PI * 2;
-/* la espuma de un agua se colma con esta parte del trabajo total */
-const POR_AGUA = 1 / 3;
-const CON_GORGOJO = 2;
+/* La quinua de referencia es la del lavado normal: 0.7 de saponina,
+   3.2 vueltas completas de dedo. Las demás paradas se miden contra
+   ella en proporción — así una quinua más floja no es otro juego,
+   es la misma batea con menos jabón encima. */
+const SAPONINA_REF = 0.7;
+const VUELTAS_REF = 3.2;
+const TOTAL_REF = VUELTAS_REF * Math.PI * 2;
+
+/* Cuánta saponina hay, en vueltas completas de dedo. */
+let VUELTAS = VUELTAS_REF;
+let TOTAL_RAD = TOTAL_REF;
+
+/* Lo que aguanta UN agua antes de colmarse de espuma, en radianes de
+   saponina sacada. Se calibra contra la quinua de referencia y NO
+   contra el trabajo de esta parada: la batea tiene el tamaño que
+   tiene. Si la capacidad fuera una fracción del total de hoy, un
+   grano más jabonoso haría más espuma en la misma cantidad de aguas
+   —el agua se estiraría sola— y es justo al revés: más saponina son
+   más aguas. */
+let LAVADAS = 3;
+let POR_AGUA = 1 / LAVADAS;
+let CAPACIDAD_AGUA = TOTAL_REF * POR_AGUA;
+
+let CON_GORGOJO = 2;
 
 let bateaObj = null, aguaMalla = null, espumaGrupo = null, granosGrupo = null;
 let plaga = null;
@@ -96,7 +117,7 @@ function removerHasta(p) {
   }
 
   quitado = Math.min(TOTAL_RAD, quitado + avance);
-  espuma = Math.min(1, espuma + avance / (TOTAL_RAD * POR_AGUA));
+  espuma = Math.min(1, espuma + avance / CAPACIDAD_AGUA);
   pintar();
   if (Math.random() < 0.12) api.chispas(c.clone().setY(api.MESA_Y + 0.34), '#fdfbf3', 2, 0.5);
   api.progreso(Math.round(quitado), Math.round(TOTAL_RAD));
@@ -134,7 +155,7 @@ function botarAgua() {
   api.tween(bateaObj.rotation, 'z', -0.34, 0.22, undefined, () => api.tween(bateaObj.rotation, 'z', 0, 0.3));
   api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#e8f2f4', 10, 0.9);
   api.sfx('frotar'); api.buzz([12, 18, 12]);
-  api.composta(Math.min(1, (aguas - 1) / 3));
+  api.composta(Math.min(1, (aguas - 1) / LAVADAS));
   setTimeout(() => { if (!terminado) { pintar(); api.aviso(`Agua ${aguas} — sigue removiendo`); } }, 280);
 }
 
@@ -164,8 +185,32 @@ export default {
 
   controles: [{ id: 'botar', txt: '🪣 Botar el agua', tip: 'cuando esté espumosa' }],
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+
+    /* La saponina se cobra en vueltas de dedo: el doble de jabón
+       encima es el doble de removida. Va como proporción de la quinua
+       de referencia —y no como un factor suelto— para que la parada
+       normal siga pidiendo exactamente sus 3.2 vueltas. */
+    const saponina = cfg.saponina_nivel ?? SAPONINA_REF;
+    VUELTAS = VUELTAS_REF * (saponina / SAPONINA_REF);
+    TOTAL_RAD = VUELTAS * Math.PI * 2;
+
+    /* Las lavadas no se cuentan: se reparte el aguante. Cada agua se
+       colma con la parte que le toca del trabajo de referencia, así
+       que pedir más lavadas es darle menos aguante a cada agua, y el
+       jugador las descubre botando, no leyendo un número. */
+    LAVADAS = cfg.lavadas_requeridas ?? 3;
+    POR_AGUA = 1 / LAVADAS;
+    CAPACIDAD_AGUA = TOTAL_REF * POR_AGUA;
+
+    CON_GORGOJO = cfg.gusanos ?? 2;
+
+    /* 'cantidad' se queda sin cablear a propósito: aquí hay UNA batea
+       y el grano es un montón, no piezas que se cuenten. Estirar las
+       vueltas en su nombre sería cobrar por una segunda batea que
+       nadie ve en la mesa. */
+
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     quitado = 0; espuma = 0; aguas = 1; anguloPrevio = null;
     modo = null; avisadoColmada = false; pellizcando = false; terminado = false;
@@ -258,11 +303,19 @@ export default {
     /* el gorgojo sale del grano guardado, no del agua: aparece en la
        tabla, al lado de la batea, y arranca para la olla */
     if (this._sueltos < CON_GORGOJO) {
-      const umbral = this._sueltos === 0 ? TOTAL_RAD * 0.3 : TOTAL_RAD * 0.66;
+      /* Se reparten entre el primer tercio y los dos tercios del
+         lavado, salgan dos o salgan cinco: antes del 0.3 el jugador
+         todavía está entendiendo el círculo, y después del 0.66 el
+         bicho aparecería con la batea casi lista, de puro castigo. */
+      const t = CON_GORGOJO > 1 ? this._sueltos / (CON_GORGOJO - 1) : 0;
+      const umbral = TOTAL_RAD * (0.3 * (1 - t) + 0.66 * t);
       if (quitado >= umbral) {
         this._sueltos++;
         const lado = this._sueltos % 2 ? -1 : 1;
-        plaga.soltar('gorgojo', new THREE.Vector3(lado * (RADIO_BATEA + 0.34), api.MESA_Y, TABLA_Z + 0.1));
+        /* de a pares se alternan los lados; del tercero en adelante se
+           corren hacia el frente para no salir uno encima de otro */
+        const fila = Math.floor((this._sueltos - 1) / 2) * 0.22;
+        plaga.soltar('gorgojo', new THREE.Vector3(lado * (RADIO_BATEA + 0.34), api.MESA_Y, TABLA_Z + 0.1 + fila));
       }
     }
 

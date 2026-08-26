@@ -214,9 +214,9 @@ export const VAINAS = {
     dificultad: 2, bloque: 'DESVAINAR',
     tiempoBase: 80,
     config: {
-      cantidad: 1,
+      cantidad: 4,
       resistencia: 0,
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'habas-2-normal': {
@@ -224,9 +224,9 @@ export const VAINAS = {
     dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 70,
     config: {
-      cantidad: 1,
+      cantidad: 6,
       resistencia: 1,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -238,10 +238,9 @@ export const MELLOCO_NIVELES = {
     dificultad: 2, bloque: 'RASPAR',
     tiempoBase: 95,
     config: {
-      cantidad: 1,
-      velocidad_minima: 0.2,   // tolerancia de velocidad
+      cantidad: 6,
       resistencia: 0,
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'melloco-2-normal': {
@@ -249,10 +248,9 @@ export const MELLOCO_NIVELES = {
     dificultad: 3, bloque: 'RASPAR',
     tiempoBase: 80,
     config: {
-      cantidad: 1,
-      velocidad_minima: 0.5,
+      cantidad: 8,
       resistencia: 1,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -264,7 +262,6 @@ export const QUINUA_NIVELES = {
     dificultad: 2, bloque: 'LAVAR',
     tiempoBase: 100,
     config: {
-      cantidad: 1,
       saponina_nivel: 0.4,    // densidad de saponina (0-1)
       lavadas_requeridas: 2,
       gusanos: 0,
@@ -275,7 +272,6 @@ export const QUINUA_NIVELES = {
     dificultad: 3, bloque: 'LAVAR',
     tiempoBase: 85,
     config: {
-      cantidad: 1,
       saponina_nivel: 0.7,
       lavadas_requeridas: 3,
       gusanos: 1,
@@ -293,7 +289,7 @@ export const COL_NIVELES = {
       cantidad: 1,
       resistencia: 0,
       espesor_corte: 'grueso',
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'col-2-fino': {
@@ -304,7 +300,7 @@ export const COL_NIVELES = {
       cantidad: 1,
       resistencia: 1,
       espesor_corte: 'fino',
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -316,10 +312,10 @@ export const MANI_NIVELES = {
     dificultad: 2, bloque: 'MAJAR',
     tiempoBase: 110,
     config: {
-      cantidad: 1,
+      cantidad: 12,
       velocidad_minima: 0.2,
       resistencia: 0,
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'mani-2-rapido': {
@@ -327,10 +323,10 @@ export const MANI_NIVELES = {
     dificultad: 3, bloque: 'MAJAR',
     tiempoBase: 95,
     config: {
-      cantidad: 1,
+      cantidad: 16,
       velocidad_minima: 0.4,
       resistencia: 1,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -342,10 +338,10 @@ export const ESCOGER_NIVELES = {
     dificultad: 2, bloque: 'ESCOGER',
     tiempoBase: 95,
     config: {
-      cantidad: 1,
+      cantidad: 26,
       piedras_pct: 0.05,     // 5% de piedras
       defectos_pct: 0.05,    // granos picados
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'escoger-2-normal': {
@@ -353,10 +349,10 @@ export const ESCOGER_NIVELES = {
     dificultad: 3, bloque: 'ESCOGER',
     tiempoBase: 75,
     config: {
-      cantidad: 1,
+      cantidad: 31,
       piedras_pct: 0.10,
       defectos_pct: 0.08,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
   'escoger-3-dificil': {
@@ -364,10 +360,10 @@ export const ESCOGER_NIVELES = {
     dificultad: 4, bloque: 'ESCOGER',
     tiempoBase: 65,
     config: {
-      cantidad: 1,
+      cantidad: 36,
       piedras_pct: 0.15,
       defectos_pct: 0.12,
-      gusanos: 1,
+      gusanos: 3,
     }
   },
 };
@@ -379,10 +375,10 @@ export const CHOCHOS_NIVELES = {
     dificultad: 2, bloque: 'PELAR',
     tiempoBase: 85,
     config: {
-      cantidad: 1,
+      cantidad: 9,
       resistencia: 0,
       velocidad_salto: 0.4,
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'chochos-2-normal': {
@@ -390,10 +386,10 @@ export const CHOCHOS_NIVELES = {
     dificultad: 3, bloque: 'PELAR',
     tiempoBase: 70,
     config: {
-      cantidad: 1,
+      cantidad: 12,
       resistencia: 1,
       velocidad_salto: 0.6,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -405,10 +401,10 @@ export const FREJOL_NIVELES = {
     dificultad: 2, bloque: 'REVENTAR',
     tiempoBase: 90,
     config: {
-      cantidad: 1,
+      cantidad: 4,
       resistencia: 0,
       presion_requerida: 0.3,
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'frejol-2-normal': {
@@ -416,10 +412,10 @@ export const FREJOL_NIVELES = {
     dificultad: 3, bloque: 'REVENTAR',
     tiempoBase: 75,
     config: {
-      cantidad: 1,
+      cantidad: 5,
       resistencia: 1,
       presion_requerida: 0.6,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -431,7 +427,7 @@ export const BACALAO_NIVELES = {
     dificultad: 2, bloque: 'DESALAR',
     tiempoBase: 100,
     config: {
-      cantidad: 1,
+      cantidad: 4,
       sal_nivel: 0.4,
       moscas_velocidad: 'lenta',
       moscas_frecuencia: 0.3,
@@ -443,7 +439,7 @@ export const BACALAO_NIVELES = {
     dificultad: 3, bloque: 'DESALAR',
     tiempoBase: 85,
     config: {
-      cantidad: 1,
+      cantidad: 5,
       sal_nivel: 0.7,
       moscas_velocidad: 'normal',
       moscas_frecuencia: 0.5,
@@ -459,9 +455,9 @@ export const ZAPALLO_NIVELES = {
     dificultad: 2, bloque: 'MULTIGESTOS',
     tiempoBase: 125,
     config: {
-      cantidad: 1,
+      cantidad: 5,
       resistencia: 0,
-      gusanos: 0,
+      gusanos: 1,
     }
   },
   'zapallo-2-normal': {
@@ -469,7 +465,7 @@ export const ZAPALLO_NIVELES = {
     dificultad: 3, bloque: 'MULTIGESTOS',
     tiempoBase: 100,
     config: {
-      cantidad: 1,
+      cantidad: 7,
       resistencia: 1,
       gusanos: 1,
     }
@@ -479,9 +475,9 @@ export const ZAPALLO_NIVELES = {
     dificultad: 4, bloque: 'MULTIGESTOS',
     tiempoBase: 75,
     config: {
-      cantidad: 1,
+      cantidad: 7,
       resistencia: 2,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
 };
@@ -577,6 +573,22 @@ export const APURO = {
   castigo: { aplastado: 10, enLaBatea: 12, granoPodrido: 8, otro: 8 },
   /* aviso cuando quedan estos segundos: el reloj se pone rojo y late */
   avisoRojo: 10,
+
+  /* LOS LOGROS. Se miran al cerrar la partida y sólo se cantan la
+     primera vez: un logro que sale en cada partida deja de ser un
+     logro a la segunda y se vuelve ruido. Están puestos sobre las
+     cosas que el modo quiere ENSEÑAR a hacer —encadenar sin
+     desastres, aguantar hasta las tandas bravas, tocar toda la
+     despensa— y no sobre el número gordo, que ya es el marcador. */
+  logros: [
+    { id: 'primera',   pide: r => r.raciones >= 1,  titulo: 'Primera ración',        texto: 'Ya sabes de qué va el apuro.' },
+    { id: 'diez',      pide: r => r.raciones >= 10, titulo: 'Diez raciones',         texto: 'Eso ya es media olla.' },
+    { id: 'veinte',    pide: r => r.raciones >= 20, titulo: 'Veinte raciones',       texto: 'La cocina entera contigo.' },
+    { id: 'limpia',    pide: r => r.raciones >= 6 && r.castigos === 0, titulo: 'Sin un solo bicho', texto: 'Seis raciones y ni uno se te fue a la olla.' },
+    { id: 'cadena8',   pide: r => r.mejorCadena >= 8, titulo: 'Ocho seguidas',       texto: 'Encadenar es el truco entero del modo.' },
+    { id: 'tanda4',    pide: r => r.tandas >= 4,     titulo: 'Cuarta tanda',         texto: 'Aguantaste cuando el reloj ya casi no devuelve nada.' },
+    { id: 'docena',    pide: r => r.ingredientes.length >= 12, titulo: 'Los doce',   texto: 'Tocaste la despensa completa en una sola partida.' },
+  ],
 
   /* QUÉ ENTRA Y CUÁNTO. `porcion` es qué parte del nivel completo
      cuenta como una ración: el choclo entero son ciento veintiséis

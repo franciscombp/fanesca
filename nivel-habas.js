@@ -21,16 +21,31 @@ import { POR_VAINA, PASO_HABA } from './modelos/habas.js';
 
 let THREE, raiz, api;
 
-const FILAS = [-0.3, 0.3];                  /* dos hileras de vainas */
-const COLS = [-0.96, 0, 0.96];
+/* La rejilla dejó de ser dos listas fijas porque ahora la cantidad de
+   vainas la manda el nivel. Lo que NO se toca es el ancho: tres por
+   hilera es lo que cabe entre los filos de la tabla, y la cámara ya
+   está echada hacia atrás para que esas tres entren en pantalla. Una
+   cuarta columna se saldría por los lados; una hilera más solo se mete
+   hacia el fondo, que es hacia donde queda sitio. */
+const POR_FILA = 3;
+const PASO_COL = 0.96;                      /* separación entre columnas */
+const PASO_FILA = 0.6;                      /* separación entre hileras */
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
    ahí se resta media tabla. Si mañana la batea se mueve, la tabla se
-   corre sola. */
-const HONDO_TABLA = 1.7;
+   corre sola. El fondo tampoco es fijo: crece con las hileras, porque
+   una vaina apoyada en el aire detrás del filo se ve fatal. */
+let HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const CON_GUSANO = 2;                       /* cuántas vainas traen sorpresa */
-const ABRIR = 0.16;                         /* mundo que recorre el dedo para abrir la vaina */
+let CON_GUSANO = 2;                         /* cuántas vainas traen sorpresa */
+/* El frote es distancia recorrida por la yema, así que la costura más
+   apretada es sencillamente más centímetros de dedo. Se descartó
+   hacerla resistir por tiempo: eso premiaría apoyar el dedo quieto
+   encima, que no es desvainar. Los tres valores están separados lo
+   justo para notarse en el pulgar sin que la suave se abra sola de un
+   roce ni la apretada se vuelva un forcejeo. */
+const FROTE_POR_RESISTENCIA = [0.09, 0.16, 0.28];
+let ABRIR = 0.16;                           /* mundo que recorre el dedo para abrir la vaina */
 
 let vainasGrupo = null;
 let vainas = [];
@@ -168,8 +183,21 @@ export default {
      la disposición de las vainas */
   camara: { pos: [0, 3.2, 3.8], mira: [0, 0.98, 0.30] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+
+    /* seis es la rejilla de siempre: dos hileras de tres */
+    const cantidad = cfg.cantidad ?? 6;
+    const filas = Math.max(1, Math.ceil(cantidad / POR_FILA));
+    /* el fondo se mide desde la tabla de dos hileras, no desde cero:
+       así la parada de hoy sale clavada y cada hilera extra empuja el
+       borde de atrás justo un paso */
+    HONDO_TABLA = 1.7 + (filas - 2) * PASO_FILA;
+    ABRIR = FROTE_POR_RESISTENCIA[cfg.resistencia ?? 1] ?? 0.16;
+    /* nunca más bichos que vainas donde esconderlos: el sorteo de abajo
+       es un Set y con un número imposible se quedaría girando en seco */
+    CON_GUSANO = Math.min(cfg.gusanos ?? 2, cantidad);
+
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     vainas = []; hechos = 0; terminado = false; modo = null; ultimoPunto = null; pellizcando = false;
 
@@ -184,21 +212,28 @@ export default {
     plaga = nuevaPlaga(THREE, api, raiz, { nombre: 'gusanito', vel: 0.13,
       /* la tabla sobresale del mesón: el bicho tiene que caminar
          ENCIMA de ella, no dentro */
-      superficie: (x, z) => (Math.abs(x) < 1.55 && Math.abs(z - TABLA_Z) < 0.85)
+      superficie: (x, z) => (Math.abs(x) < 1.55 && Math.abs(z - TABLA_Z) < HONDO_TABLA / 2)
         ? api.MESA_Y + 0.10 : api.MESA_Y,
     });
 
     /* qué vainas traen bicho: se decide al armar, nunca a mitad de partida */
     const conBicho = new Set();
-    while (conBicho.size < CON_GUSANO) conBicho.add(Math.floor(Math.random() * (FILAS.length * COLS.length)));
+    while (conBicho.size < CON_GUSANO) conBicho.add(Math.floor(Math.random() * cantidad));
 
+    /* Cada hilera se centra por su cuenta. Con una cantidad que no es
+       múltiplo de tres la última queda coja, y dejarla pegada a la
+       izquierda haría pensar que falta una vaina por cargar. */
     let i = 0;
-    FILAS.forEach(dz => COLS.forEach(dx => {
-      const rec = nuevaVaina(dx, TABLA_Z + dz, conBicho.has(i));
-      vainasGrupo.add(rec.obj);
-      vainas.push(rec);
-      i++;
-    }));
+    for (let f = 0; f < filas; f++) {
+      const enFila = Math.min(POR_FILA, cantidad - f * POR_FILA);
+      const dz = (f - (filas - 1) / 2) * PASO_FILA;
+      for (let c = 0; c < enFila; c++) {
+        const rec = nuevaVaina((c - (enFila - 1) / 2) * PASO_COL, TABLA_Z + dz, conBicho.has(i));
+        vainasGrupo.add(rec.obj);
+        vainas.push(rec);
+        i++;
+      }
+    }
 
     TOTAL = vainas.length * POR_VAINA;
     api.progreso(0, TOTAL);

@@ -22,15 +22,15 @@ import { POR_VAINA } from './modelos/frejol.js';
 
 let THREE, raiz, api;
 
-const VAINAS = 5;
+let VAINAS = 5;
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
    ahí se resta media tabla. Si mañana la batea se mueve, la tabla se
    corre sola. */
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
-const APRIETE = 0.48;            /* segundos de presión para que reviente */
-const CON_GORGOJO = 2;
+let APRIETE = 0.48;              /* segundos de presión para que reviente */
+let CON_GORGOJO = 2;
 /* el dedo, del mismo grosor que en las habas y el melloco: 0.22 era
    el más flaco de la mesa y hacía falta puntería para juntar */
 const RADIO_BARRIDO = 0.3;
@@ -47,6 +47,25 @@ let pellizcando = false;
 let terminado = false;
 
 /* La vaina moteada y el grano vino viven en modelos/frejol.js. */
+
+/* Las cinco x de la fila de siempre no son una progresión: están
+   puestas a mano y las de los extremos caen un pelo más lejos de lo
+   que tocaría. Sacarlas de una fórmula las correría medio centímetro
+   sin ganar nada, así que la fila de cinco se devuelve tal cual y sólo
+   se reparte cuando la cantidad es otra. Al repartir, el ancho se abre
+   hasta ±1.35 —el mismo tope al que se recortan los granos regados—
+   sólo si hay más vainas que antes: apretar seis o siete en el ancho
+   viejo las dejaría montadas unas sobre otras y el barrido no sabría
+   de qué vaina vino cada grano. */
+const XS_FILA = [-1.05, -0.52, 0, 0.52, 1.05];
+
+function filaDeVainas(n) {
+  if (n === XS_FILA.length) return XS_FILA;
+  if (n <= 1) return [0];
+  const media = n > XS_FILA.length ? 1.35 : 1.05;
+  const paso = (media * 2) / (n - 1);
+  return Array.from({ length: n }, (_, i) => -media + i * paso);
+}
 
 function nuevaVaina(x, z, conGorgojo) {
   const v = api.pieza('vaina-frejol');
@@ -147,13 +166,26 @@ function barrerEn(punto, prev) {
 
 export default {
   id: 'frejol',
-  /* cinco vainas regadas por la tabla: la cámara se aleja para que se
-     vea bien la dispersión de granos a lo ancho. Un poco más de altura
-     también ayuda a apreciar cómo quedan repartidos */
+  /* el encuadre está hecho para la fila entera: la cámara se aleja para
+     que se vea bien la dispersión de granos a lo ancho. Un poco más de
+     altura también ayuda a apreciar cómo quedan repartidos. No se mueve
+     con la cantidad: con una sola vaina el plano queda ancho, pero los
+     granos se riegan igual y el barrido necesita ese aire */
   camara: { pos: [0, 3.25, 3.85], mira: [0, 0.98, 0.30] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+    VAINAS = cfg.cantidad ?? 5;
+    APRIETE = cfg.presion_requerida ?? 0.48;
+    /* Más gorgojos que vainas no da un nivel más difícil: da un sorteo
+       que no termina nunca, porque cada bicho sale de una vaina
+       distinta y el Set no puede crecer más que la fila. Se recorta
+       antes de sortear, no dentro del bucle. */
+    CON_GORGOJO = Math.min(cfg.gusanos ?? 2, VAINAS);
+    /* el marcador cuenta granos, no vainas: cambiada la cantidad hay
+       que rehacer el total antes del primer api.progreso, o la barra
+       arranca midiéndose contra la fila de otro nivel */
+    TOTAL = VAINAS * POR_VAINA;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     vainas = []; granos = []; hechos = 0; terminado = false; modo = null; apretando = null; pellizcando = false;
     ultimoPunto = null;
@@ -176,7 +208,7 @@ export default {
     const conBicho = new Set();
     while (conBicho.size < CON_GORGOJO) conBicho.add(Math.floor(Math.random() * VAINAS));
 
-    const xs = [-1.05, -0.52, 0, 0.52, 1.05];
+    const xs = filaDeVainas(VAINAS);
     xs.forEach((x, i) => {
       const rec = nuevaVaina(x, TABLA_Z + (i % 2 ? 0.3 : -0.26), conBicho.has(i));
       vainasGrupo.add(rec.obj);

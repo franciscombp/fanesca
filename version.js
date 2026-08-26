@@ -39,10 +39,11 @@ const NOVEDADES = [
     fecha: '2026-08-26',
     titulo: 'El Apuro',
     cambios: [
+      'Los doce ingredientes tienen ya su escalera de dificultad: la mesa pasa de 16 paradas a 40. Cada una cambia de verdad —más vainas, más apretadas, más bichos—, no sólo de nombre.',
       'Modo nuevo: El Apuro. Los ingredientes se suceden sin respiro contra el reloj, y cada ración que terminas te DEVUELVE segundos. Los bichos ya no arruinan la partida: te quitan tiempo, y la partida sigue.',
       'Se acabó la ficha antes de cada nivel. Ahora tocas un ingrediente y ya estás cocinando: el gesto se explica dentro, sobre el mesón, que es donde se puede aplicar mientras se lee.',
       'Arreglada la arveja: las vainas se montaban de dos en dos y las arvejas salían atravesadas respecto a su propia vaina.',
-      'Al final de cada partida de El Apuro se abre una página del cuaderno — de un ingrediente que acabas de tener en la mano.',
+      'Al final de cada partida de El Apuro se abre una página del cuaderno —de un ingrediente que acabas de tener en la mano— y se cantan los logros nuevos, que sólo salen la primera vez.',
     ],
     internos: [
       'modo-apuro.js no sabe jugar a nada: se engancha a api.progreso / api.completar / api.arruinar y encadena los niveles que ya existen. Añadir el modo no tocó ni un nivel.',
@@ -51,6 +52,10 @@ const NOVEDADES = [
       'La baraja de ingredientes va sin reposición y barajada; el azar puro repetía el mismo ingrediente con una frecuencia que se siente rota.',
       'ARRUINADO gana `clave` para que el modo le ponga precio en segundos a cada desastre.',
       'nivel-arveja: las arvejas vuelven al eje X del modelo y COLS pasa a ±0.5 (la vaina mide 0.95 y estaban a 0.7).',
+      'Los doce niveles leen construir(ctx, cfg) con valores por defecto idénticos a sus constantes de hoy: con cfg vacío nada cambia.',
+      '`cantidad: 1` estaba de marcador en casi todas las configs, de cuando ningún nivel las leía. Ahora que las leen habría dejado una sola vaina donde había seis: se pusieron las cuentas reales (6 habas, 12 chochos, 5 fréjoles, 8 mellocos, 7 tajadas, 16 manís, 5 presas).',
+      'El maní tomaba velocidad_minima cruda como umbral en unidades de mundo: 0.2 era lo que el dedo recorre en seis eventos de cruzar la losa, y la parada rápida habría sido injugable.',
+      'El melloco y la quinua dejan parámetros sin cablear a propósito: en el melloco correr es lo que se castiga, y en la quinua hay UNA batea. Se quitaron de sus configs para no prometer perillas que no giran.',
     ],
   },
   {

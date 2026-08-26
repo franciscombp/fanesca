@@ -238,6 +238,10 @@ function terminar(porque) {
     segundosGanados,
     ingredientes: [...tocados],
   };
+  /* qué logros CUMPLE esta partida. Cuáles son nuevos lo decide el
+     juego, que es quien tiene el guardado: aquí no se sabe —ni hace
+     falta saber— qué hizo el jugador otros días. */
+  resumen.logros = APURO.logros.filter(l => { try { return l.pide(resumen); } catch (e) { return false; } });
   racionActual = null;
   ganchos.finDePartida(resumen);
 }

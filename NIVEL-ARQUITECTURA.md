@@ -54,16 +54,12 @@ const RUTA = construirRuta();   // ingredientes × variantes
 ```
 
 Un ingrediente se abre en varios nodos **solo si su módulo lee la
-config**. Eso lo dice `CON_VARIANTES`:
+config**. Eso lo dice `CON_VARIANTES`, y **ya están los doce**: la mesa
+tiene 40 paradas.
 
-```js
-const CON_VARIANTES = new Set(['maiz']);
-```
-
-Hoy es el choclo y nadie más. Pintar cinco nodos de arveja que juegan
-exactamente igual sería prometer una campaña que no existe. Cuando un
-`nivel-*.js` aprenda a leer sus parámetros, se agrega su id ahí y sus
-variantes aparecen solas.
+Que un id esté en esa lista es una **promesa** de que sus variantes se
+juegan distinto. Hay que comprobarla nivel a nivel antes de escribirlo:
+el pecado no es que falte uno, es que sobre.
 
 ---
 
@@ -281,19 +277,61 @@ Una línea:
 
 ---
 
-## Lo que falta
+## Cablear un ingrediente: lo que se aprendió haciendo los doce
 
-Los otros once ingredientes ya tienen sus variantes escritas en
-`niveles-config.js` (30 niveles en total), pero **sus módulos todavía
-no leen los parámetros**, así que no están en `CON_VARIANTES` y se
-dibujan como un solo nodo. Para abrir uno:
+Tres trampas, y las tres costaron un nivel roto antes de verse.
 
-1. Que su `construir(ctx, config)` lea lo que necesita.
-2. Agregar su id a `CON_VARIANTES` en `main.js`.
-3. Comprobar que `migrar()` le pase el récord viejo.
+### 1. `cantidad: 1` era una bomba
 
-Ese orden importa: el paso 2 sin el 1 pinta nodos que juegan igual.
+Casi todas las configs traían `cantidad: 1`. Era un marcador de cuando
+ningún nivel las leía — y en cuanto empezaron a leerlas, ese `1`
+dejaba **una sola vaina donde había seis**. Las cuentas reales:
 
+| | unidades de hoy |
+|---|---|
+| habas | 6 vainas |
+| arveja | 6 vainas |
+| chochos | 12 |
+| frejol | 5 vainas |
+| melloco | 8 |
+| zapallo | 7 tajadas |
+| maní | 16 granos |
+| bacalao | 5 presas |
+| escoger | 31 granos (22 buenos + 5 piedras + 4 picados) |
+| col | 1 hoja (la cuenta va en tiras) |
+
+**Regla:** el valor por defecto de cada parámetro tiene que ser
+*exactamente* la constante que el nivel ya tenía. Con `cfg` vacío el
+nivel se juega idéntico, o el cambio rompió algo.
+
+### 2. Las unidades del parámetro no son las del código
+
+`velocidad_minima` es un dial de 0 a 1. El maní la tomó cruda como
+umbral en unidades de mundo, y `0.2` resultó ser lo que el dedo
+recorre en **seis eventos** de cruzar la losa entera: la parada rápida
+habría sido injugable. Un parámetro de config casi nunca está en las
+unidades internas del nivel — hay que mapearlo.
+
+### 3. Un parámetro sin equivalente honesto NO se cablea
+
+El melloco dejó `velocidad_minima` fuera a propósito: ahí **correr es
+lo que se castiga**, así que atarle la dificultad habría hecho que la
+parada más exigente fuera la más indulgente, invirtiendo la curva. La
+quinua dejó `cantidad` fuera porque hay **una** batea.
+
+Los dos hicieron bien. Un parámetro que se puede escribir y no hace
+nada es peor que no tenerlo, así que además se quitaron de sus
+configs.
+
+### Y lo que no se ve en el total
+
+`col-1-facil` y `col-2-fino` declaran el mismo total de tiras, y está
+bien: la diferencia es el **listón** (qué tajada se celebra) y el
+esfuerzo de enrollar. Hacer que "fino" pidiera menos tiras habría
+hecho que la parada exigente costara *menos* col que la fácil.
+
+Al verificar variantes, medir el total no basta — hay que mirar qué
+parámetro cambió y si ese cambio se siente.
 
 ---
 
@@ -328,3 +366,46 @@ arrastre (mismo tamaño aparente) y **0 px** de desfase con el dedo.
 Cualquier nivel que cargue algo por encima del mesón necesita
 `puntoAnteCamara`. Los que trabajan sobre la tabla pueden seguir con
 `puntoEnPlano`.
+
+
+---
+
+## El Apuro — el modo contrarreloj
+
+Vive en `modo-apuro.js` y **no sabe jugar a nada**. Se engancha a las
+tres llamadas que los doce niveles ya hacían igual:
+
+```
+api.progreso(hechos, total)  → ¿ya está servida la ración?
+api.completar()              → el nivel terminó entero
+api.arruinar(motivo)         → cuesta segundos, no la partida
+```
+
+La consecuencia es la que importa: **añadir el modo no tocó ni un
+nivel**. Un ingrediente entra al Apuro por su entrada en
+`APURO.raciones` y nada más; si mañana el modo se quita, los doce
+siguen exactamente igual.
+
+### Las decisiones
+
+- **El reloj es la vida, y no hay vidas.** Este juego tiene gestos que
+  castigan la prisa (el tierno revienta, el melloco se dispara). Las
+  vidas vuelven cauto al jugador, y cauto contra reloj es una
+  contradicción que se siente aunque no se sepa nombrar.
+- **El reloj sube.** La recompensa de hacerlo bien es seguir jugando.
+- **Los bichos cobran, no matan.** Perder de golpe por un error a los
+  diez segundos es la forma más rápida de que alguien cierre el juego.
+- **Una ración es una PORCIÓN** del nivel (`porcion`), no el nivel
+  entero: un choclo son 126 granos y eso es más que media partida.
+- **La dificultad sale de la campaña**, subiendo por la escalera de
+  variantes de cada ingrediente. Una segunda tabla sería la misma
+  curva escrita dos veces.
+
+### La carrera que hubo que cerrar
+
+Montar el siguiente nivel es asíncrono. En ese hueco el nivel
+**anterior** sigue vivo y sigue llamando a `progreso()`. Si la ración
+nueva ya estuviera activa, esa llamada tardía le fijaría el total del
+ingrediente viejo y la cuota saldría calculada sobre otra cosa. Por
+eso la ración se activa con `Apuro.activar()`, que el juego llama
+justo antes de `Motor.cargar`.

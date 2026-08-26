@@ -12,6 +12,12 @@
    van a lo salado, así que aparecen justo donde estás trabajando.
    Aplastar una sobre el pescado arruina todo. Para sacarla se
    arrastra desde ella: se espanta y se va.
+
+   Cuántas presas se tienden, cuánta sal traen encima y cada cuánto
+   cae una mosca los pone la config de la parada. El cordel y la
+   tabla son los mismos para el primer desale y para el bacalao que
+   viene curado a lo bruto; lo que cambia es el trabajo que hay
+   encima de cada presa y la paciencia que dejan las moscas.
    ============================================================ */
 
 import { nuevaMosca } from './modelos/bichos.js';
@@ -20,8 +26,16 @@ import { CARNE_LIMPIA } from './modelos/bacalao.js';
 
 let THREE, raiz, api;
 
-const PRESAS = 5;
-const SAL_POR_PRESA = 7;
+let PRESAS = 5;
+/* El bacalao de referencia es el del desale normal: 0.7 de sal, siete
+   granos por presa. Las demás paradas se miden contra él en proporción
+   —y no contra una escala inventada— para que la parada de siempre siga
+   pidiendo exactamente sus siete granos y para que media sal sea de
+   verdad la mitad del frotado. Nunca menos de uno: una presa que
+   naciera limpia se saltaría el primer gesto del nivel y aparecería
+   lista para tender sin que el jugador entienda por qué. */
+const SAL_REF = 0.7, SAL_POR_PRESA_REF = 7;
+let SAL_POR_PRESA = SAL_POR_PRESA_REF;
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
    ahí se resta media tabla. Si mañana la batea se mueve, la tabla se
@@ -31,7 +45,15 @@ let TABLA_Z = 0;                 /* se fija en construir(), desde api */
 const FROTE = 0.11;              /* mundo recorrido por cada grano de sal */
 const CORDEL_Z = -0.62;          /* arrastra hacia el fondo para tender */
 const CORDEL_Y = () => api.MESA_Y + 0.92;
-const MOSCA_CADA = 11;           /* segundos entre moscas */
+/* Las moscas de la parada normal caen cada once segundos, y eso es la
+   frecuencia 0.5. El resto se lee como proporción de ella: el doble de
+   frecuencia tiene que ser el doble de moscas, no una tabla de segundos
+   puestos a ojo parada por parada. */
+const FRECUENCIA_REF = 0.5, MOSCA_CADA_REF = 11;
+let MOSCA_CADA = MOSCA_CADA_REF; /* segundos entre moscas */
+/* El respiro de apertura, antes de la primera mosca: el jugador todavía
+   está entendiendo que aquí se frota. */
+const PRIMERA_MOSCA = 4.5;
 const MOSCA_DURA = 6.5;          /* cuánto se queda posada */
 /* Recién posada, la mosca no mata: el dedo ya venía frotando ahí y
    perder por eso sería castigar un reflejo imposible. En ese respiro,
@@ -51,6 +73,32 @@ let perdonMosca = false;   /* una mosca aplastada perdonada por nivel */
    cordel viven en modelos/bacalao.js. La carne se busca POR NOMBRE
    porque es la única pieza del juego que cambia de material en
    vivo: al quedar sin sal, pasa de salada a limpia. */
+
+/* La fila de la tabla nunca estuvo a compás: -1.05, -0.52, 0, 0.52,
+   1.05, con medio centímetro de más en las orillas. Ese descuadre es lo
+   que la hace parecer puesta a mano y no calculada, así que la fila de
+   cinco se conserva tal cual y sólo se reparte a compás cuando la parada
+   pide otra cantidad. El ancho no crece con las presas: ensanchar la
+   fila las sacaría de la madera y del cordel de arriba. Que se aprieten
+   no rompe el frotado porque el zigzag en z deja a cada vecina en otra
+   hilera, que es justamente para lo que está. */
+const FILA_A_MANO = [-1.05, -0.52, 0, 0.52, 1.05];
+const MEDIA_FILA = 1.05;
+
+function filaDePresas(n) {
+  if (n === FILA_A_MANO.length) return FILA_A_MANO.slice();
+  if (n < 2) return [0];
+  return Array.from({ length: n }, (_, i) => -MEDIA_FILA + i * (MEDIA_FILA * 2 / (n - 1)));
+}
+
+/* Los huecos del cordel sí eran parejos (-1, -0.5, 0, 0.5, 1), y esta
+   cuenta los devuelve clavados para cinco. Se reparten entre los mismos
+   postes de siempre porque el tendedero no se mueve: caben más presas,
+   más juntas, como en un tendedero de verdad. */
+function huecosDelCordel(n) {
+  if (n < 2) return [0];
+  return Array.from({ length: n }, (_, i) => -1 + i * (2 / (n - 1)));
+}
 
 function nuevaPresa(x, z) {
   const g = api.pieza('presa-bacalao');
@@ -159,14 +207,47 @@ export default {
      no sorprendan — además necesita verse bien el área de frotado */
   camara: { pos: [0, 3.3, 3.9], mira: [0, 0.98, 0.30] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     perdonMosca = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+
+    PRESAS = Math.max(1, Math.round(cfg.cantidad ?? 5));
+    SAL_POR_PRESA = Math.max(1, Math.round(SAL_POR_PRESA_REF * ((cfg.sal_nivel ?? SAL_REF) / SAL_REF)));
+    /* TOTAL se calculaba al declararlo, cuando las presas y la sal eran
+       fijas para siempre. Ahora las dos llegan de la parada y la cuenta
+       hay que rehacerla aquí: si no, la barra mediría otra receta y el
+       nivel se daría por terminado antes o nunca. */
+    TOTAL = PRESAS * (SAL_POR_PRESA + 1);
+
+    const frecuencia = cfg.moscas_frecuencia ?? FRECUENCIA_REF;
+    /* Frecuencia 0 no es "una mosca cada muchísimo": es un desale sin
+       moscas, y se juega así. Con la espera en infinito la cuenta atrás
+       de actualizar() nunca llega a cero y no hace falta un caso aparte
+       allá abajo, ni tampoco la mosca de apertura. */
+    MOSCA_CADA = frecuencia > 0 ? MOSCA_CADA_REF * (FRECUENCIA_REF / frecuencia) : Infinity;
+    /* El respiro de apertura no puede durar más que el intervalo mismo:
+       en una parada plagada, hacer esperar a la primera mosca más que a
+       las siguientes regalaría el tramo más fácil justo al principio. */
+    tMosca = frecuencia > 0 ? Math.min(PRIMERA_MOSCA, MOSCA_CADA) : Infinity;
+
+    /* 'moscas_velocidad' se queda sin cablear a propósito. La mosca de
+       este nivel no viaja: aparece ya posada sobre la presa y de ahí no
+       se mueve hasta que se va. Lo único que corre a una velocidad son
+       las alas, y acelerarlas no cambiaría ni un gesto del jugador:
+       sería prometer una parada más difícil que se juega igual. Lo que
+       aquí aprieta a las moscas es cada cuánto caen, y eso ya lo hace
+       'moscas_frecuencia'.
+
+       'gusanos' tampoco: en el bacalao no hay bicho escondido que
+       destapar. La mosca no viene dentro de la presa, llega volando con
+       el reloj, así que un número de bichos ocultos no tiene dónde
+       ponerse. La config de las dos paradas lo trae en 0. */
+
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     presas = []; moscas = []; hechos = 0; terminado = false;
     modo = null; cargada = null; frotando = null; ultimoPunto = null;
-    tMosca = 4.5; avisoLimpia = false;
-    huecosCordel = [-1.0, -0.5, 0, 0.5, 1.0];
+    avisoLimpia = false;
+    huecosCordel = huecosDelCordel(PRESAS);
 
     const tabla = api.pieza('tabla', { ancho: 3.1, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
@@ -188,7 +269,7 @@ export default {
     moscasGrupo = new THREE.Group();
     raiz.add(presasGrupo, moscasGrupo);
 
-    const xs = [-1.05, -0.52, 0, 0.52, 1.05];
+    const xs = filaDePresas(PRESAS);
     xs.forEach((x, i) => {
       const rec = nuevaPresa(x, TABLA_Z + (i % 2 ? 0.24 : -0.2));
       presasGrupo.add(rec.obj);

@@ -27,21 +27,43 @@ import { ANCHO_HOJA, LARGO_HOJA } from './modelos/col.js';
 
 let THREE, raiz, api;
 
-const OBJETIVO = 24;             /* tiras que pide la olla */
+/* La col no se cuenta en hojas. Aquí la hoja no es la pieza del
+   nivel sino el material: vienen las que hagan falta y cuántas gastes
+   es cosa tuya, no del enunciado — de eso trata el nivel entero. Lo
+   que la olla pide es picado, así que la cuenta va en tiras y una col
+   vale las de siempre. */
+const TIRAS_POR_COL = 24;
+let OBJETIVO = TIRAS_POR_COL;    /* tiras que pide la olla */
 const HONDO_TABLA = 1.7;
 const ANCHO_TABLA = 3.1;
 let TABLA_Z = 0;
 const ALTO = 0.14;
 
 /* cuánto mundo hay que empujar de lado para enrollar una hoja */
-const ENROLLADO = ANCHO_HOJA * 0.68;
+let ENROLLADO = ANCHO_HOJA * 0.68;
+/* La col apretada no cede a la primera: hay que pasarle el dedo de
+   orilla a orilla más veces. Se descartó hacerla resistir por tiempo
+   —eso premiaría dejar la yema apoyada encima, que no es enrollar— y
+   se dejó lo que el gesto ya medía: centímetros de dedo. La tabla va
+   en fracción del ancho de la hoja y no en mundo, para que siga
+   queriendo decir lo mismo el día que la col cambie de tamaño. */
+const ENROLLADO_POR_RESISTENCIA = [0.44, 0.68, 1.04];
 /* el corte: lo que se considera fino, y lo máximo que el cuchillo
    se lleva de una vez (más que esto es un trozo, no una tira) */
-const FINA = 0.1;
-const GRUESA = 0.24;
+let FINA = 0.1;
+let GRUESA = 0.24;
 const MAX_TAJADA = 0.34;
+/* Pedir el corte fino no cambia el cuchillo: cambia la vara. Qué
+   tajada se celebra y a partir de cuál te gritan. Por eso MAX_TAJADA
+   se queda fuera de la tabla — bajarlo haría que el corte a lo bestia
+   se llevara MENOS rollo, o sea que la parada exigente costaría menos
+   col que la fácil, justo al revés de lo que promete su nombre. */
+const VARA_DEL_CORTE = {
+  grueso: { fina: 0.1, gruesa: 0.24 },
+  fino: { fina: 0.07, gruesa: 0.16 },
+};
 const SOBRA = 0.1;               /* el cabito que ya no se puede cortar */
-const CON_GUSANO = 2;
+let CON_GUSANO = 2;
 
 let colGrupo = null;
 let plaga = null;
@@ -218,8 +240,24 @@ export default {
      del enrollado y el corte sin forzar la vista */
   camara: { pos: [0, 3.15, 3.75], mira: [0, 0.98, 0.30] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+
+    OBJETIVO = TIRAS_POR_COL * (cfg.cantidad ?? 1);
+    ENROLLADO = ANCHO_HOJA * (ENROLLADO_POR_RESISTENCIA[cfg.resistencia ?? 1] ?? 0.68);
+    /* Se busca la vara por la etiqueta y no por índice: un
+       `espesor_corte` mal escrito en la config cae en el corte de
+       siempre en vez de dejar el nivel sin umbrales y con todas las
+       tajadas contadas como gruesas. */
+    const vara = VARA_DEL_CORTE[cfg.espesor_corte] ?? VARA_DEL_CORTE.grueso;
+    FINA = vara.fina;
+    GRUESA = vara.gruesa;
+    /* Es un tope, no una cuota: el bicho sale al armar el rollo, así
+       que pedir más bichos que hojas gaste el jugador simplemente no
+       los saca. Cortar grueso —que es lo que quema hojas— es lo que
+       los va destapando, y esa es justo la moraleja del nivel. */
+    CON_GUSANO = cfg.gusanos ?? 2;
+
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     hoja = null; rollo = null; hojasUsadas = 0;
     tiras = 0; finas = 0; gruesas = 0;
