@@ -13,7 +13,8 @@ import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niv
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
-import { variantesDe, nivelPor as configPor } from './niveles-config.js';
+import { variantesDe, nivelPor as configPor, APURO } from './niveles-config.js';
+import Apuro from './modo-apuro.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -236,6 +237,10 @@ function cucharasHTML(n) {
 function icono(id) { return (typeof iconOf === 'function') ? iconOf(id) : ''; }
 
 function mostrar(pantalla) {
+  /* salirse del mesón con El Apuro corriendo tiene que APAGARLO: si
+     no, el reloj sigue bajando desde la mesa y la partida se pierde
+     sola mientras nadie mira */
+  if (pantalla !== 'juego' && Apuro.activo) { Apuro.parar(); pararReloj(); }
   $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + pantalla));
   Motor.setActive(pantalla === 'juego');
   if (pantalla === 'mesa') { renderMesa(); marcaCuaderno(); }
@@ -385,10 +390,17 @@ function renderMesa() {
     b.addEventListener('click', () => {
       sfx('tab');
       if (!abierto) { toast('Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆'); return; }
-      /* rejugarlo no necesita instrucciones: directo a la mesa. El
-         brief queda para la primera vez, que es cuando enseña algo */
-      if (mejor) jugar(n.id);
-      else abrirBrief(n.id);
+      /* DIRECTO AL MESÓN, siempre. Había en medio una ficha con el
+         gesto, la nota y el bicho, y quitarla es lo que más fluidez
+         le devolvió al juego: eran dos toques y una pantalla de
+         lectura entre querer jugar y estar jugando.
+
+         No se pierde nada, porque el gesto YA se explica dentro, en
+         la pista sobre el mesón —donde además se puede aplicar
+         mientras se lee, que es cuando una instrucción sirve—. La
+         nota de cultura se lee en la tarjeta del final y en el
+         cuaderno, con calma y sin el reloj encima. */
+      jugar(n.id);
     });
     lista.appendChild(b);
   });
@@ -528,28 +540,8 @@ function marcaCuaderno() {
   $('#cuaderno-nuevo').classList.toggle('hidden', !hayNuevo);
 }
 
-/* ---------- el brief antes de cada nivel ---------- */
-
-let nivelPendiente = null;
-
-function abrirBrief(id) {
-  const n = rutaPorId(id);
-  if (!n) return;
-  nivelPendiente = id;
-  const mejor = estado.mejores[id];
-  $('#brief-art').innerHTML = `<span class="plate">${icono(n.icono)}</span>`;
-  $('#brief-tarea').textContent = n.tarea;
-  $('#brief-nombre').textContent = n.nombre;
-  $('#brief-gesto').innerHTML = n.gesto;
-  $('#brief-bicho').innerHTML = `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y a la composta. No lo aplastes.`;
-  $('#brief-nota').textContent = n.nota || '';
-  $('#brief-mejor').textContent = mejor
-    ? `Tu mejor tiempo: ${tiempoBonito(mejor.ms)} · ${mejor.cucharas} cuchara${mejor.cucharas > 1 ? 's' : ''}`
-    : `3 cucharas si bajas de ${n.cucharas[0]}s`;
-  $('#modal-brief').classList.add('open');
-}
-
 /* ---------- el nivel en curso ---------- */
+
 
 let nivelActual = null;      /* datos de niveles.js */
 let modActual = null;        /* el módulo cargado */
@@ -562,6 +554,14 @@ let hechosAhora = 0, totalAhora = 1;
    sobra— y se vuelve a contar entero en el modal de listo. */
 function pintarReloj() {
   const el = $('#hud-tiempo');
+  if (Apuro.activo) {
+    /* contra reloj se lee el entero y nada más: las décimas a esta
+       velocidad son ruido que parpadea, no información */
+    el.textContent = Math.ceil(Apuro.reloj) + 's';
+    el.classList.toggle('hud-tiempo--rojo', Apuro.enRojo);
+    return;
+  }
+  el.classList.remove('hud-tiempo--rojo');
   el.textContent = tiempoBonito(tiempoMs);
 }
 
@@ -569,9 +569,14 @@ function arrancarReloj() {
   t0 = performance.now() - tiempoMs;
   corriendo = true;
   clearInterval(relojId);
+  let ultimo = performance.now();
   relojId = setInterval(() => {
     if (!corriendo) return;
-    tiempoMs = performance.now() - t0;
+    const ahora = performance.now();
+    const dt = (ahora - ultimo) / 1000;
+    ultimo = ahora;
+    if (Apuro.activo) Apuro.tick(dt);
+    else tiempoMs = ahora - t0;
     pintarReloj();
   }, 83);
 }
@@ -641,20 +646,39 @@ const api = {
     const subio = hechos > hechosAhora;
     const cuanto = hechos - hechosAhora;
     hechosAhora = hechos; totalAhora = total || 1;
-    const k = Math.max(0, Math.min(1, hechos / totalAhora));
+    /* En El Apuro la barra mide LA RACIÓN, no el ingrediente entero:
+       marcar el 12% de un choclo del que sólo hay que hacer el 30%
+       le miente al jugador sobre cuánto le falta para el siguiente
+       bono, que es la única cifra que le importa mientras corre. */
+    const meta = (Apuro.activo && Apuro.racion && Apuro.racion.cuota) || totalAhora;
+    const k = Math.max(0, Math.min(1, hechos / meta));
     const barra = $('#hud-barra');
     barra.style.width = (k * 100) + '%';
     const pct = $('#hud-pct');
-    if (pct) pct.textContent = Math.round(k * 100) + '%';
+    if (pct) pct.textContent = Apuro.activo
+      ? Apuro.raciones + (Apuro.raciones === 1 ? ' ración' : ' raciones')
+      : Math.round(k * 100) + '%';
     Motor.llenarRecipiente('batea', k);
     if (subio) {
       racha(cuanto, k);
       puntosFlotantes(cuanto);
     }
+    /* El Apuro escucha el mismo latido que la barra. No necesita que
+       el nivel sepa nada de él: con saber cuánto lleva hecho de su
+       propio total ya puede decidir si la ración está servida. */
+    if (Apuro.activo) Apuro.progreso(hechos, total || 1);
   },
   composta(k) { Motor.llenarRecipiente('composta', Math.max(0, Math.min(1, k))); },
-  completar() { if (corriendo) terminarNivel(); },
-  arruinar(motivo) { if (corriendo) arruinarNivel(motivo); },
+  completar() {
+    if (Apuro.activo) { Apuro.completar(); return; }
+    if (corriendo) terminarNivel();
+  },
+  arruinar(motivo) {
+    /* en El Apuro un desastre cuesta segundos, no la partida: si el
+       modo se lo queda, aquí no se abre nada */
+    if (Apuro.activo && Apuro.arruinar(motivo)) return;
+    if (corriendo) arruinarNivel(motivo);
+  },
   aviso: alerta,
   pista,
   /* los pops suben de tono con la racha: la escalerita sonora es la
@@ -859,12 +883,165 @@ async function jugar(id) {
   const nivelConfig = obtenerConfigNivel(id);
   Motor.cargar(modActual, api, nivelConfig);
   renderControles(modActual);
+  /* La primera vez que se toca un ingrediente se avisa del bicho: es
+     lo único que decía el brief y no dice el gesto, y perderlo sería
+     dejar que alguien arruine su primera olla sin haber sido
+     advertido. A la segunda ya se sabe y sólo estorbaría. */
+  const primeraVez = !estado.mejores[n.id];
   pista(n.gesto, 5200);
+  if (primeraVez && n.bicho) {
+    setTimeout(() => pista(`🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>`, 4200), 5400);
+  }
   Editor.nivel(n.id);
   pintarBotonEditor();
   arrancarReloj();
   estado.intentos++;
   guardar();
+}
+
+
+/* ============================================================
+   EL APURO — el juego alrededor del modo
+
+   `modo-apuro.js` lleva las reglas; esto es lo que el modo le pide
+   al juego: montar el siguiente ingrediente, celebrar una ración,
+   cobrar un castigo y cerrar la partida. Vive aquí y no allá porque
+   todo son pantallas y sonidos, y el modo no tiene por qué saber
+   que existe el DOM.
+   ============================================================ */
+
+function apuroHUD() {
+  const t = $('#hud-tarea');
+  if (t) t.textContent = `El Apuro · tanda ${Apuro.tanda}`;
+  const pct = $('#hud-pct');
+  if (pct) pct.textContent = Apuro.raciones + (Apuro.raciones === 1 ? ' ración' : ' raciones');
+  const barra = $('#hud-barra');
+  if (barra) barra.style.width = '0%';
+}
+
+/* Montar el ingrediente que toca. Es `jugar()` sin la campaña: sin
+   récords, sin brief, sin modal de listo — y sobre todo sin volver a
+   la mesa entre uno y otro, que es exactamente lo que le quitaba
+   fluidez al juego. La mesa cambia y ya estás en el siguiente. */
+async function montarRacion(base, config) {
+  const ficha = porId(base);
+  if (!ficha) return;
+  nivelActual = ficha;
+  const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(ficha.icono);
+  apuroHUD();
+  try {
+    const m = await ficha.modulo();
+    modActual = m.default || m;
+  } catch (e) { console.error(e); return; }
+  await Motor.modelosListos();
+  hechosAhora = 0; totalAhora = 1;
+  /* justo antes de construir: a partir de aquí el progreso que llegue
+     es de ESTE ingrediente y no del que se estaba jugando */
+  Apuro.activar();
+  Motor.cargar(modActual, api, config);
+  renderControles(modActual);
+  Editor.nivel(ficha.id);
+}
+
+const GANCHOS_APURO = {
+  montar: (base, config) => montarRacion(base, config),
+
+  racionServida({ base, bono, raciones, cadena }) {
+    const ficha = porId(base);
+    sfx('bien'); buzz([12, 20]);
+    apuroHUD();
+    flotarTiempo('+' + bono + 's', 'gana');
+    /* la cadena se celebra aparte del bono: son dos cosas distintas
+       y juntarlas en un solo mensaje las apagaba a las dos */
+    if (cadena >= 3) toast(`¡${cadena} seguidas! 🔥`);
+    else toast(`${ficha ? ficha.nombre : 'Listo'} · +${bono}s`);
+  },
+
+  castigo({ coste, motivo }) {
+    sfx('mal'); buzz([50, 40, 60]);
+    Motor.destello('rgba(230,57,70,.4)');
+    Motor.sacudir(0.7);
+    flotarTiempo('−' + coste + 's', 'pierde');
+    alerta(motivo && motivo.titulo ? motivo.titulo : 'Se dañó', 'peligro');
+    setTimeout(() => alerta(null), 1600);
+  },
+
+  tanda(n, bono) {
+    sfx('fiesta'); buzz([15, 25, 15]);
+    toast(`¡Tanda ${n}! Ahora +${bono}s por ración`);
+    Motor.destello('rgba(232,129,58,.25)');
+  },
+
+  finDePartida(resumen) { cerrarApuro(resumen); },
+};
+
+/* el ±Ns que salta del reloj: en un modo donde el tiempo ES la vida,
+   verlo moverse importa más que cualquier marcador */
+function flotarTiempo(txt, clase) {
+  const caja = $('#hud-flotantes');
+  if (!caja) return;
+  const el = document.createElement('span');
+  el.className = 'flota-tiempo flota-tiempo--' + clase;
+  el.textContent = txt;
+  caja.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
+function arrancarApuro() {
+  initAudio();
+  pararReloj();
+  tiempoMs = 0;
+  reiniciarRacha();
+  alerta(null);
+  pista(null);
+  mostrar('juego');
+  Apuro.arrancar(GANCHOS_APURO);
+  arrancarReloj();
+  pista('<b>El Apuro:</b> termina cada ración y el reloj te devuelve segundos. Los bichos te los quitan.', 4200);
+  estado.intentos++;
+  guardar();
+}
+
+function cerrarApuro(resumen) {
+  pararReloj();
+  Apuro.parar();
+  sfx('fiesta'); buzz([20, 40, 20, 60]);
+  const mejor = estado.apuro || { raciones: 0 };
+  const esRecord = resumen.raciones > mejor.raciones;
+  if (esRecord) estado.apuro = { raciones: resumen.raciones, cadena: resumen.mejorCadena, fecha: new Date().toISOString().slice(0, 10) };
+  guardar();
+
+  setTimeout(() => {
+    Motor.setActive(false);
+    const cabecera = document.querySelector('#modal-apuro .sheet-eyebrow');
+    if (cabecera) cabecera.textContent = resumen.porque === 'salida' ? 'lo dejaste ahí' : 'se acabó el tiempo';
+    $('#apuro-raciones').textContent = resumen.raciones;
+    $('#apuro-detalle').textContent =
+      `${resumen.tandas} tanda${resumen.tandas > 1 ? 's' : ''} · mejor cadena ${resumen.mejorCadena}` +
+      (resumen.castigos ? ` · ${resumen.castigos} desastre${resumen.castigos > 1 ? 's' : ''}` : ' · sin un solo desastre');
+    $('#apuro-mejor').textContent = esRecord
+      ? (mejor.raciones ? `¡Nuevo récord! antes: ${mejor.raciones}` : 'Tu primera vez en El Apuro')
+      : `Tu récord sigue siendo ${mejor.raciones}`;
+
+    /* LA PARTE DIDÁCTICA. El Apuro va tan rápido que no da tiempo de
+       leer nada mientras se juega — así que lo que se aprende se
+       cobra al final, y de un ingrediente que ACABAS de tener en la
+       mano. Una tarjeta al azar de la enciclopedia se leería como
+       relleno; ésta habla de algo que tus dedos tocaron hace diez
+       segundos, y eso es lo que hace que se lea. */
+    const conTarjeta = resumen.ingredientes.filter(b => TARJETAS[b]);
+    const caja = $('#apuro-tarjeta');
+    if (conTarjeta.length) {
+      const cual = conTarjeta[Math.floor(Math.random() * conTarjeta.length)];
+      const t = TARJETAS[cual];
+      caja.classList.remove('hidden');
+      $('#apuro-tarjeta-titulo').textContent = t.titulo;
+      $('#apuro-tarjeta-texto').textContent = t.texto;
+      if (!estado.leidos.includes(cual)) { estado.leidos.push(cual); guardar(); }
+    } else caja.classList.add('hidden');
+
+    $('#modal-apuro').classList.add('open');
+  }, 700);
 }
 
 function terminarNivel() {
@@ -1017,12 +1194,11 @@ function bindEventos() {
     if ($('#screen-mesa').classList.contains('active')) renderMesa();
   });
 
-  $('#brief-ok').addEventListener('click', () => {
-    cerrarModales();
-    if (nivelPendiente) jugar(nivelPendiente);
-  });
-  $('#brief-cancelar').addEventListener('click', cerrarModales);
-  $('#modal-brief').addEventListener('click', (e) => { if (e.target === $('#modal-brief')) cerrarModales(); });
+  /* El Apuro */
+  $('#btn-apuro').addEventListener('click', () => { sfx('tab'); arrancarApuro(); });
+  $('#apuro-otra').addEventListener('click', () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
+  $('#apuro-salir').addEventListener('click', () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
+
 
   $('#voz').addEventListener('click', () => voz(null));
   $('#btn-cuaderno').addEventListener('click', () => { sfx('tab'); mostrar('cuaderno'); });
@@ -1032,6 +1208,12 @@ function bindEventos() {
   let salirArmado = 0;
   $('#btn-salir').addEventListener('click', () => {
     sfx('tab');
+    /* En El Apuro salir CIERRA la partida en vez de tirarla: llevas
+       raciones ganadas y un récord posible, y perderlos por tocar el
+       botón de pausa sería lo mismo que castigar por dejar de jugar.
+       El resultado se enseña igual que si se hubiera acabado el
+       reloj — que es lo que el jugador quiere ver. */
+    if (Apuro.activo) { Apuro.terminar('salida'); return; }
     /* con faena empezada, un toque solo no bota el trabajo: el botón
        está a 40px del filo y el pulgar izquierdo pasa rozando */
     if (corriendo && hechosAhora > 0 && Date.now() - salirArmado > 2600) {
@@ -1054,7 +1236,7 @@ function bindEventos() {
        siguiente sin darle a la mano dónde soltarse. Si el nivel es
        nuevo, su brief ES la transición; si ya se jugó, ni eso. */
     if (estado.mejores[sig.id]) { jugar(sig.id); }
-    else { mostrar('mesa'); abrirBrief(sig.id); }
+    else { jugar(sig.id); }
   });
   $('#listo-repetir').addEventListener('click', () => {
     const id = nivelActual ? nivelActual.id : null;
@@ -1156,6 +1338,8 @@ window.Fanesca = {
      prueba automática eso se veía idéntico a un nivel sano. */
   get modulo() { return modActual; },
   jugar,
+  api,
+  Apuro,
   sondear: (x, y) => Motor.sondear(x, y),
   puntos: () => ({ batea: Motor.proyectar(BATEA), composta: Motor.proyectar(COMPOSTA) }),
 };

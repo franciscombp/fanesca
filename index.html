@@ -79,6 +79,17 @@
           <p class="escenarios-tit">¿Dónde cocinas hoy?</p>
           <div id="escenarios-lista" class="escenarios-lista"></div>
         </div>
+        <!-- El Apuro: el modo rápido, al alcance desde la mesa. Va
+             ANTES del camino y no dentro: no es una parada más, es
+             otra manera de jugar lo mismo. -->
+        <button type="button" id="btn-apuro" class="btn-apuro">
+          <span class="btn-apuro-ico" aria-hidden="true">⏱</span>
+          <span class="btn-apuro-txt">
+            <strong>El Apuro</strong>
+            <small id="btn-apuro-pie">Contra reloj, todo junto</small>
+          </span>
+          <span class="btn-apuro-ir" aria-hidden="true">▶</span>
+        </button>
         <div id="mesa-lista" class="mesa-lista"></div>
       </div>
     </div>
@@ -149,18 +160,20 @@
 
   </main>
 
-  <!-- ================= Modal: cómo se hace ================= -->
-  <div id="modal-brief" class="modal" role="dialog" aria-modal="true">
+  <!-- ================= Modal: fin de El Apuro ================= -->
+  <div id="modal-apuro" class="modal" role="dialog" aria-modal="true">
     <div class="sheet">
-      <div id="brief-art" class="brief-art"></div>
-      <p id="brief-tarea" class="sheet-eyebrow"></p>
-      <h3 id="brief-nombre" class="sheet-title"></h3>
-      <p id="brief-gesto" class="sheet-body"></p>
-      <p id="brief-bicho" class="brief-bicho"></p>
-      <p id="brief-nota" class="brief-nota"></p>
-      <p id="brief-mejor" class="brief-mejor"></p>
-      <button type="button" id="brief-ok" class="btn btn--lg btn--block">¡Manos a la obra!</button>
-      <button type="button" id="brief-cancelar" class="btn btn--peltre btn--sm btn--block">Ahora no</button>
+      <p class="sheet-eyebrow">se acabó el tiempo</p>
+      <p class="apuro-cifra"><span id="apuro-raciones">0</span></p>
+      <p class="apuro-cifra-pie">raciones</p>
+      <p id="apuro-detalle" class="listo-tiempo"></p>
+      <p id="apuro-mejor" class="listo-mejor"></p>
+      <section id="apuro-tarjeta" class="tarjeta hidden">
+        <h4 id="apuro-tarjeta-titulo" class="tarjeta-titulo"></h4>
+        <p id="apuro-tarjeta-texto" class="tarjeta-texto"></p>
+      </section>
+      <button type="button" id="apuro-otra" class="btn btn--nopal btn--lg btn--block">Otra vez</button>
+      <button type="button" id="apuro-salir" class="btn btn--peltre btn--sm btn--block">Volver a la mesa</button>
     </div>
   </div>
 

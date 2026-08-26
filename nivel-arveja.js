@@ -31,22 +31,34 @@ import { POR_VAINA, PASO_ARVEJA } from './modelos/arveja.js';
 
 let THREE, raiz, api;
 
-/* Las vainas se distribuyen igual que los granos dentro de ellas:
-   más en profundidad (Z) que en ancho (X), para mantener coherencia visual */
-const FILAS = [-0.7, 0, 0.7];
-const COLS = [-0.35, 0.35];
+/* LA VAINA VA A LO LARGO DE X, y esto tiene que decidirlo el MODELO,
+   no la rejilla: en modelos/arveja.js el casco, el hilo y el rabito
+   están construidos sobre el eje X. Hubo un intento de poner la vaina
+   "vertical" que movió las arvejas y esta rejilla al eje Z pero dejó
+   el modelo donde estaba, y quedaron dos cosas rotas a la vez: las
+   arvejas salían atravesadas respecto a su propia vaina, y las vainas
+   se montaban de dos en dos —0.7 de separación para 0.95 de largo—.
+
+   Como la vaina ocupa X, las columnas tienen que respetar su largo y
+   las filas pueden ir apretadas: son sólo 0.22 de fondo. */
+const FILAS = [-0.7, 0, 0.7];      /* en Z: caben holgadas */
+const COLS = [-0.5, 0.5];          /* en X: 1.0 de separación para 0.95 de vaina */
 const HONDO_TABLA = 1.7;
 let TABLA_Z = 0;
-const CON_GUSANO = 2;
 
+/* ---------- lo que la config decide ----------
+   Los valores de aquí son el nivel de siempre: con una config vacía
+   la arveja se juega exactamente como se jugaba. */
+let VAINAS_N = 6;          /* cuántas vainas hay en la tabla */
+let CON_GUSANO = 2;        /* cuántas de ellas traen bicho */
 /* Cuánto mundo hay que jalar para que el hilo salga entero. Es
    deliberadamente más largo que el frote de la haba: deshilar es un
    tirón franco de punta a punta, no un restregón corto. */
-const LARGO_HILO = 0.4;
+let LARGO_HILO = 0.4;
 /* Cuánto puede desviarse el tirón del eje de la vaina antes de que
    deje de contar. Generoso —el dedo no va con regla— pero no tanto
    como para que cualquier arrastre deshile. */
-const TOLERANCIA = 0.5;
+let TOLERANCIA = 0.5;
 
 let vainasGrupo = null;
 let vainas = [];
@@ -74,9 +86,9 @@ function nuevaVaina(x, z, conGusano) {
   const granos = [];
   for (let i = 0; i < POR_VAINA; i++) {
     const a = api.pieza('arveja', { variante: i });
-    /* Cambio de orientación: las arvejas se distribuyen en profundidad (Z)
-       en lugar de en ancho (X) para que la vaina quede más vertical */
-    a.position.set(0, -0.006, (i - (POR_VAINA - 1) / 2) * PASO_ARVEJA);
+    /* en fila a lo largo de la vaina, que es su eje X — el mismo
+       contra el que ejeDe() mide el tirón del hilo */
+    a.position.set((i - (POR_VAINA - 1) / 2) * PASO_ARVEJA, -0.006, 0);
     a.userData = { tipo: 'arveja', i };
     a.visible = false;
     granos.push(a);
@@ -228,8 +240,20 @@ export default {
      para poder jalarlos correctamente */
   camara: { pos: [0, 3.2, 3.8], mira: [0, 0.98, 0.30] },
 
-  construir(ctx) {
+  construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+
+    /* La fricción del hilo y la tolerancia del tirón son la misma
+       dificultad vista por dos lados: cuánto hay que jalar, y cuánto
+       perdona el pulso. Se derivan para que la config diga UNA cosa
+       —qué tan apretada viene la vaina— y no dos números que hay que
+       mantener coherentes a mano. */
+    const friccion = cfg.hilo_friccion ?? 0.3;
+    LARGO_HILO = 0.25 + friccion * 0.5;
+    TOLERANCIA = 0.5 + (cfg.resistencia ?? 0) * 0.12;
+    VAINAS_N = Math.max(1, Math.min(FILAS.length * COLS.length, cfg.cantidad ?? 6));
+    CON_GUSANO = cfg.gusanos ?? 2;
+
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     vainas = []; hechos = 0; terminado = false;
     modo = null; jalando = null; ultimoPunto = null; cadena = 0; pellizcando = false;
@@ -251,7 +275,12 @@ export default {
     while (conBicho.size < CON_GUSANO) conBicho.add(Math.floor(Math.random() * (FILAS.length * COLS.length)));
 
     let i = 0;
+    /* el orden importa: primero se llena una fila entera y luego la
+       siguiente, para que una cantidad impar deje el hueco atrás y no
+       un damero con agujeros en medio */
+    let puestas = 0;
     FILAS.forEach(dz => COLS.forEach(dx => {
+      if (puestas++ >= VAINAS_N) return;
       const rec = nuevaVaina(dx, TABLA_Z + dz, conBicho.has(i));
       vainasGrupo.add(rec.obj);
       vainas.push(rec);

@@ -30,10 +30,29 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.15.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.15.0',
+    fecha: '2026-08-26',
+    titulo: 'El Apuro',
+    cambios: [
+      'Modo nuevo: El Apuro. Los ingredientes se suceden sin respiro contra el reloj, y cada ración que terminas te DEVUELVE segundos. Los bichos ya no arruinan la partida: te quitan tiempo, y la partida sigue.',
+      'Se acabó la ficha antes de cada nivel. Ahora tocas un ingrediente y ya estás cocinando: el gesto se explica dentro, sobre el mesón, que es donde se puede aplicar mientras se lee.',
+      'Arreglada la arveja: las vainas se montaban de dos en dos y las arvejas salían atravesadas respecto a su propia vaina.',
+      'Al final de cada partida de El Apuro se abre una página del cuaderno — de un ingrediente que acabas de tener en la mano.',
+    ],
+    internos: [
+      'modo-apuro.js no sabe jugar a nada: se engancha a api.progreso / api.completar / api.arruinar y encadena los niveles que ya existen. Añadir el modo no tocó ni un nivel.',
+      'Una ración es una PORCIÓN del nivel (APURO.raciones), no el nivel entero: el choclo son 126 granos y eso es más que media partida del modo.',
+      'La dificultad de cada tanda sale de la escalera de variantes de la campaña, no de una tabla propia: dos tablas serían la misma curva escrita dos veces.',
+      'La baraja de ingredientes va sin reposición y barajada; el azar puro repetía el mismo ingrediente con una frecuencia que se siente rota.',
+      'ARRUINADO gana `clave` para que el modo le ponga precio en segundos a cada desastre.',
+      'nivel-arveja: las arvejas vuelven al eje X del modelo y COLS pasa a ±0.5 (la vaina mide 0.95 y estaban a 0.7).',
+    ],
+  },
   {
     v: '1.14.0',
     fecha: '2026-08-20',

@@ -169,15 +169,18 @@ export const MAIZ = {
   },
 };
 
-// DESVAINAR — Vainas
+/* DESVAINAR — Vainas
+
+   `cantidad` son VAINAS de verdad. Estaba a 1 en todas: era un
+   marcador de cuando ningún nivel leía la config, y ahora que la
+   leen dejaría una sola vaina en la tabla en vez de las seis. */
 export const VAINAS = {
   'arveja-1-facil': {
     nombre: 'La arveja · primer hilo',
     dificultad: 2, bloque: 'DESVAINAR',
     tiempoBase: 85,
     config: {
-      tipo: 'arveja',
-      cantidad: 1,
+      cantidad: 4,
       resistencia: 0,       // 0=suave, 1=normal, 2=apretada
       hilo_friccion: 0.3,   // 0.3=fácil, 0.8=difícil
       gusanos: 0,
@@ -188,11 +191,10 @@ export const VAINAS = {
     dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 75,
     config: {
-      tipo: 'arveja',
-      cantidad: 1,
+      cantidad: 6,
       resistencia: 1,
       hilo_friccion: 0.5,
-      gusanos: 1,
+      gusanos: 2,
     }
   },
   'arveja-3-dificil': {
@@ -200,11 +202,10 @@ export const VAINAS = {
     dificultad: 4, bloque: 'DESVAINAR',
     tiempoBase: 65,
     config: {
-      tipo: 'arveja',
-      cantidad: 1,
+      cantidad: 6,
       resistencia: 2,
       hilo_friccion: 0.8,
-      gusanos: 1,
+      gusanos: 3,
     }
   },
 
@@ -213,7 +214,6 @@ export const VAINAS = {
     dificultad: 2, bloque: 'DESVAINAR',
     tiempoBase: 80,
     config: {
-      tipo: 'haba',
       cantidad: 1,
       resistencia: 0,
       gusanos: 0,
@@ -224,7 +224,6 @@ export const VAINAS = {
     dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 70,
     config: {
-      tipo: 'haba',
       cantidad: 1,
       resistencia: 1,
       gusanos: 1,
@@ -541,3 +540,62 @@ export function proximoNivel(ordenActual) {
 export function nivelPorBloque(bloque) {
   return NIVELES_ORDENADO.filter(n => n.bloque === bloque);
 }
+
+/* ============================================================
+   EL APURO — el modo contrarreloj
+
+   La campaña se juega con calma: un ingrediente, su gesto, su
+   historia. El Apuro es lo contrario y a propósito — es la cocina
+   del Viernes Santo a las once de la mañana, con todo el mundo
+   pidiendo la olla.
+
+   POR QUÉ EL TIEMPO Y NO LAS VIDAS. En este juego hay gestos que
+   CASTIGAN la prisa: el choclo tierno revienta si pasas el dedo
+   fuerte, el melloco se dispara si lo empujas. Un modo de vidas
+   te vuelve cauto, y cauto contra el reloj es una contradicción
+   que el jugador siente aunque no sepa nombrarla. Con el reloj como
+   única vida, ir rápido y ir bien son la misma decisión.
+
+   Y EL RELOJ SUBE. Cada ración terminada devuelve segundos: la
+   recompensa de hacerlo bien no son puntos abstractos, es seguir
+   jugando. Es el enganche más viejo que hay y sigue siendo el mejor.
+
+   LOS BICHOS NO MATAN, COBRAN. En la campaña aplastar un gusanito
+   arruina la olla y se acabó. Aquí te cuesta segundos: la partida
+   sigue, y una partida que sigue es una partida que quieres
+   terminar. Perder de golpe por un error a los diez segundos es la
+   forma más rápida de que alguien cierre el juego.
+   ============================================================ */
+export const APURO = {
+  relojInicial: 45,
+  /* el bono por ración baja con las tandas: al principio regala
+     tiempo para que entres, después hay que ganárselo */
+  bonoBase: 9,
+  bonoMinimo: 4,
+  racionesPorTanda: 4,
+  /* lo que cuesta cada desastre, en segundos */
+  castigo: { aplastado: 10, enLaBatea: 12, granoPodrido: 8, otro: 8 },
+  /* aviso cuando quedan estos segundos: el reloj se pone rojo y late */
+  avisoRojo: 10,
+
+  /* QUÉ ENTRA Y CUÁNTO. `porcion` es qué parte del nivel completo
+     cuenta como una ración: el choclo entero son ciento veintiséis
+     granos y eso es un minuto largo — demasiado para una vuelta de
+     un modo que dura dos. `ajustes` recorta lo que en el apuro no
+     tiene sentido: nadie deshoja diez hojas cuando va con prisa, el
+     choclo ya viene pelado de la feria. */
+  raciones: [
+    { base: 'maiz',    porcion: 0.30, ajustes: { hojas: 2 } },
+    { base: 'arveja',  porcion: 0.70 },
+    { base: 'habas',   porcion: 0.70 },
+    { base: 'chochos', porcion: 0.70 },
+    { base: 'frejol',  porcion: 0.70 },
+    { base: 'melloco', porcion: 0.60 },
+    { base: 'col',     porcion: 0.55 },
+    { base: 'escoger', porcion: 0.50 },
+    { base: 'quinua',  porcion: 0.50 },
+    { base: 'mani',    porcion: 0.50 },
+    { base: 'bacalao', porcion: 0.55 },
+    { base: 'zapallo', porcion: 0.35 },
+  ],
+};
