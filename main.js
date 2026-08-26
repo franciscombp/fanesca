@@ -411,7 +411,15 @@ function renderMesa() {
   const hechos = listos();
   const todos = hechos >= NIVELES.length;
   const dias = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
-  $('#mesa-progreso').textContent = `${hechos} / ${NIVELES.length}${dias}`;
+  /* EL MARCADOR CAMBIA DE VARA CON EL ACTO. Contar ingredientes tenía
+     sentido mientras la meta era la olla; con la olla cocinada el
+     jugador está en la temporada, y un "12 / 12" clavado durante las
+     veintiocho paradas restantes decía que ya no había nada que
+     hacer en el 70% del mapa. */
+  const paradasHechas = RUTA.filter(n => estaListo(n.id)).length;
+  $('#mesa-progreso').textContent = estado.ollaVista
+    ? `${paradasHechas} / ${RUTA.length} paradas de la temporada${dias}`
+    : `${hechos} / ${NIVELES.length} ingredientes listos${dias}`;
   $('#olla-frase').textContent = FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)];
 
   /* ============================================================
@@ -543,14 +551,24 @@ function renderMesa() {
      Acto II se salían por abajo, encima de la despensa. */
   const alto = Math.max(...centros.map(c => c.y)) + 140;
   lista.style.height = alto + 'px';
-  const tramos = centros.slice(1).map((c, i) => {
-    const a = centros[i];
-    const hecho = i < hechos;
+  /* EN ORDEN VISUAL, NO DE INSERCIÓN. Los centros se apilan según se
+     añaden los nodos, y la olla se añade la última aunque se dibuje
+     en medio: unir centros consecutivos hacía que el último tramo
+     cruzara el mapa entero — del fondo de la temporada de vuelta a la
+     olla. Y el dorado iba por "cuántos ingredientes van", que topa en
+     doce: las veintiocho paradas de la temporada nunca doraban su
+     tramo. Ahora cada tramo une vecinos DE PANTALLA y se dora cuando
+     su parada de arriba está hecha. */
+  const visual = RUTA.map((n, i) => ({ ...centros[i], hecho: !!estaListo(n.id) }));
+  visual.push({ ...centros[RUTA.length], hecho: !!estado.ollaVista });
+  visual.sort((a, b) => a.y - b.y);
+  const tramos = visual.slice(1).map((c, i) => {
+    const a = visual[i];
     const d = `M ${a.x} ${a.y} C ${a.x} ${a.y + 66}, ${c.x} ${c.y - 66}, ${c.x} ${c.y}`;
     /* dos trazos por tramo: la base ancha es la tierra del sendero,
        las rayas de encima son las baldosas — sobre el mantel a
        cuadros, un solo trazo punteado se perdía */
-    return `<path class="tramo-base" d="${d}"/><path class="tramo ${hecho ? 'tramo--hecho' : ''}" d="${d}"/>`;
+    return `<path class="tramo-base" d="${d}"/><path class="tramo ${a.hecho ? 'tramo--hecho' : ''}" d="${d}"/>`;
   }).join('');
   lista.insertAdjacentHTML('afterbegin',
     `<svg class="camino-svg" viewBox="0 0 100 ${alto}" preserveAspectRatio="none" aria-hidden="true">${tramos}</svg>`);
@@ -1306,9 +1324,11 @@ function terminarNivel() {
     } else caja.classList.add('hidden');
 
     const quedanIngredientes = NIVELES.some(x => !ingredienteListo(x.id));
+    const quedanParadas = RUTA.some((x, i) => !estaListo(x.id) && desbloqueado(i));
     $('#listo-seguir').textContent = quedanIngredientes
       ? 'Siguiente ingrediente'
-      : (estado.ollaVista ? 'Siguiente parada' : 'Servir la fanesca');
+      : (!estado.ollaVista ? 'Servir la fanesca'
+        : (quedanParadas ? 'Siguiente parada' : '¡La cosecha, completa!'));
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
   }, 620);
@@ -1448,7 +1468,14 @@ function bindEventos() {
        parada que de verdad esté abierta: saltar a una cerrada era
        colarse por detrás del candado. */
     const sig = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
-    if (!sig) { mostrar('mesa'); return; }
+    if (!sig) {
+      mostrar('mesa');
+      /* no queda parada abierta sin hacer: si es porque están TODAS,
+         la temporada tiene su propio cierre — hora y media de juego
+         no puede terminar en volver a la mesa sin que nadie diga nada */
+      if (!RUTA.some(x => !estaListo(x.id))) setTimeout(() => mostrarFinal(true), 350);
+      return;
+    }
     jugar(sig.id);
   });
   $('#listo-repetir').addEventListener('click', () => {
@@ -1483,22 +1510,31 @@ function bindEventos() {
   });
 }
 
-function mostrarFinal() {
+function mostrarFinal(temporada = false) {
   /* cocinar la olla deja huella: es lo que abre el Acto II, y sin
      este registro el candado de la temporada decía "cocina la olla"
      mientras en realidad miraba otra cosa */
   if (!estado.ollaVista) { estado.ollaVista = true; guardar(); }
+  /* DOS FINALES, EL MISMO ALTAR. El de la olla celebra los doce; el
+     de la temporada, las cuarenta — hora y media de juego que antes
+     terminaba devolviéndote a la mesa en silencio, sin un solo
+     acuse de recibo. */
+  $('#final-eyebrow').textContent = temporada ? 'la temporada entera' : 'jueves santo';
+  $('#final-titulo').textContent = temporada ? '¡Se acabó la cosecha!' : '¡La fanesca está servida!';
+  $('#final-cuerpo').textContent = temporada
+    ? 'Las cuarenta paradas: el choclo tierno y el maíz de la tonga, la vaina suave y la apretada. Ya no queda grano en esta cocina que no conozca tu mano.'
+    : 'Todo lo que va adentro pasó por tus manos: grano por grano, vaina por vaina. Ahora sí, que hierva despacio.';
   /* La cuenta del final es sobre el ACTO I: la olla es el cierre de
      los doce, y medirla contra las cuarenta paradas —veintiocho de
      ellas opcionales y aún cerradas— convertía la celebración en un
      "24 de 120" que suena a suspenso. La temporada lleva su propio
      marcador en cada parada. */
-  const actoI = RUTA.filter(n => n.acto === 1);
-  const total = actoI.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
-  const cuch = actoI.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
+  const cuenta = temporada ? RUTA : RUTA.filter(n => n.acto === 1);
+  const total = cuenta.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
+  const cuch = cuenta.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
   $('#final-cierre').textContent = CIERRE;
   $('#final-voz').innerHTML = `«${CACUANGO_PARAMO.texto}»<span>${CACUANGO_PARAMO.quien}</span>`;
-  $('#final-total').textContent = `${cuch} de ${actoI.length * 3} cucharas · ${tiempoBonito(total)} en total`;
+  $('#final-total').textContent = `${cuch} de ${cuenta.length * 3} cucharas · ${tiempoBonito(total)} en total`;
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
   sfx('fiesta');
