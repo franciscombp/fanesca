@@ -77,6 +77,7 @@ export const HISTORIA = {
         'No es casualidad, y no es que una tradición haya reemplazado a la otra: es que las dos miran <b>el mismo día del cielo</b>.',
         'El Mushuk Nina se celebraba en el <b>equinoccio de marzo</b>. Y la Pascua cristiana no tiene fecha fija: se calcula como el primer domingo después de la primera luna llena que sigue a ese mismo equinoccio. El calendario que llegó de Europa cayó encima del andino sin tener que moverlo.',
         'Por eso la fanesca es de Viernes Santo y de cosecha a la vez. Son dos calendarios comiendo del mismo plato.',
+        'Y si este juego dice <b>jueves santo</b>, no es un despiste: pelar, desgranar y desvainar toma la tarde entera, así que la olla se deja lista la víspera. El jueves se cocina; el viernes se sirve.',
       ],
     },
     {

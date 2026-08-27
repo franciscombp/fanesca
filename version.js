@@ -30,10 +30,29 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.17.0';
+const APP_VERSION = '1.17.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.17.1',
+    fecha: '2026-08-27',
+    titulo: 'Lista para las manos de todos',
+    cambios: [
+      'El rótulo del Acto I ya no se imprime encima de la mesa: tiene su sitio en el camino, como el del Acto II.',
+      'El botón de "Nueva versión" ya no aparece en pleno nivel: espera a que vuelvas a la mesa, para no costarle la partida a nadie.',
+      'Salir de El Apuro pide un segundo toque —como en la campaña— y guarda siempre lo que llevas, también con la tecla Escape.',
+      'En el maíz, la presentación de cada mazorca y el aviso de los granos dañados ya no se pisan: se leen una detrás de la otra.',
+      'El cuaderno aclara lo del jueves: la olla se deja lista la víspera, y el Viernes Santo se sirve.',
+    ],
+    internos: [
+      'renderMesa: base del camino 76→176 para que el rótulo del Acto I quede dentro de #mesa-lista (top 58, no −42).',
+      'actualizador.js: avisarActualizacion() espera con un intervalo a que #screen-juego deje de estar activa.',
+      'motorListo: jugar() y arrancarApuro() no entran sin WebGL; migrar() sanea tipos del guardado (mejores no-objeto, récords sin ms, leidos no-array, dias).',
+      'nivel-maiz: presentarMazorca() encola avisarPodridos() a 4,8 s con token contra choclo nuevo y destruir().',
+      'niveles-config: «El segundo está duro»→«El choclo duro», «Entra el maíz seco»→«El maíz seco» — sintagmas nominales para «… a la olla» y «Primero …».',
+    ],
+  },
   {
     v: '1.17.0',
     fecha: '2026-08-27',

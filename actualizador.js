@@ -74,8 +74,27 @@
 
   let avisoPuesto = false;
   let actualizandoPorBoton = false;
+  let esperandoSalida = false;
   function avisarActualizacion(reg) {
     if (avisoPuesto || !reg.waiting) return;
+    /* NUNCA EN PLENO NIVEL. El chequeo corre al recuperar el foco y
+       cada hora, así que a un jugador activo el botón le aterrizaba a
+       media faena —o a media partida de El Apuro—, plantado donde
+       vive el pulgar, y un toque le recargaba la partida. Se espera a
+       que vuelva a la mesa o a la portada: la versión nueva puede
+       esperar tres minutos; la partida de alguien, no. */
+    const juego = document.getElementById('screen-juego');
+    if (juego && juego.classList.contains('active')) {
+      if (esperandoSalida) return;
+      esperandoSalida = true;
+      const espera = setInterval(() => {
+        if (juego.classList.contains('active')) return;
+        clearInterval(espera);
+        esperandoSalida = false;
+        avisarActualizacion(reg);
+      }, 2000);
+      return;
+    }
     avisoPuesto = true;
     const btn = document.createElement('button');
     btn.type = 'button';

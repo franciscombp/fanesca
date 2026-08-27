@@ -85,7 +85,9 @@ export const MAIZ = {
     config: { choclos: 2, hojas: 6, madurez: ['tierno', 'tierno'], podridos: 0, gusanos: 0 }
   },
   'maiz-5-primer-duro': {
-    nombre: 'El segundo está duro',
+    /* sintagma nominal, no frase: el nombre entra en plantillas como
+       «… a la olla» y «Primero …», donde una oración quedaba rota */
+    nombre: 'El choclo duro',
     corto: 'El primer duro',
     dificultad: 3, bloque: 'DESGRANAR',
     tiempoBase: 140,
@@ -131,7 +133,8 @@ export const MAIZ = {
 
   /* --- el maíz seco: la temporada se cierra donde se guarda --- */
   'maiz-11-seco': {
-    nombre: 'Entra el maíz seco',
+    /* sintagma nominal por lo mismo que el choclo duro de arriba */
+    nombre: 'El maíz seco',
     corto: 'El maíz seco',
     dificultad: 4, bloque: 'DESGRANAR',
     tiempoBase: 110,

@@ -72,7 +72,18 @@ const RENOMBRADOS = {
 };
 
 function migrar(s) {
-  if (!s.mejores) s.mejores = {};
+  /* PRIMERO, LOS TIPOS. Un guardado editado a mano o corrompido
+     pasaba cargar() entero —`!s.mejores` no atrapa un string— y el
+     juego reventaba después, justo al ganar, que es cuando se
+     comparan récords. Aquí se endereza lo que no tenga la forma
+     esperada en vez de dejar que explote lejos de su causa. */
+  if (!s.mejores || typeof s.mejores !== 'object' || Array.isArray(s.mejores)) s.mejores = {};
+  for (const k of Object.keys(s.mejores)) {
+    const m = s.mejores[k];
+    if (!m || typeof m !== 'object' || typeof m.ms !== 'number') delete s.mejores[k];
+  }
+  if (!Array.isArray(s.leidos)) s.leidos = [];
+  if (!s.dias || typeof s.dias !== 'object') s.dias = { ultima: null, seguidos: 0 };
   /* el ingrediente entero pasó a ser una temporada: su récord es el
      de la primera parada */
   CON_VARIANTES.forEach(base => {
@@ -460,13 +471,19 @@ function renderMesa() {
 
   const PASO = 132;               /* alto entre nodos */
   const XS = [50, 22, 50, 78];    /* la serpiente, en % del ancho */
+  /* el primer nodo baja para dejarle su hueco al rótulo del Acto I
+     DENTRO del contenedor, como ya lo tiene el del Acto II: con la
+     base vieja el rótulo caía en top negativo y se imprimía encima de
+     lo que hubiera arriba de la mesa — la frase de la olla en la
+     primera visita, el pie de El Apuro después. */
+  const BASE = 176;
   const centros = [];
 
   const nodoDe = (n, i, estadoNodo) => {
     const b = document.createElement('button');
     b.type = 'button';
     const x = XS[i % XS.length];
-    const y = i * PASO + 76;
+    const y = i * PASO + BASE;
     centros.push({ x, y });
     b.className = 'nodo ' + estadoNodo;
     b.style.left = x + '%';
@@ -492,7 +509,7 @@ function renderMesa() {
   const rotulo = (puesto, sobre, titulo, pie) => {
     const el = document.createElement('p');
     el.className = 'camino-acto';
-    el.style.top = (puesto * PASO + 76 - sobre) + 'px';
+    el.style.top = (puesto * PASO + BASE - sobre) + 'px';
     el.innerHTML = `<strong>${titulo}</strong><span>${pie}</span>`;
     lista.appendChild(el);
   };
@@ -552,7 +569,10 @@ function renderMesa() {
     ${todos ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
     <span class="nodo-nombre">${estado.ollaVista ? 'La fanesca, servida' : (todos ? '¡A cocinar!' : `La olla · faltan ${NIVELES.length - hechos}`)}</span>`;
   olla.setAttribute('aria-label', todos ? 'Cocinar la olla' : `La olla, faltan ${NIVELES.length - hechos} ingredientes`);
-  rotulo(0, 118, 'Acto I · La primera olla', 'los doce ingredientes, uno por uno');
+  /* 146 y no menos: el nodo se dibuja CENTRADO en su (x,y) —su borde
+     de arriba queda 72px por encima— y con menos margen el rótulo le
+     pisaba el plato al primer choclo */
+  rotulo(0, 146, 'Acto I · La primera olla', 'los doce ingredientes, uno por uno');
   if (RUTA.some(n => n.acto === 2)) {
     rotulo(ACTO_I_N + 1, 30, 'Acto II · La temporada', 'los mismos doce, cuando se ponen bravos');
   }
@@ -705,6 +725,7 @@ function marcaCuaderno() {
 
 let nivelActual = null;      /* datos de niveles.js */
 let modActual = null;        /* el módulo cargado */
+let motorListo = false;      /* si init() consiguió WebGL; sin él no se entra a ningún mesón */
 let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque */
 let hechosAhora = 0, totalAhora = 1;
@@ -1051,6 +1072,10 @@ function renderControles(mod) {
 async function jugar(id) {
   const n = rutaPorId(id);
   if (!n) return;
+  /* sin WebGL no hay mesón: entrar igual dejaba al jugador atrapado
+     en una pantalla vacía. El aviso largo ya está puesto en la escena
+     desde init(); aquí basta con no entrar. */
+  if (!motorListo) { toast('Este minijuego necesita WebGL 😔'); return; }
   nivelActual = n;
   estado.ultimoNivel = id;
   guardar();
@@ -1234,6 +1259,7 @@ function flotarTiempo(txt, clase) {
 }
 
 function arrancarApuro() {
+  if (!motorListo) { toast('Este minijuego necesita WebGL 😔'); return; }
   initAudio();
   pararReloj();
   tiempoMs = 0;
@@ -1517,8 +1543,18 @@ function bindEventos() {
        raciones ganadas y un récord posible, y perderlos por tocar el
        botón de pausa sería lo mismo que castigar por dejar de jugar.
        El resultado se enseña igual que si se hubiera acabado el
-       reloj — que es lo que el jugador quiere ver. */
-    if (Apuro.activo) { Apuro.terminar('salida'); return; }
+       reloj — que es lo que el jugador quiere ver. Pero con el mismo
+       doble toque que la campaña: un roce del pulgar no debe terminar
+       una partida que iba bien. */
+    if (Apuro.activo) {
+      if (Date.now() - salirArmado > 2600) {
+        salirArmado = Date.now();
+        toast('¿Terminar El Apuro? Toca otra vez — lo que llevas se guarda');
+        return;
+      }
+      Apuro.terminar('salida');
+      return;
+    }
     /* con faena empezada, un toque solo no bota el trabajo: el botón
        está a 40px del filo y el pulgar izquierdo pasa rozando */
     if (corriendo && hechosAhora > 0 && Date.now() - salirArmado > 2600) {
@@ -1577,6 +1613,10 @@ function bindEventos() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if ($$('.modal.open').length) { cerrarModales(); return; }
+      /* también con Escape el Apuro se CIERRA guardando: la salida
+         directa era la única ruta del juego que tiraba a la basura
+         raciones ganadas, sin resumen ni récord */
+      if (Apuro.activo) { Apuro.terminar('salida'); return; }
       if ($('#screen-juego').classList.contains('active')) salirDelNivel();
       else if ($('#screen-cuaderno').classList.contains('active')) mostrar('mesa');
     }
@@ -1636,6 +1676,7 @@ function init() {
   const cont = $('#escena');
   let ok = false;
   try { ok = Motor.init(cont, $('#destello')); } catch (e) { ok = false; }
+  motorListo = ok;
   if (ok) Motor.escenario(estado.escenario || POR_DEFECTO);
   /* el editor de escena: solo existe en modo dev, y guarda sus
      retoques aparte del progreso */

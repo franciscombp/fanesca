@@ -668,12 +668,7 @@ function intentarPelos() {
   api.sfx('pop2'); api.buzz([8, 10]);
   fase = 'desgranar';
   if (api.rotulo) api.rotulo(`Desgranar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
-  api.pista(`${madurez.presenta} Empieza por una <b>punta</b>.`, 4600);
-  /* Los dañados hay que PRESENTARLOS. Un grano café en medio de
-     ciento veinte amarillos no se lee solo como "a este trátalo
-     distinto": se lee como decoración, y el jugador se entera de que
-     eran otra cosa cuando ya arruinó la olla. */
-  if (posicionesPodridas.size) avisarPodridos();
+  presentarMazorca();
 }
 
 /* ---------- los granos dañados ---------- */
@@ -721,9 +716,30 @@ function picotearPodrido(a, p) {
 }
 
 function avisarPodridos() {
+  api.pista('Los <b>cafés están dañados</b>. No se sacan: <b>déjalos ahí</b> y se van con la tusa al terminar. Eso sí, traban la hilera — toca rodearlos.', 6400);
+}
+
+/* Arranca el desgranado: presenta la madurez y, si hay dañados, los
+   presenta a ellos también. Los dañados hay que presentarlos —un
+   grano café entre ciento veinte amarillos se lee como decoración, y
+   el jugador se entera de que eran otra cosa cuando ya arruinó la
+   olla— pero NO en el mismo tick: las dos pistas caían juntas y la
+   segunda borraba a la primera, justo en las paradas donde la frase
+   de la madurez es lo único que explica por qué la mazorca se
+   comporta distinto. La alerta roja de arriba sí sale al momento —va
+   por otro canal y no pisa nada—; la pista larga espera a que la
+   presentación se lea. El token mata el aviso pendiente si entra
+   otro choclo o el nivel se descarga. */
+let podridosToken = 0;
+function presentarMazorca() {
+  api.pista(`${madurez.presenta} Empieza por una <b>punta</b>.`, 4600);
+  if (!posicionesPodridas.size) return;
   const n = posicionesPodridas.size;
   api.aviso(`🟤 ${n === 1 ? 'Un grano dañado' : n + ' granos dañados'} — no los toques`);
-  api.pista('Los <b>cafés están dañados</b>. No se sacan: <b>déjalos ahí</b> y se van con la tusa al terminar. Eso sí, traban la hilera — toca rodearlos.', 6400);
+  const token = ++podridosToken;
+  setTimeout(() => {
+    if (token === podridosToken && fase === 'desgranar') avisarPodridos();
+  }, 4800);
 }
 
 /* ---------- armar un choclo ---------- */
@@ -822,8 +838,7 @@ function armarChoclo() {
     if (hojasGrupo) { giro.remove(hojasGrupo); hojasGrupo = null; }
     fase = 'desgranar';
     if (api.rotulo) api.rotulo(`Desgranar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
-    api.pista(`${madurez.presenta} Empieza por una <b>punta</b>.`, 4600);
-    if (posicionesPodridas.size) avisarPodridos();
+    presentarMazorca();
     return;
   }
   if (api.rotulo) api.rotulo(`Deshojar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
@@ -1298,6 +1313,7 @@ export default {
 
   destruir() {
     transToken++;
+    podridosToken++;   /* que un aviso de dañados pendiente no salga en otro mesón */
     mazorca = giro = tusa = granosGrupo = gusanosGrupo = hojasGrupo = pelos = null;
     granos = []; gusanos = []; cascadas = []; hojas = [];
     cargado = null; modo = null; hojaActiva = null; pellizcando = false; terminado = false;
