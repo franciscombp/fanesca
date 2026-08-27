@@ -110,7 +110,7 @@ function removerHasta(p) {
     if (!avisadoColmada) {
       avisadoColmada = true;
       api.sfx('resist'); api.buzz([16, 18]);
-      api.aviso('El agua ya no da más — bótala y pon otra');
+      api.aviso('El agua ya no da más — bótala y pon otra', 'bien');
       api.pista('Está saturada de espuma. <b>Bota el agua</b> y sigue con la nueva.', 3200);
     }
     return;
@@ -143,7 +143,7 @@ function botarAgua() {
   if (terminado) return;
   if (espuma < 0.06) {
     api.sfx('resist');
-    api.aviso('Esa agua está limpia todavía');
+    api.aviso('Esa agua está limpia todavía', 'bien');
     return;
   }
   aguas++;
@@ -163,7 +163,7 @@ function botarAgua() {
 
 function listo() {
   if (terminado) return;
-  if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea'); return; }
+  if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea', 'bien'); return; }
   terminado = true;
   /* la quinua limpia se va a la olla; el agua turbia se queda */
   granosGrupo.children.forEach((m, i) => {

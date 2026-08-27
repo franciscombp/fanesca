@@ -138,7 +138,7 @@ function revisarFase() {
 function revisarFinal() {
   if (terminado) return;
   if (granos.some(g => !g.ido && g.clase === 'buena')) return;
-  if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea'); return; }
+  if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea', 'bien'); return; }
   terminado = true;
   api.completar();
 }

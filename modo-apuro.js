@@ -73,6 +73,8 @@ let castigos = 0;           /* cuántos desastres */
 let segundosGanados = 0;
 let racionActual = null;    /* { base, cuota, total, hechos } */
 let bolsa = [];             /* la baraja de ingredientes, sin reposición */
+let cuotaBase = {};         /* la cuota de la primera vez que salió cada base */
+let castigoToken = 0;       /* para que un castigo viejo no monte nada tarde */
 let ganchos = null;         /* lo que el modo le pide al juego */
 let pidiendoSiguiente = false;
 let pendiente = null;      /* la ración cuyo nivel se está montando */
@@ -124,6 +126,7 @@ function arrancar(g) {
   raciones = 0; tanda = 1; cadena = 0; mejorCadena = 0;
   castigos = 0; segundosGanados = 0;
   tocados = new Set();
+  cuotaBase = {};
   racionActual = null;
   pendiente = null;
   pidiendoSiguiente = false;
@@ -176,7 +179,14 @@ function progreso(hechos, total) {
     racionActual.total = total;
     /* al menos uno: con porciones chicas y totales chicos, redondear
        hacia abajo daba cuotas de cero y la ración se servía sola */
-    racionActual.cuota = Math.max(1, Math.ceil(total * racionActual.porcion));
+    let cuota = Math.max(1, Math.ceil(total * racionActual.porcion));
+    /* LA CUOTA SE CONGELA EN LA DE LA TANDA 1. La dificultad de las
+       tandas ya sube por la config (más resistencia, más bichos);
+       si además creciera la cuota mientras el bono BAJA, el mismo
+       ingrediente pagaría la mitad por el doble de trabajo — el
+       jugador lo siente como estafa, no como reto. */
+    if (!cuotaBase[racionActual.base]) cuotaBase[racionActual.base] = cuota;
+    racionActual.cuota = Math.min(cuota, cuotaBase[racionActual.base]);
   }
   racionActual.hechos = hechos;
   if (racionActual.cuota && hechos >= racionActual.cuota) servida();
@@ -214,9 +224,12 @@ function arruinar(motivo) {
   ganchos.castigo({ coste, motivo, reloj: Math.max(0, reloj) });
   if (reloj <= 0) { terminar('reloj'); return true; }
   /* la ración se da por perdida y entra otra: quedarse en un choclo
-     con la olla ya arruinada no tiene nada que ofrecer */
+     con la olla ya arruinada no tiene nada que ofrecer. El respiro de
+     700 ms es para que el aviso del castigo se VEA antes de que el
+     mesón cambie — sin él, la mesa nueva se tragaba la explicación. */
   if (racionActual) racionActual.servida = true;
-  siguienteRacion();
+  const token = ++castigoToken;
+  setTimeout(() => { if (activo && token === castigoToken) siguienteRacion(); }, 700);
   return true;
 }
 

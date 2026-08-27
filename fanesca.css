@@ -801,6 +801,16 @@ svg[width="0"] { width: 0; height: 0; }
   border: 2px solid rgba(255, 235, 200, .34);
   box-shadow: var(--e-3);
 }
+/* Con el mesón activo, el toast SUBE: abajo vive la pista —la única
+   enseñanza del juego— y el toast de celebración se le plantaba
+   encima comiéndole las líneas de en medio. Arriba celebra igual y
+   no tapa clase. `#stage:has()` porque el toast vive fuera de las
+   pantallas y no hereda de #screen-juego. */
+#stage:has(#screen-juego.active) #toast {
+  bottom: auto;
+  top: calc(env(safe-area-inset-top) + 5.4rem);
+}
+#stage:has(#screen-juego.active) #toast.visible { transform: translateX(-50%) translateY(0); }
 
 @media (prefers-reduced-motion: reduce) {
   .hud-alerta.entra { animation: none; }
@@ -1528,3 +1538,10 @@ body.con-editor #stage { margin-right: 340px; }
   font-size: var(--t-xs); color: var(--text-muted, #7a6a55);
   text-shadow: 0 1px 0 rgba(255,255,255,.7);
 }
+
+/* El Apuro con candado: se ve, se sabe qué falta, no grita */
+.btn-apuro--cerrado {
+  background: linear-gradient(135deg, #9a8672 0%, #b09a83 100%);
+  box-shadow: var(--e-1);
+}
+.btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.14); }

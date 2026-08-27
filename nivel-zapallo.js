@@ -574,7 +574,7 @@ export default {
       cargando.estado = 'cargado'; cargado = true;
       cargando.gus.aro.visible = false;
       api.sfx('tab'); api.buzz(12);
-      api.aviso('Llévalo a la composta 🌿');
+      api.aviso('Llévalo a la composta 🌿', 'bien');
       modo = 'cargar';
       return;
     }
@@ -671,7 +671,7 @@ export default {
     w.estado = 'cargado'; pellizcando = true;
     w.gus.aro.visible = false;
     api.sfx('tab'); api.buzz(12);
-    api.aviso('Llévalo a la composta 🌿');
+    api.aviso('Llévalo a la composta 🌿', 'bien');
   },
   alPellizcarMover() {
     if (!pellizcando || !cargando) return;

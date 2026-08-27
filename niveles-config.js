@@ -627,22 +627,28 @@ export const APURO = {
      un modo que dura dos. `ajustes` recorta lo que en el apuro no
      tiene sentido: nadie deshoja diez hojas cuando va con prisa, el
      choclo ya viene pelado de la feria. */
+  /* Las porciones se calibraron midiendo lo que tarda cada ración de
+     verdad: el bono es plano (9 s), así que las raciones tienen que
+     costar parecido — antes la quinua valía una vuelta de dedo y el
+     bacalao trece toques por presa. Y el choclo entra YA PELADO
+     (hojas: 0): cobraba tres gestos de deshojado antes de dejar
+     puntuar, con la barra clavada en cero. */
   raciones: [
-    { base: 'maiz',    porcion: 0.30, ajustes: { hojas: 2 } },
+    { base: 'maiz',    porcion: 0.22, ajustes: { hojas: 0 } },
     { base: 'arveja',  porcion: 0.70 },
     { base: 'habas',   porcion: 0.70 },
     { base: 'chochos', porcion: 0.70 },
     { base: 'frejol',  porcion: 0.70 },
     { base: 'melloco', porcion: 0.60 },
-    { base: 'col',     porcion: 0.55 },
+    { base: 'col',     porcion: 0.30 },
     /* sin gorgojo: en escoger el bicho TRABA la fase de barrer —no se
        puede puntuar hasta sacarlo— y camina solo a la batea en ~18 s.
        Una ración que te cobra 30 s hagas lo que hagas no es brava,
        es una tómbola. */
     { base: 'escoger', porcion: 0.50, ajustes: { gusanos: 0 } },
     { base: 'quinua',  porcion: 0.50 },
-    { base: 'mani',    porcion: 0.50 },
-    { base: 'bacalao', porcion: 0.55 },
-    { base: 'zapallo', porcion: 0.35 },
+    { base: 'mani',    porcion: 0.35 },
+    { base: 'bacalao', porcion: 0.30 },
+    { base: 'zapallo', porcion: 0.25 },
   ],
 };

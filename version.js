@@ -30,10 +30,33 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.16.0';
+const APP_VERSION = '1.17.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.17.0',
+    fecha: '2026-08-27',
+    titulo: 'La versión redonda',
+    cambios: [
+      'El juego por fin enseña y se deja leer: las pistas duran lo que toma leerlas, van en fila —el gesto, la del nivel, el aviso del bicho— y una parada ya superada no repite el tutorial.',
+      'El reloj arranca con tu primer toque, no mientras lees: aprender ya no cuesta cucharas.',
+      'Terminar el 12º ingrediente sirve la fanesca de verdad, las tarjetas de cada nivel aparecen (estaban mudas las doce) y el cuaderno se abre con ellas.',
+      'La temporada cuenta y termina: el marcador sigue después de la olla, el sendero se dora parada a parada, y la parada 40 cierra con "¡Se acabó la cosecha!".',
+      'La primera visita va al grano: sin selector de cocinas ni El Apuro estorbando — aparecen cuando ya cocinaste algo. El Apuro se abre con cuatro ingredientes y enseña sus reglas la primera vez.',
+      'Las vainas abiertas de arveja y haba ya no muestran granos falsos en la tapa, y los avisos de rutina dejaron de sonar a alarma.',
+      'El modo dev salió de la portada: cinco toques en el número de versión lo revelan.',
+    ],
+    internos: [
+      'pista(): duración por palabras (340 ms/u, piso 2,6 s, techo 12 s) y pistasEnFila() con captura de las pistas de construir(). Una pista reactiva corta la fila.',
+      'gestos de niveles.js reescritos a una frase; avisoBicho por ingrediente (la mosca se espanta, no se pellizca) y condicionado a que la config traiga bichos.',
+      'relojEnEspera: jugar() arma sin arrancar y el primer pointerdown en #escena dispara; completar/arruinar aceptan el estado en espera.',
+      'Sendero por orden visual con dorado por parada; marcador por actos; mostrarFinal(temporada) reutiliza el altar con la cuenta de las 40.',
+      'Apuro: porciones recalibradas (maíz 0.22 y pelado con hojas:0, col/bacalao 0.30, maní 0.35, zapallo 0.25), cuota congelada en la de tanda 1, castigo con coste y ración perdida visibles 700 ms, la voz no congela su reloj, partida de 0 raciones sin felicitación hueca.',
+      'ARRUINADO normaliza el artículo del bicho («El el gusano» y «El mosca», fuera). Banda de dificultad repartida por huecos ideales: el final es la tonga, no diez choclos seguidos.',
+      'ollaVista abre el Acto II y migra para quien ya jugaba la temporada; builders.js al PRECACHE.',
+    ],
+  },
   {
     v: '1.16.0',
     fecha: '2026-08-26',

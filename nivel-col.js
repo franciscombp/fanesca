@@ -202,7 +202,7 @@ function cortarEn(z) {
     gruesas++;
     api.sfx('resist'); api.buzz([14, 16]);
     if (gruesas === 1) api.pista('<b>Más finita.</b> Una tajada gruesa es una sola tira: así se te acaba la col.', 3600);
-    else api.aviso('Muy gruesa — vas a necesitar otra col');
+    else api.aviso('Muy gruesa — vas a necesitar otra col', 'bien');
   } else {
     api.sfx(tiras % 2 ? 'pop' : 'pop2');
     api.buzz(8);
@@ -228,7 +228,7 @@ function cortarEn(z) {
 
 function revisarFinal() {
   if (terminado || tiras < OBJETIVO) return;
-  if (plaga.vivos()) { api.aviso('Falta sacar el gusano antes de llevar la batea'); return; }
+  if (plaga.vivos()) { api.aviso('Falta sacar el gusano antes de llevar la batea', 'bien'); return; }
   terminado = true;
   api.completar();
 }

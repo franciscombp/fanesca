@@ -191,6 +191,7 @@ export const NIVELES = [
     icono: 'bacalao',
     modulo: () => import('./nivel-bacalao.js'),
     gesto: '<b>Frota</b> la sal de cada presa y arrástrala al cordel a orear.',
+    avisoBicho: '🪰 Si se posa <b>la mosca</b>: espántala de un roce. <b>No la aplastes</b> contra la carne.',
 
     nota: 'El bacalao llega seco y salado desde el norte. Se le saca la sal frotando y se tiende a orear antes de la leche.',
     bicho: 'la mosca',

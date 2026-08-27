@@ -187,7 +187,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
       cargado = rec;
       rec.bicho.aro.visible = false;
       api.sfx('tab'); api.buzz(12);
-      api.aviso('Llévalo a la composta 🌿');
+      api.aviso('Llévalo a la composta 🌿', 'bien');
       return true;
     },
     llevando() { return !!cargado; },

@@ -18,16 +18,26 @@
    tener que leerle el título al jugador.
    ============================================================ */
 
+/* Los niveles mandan el bicho como pueden: 'gusanito', 'mosca',
+   'el gusano'. La plantilla ponía "El " delante de todos y salían
+   «El el gusano reventó» y «El mosca reventó». Aquí se normaliza UNA
+   vez: si ya trae artículo se respeta, si no se le pone el suyo. */
+const conArticulo = (bicho) => {
+  if (/^(el|la|los|las)\s/i.test(bicho)) return bicho;
+  return (bicho === 'mosca' ? 'la ' : 'el ') + bicho;
+};
+const Mayus = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
 export const ARRUINADO = {
   aplastado: (bicho = 'gusanito') => ({
     clave: 'aplastado',
-    titulo: 'Lo aplastaste',
-    texto: `El ${bicho} reventó encima de la comida. Con eso ya no hay nada que hacer: se bota todo y se empieza de nuevo.`,
+    titulo: bicho === 'mosca' ? 'La aplastaste' : 'Lo aplastaste',
+    texto: `${Mayus(conArticulo(bicho))} reventó encima de la comida. Con eso ya no hay nada que hacer: se bota todo y se empieza de nuevo.`,
   }),
   enLaBatea: (bicho = 'gusanito') => ({
     clave: 'enLaBatea',
     titulo: 'Se te fue a la batea',
-    texto: `El ${bicho} llegó hasta la batea y se mezcló con lo bueno. Ya no se puede separar: toca botar todo y empezar de nuevo.`,
+    texto: `${Mayus(conArticulo(bicho))} llegó hasta la batea y se mezcló con lo bueno. Ya no se puede separar: toca botar todo y empezar de nuevo.`,
   }),
   granoPodrido: () => ({
     clave: 'granoPodrido',

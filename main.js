@@ -83,6 +83,10 @@ function migrar(s) {
     delete s.mejores[base];
     if (s.ultimoNivel === base && primera) s.ultimoNivel = primera.id;
   });
+  /* quien ya jugó paradas de la temporada cocinó la olla en el orden
+     viejo: sin esta huella el mapa le pintaría hecho lo que el
+     candado le niega */
+  if (!s.ollaVista && RUTA.some(n => n.acto === 2 && s.mejores[n.id])) s.ollaVista = true;
   for (const [viejo, nuevo] of Object.entries(RENOMBRADOS)) {
     if (!s.mejores[viejo]) continue;
     if (!s.mejores[nuevo]) s.mejores[nuevo] = s.mejores[viejo];
@@ -200,27 +204,25 @@ function construirRuta() {
     if (suyas.length) porIngrediente.set(ing.id, suyas);
   });
 
-  /* Dentro de cada banda de dificultad se reparte EN RUEDA, un
-     ingrediente por turno. Ordenar sólo por dificultad dejaba las
-     siete paradas de maíz de las bandas bajas una detrás de otra: el
-     mismo muro que se venía a deshacer, sólo que más adelante. En
-     rueda, la temporada alterna choclo, arveja, habas… y aun así sube.
-
-     Se agota por bandas y no de una vez para que la rueda no adelante
-     una parada brava por el mero hecho de que a su ingrediente le
-     tocaba turno. */
+  /* Dentro de cada banda de dificultad se reparte PROPORCIONALMENTE:
+     al j-ésimo de los k que un ingrediente trae en la banda le toca
+     el hueco ideal (j+½)·N/k, y la banda se ordena por esos huecos.
+     La rueda simple —un turno por ingrediente— repartía bien mientras
+     todos tenían paradas, pero al agotarse los demás dejaba las siete
+     del maíz en cola: las últimas seis paradas del juego eran todas
+     choclo. Con huecos ideales, siete entre quince caen una de cada
+     dos, de la primera a la última. */
   const bandas = [...new Set([...porIngrediente.values()].flat().map(n => n.dificultad))].sort((a, b) => a - b);
   bandas.forEach(dif => {
-    const colas = [...porIngrediente.entries()]
-      .map(([id, ns]) => [id, ns.filter(n => n.dificultad === dif)])
-      .filter(([, ns]) => ns.length);
-    let quedan = true;
-    for (let vuelta = 0; quedan; vuelta++) {
-      quedan = false;
-      colas.forEach(([, ns]) => {
-        if (vuelta < ns.length) { ruta.push(ns[vuelta]); quedan = true; }
-      });
-    }
+    const enBanda = [...porIngrediente.values()]
+      .map(ns => ns.filter(n => n.dificultad === dif))
+      .filter(ns => ns.length);
+    const N = enBanda.reduce((a, ns) => a + ns.length, 0);
+    const conHueco = [];
+    enBanda.forEach(ns => ns.forEach((n, j) =>
+      conHueco.push({ n, hueco: (j + 0.5) * N / ns.length })));
+    conHueco.sort((a, b) => a.hueco - b.hueco);
+    conHueco.forEach(({ n }) => ruta.push(n));
   });
 
   return ruta;
@@ -234,10 +236,13 @@ function nodoDeVariante(ing, base, v, acto) {
     acto,
     nombre: v.nombre,
     /* En el Acto I la parada PRESENTA al ingrediente, así que se llama
-       como él: "Las habas", no "habas · apertura suave". El nombre de
-       variante es información de dificultad, y en el acto donde sólo
-       hay una variante de cada uno no distingue nada — sólo alarga. */
-    corto: acto === 1 ? ing.nombre : (v.corto || null),
+       como él: "Las habas". En el Acto II pasa lo contrario: cuatro
+       ingredientes comparten icono, y un nodo que sólo dice
+       "Apretadas" no dice de quién — el nombre completo de la
+       variante ya trae al ingrediente dentro. */
+    corto: acto === 1
+      ? ing.nombre
+      : v.nombre.replace(/^(El|La|Los|Las)\s/, '').replace(/^\w/, c => c.toUpperCase()),
     dificultad: v.dificultad,
     config: v.config,
     cucharas: cucharasDeTiempo(v.tiempoBase),
@@ -408,6 +413,21 @@ function renderEscenarios() {
 
 function renderMesa() {
   renderEscenarios();
+  /* la primera visita va al grano: el selector de cocinas y El Apuro
+     son de quien ya cocina, y empujaban el único nodo tocable fuera
+     de la pantalla justo para quien más lo necesitaba ver */
+  const algunHecho = listos() > 0;
+  const esc = document.querySelector('.escenarios');
+  if (esc) esc.classList.toggle('hidden', !algunHecho && !estado.devMode);
+  const btnA = $('#btn-apuro');
+  if (btnA) {
+    btnA.classList.toggle('hidden', !algunHecho && !estado.devMode);
+    btnA.classList.toggle('btn-apuro--cerrado', listos() < 4 && !estado.devMode);
+    const pie = $('#btn-apuro-pie');
+    if (pie) pie.textContent = listos() < 4 && !estado.devMode
+      ? `Se abre con 4 ingredientes — llevas ${listos()}`
+      : (estado.apuro ? `Tu récord: ${estado.apuro.raciones} raciones` : 'Contra reloj, todo junto');
+  }
   const hechos = listos();
   const todos = hechos >= NIVELES.length;
   const dias = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
@@ -525,13 +545,14 @@ function renderMesa() {
      cocinarla. El jugador la veía a una distancia que no era la suya
      y el final del juego quedaba escondido detrás del contenido
      opcional. */
-  const olla = nodoDe(OLLA, ACTO_I_N, todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado');
+  const olla = nodoDe(OLLA, ACTO_I_N,
+    estado.ollaVista ? 'nodo--olla nodo--hecho' : (todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado'));
   olla.innerHTML = `
     <span class="nodo-plato nodo-plato--olla">${icono(OLLA.icono)}</span>
     ${todos ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
-    <span class="nodo-nombre">${todos ? '¡A cocinar!' : `La olla · faltan ${NIVELES.length - hechos}`}</span>`;
+    <span class="nodo-nombre">${estado.ollaVista ? 'La fanesca, servida' : (todos ? '¡A cocinar!' : `La olla · faltan ${NIVELES.length - hechos}`)}</span>`;
   olla.setAttribute('aria-label', todos ? 'Cocinar la olla' : `La olla, faltan ${NIVELES.length - hechos} ingredientes`);
-  rotulo(0, 72, 'Acto I · La primera olla', 'los doce ingredientes, uno por uno');
+  rotulo(0, 118, 'Acto I · La primera olla', 'los doce ingredientes, uno por uno');
   if (RUTA.some(n => n.acto === 2)) {
     rotulo(ACTO_I_N + 1, 30, 'Acto II · La temporada', 'los mismos doce, cuando se ponen bravos');
   }
@@ -685,6 +706,7 @@ function marcaCuaderno() {
 let nivelActual = null;      /* datos de niveles.js */
 let modActual = null;        /* el módulo cargado */
 let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
+let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque */
 let hechosAhora = 0, totalAhora = 1;
 
 /* El reloj se ve mientras se juega: de él salen las cucharas, así que
@@ -719,7 +741,7 @@ function arrancarReloj() {
     pintarReloj();
   }, 83);
 }
-function pararReloj() { corriendo = false; clearInterval(relojId); relojId = null; }
+function pararReloj() { corriendo = false; relojEnEspera = false; clearInterval(relojId); relojId = null; }
 
 /* ---------- las pistas ----------
 
@@ -782,7 +804,9 @@ function voz(cita, ms = 9000, opts = {}) {
   if (!cita) { v.classList.remove('visible'); if (vozPauso) { vozPauso = false; if (nivelActual) arrancarReloj(); } return; }
   /* leer una cita no puede costar cucharas: el reloj se detiene
      mientras está en pantalla y sigue cuando se va */
-  if (corriendo) { pararReloj(); vozPauso = true; }
+  /* en El Apuro el reloj ES la partida: congelarlo por una cita lo
+     convertía en 9,5 s de tiempo regalado (o robado al ritmo) */
+  if (corriendo && !Apuro.activo) { pararReloj(); vozPauso = true; }
   /* sobre la escena va la versión corta si la hay: la cita entera se
      lee en el cuaderno, con su contexto y su fuente */
   $('#voz-texto').textContent = '«' + ((opts.corta && cita.corta) || cita.texto) + '»';
@@ -851,13 +875,16 @@ const api = {
   composta(k) { Motor.llenarRecipiente('composta', Math.max(0, Math.min(1, k))); },
   completar() {
     if (Apuro.activo) { Apuro.completar(); return; }
-    if (corriendo) terminarNivel();
+    /* "en espera" también es una partida viva: el reloj arranca con
+       el primer toque, y un nivel terminado de un toque no puede
+       quedarse sin celebrar por un tecnicismo del cronómetro */
+    if (corriendo || relojEnEspera) { relojEnEspera = false; terminarNivel(); }
   },
   arruinar(motivo) {
     /* en El Apuro un desastre cuesta segundos, no la partida: si el
        modo se lo queda, aquí no se abre nada */
     if (Apuro.activo && Apuro.arruinar(motivo)) return;
-    if (corriendo) arruinarNivel(motivo);
+    if (corriendo || relojEnEspera) { relojEnEspera = false; arruinarNivel(motivo); }
   },
   aviso: alerta,
   pista: (msg, ms) => { if (capturaPista && msg) capturaPista(msg, ms); else pista(msg, ms); },
@@ -1066,21 +1093,37 @@ async function jugar(id) {
   Motor.cargar(modActual, api, nivelConfig);
   capturaPista = null;
   renderControles(modActual);
-  /* La fila del arranque: el gesto del ingrediente, las pistas que el
-     nivel dejó al construirse, y —la primera vez— el aviso del bicho,
-     que era lo único que decía la ficha eliminada y no dice el gesto.
-     Cada una espera a que la anterior se lea. */
-  const primeraVez = !ingredienteListo(n.base || n.id);
-  pistasEnFila([
-    { msg: n.gesto },
-    ...capturadas,
-    primeraVez && n.bicho
-      ? { msg: `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>` }
-      : null,
-  ]);
+  /* La fila del arranque, con tres reglas aprendidas mirando jugar:
+
+     · si el nivel puso SU pista al construirse, el gesto genérico
+       sobra — cinco de los doce decían lo mismo dos veces seguidas, y
+       la del nivel llega en la fase exacta en que sirve;
+     · el aviso del bicho sólo si ESTA parada trae bichos: cuatro de
+       las intro van limpias y avisar de un gusanito que no existe es
+       enseñar a desconfiar de los avisos. Y con el texto de cada
+       ingrediente, que la mosca no se pellizca — se espanta;
+     · en una parada ya superada no se repite nada de esto: quien
+       vuelve a bajarse el tiempo no necesita el tutorial de nuevo. */
+  const yaJugada = !!estado.mejores[n.id];
+  const cfgN = nivelConfig || {};
+  const traeBichos = (Array.isArray(cfgN.gusanos) ? cfgN.gusanos.some(g => g > 0) : (cfgN.gusanos || 0) > 0)
+    || (cfgN.moscas_frecuencia || 0) > 0;
+  const fila = [];
+  if (!yaJugada && !capturadas.length) fila.push({ msg: n.gesto });
+  fila.push(...capturadas);
+  if (!yaJugada && traeBichos) {
+    fila.push({ msg: n.avisoBicho || `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>` });
+  }
+  pistasEnFila(fila);
   Editor.nivel(n.id);
   pintarBotonEditor();
-  arrancarReloj();
+  /* EL RELOJ ARRANCA CON EL PRIMER TOQUE. Leer las pistas de
+     arranque costaba entre un cuarto y la mitad del presupuesto de
+     tres cucharas: el juego enseñaba y cobraba por escuchar la
+     clase. El tiempo corre desde que la mano entra al mesón. */
+  relojEnEspera = true;
+  tiempoMs = 0;
+  pintarReloj();
   estado.intentos++;
   guardar();
 }
@@ -1096,9 +1139,9 @@ async function jugar(id) {
    que existe el DOM.
    ============================================================ */
 
-function apuroHUD() {
+function apuroHUD(nombre) {
   const t = $('#hud-tarea');
-  if (t) t.textContent = `El Apuro · tanda ${Apuro.tanda}`;
+  if (t) t.textContent = nombre ? `${nombre} · tanda ${Apuro.tanda}` : `El Apuro · tanda ${Apuro.tanda}`;
   const pct = $('#hud-pct');
   if (pct) pct.textContent = Apuro.raciones + (Apuro.raciones === 1 ? ' ración' : ' raciones');
   const barra = $('#hud-barra');
@@ -1114,7 +1157,7 @@ async function montarRacion(base, config) {
   if (!ficha) return;
   nivelActual = ficha;
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(ficha.icono);
-  apuroHUD();
+  apuroHUD(ficha.nombre);
   try {
     const m = await ficha.modulo();
     modActual = m.default || m;
@@ -1163,8 +1206,10 @@ const GANCHOS_APURO = {
     Motor.destello('rgba(230,57,70,.4)');
     Motor.sacudir(0.7);
     flotarTiempo('−' + coste + 's', 'pierde');
-    alerta(motivo && motivo.titulo ? motivo.titulo : 'Se dañó', 'peligro');
-    setTimeout(() => alerta(null), 1600);
+    /* con el qué, el cuánto y la consecuencia: perder la ración sin
+       que nadie lo diga se sentía a fallo del juego, no del dedo */
+    alerta(`${motivo && motivo.titulo ? motivo.titulo : 'Se dañó'} · −${coste}s · ración perdida`, 'peligro');
+    setTimeout(() => alerta(null), 2800);
   },
 
   tanda(n, bono) {
@@ -1216,9 +1261,12 @@ function cerrarApuro(resumen) {
     const cabecera = document.querySelector('#modal-apuro .sheet-eyebrow');
     if (cabecera) cabecera.textContent = resumen.porque === 'salida' ? 'lo dejaste ahí' : 'se acabó el tiempo';
     $('#apuro-raciones').textContent = resumen.raciones;
-    $('#apuro-detalle').textContent =
-      `${resumen.tandas} tanda${resumen.tandas > 1 ? 's' : ''} · mejor cadena ${resumen.mejorCadena}` +
-      (resumen.castigos ? ` · ${resumen.castigos} desastre${resumen.castigos > 1 ? 's' : ''}` : ' · sin un solo desastre');
+    $('#apuro-detalle').textContent = resumen.raciones === 0
+      /* felicitar "sin un solo desastre" a quien no sacó ni una
+         ración es burlarse sin querer: mejor decirle cómo se empieza */
+      ? 'Nadie sirve una ración a la primera. Termina una parte del ingrediente y el reloj sube.'
+      : `${resumen.tandas} tanda${resumen.tandas > 1 ? 's' : ''} · mejor cadena ${resumen.mejorCadena}` +
+        (resumen.castigos ? ` · ${resumen.castigos} desastre${resumen.castigos > 1 ? 's' : ''}` : ' · sin un solo desastre');
     $('#apuro-mejor').textContent = esRecord
       ? (mejor.raciones ? `¡Nuevo récord! antes: ${mejor.raciones}` : 'Tu primera vez en El Apuro')
       : `Tu récord sigue siendo ${mejor.raciones}`;
@@ -1287,7 +1335,9 @@ function terminarNivel() {
 
   setTimeout(() => {
     Motor.setActive(false);
-    $('#listo-nombre').textContent = n.nombre + ' a la olla';
+    /* en el Acto I la parada se llama como su ingrediente: "El choclo
+       a la olla", no "El choclo · primeros granos a la olla" */
+    $('#listo-nombre').textContent = (n.acto === 1 ? (n.corto || n.nombre) : n.nombre) + ' a la olla';
     /* las cucharas se revelan de a una, cada una más aguda: el
        redoble del final es la mitad de la celebración */
     $('#listo-cucharas').innerHTML = cucharasHTML(0);
@@ -1410,18 +1460,47 @@ function bindEventos() {
     });
   }
 
+  /* EL MODO DEV NO ES PARA JUGADORES. Estaba en la portada a un
+     toque de cualquiera, y "todo abierto" le vacía la campaña a
+     quien lo pulse por curiosidad. Ahora el botón nace oculto y lo
+     revelan cinco toques en el número de versión — el gesto de
+     autor de toda la vida. Si ya está activo se muestra, para poder
+     apagarlo sin el ritual. */
   const btnDev = $('#btn-dev');
-  if (btnDev) btnDev.addEventListener('click', () => {
-    sfx('tab');
-    estado.devMode = !estado.devMode;
-    guardar();
-    pintarDev();
-    toast(estado.devMode ? 'Modo dev: todos los niveles abiertos 🛠' : 'Modo dev desactivado');
-    if ($('#screen-mesa').classList.contains('active')) renderMesa();
-  });
+  if (btnDev) {
+    btnDev.classList.toggle('hidden', !estado.devMode);
+    let toquesVersion = 0, toquesId = null;
+    const ver = document.querySelector('[data-version]');
+    if (ver) ver.addEventListener('click', () => {
+      clearTimeout(toquesId);
+      toquesId = setTimeout(() => { toquesVersion = 0; }, 1600);
+      if (++toquesVersion >= 5) {
+        toquesVersion = 0;
+        btnDev.classList.remove('hidden');
+        toast('Modo dev a la vista 🛠');
+      }
+    });
+    btnDev.addEventListener('click', () => {
+      sfx('tab');
+      estado.devMode = !estado.devMode;
+      guardar();
+      pintarDev();
+      toast(estado.devMode ? 'Modo dev: todos los niveles abiertos 🛠' : 'Modo dev desactivado');
+      if ($('#screen-mesa').classList.contains('active')) renderMesa();
+    });
+  }
 
-  /* El Apuro */
-  $('#btn-apuro').addEventListener('click', () => { sfx('tab'); arrancarApuro(); });
+  /* El Apuro: cerrado hasta conocer cuatro gestos. Soltar a alguien
+     que no ha jugado nada en un contrarreloj de ingredientes al azar
+     es soltarlo a perder sin saber por qué. */
+  $('#btn-apuro').addEventListener('click', () => {
+    sfx('tab');
+    if (listos() < 4 && !estado.devMode) {
+      toast(`El Apuro se abre con 4 ingredientes — llevas ${listos()}`);
+      return;
+    }
+    arrancarApuro();
+  });
   $('#apuro-otra').addEventListener('click', () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
   $('#apuro-salir').addEventListener('click', () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
 
@@ -1502,6 +1581,11 @@ function bindEventos() {
       else if ($('#screen-cuaderno').classList.contains('active')) mostrar('mesa');
     }
   });
+
+  /* el primer dedo sobre el mesón arranca el reloj de la campaña */
+  $('#escena').addEventListener('pointerdown', () => {
+    if (relojEnEspera) { relojEnEspera = false; arrancarReloj(); }
+  }, { capture: true });
 
   /* el navegador se fue a otra pestaña: no correr el reloj de gratis */
   document.addEventListener('visibilitychange', () => {

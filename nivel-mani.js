@@ -157,7 +157,7 @@ function pasar(p, dx, dz) {
 
 function revisarFinal() {
   if (terminado || hechos < CUANTOS) return;
-  if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea'); return; }
+  if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea', 'bien'); return; }
   terminado = true;
   /* la pasta se recoge de la piedra y se va entera a la olla */
   granos.forEach((rec, i) => {

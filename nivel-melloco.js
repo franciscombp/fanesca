@@ -166,7 +166,7 @@ function rasparEn(punto, paso, dx, dz) {
 
 function revisarFinal() {
   if (terminado || hechos < CUANTOS) return;
-  if (plaga.vivos()) { api.aviso('Falta sacar el gusanito antes de llevar la batea'); return; }
+  if (plaga.vivos()) { api.aviso('Falta sacar el gusanito antes de llevar la batea', 'bien'); return; }
   terminado = true;
   api.completar();
 }

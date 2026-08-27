@@ -428,7 +428,7 @@ function revisarCob() {
   if (terminado || fase !== 'desgranar') return;
   if (!cobLimpio()) return;
   const vivos = gusanos.some(w => w.estado === 'fuera' || w.estado === 'cargado');
-  if (vivos) { api.aviso('Falta sacar el gusanito antes de seguir'); return; }
+  if (vivos) { api.aviso('Falta sacar el gusanito antes de seguir', 'bien'); return; }
 
   fase = 'transicion';
   api.sfx('bien'); api.buzz([15, 25]);
@@ -618,7 +618,7 @@ function agarrarBicho(w) {
   w.obj.scale.setScalar(0.82);
   api.tween(w.obj.scale, 'x', 1, 0.18); api.tween(w.obj.scale, 'y', 1, 0.18); api.tween(w.obj.scale, 'z', 1, 0.18);
   api.sfx('tab'); api.buzz(12);
-  api.aviso('Llévalo a la composta 🌿');
+  api.aviso('Llévalo a la composta 🌿', 'bien');
 }
 
 /* ---------- las hojas: pelar ---------- */
@@ -813,6 +813,19 @@ function armarChoclo() {
   mazorca.scale.setScalar(0.01);
   api.tween(mazorca.scale, 'x', 1, 0.4); api.tween(mazorca.scale, 'y', 1, 0.4); api.tween(mazorca.scale, 'z', 1, 0.4);
 
+  /* CON CERO HOJAS EL CHOCLO LLEGA PELADO DEL TODO: ni envoltura ni
+     jalón de pelos. Es la puerta que usa El Apuro — ahí nadie deshoja
+     con el reloj corriendo, el choclo viene listo de la feria — y de
+     paso la pista de "pela las hojas" no sale cuando no hay hojas. */
+  if (HOJAS_N === 0) {
+    if (pelos) { giro.remove(pelos); pelos = null; }
+    if (hojasGrupo) { giro.remove(hojasGrupo); hojasGrupo = null; }
+    fase = 'desgranar';
+    if (api.rotulo) api.rotulo(`Desgranar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
+    api.pista(`${madurez.presenta} Empieza por una <b>punta</b>.`, 4600);
+    if (posicionesPodridas.size) avisarPodridos();
+    return;
+  }
   if (api.rotulo) api.rotulo(`Deshojar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
   api.pista('Pela las hojas: agarra una y <b>jala hacia abajo</b>.', 4200);
 }
@@ -1268,10 +1281,18 @@ export default {
     tAuto -= dt;
     if (tAuto <= 0) { tAuto = 0.35; autoGirar(); }
 
-    /* si te trabaste un rato, la cocina te sopla la respuesta */
+    /* si te trabaste un rato, la cocina te sopla la respuesta — en
+       las dos fases: el novato se atasca ANTES de ver un grano, con
+       la hoja que no sabe que se jala */
     if (!terminado && fase === 'desgranar' && hechos < TOTAL && ultimoPop && t - ultimoPop > 11) {
       ultimoPop = t;
       api.pista('Prueba por las <b>puntas</b> de la mazorca: ahí siempre hay un grano suelto.', 3600);
+    }
+    if (!terminado && fase === 'deshojar' && ultimoPop && t - ultimoPop > 12) {
+      ultimoPop = t;
+      api.pista(hojasQuedan()
+        ? 'Agarra una hoja y <b>jálala hacia abajo</b>, hasta que cuelgue.'
+        : 'Ya no hay hojas: <b>jala los pelos</b> de la punta y se va la envoltura entera.', 4000);
     }
   },
 
