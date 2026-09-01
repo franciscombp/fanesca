@@ -240,12 +240,16 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
 
 ## Progreso — la semana, y un solo candado
 
-- **El mapa es una semana**: cinco días de ocho paradas (`DIAS` en
+- **La campaña es una semana y se presenta como el RECETARIO de la
+  abuela**: cinco días de ocho paradas (`DIAS` en
   `niveles-config.js`) que entrelazan las doce presentaciones con las
-  variantes bravas, la olla al final como clímax del jueves por la
-  noche, y el Viernes Santo debajo — la zona de El Apuro. La
-  narrativa vive en `DIAS_RELATO` y `VIERNES` (`historia.js`); cada
-  cierre de día se celebra una vez (`estado.diasVistos`).
+  variantes bravas. Cada día es una página de libreta y cada parada
+  un renglón numerado (`.pagina`/`.renglon` — no `.paso`, que es el
+  kill-switch del HUD viejo del zapallo); la receta grande de la
+  fanesca cierra el cuaderno llenándose parada a parada, y la última
+  página es el Viernes Santo con El Apuro. La narrativa vive en
+  `DIAS_RELATO` y `VIERNES` (`historia.js`); cada cierre de día se
+  celebra una vez (`estado.diasVistos`).
 - **Un solo candado, el de adelante**: la parada siguiente se abre al
   terminar la anterior. Se puede porque el reparto de la semana ya
   entrelaza los ingredientes (nunca hay quince maíces en fila) y los

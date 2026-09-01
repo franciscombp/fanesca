@@ -1547,82 +1547,181 @@ body.con-editor #stage { margin-right: 340px; }
 .btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.14); }
 
 /* ============================================================
-   LA SEMANA EN EL MAPA — bandas, banners y el viernes.
+   EL RECETARIO — la semana en la libreta de la abuela.
 
-   Cada día tiñe su tramo del mantel con un color propio y lleva su
-   banner de capítulo; la olla se llena al final del jueves y debajo
-   está el Viernes Santo con El Apuro. El apilado va explícito
-   porque el orden del DOM ya no coincide con el de pintura: las
-   bandas se añaden al final pero van DEBAJO del sendero, y el
-   sendero debajo de los nodos. */
+   Cada día es una página de papel con sus renglones; cada parada,
+   un paso numerado que se tacha al hacerse. El papel manda: fondo
+   crema, renglones punteados, la línea roja de margen de las
+   libretas de toda la vida, y la letra a mano (Caveat) solo para lo
+   que la abuela escribiría — quién vino, el sello de "hecho". */
 
-.zona {
-  position: absolute; left: 0; right: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-top: 2px dashed rgba(150, 98, 43, .28);
+.recetario {
+  display: flex; flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-2) 0 var(--sp-4);
 }
-.zona--lunes     { background: linear-gradient(180deg, rgba(242,179,31,.14), rgba(242,179,31,.05)); border-top: none; }
-.zona--martes    { background: linear-gradient(180deg, rgba(150,98,43,.14), rgba(150,98,43,.05)); }
-.zona--miercoles { background: linear-gradient(180deg, rgba(108,191,90,.16), rgba(108,191,90,.05)); }
-.zona--jueves    { background: linear-gradient(180deg, rgba(217,79,48,.13), rgba(217,79,48,.05)); }
-.zona--noche     { background: linear-gradient(180deg, rgba(43,54,94,.18), rgba(43,54,94,.07)); }
-/* sin borde: su corte pasaba justo por detrás de la olla, y el cambio
-   de tinte más la propia olla ya dicen que aquí empieza otra cosa */
-.zona--viernes   { background: linear-gradient(180deg, rgba(242,179,31,.20), rgba(217,79,48,.08)); border-top: none; }
 
-/* el decorado de cada banda: utilería, no información */
-.zona-deco {
-  position: absolute;
+.pagina {
+  position: relative;
+  background:
+    linear-gradient(90deg, transparent 0 40px, rgba(217, 79, 48, .35) 40px 41.5px, transparent 41.5px),
+    linear-gradient(180deg, #fffdf4, #fbf4e0);
+  border: var(--ring);
+  border-radius: var(--r-lg, 18px);
+  box-shadow: var(--e-2);
+  padding: .85rem 1rem .5rem 1rem;
+  animation: pagina-entra .4s var(--ease-pop, ease-out) both;
+}
+/* levemente torcidas y alternadas, como pegadas a mano */
+.pagina:nth-child(odd)  { transform: rotate(.35deg); }
+.pagina:nth-child(even) { transform: rotate(-.3deg); }
+@keyframes pagina-entra {
+  from { opacity: 0; translate: 0 14px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+.pagina--porvenir { opacity: .68; }
+.pagina--porvenir .pagina-titulo { color: var(--text-muted, #7a6a55); }
+
+.pagina-head {
+  position: relative;
+  padding: 0 3.4rem .5rem 0;
+  border-bottom: 2px solid rgba(150, 98, 43, .25);
+  margin-bottom: .15rem;
+}
+.pagina-deco {
+  position: absolute; top: 0; right: 0;
   font-size: 1.7rem;
-  opacity: .5;
+  opacity: .6;
   filter: saturate(.85) drop-shadow(0 2px 2px rgba(0,0,0,.12));
 }
+.pagina-dia {
+  margin: 0;
+  font-family: var(--font-display); font-size: var(--t-2xs, .68rem); font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--chile-600, #b93f24);
+}
+.pagina-titulo {
+  margin: 0;
+  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
+  color: var(--text); line-height: 1.1;
+}
+.pagina-quien {
+  margin: .05rem 0 0;
+  font-family: 'Caveat', 'Segoe Script', cursive;
+  font-size: 1.15rem; line-height: 1;
+  color: var(--text-muted, #7a6a55);
+}
+/* el sello de página hecha: tinta verde, torcido, de caucho */
+.pagina-sello {
+  position: absolute; right: -4px; bottom: 4px;
+  transform: rotate(-8deg);
+  font-family: 'Caveat', 'Segoe Script', cursive;
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--nopal-600, #4e9c3e);
+  border: 2px solid var(--nopal-500, #6cbf5a);
+  border-radius: 8px;
+  padding: 0 .45rem;
+  background: rgba(108, 191, 90, .1);
+}
+.pagina-cuenta {
+  position: absolute; right: 0; bottom: 6px;
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  color: var(--text-muted, #7a6a55);
+}
 
-.camino-svg { z-index: 1; }
-.camino .nodo, .camino-dia, .viernes { z-index: 2; }
+.pagina-pasos { list-style: none; margin: 0; padding: 0; }
+.renglon {
+  display: flex; align-items: center; gap: .55rem;
+  width: 100%;
+  padding: .42rem .1rem;
+  background: none; border: 0;
+  border-bottom: 1px dashed rgba(150, 98, 43, .28);   /* el renglón de la libreta */
+  font-family: inherit; text-align: left; color: inherit;
+  cursor: pointer;
+}
+.pagina-pasos li:last-child .renglon { border-bottom: 0; }
+.renglon:active { background: rgba(150, 98, 43, .07); }
 
-/* el banner de un día: mismo traje que el rótulo de acto de antes */
-.camino-dia {
-  position: absolute; left: 0; right: 0;
-  display: flex; flex-direction: column; align-items: center; gap: .1rem;
-  margin: 0; padding: 0 1rem;
-  text-align: center;
-  pointer-events: none;
+.renglon-num {
+  flex: 0 0 1.7rem;
+  font-family: 'Caveat', 'Segoe Script', cursive;
+  font-size: 1.15rem; font-weight: 700; line-height: 1;
+  color: var(--text-muted, #7a6a55);
+  text-align: right;
 }
-.camino-dia strong {
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
-  color: var(--text);
-  background: var(--surface-raised, #fff);
-  border: var(--ring); border-radius: var(--r-pill);
-  padding: .18rem .9rem;
-  box-shadow: var(--e-1);
+.renglon-icono {
+  flex: 0 0 auto;
+  width: 40px; height: 40px;
+  padding: 5px;
+  border-radius: 50%;
+  background: radial-gradient(120% 120% at 32% 26%, var(--surface-raised, #fff) 0%, var(--surface, #f4ead6) 100%);
+  border: 2.5px solid var(--madera-400, #b4632c);
 }
-.camino-dia span {
-  font-size: var(--t-xs); color: var(--text-muted, #7a6a55);
-  text-shadow: 0 1px 0 rgba(255,255,255,.7);
+.renglon-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.renglon-nombre {
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
-.camino-dia--hecho strong { border-color: var(--nopal-500, #6cbf5a); }
-.camino-dia--hecho strong::after { content: ' ✓'; color: var(--nopal-500, #6cbf5a); }
-.camino-dia--porvenir { opacity: .55; }
+.renglon-dif { font-size: .52rem; letter-spacing: -1px; line-height: 1; margin-top: 2px; filter: saturate(.9); }
+.renglon-estado { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; }
+.renglon-cucharas { display: flex; gap: 1px; }
+.renglon-cucharas .cuchara { width: 14px; height: 14px; }
 
-/* el número de parada: chiquito, arriba a la izquierda del plato */
-.nodo-num {
-  position: absolute; top: -6px; left: 4px;
-  min-width: 22px; height: 22px;
-  display: grid; place-items: center;
-  font-family: var(--font-display); font-weight: 800; font-size: .72rem;
-  color: var(--text);
-  background: var(--surface-raised, #fff);
-  border: var(--ring); border-radius: var(--r-pill);
-  box-shadow: var(--e-1);
-  padding: 0 4px;
+/* hecho: tachado con tinta suave — en una libreta, tachar ES lograr */
+.renglon--hecho .renglon-nombre {
+  text-decoration: line-through;
+  text-decoration-color: rgba(108, 191, 90, .75);
+  text-decoration-thickness: 2px;
+  color: var(--text-muted, #7a6a55);
 }
-.nodo--bloqueado .nodo-num { opacity: .55; }
+.renglon--hecho .renglon-icono { border-color: var(--nopal-500, #6cbf5a); }
+
+/* el siguiente paso lleva el lápiz y respira */
+.renglon--siguiente {
+  background: linear-gradient(90deg, rgba(242, 179, 31, .22), rgba(242, 179, 31, .06));
+  border-radius: 10px;
+  border-bottom-color: transparent;
+}
+.renglon--siguiente .renglon-icono {
+  border-color: var(--maiz-500, #f2b31f);
+  box-shadow: 0 0 0 4px rgba(242, 179, 31, .25);
+  animation: nodo-late 1.6s var(--ease-pop) infinite;
+}
+.renglon-lapiz { font-size: 1.15rem; animation: lapiz-bob 1.6s ease-in-out infinite; }
+@keyframes lapiz-bob {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-3px) rotate(-8deg); }
+}
+
+.renglon--bloqueado { opacity: .5; }
+.renglon--bloqueado .renglon-icono { filter: grayscale(.75); }
+.renglon-candado { font-size: .95rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+
+/* la receta grande del final: la fanesca, llenándose */
+.receta-final {
+  display: flex; align-items: center; gap: .8rem;
+  width: 100%;
+  padding: .8rem 1rem;
+  border-radius: var(--r-lg, 18px);
+  border: 3px solid var(--chile-500, #d94f30);
+  background: linear-gradient(135deg, #fffdf4, #fbeede);
+  box-shadow: var(--e-2);
+  font-family: inherit; text-align: left; color: inherit;
+  cursor: pointer;
+}
+.receta-plato { width: 64px; height: 64px; flex: 0 0 auto; }
+.receta-plato svg { width: 100%; height: 100%; }
+.receta-txt { flex: 1 1 auto; display: flex; flex-direction: column; gap: .1rem; }
+.receta-txt strong { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.05; }
+.receta-txt small { font-size: var(--t-xs); color: var(--text-muted, #7a6a55); }
+.receta-final--lista { animation: nodo-late 1.6s var(--ease-pop) infinite; }
+.receta-final--servida { border-color: var(--nopal-500, #6cbf5a); }
 
 /* la olla se llena: la barra es la promesa de que esto termina */
 .olla-carga {
-  width: 86px; height: 9px;
+  width: 100%; max-width: 190px; height: 9px;
+  margin-top: .2rem;
   border-radius: var(--r-pill);
   background: var(--surface-raised, #fff);
   border: var(--ring);
@@ -1636,36 +1735,18 @@ body.con-editor #stage { margin-right: 340px; }
   transition: width .5s var(--ease-out);
 }
 
-/* el Viernes Santo: la zona de El Apuro al fondo del camino */
-.viernes {
-  position: absolute; left: 0; right: 0;
-  display: flex; flex-direction: column; align-items: center; gap: .35rem;
-  padding: 0 var(--sp-5);
-  text-align: center;
-}
-.viernes-tit {
-  display: flex; flex-direction: column; align-items: center; gap: .1rem;
-  margin: 0;
-}
-.viernes-tit strong {
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
-  color: var(--text);
-  background: var(--surface-raised, #fff);
-  border: var(--ring); border-radius: var(--r-pill);
-  padding: .18rem .9rem;
-  box-shadow: var(--e-1);
-}
-.viernes-tit span {
-  font-size: var(--t-xs); color: var(--text-muted, #7a6a55);
-  text-shadow: 0 1px 0 rgba(255,255,255,.7);
+/* la última página: el Viernes Santo, con El Apuro dentro */
+.pagina--viernes {
+  background:
+    linear-gradient(90deg, transparent 0 40px, rgba(217, 79, 48, .35) 40px 41.5px, transparent 41.5px),
+    linear-gradient(180deg, #fff8e6, #fdeecd);
+  padding-bottom: .9rem;
 }
 .viernes-promesa {
-  margin: 0 0 .3rem;
+  margin: .35rem 0 .6rem;
   font-size: var(--t-sm); color: var(--text-muted, #7a6a55);
-  max-width: 320px;
-  text-shadow: 0 1px 0 rgba(255,255,255,.6);
 }
-.viernes .btn-apuro { margin: 0; max-width: 360px; }
+.pagina--viernes .btn-apuro { margin: 0; }
 
 /* la escalera de logros: pendientes en gris, el nuevo brilla */
 .logro--pendiente {

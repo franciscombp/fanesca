@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.18.0';
+const APP_VERSION = '1.19.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.19.0',
+    fecha: '2026-09-01',
+    titulo: 'El recetario de la abuela',
+    cambios: [
+      'La semana ya no es un mapa: es el recetario de la abuela. Cada día es una página de la libreta —con su renglón rojo de margen y su letra a mano— y cada parada, un paso numerado de la receta.',
+      'Los pasos hechos se tachan con tinta verde y guardan sus cucharas; el que sigue lleva el lápiz y respira.',
+      'Al final del cuaderno está la receta grande: la fanesca, con su barra llenándose parada a parada. Y la última página es el Viernes Santo, donde vive El Apuro.',
+      'Cada página dice quién está hoy en la cocina y cuánto va del día — la semana entera se hojea en un momento.',
+    ],
+    internos: [
+      'renderMesa: recetario en flujo (secciones .pagina + renglones .renglon) en vez de la serpiente absoluta; adiós zonas/banners/sendero SVG. Clase renglon y no paso: .paso es el kill-switch del HUD viejo del zapallo (display:none !important).',
+      'Los renglones de presentación se escriben «El choclo · desgranar» (corto + tarea); las variantes van con su nombre. Autoscroll por rectángulos (offsetTop ya no mide contra el contenedor).',
+      'Caveat (Google Fonts) para lo manuscrito: quién vino, números de paso, el sello de «✓ hecho». Fallback cursive.',
+      'Portada: «Abrir el recetario»; el letrero de la mesa: «El recetario de la abuela».',
+    ],
+  },
   {
     v: '1.18.0',
     fecha: '2026-09-01',

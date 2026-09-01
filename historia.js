@@ -80,17 +80,17 @@ export const DIAS_RELATO = {
     refri: 'Habas peladas, chochos, fréjol, la primera arveja y tres choclos desgranados.',
   },
   martes: {
-    quien: 'llegó la tía con el costal',
+    quien: 'la tía, con noticias de medio mundo',
     escena: 'La tía llegó con el costal al hombro y noticias de medio mundo. Entre los tres dejaron la lenteja escogida, la quinua lavada y el maní majado en la piedra. «El jueves esto se llena», advierte. No exagera.',
     refri: 'La lenteja limpia, la col en tiras, la quinua sin espuma y el maní molido.',
   },
   miercoles: {
-    quien: 'los primos, al desgrane',
+    quien: 'los primos, y el tío con el bacalao',
     escena: 'Los primos desgranaron más de lo que botaron, que en ellos ya es decir. La vecina mandó col y zapallo de su huerta, y el tío apareció con el bacalao envuelto en papel. La refri ya no cierra a la primera.',
     refri: 'El bacalao en remojo, el zapallo partido, y la mesa del desgrane llena de tusas.',
   },
   jueves: {
-    quien: 'la casa llena',
+    quien: 'todos, y todos opinan',
     escena: 'Ya no cabe un alma en la cocina y todo el mundo opina de todo. Tú a lo tuyo: la arveja apretada, la mazorca picada, el maní fino. La abuela prueba la sal del bacalao y por primera vez en la semana no corrige nada.',
     refri: 'Todo lo delicado, listo. Solo queda lo bravo: la tonga.',
   },
