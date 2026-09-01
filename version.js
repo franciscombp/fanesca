@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.19.0';
+const APP_VERSION = '1.20.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.20.0',
+    fecha: '2026-09-01',
+    titulo: 'La despensa, vacía: cocinan los dieciocho',
+    cambios: [
+      'Los seis que esperaban en la despensa ya tienen minijuego, cada uno con su gesto: frotar el garbanzo remojado, rallar el sambo, agitar el arroz hasta que el agua salga clara, desmigar el queso (y la leche de un solo golpe), cascar y pelar el huevo duro, y freír el maduro para armar el plato.',
+      'La semana creció a 46 paradas: el garbanzo llega el martes con el costal, el sambo el miércoles desde la huerta, el arroz el jueves con la casa llena.',
+      'El Viernes Santo ahora se juega: con la olla servida se abren el queso, el huevo y la guarnición — lo de encima del plato — y al armarlo, la mesa queda puesta.',
+      'El Apuro reparte ahora dieciocho ingredientes, con la mosca rondando el queso y la sartén contra el reloj.',
+      'Seis tarjetas nuevas para el cuaderno: la camisita del remojo, el primo pálido, el agua que sale blanca, la miga y la leche, lo de encima, y el plato que se arma.',
+    ],
+    internos: [
+      'nivel-garbanzo/sambo/arroz/queso/huevo/guarnicion.js: seis módulos con el contrato de siempre; piezas en modelos/despensa.js (paleta ampliada). Todos con token de generación para sus setTimeout — el siguiente huevo se plantaba en el mesón del nivel siguiente.',
+      'DIAS: martes/miércoles/jueves a 9 paradas; día viernes con sirve:true — desbloqueado() y el candado del recetario miran ollaVista; la olla, el final y su cuenta (129 cucharas) miden solo la campaña de 43.',
+      'APURO.raciones: 18 entradas con porciones calibradas (guarnición con presas:1); SIN_FIN para los seis. POR_VENIR = [] y la despensa no se dibuja vacía.',
+      'maduro en Group: la forma vive en la escala del mesh y escalarlo directo la borraba (tajada del tamaño de la pantalla).',
+    ],
+  },
   {
     v: '1.19.0',
     fecha: '2026-09-01',

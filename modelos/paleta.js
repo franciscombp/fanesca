@@ -138,6 +138,47 @@ export const COMIDA = {
   mosca_ojo: '#c0392b',
   mosca_ala: '#eaf4f6',
 
+  /* sambo: el primo pálido del zapallo — piel verde agua con vetas
+     crema, pulpa clarita que se deshace en hebra */
+  sambo_piel: '#cfe0a8',
+  sambo_veta: '#e9f2cd',
+  sambo_pulpa: '#f6edcf',
+  sambo_pepa: '#e8d9a8',
+  rallador: '#c4beb2',
+  rallador_diente: '#8f887b',
+  rallador_marco: '#a5744a',
+
+  /* garbanzo: la pepa con su piquito y la camisita que suelta */
+  garbanzo: '#e8c98a',
+  garbanzo_camisita: '#f2e3c2',
+
+  /* arroz: grano blanco y el agua que sale lechosa */
+  arroz: '#f7f3e8',
+  agua_leche: '#f2f0e4',
+
+  /* queso y leche: fresco, blanco, de desmigajar */
+  queso: '#f8f3e2',
+  queso_borde: '#efe6cc',
+  leche: '#fdfbf4',
+  jarra: '#c9855a',
+
+  /* huevo duro: cáscara, grieta y la clara de adentro */
+  huevo_cascara: '#f0e0c8',
+  huevo_grieta: '#8a7a5e',
+  huevo_clara: '#fbf7ee',
+
+  /* la guarnición: el maduro por sus tres estados, la empanadita y
+     el ají — lo de encima del plato */
+  sarten: '#4a4640',
+  sarten_mango: '#6b4a2c',
+  maduro: '#f2c04e',
+  maduro_dorado: '#d98f2b',
+  maduro_quemado: '#5c3a1c',
+  empanadita: '#f0d9a0',
+  aji_salsa: '#d94f30',
+  plato_hondo: '#e8dbc0',
+  crema_fanesca: '#f0dfae',
+
   /* la utilería del mesón */
   tabla: '#ecc287',
   ojo_blanco: '#fffdf6',

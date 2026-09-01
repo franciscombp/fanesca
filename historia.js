@@ -99,6 +99,12 @@ export const DIAS_RELATO = {
     escena: 'La casa por fin se calló. Quedan la abuela, tú y la tonga de maíz seco — la faena que se hace de noche porque de día no dio tiempo. El último grano cae cuando ya nadie lo ve. Ahora sí: la olla.',
     refri: 'No queda nada por pelar. Mañana solo se sirve.',
   },
+  /* el viernes también se juega: lo de encima del plato */
+  viernes: {
+    quien: 'todos los que caben, y más',
+    escena: 'El queso desmigado, el huevo en rodajas, el maduro todavía caliente. La abuela mira la mesa, mira la olla y te mira a ti: «Sirve tú». Y la puerta no deja de sonar.',
+    refri: 'Nada — ya está todo en la mesa. Ahora, a servir.',
+  },
 };
 
 /* la promesa del Viernes: el texto de la zona final del mapa, donde
@@ -278,6 +284,33 @@ export const TARJETAS = {
     titulo: 'La sal era el barco',
     texto: 'El bacalao llegó por una regla religiosa —nada de carne en vigilia— y se quedó por una razón física: sin frío, el único pescado que podía cruzar el Atlántico y subir a los Andes era el que venía seco y enterrado en sal. Desalarlo, como acabas de hacer, es deshacerle el viaje.',
     abre: ['bacalao'],
+  },
+  garbanzo: {
+    titulo: 'La camisita del remojo',
+    texto: 'El garbanzo vino del Mediterráneo con los mismos barcos que el haba, y aprendió las mismas costumbres: una noche entera en agua antes de tocar la olla. A la mañana la piel ya no está pegada — está puesta, floja, y sale frotando. En muchas casas es el paso que les toca a los niños, porque no se puede hacer mal.',
+    abre: ['granos'],
+  },
+  sambo: {
+    titulo: 'El primo pálido',
+    texto: 'El sambo es de estas mismas tierras que el zapallo, y en la fanesca entran los dos: el zapallo en cubos que se ven, el sambo en hebra que desaparece. Rallado y hervido se deshace entero en el caldo — nadie lo encuentra en el plato y sin él el caldo no es el mismo. Hay ingredientes que trabajan así, sin firmar.',
+    abre: ['origen'],
+  },
+  arroz: {
+    titulo: 'El agua que sale blanca',
+    texto: 'Lo blanco que suelta el arroz al lavarse es almidón, y no es mugre: es lo que se le quita para que no vuelva engrudo la olla. Por eso el arroz no se lava mirando espuma, como la quinua, sino mirando el agua — cuando sale clara, ya soltó lo que tenía que soltar. Cada grano de esta cocina se lava distinto, y saber cuál es cuál también es cocinar.',
+  },
+  queso: {
+    titulo: 'La miga, nunca el cuchillo',
+    texto: 'El queso fresco se desmigaja con los dedos porque la miga se funde en el caldo y el cubo de cuchillo no: flota entero, como ajeno. La leche y el queso son la capa que el calendario católico le puso encima a la olla de granos — la vigilia prohibía la carne, no la vaca — y a estas alturas ya son tan de la fanesca como el choclo.',
+    abre: ['granos'],
+  },
+  huevo: {
+    titulo: 'Lo de encima también cuenta',
+    texto: 'El huevo duro no va dentro de la fanesca: va encima, en rodajas, coronando el plato con el maduro y las empanaditas. Es la señal de que este plato no se sirve — se ARMA, y cada casa lo arma distinto. Pelarlo bien tiene su truco de toda la vida: cascarlo a golpecitos y jalar desde la grieta, nunca de a poquitos.',
+  },
+  guarnicion: {
+    titulo: 'El plato se arma',
+    texto: 'Maduro frito, empanaditas de viento, el ají al lado: la guarnición es la firma de cada casa sobre un plato que es de todos. Dos fanescas con la misma olla no llegan iguales a la mesa. Y el maduro tiene una sola regla, que ya conoces: se voltea cuando dora — ni antes, que queda pálido, ni después, que ya no hay maduro.',
   },
 };
 

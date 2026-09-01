@@ -156,6 +156,9 @@ const listos = () => NIVELES.filter(n => ingredienteListo(n.id)).length;
 function desbloqueado(i) {
   if (estado.devMode || i === 0) return true;
   if (estaListo(RUTA[i].id)) return true;
+  /* el viernes no mira la parada anterior: mira la OLLA. Lo de
+     encima del plato no se prepara antes de que la fanesca exista. */
+  if (RUTA[i].sirve && !estado.ollaVista) return false;
   return estaListo(RUTA[i - 1].id);
 }
 
@@ -203,7 +206,7 @@ function construirRuta() {
       if (!ing) return;
       const intro = !presentados.has(v.base);
       presentados.add(v.base);
-      ruta.push(nodoDeVariante(ing, v.base, v, { dia: dia.id, diaIndex: d, intro, num: ruta.length + 1 }));
+      ruta.push(nodoDeVariante(ing, v.base, v, { dia: dia.id, diaIndex: d, intro, num: ruta.length + 1, sirve: !!dia.sirve }));
     });
   });
   return ruta;
@@ -415,14 +418,22 @@ function renderMesa() {
 
   const hechos = listos();
   const paradasHechas = RUTA.filter(n => estaListo(n.id)).length;
-  const todas = paradasHechas >= RUTA.length;
+  /* LA OLLA MIRA LA CAMPAÑA: los días de preparación, sin el
+     viernes — lo de encima del plato viene DESPUÉS de la olla, no
+     antes */
+  const campana = RUTA.filter(n => !n.sirve);
+  const campanaHecha = campana.filter(n => estaListo(n.id)).length;
+  const todas = campanaHecha >= campana.length;
+  const todo = paradasHechas >= RUTA.length;
   const racha = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
   /* el marcador dice EN QUÉ DÍA de la semana vas: es el mismo número
      de siempre, pero con el capítulo puesto */
   const diaEnCurso = DIAS.find(d => !diaCompleto(d));
-  $('#mesa-progreso').textContent = todas
-    ? (estado.ollaVista ? `La semana entera, cocinada${racha}` : `40 / 40 — la olla espera${racha}`)
-    : `${paradasHechas} / ${RUTA.length} paradas · ${diaEnCurso.nombre.toLowerCase()}${racha}`;
+  $('#mesa-progreso').textContent = (todo && estado.ollaVista)
+    ? `La mesa, puesta y servida${racha}`
+    : (todas && !estado.ollaVista
+      ? `${paradasHechas} / ${RUTA.length} — la olla espera${racha}`
+      : `${paradasHechas} / ${RUTA.length} paradas · ${diaEnCurso.nombre.toLowerCase()}${racha}`);
   $('#olla-frase').textContent = FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)];
 
   /* ============================================================
@@ -444,7 +455,11 @@ function renderMesa() {
   lista.className = 'recetario';
 
   /* el garabato de margen de cada página: utilería, no información */
-  const DECO = { lunes: '🧺', martes: '🥜', miercoles: '🌿', jueves: '🔥', noche: '🕯️' };
+  const DECO = { lunes: '🧺', martes: '🥜', miercoles: '🌿', jueves: '🔥', noche: '🕯️', viernes: '🎉' };
+
+  /* las páginas del viernes van DESPUÉS de la receta grande: primero
+     se cocina la olla, después lo de encima */
+  const paginasSirve = [];
 
   DIAS.forEach((dia, d) => {
     const relato = DIAS_RELATO[dia.id] || {};
@@ -495,7 +510,11 @@ function renderMesa() {
       b.addEventListener('click', () => {
         sfx('tab');
         if (!abierto) {
-          toast('Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
+          /* el viernes no está cerrado por la parada anterior sino por
+             la olla, y el candado debe decir la verdad */
+          toast(n.sirve && !estado.ollaVista
+            ? 'Primero se cocina la olla 🍲'
+            : 'Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
           return;
         }
         /* DIRECTO AL MESÓN, siempre: el gesto se explica dentro, en
@@ -505,7 +524,8 @@ function renderMesa() {
       li.appendChild(b);
       ol.appendChild(li);
     });
-    lista.appendChild(pag);
+    if (dia.sirve) paginasSirve.push(pag);
+    else lista.appendChild(pag);
   });
 
   /* LA RECETA GRANDE, al final del cuaderno: la fanesca. Se va
@@ -513,7 +533,7 @@ function renderMesa() {
      las páginas terminan en una sola olla— y se cocina cuando no
      queda nada por pelar. */
   const ollaAbierta = todas || estado.ollaVista;
-  const pctOlla = Math.round(paradasHechas / RUTA.length * 100);
+  const pctOlla = Math.round(campanaHecha / campana.length * 100);
   const receta = document.createElement('button');
   receta.type = 'button';
   receta.className = 'receta-final' + (estado.ollaVista ? ' receta-final--servida' : (ollaAbierta ? ' receta-final--lista' : ''));
@@ -529,59 +549,61 @@ function renderMesa() {
   receta.setAttribute('aria-label', ollaAbierta ? 'Cocinar la olla' : `La olla, al final de la semana — vas ${pctOlla}%`);
   receta.addEventListener('click', () => {
     sfx('tab');
-    if (!ollaAbierta) { toast(`La olla se cocina al final de la semana — faltan ${RUTA.length - paradasHechas} paradas`); return; }
+    if (!ollaAbierta) { toast(`La olla se cocina al final de la semana — faltan ${campana.length - campanaHecha} paradas`); return; }
     mostrarFinal();
   });
   lista.appendChild(receta);
 
-  /* LA ÚLTIMA PÁGINA: el Viernes Santo, donde vive El Apuro. La
-     campaña cocina de lunes a jueves; servir a una casa que no deja
-     de llenarse es el viernes, y eso es lo que el modo sin fin
-     juega. El botón vive en el HTML con sus eventos puestos; aquí
-     solo se muda a su página. */
-  const viernes = document.createElement('section');
-  viernes.className = 'pagina pagina--viernes';
-  viernes.innerHTML = `
-    <header class="pagina-head">
-      <span class="pagina-deco" aria-hidden="true">🎉</span>
-      <p class="pagina-dia">${VIERNES.nombre}</p>
-      <h3 class="pagina-titulo">${VIERNES.titulo}</h3>
-      <p class="pagina-quien">${VIERNES.quien}</p>
-    </header>
-    <p class="viernes-promesa">${VIERNES.promesa}</p>`;
-  if (!btnApuroEl) btnApuroEl = document.getElementById('btn-apuro');
-  if (btnApuroEl) {
-    const lunesListo = diaCompleto(DIAS[0]) || estado.devMode;
-    btnApuroEl.classList.remove('hidden');
-    btnApuroEl.classList.toggle('btn-apuro--cerrado', !lunesListo);
-    const pie = btnApuroEl.querySelector('#btn-apuro-pie');
-    if (pie) pie.textContent = !lunesListo
-      ? `Se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`
-      : (estado.apuro ? `Tu récord: ${estado.apuro.raciones} raciones` : 'Raciones sin fin, contra el reloj');
-    viernes.appendChild(btnApuroEl);
-  }
-  lista.appendChild(viernes);
-
-  /* la despensa: lo que aún no tiene minijuego, dicho sin disimulo */
-  const desp = document.createElement('div');
-  desp.className = 'despensa';
-  desp.innerHTML = '<p class="mesa-sep">todavía en la despensa <span>· su minijuego viene después</span></p>';
-  const fila = document.createElement('div');
-  fila.className = 'despensa-fila';
-  POR_VENIR.forEach(n => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'despensa-chip';
-    chip.innerHTML = `<span class="despensa-icono">${icono(n.icono)}</span><span>${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
-    chip.addEventListener('click', () => {
-      sfx('tab');
-      const texto = n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, '');
-      toast(texto, Math.max(2600, 1200 + texto.split(/\s+/).length * 300));
-    });
-    fila.appendChild(chip);
+  /* LA PÁGINA DEL VIERNES va después de la olla y AHORA SE JUEGA: el
+     queso, el huevo y la guarnición son lo de encima del plato, y se
+     abren con la fanesca servida. Debajo de sus tres renglones vive
+     El Apuro — servir a una casa que no deja de llenarse es
+     exactamente lo que el modo sin fin juega. El botón vive en el
+     HTML con sus eventos puestos; aquí solo se muda a su página. */
+  paginasSirve.forEach(pag => {
+    const promesa = document.createElement('p');
+    promesa.className = 'viernes-promesa';
+    promesa.textContent = VIERNES.promesa;
+    pag.appendChild(promesa);
+    if (!btnApuroEl) btnApuroEl = document.getElementById('btn-apuro');
+    if (btnApuroEl) {
+      const lunesListo = diaCompleto(DIAS[0]) || estado.devMode;
+      btnApuroEl.classList.remove('hidden');
+      btnApuroEl.classList.toggle('btn-apuro--cerrado', !lunesListo);
+      const pie = btnApuroEl.querySelector('#btn-apuro-pie');
+      if (pie) pie.textContent = !lunesListo
+        ? `Se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`
+        : (estado.apuro ? `Tu récord: ${estado.apuro.raciones} raciones` : 'Raciones sin fin, contra el reloj');
+      pag.appendChild(btnApuroEl);
+    }
+    lista.appendChild(pag);
   });
-  desp.appendChild(fila);
-  lista.insertAdjacentElement('afterend', desp);
+
+  /* la despensa: lo que aún no tiene minijuego, dicho sin disimulo.
+     HOY ESTÁ VACÍA —los seis que esperaban ya cocinan— y vacía no se
+     dibuja: una sección que anuncia que no falta nada es ruido. Si
+     un día la receta crece, vuelve sola. */
+  const desp = document.createElement('div');
+  if (POR_VENIR.length) {
+    desp.className = 'despensa';
+    desp.innerHTML = '<p class="mesa-sep">todavía en la despensa <span>· su minijuego viene después</span></p>';
+    const fila = document.createElement('div');
+    fila.className = 'despensa-fila';
+    POR_VENIR.forEach(n => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'despensa-chip';
+      chip.innerHTML = `<span class="despensa-icono">${icono(n.icono)}</span><span>${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
+      chip.addEventListener('click', () => {
+        sfx('tab');
+        const texto = n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, '');
+        toast(texto, Math.max(2600, 1200 + texto.split(/\s+/).length * 300));
+      });
+      fila.appendChild(chip);
+    });
+    desp.appendChild(fila);
+    lista.insertAdjacentElement('afterend', desp);
+  }
 
   /* el mapa abre MOSTRANDO el siguiente paso: nadie debería tener
      que hacer scroll para encontrar dónde seguir.
@@ -626,7 +648,7 @@ function mostrarDia(dia) {
   if (!relato || estado.diasVistos.includes(dia.id)) return;
   estado.diasVistos.push(dia.id);
   guardar();
-  $('#dia-eyebrow').textContent = `se acabó el ${dia.nombre.toLowerCase()}`;
+  $('#dia-eyebrow').textContent = dia.sirve ? '¡a la mesa!' : `se acabó el ${dia.nombre.toLowerCase()}`;
   $('#dia-titulo').textContent = dia.titulo;
   $('#dia-escena').textContent = relato.escena;
   $('#dia-refri').textContent = relato.refri;
@@ -1386,8 +1408,8 @@ function terminarNivel() {
     const miDia = DIAS[n.diaIndex];
     const cierraDia = miDia && diaCompleto(miDia) && !estado.diasVistos.includes(miDia.id);
     $('#listo-seguir').textContent = !quedanParadas
-      ? (estado.ollaVista ? 'A la mesa' : '¡A la olla!')
-      : (cierraDia ? `Cerrar el ${miDia.nombre.toLowerCase()}` : 'Siguiente parada');
+      ? (estado.ollaVista ? '¡La mesa está puesta!' : '¡A la olla!')
+      : (cierraDia ? (miDia.sirve ? '¡A la mesa!' : `Cerrar el ${miDia.nombre.toLowerCase()}`) : 'Siguiente parada');
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
   }, 620);
@@ -1630,11 +1652,14 @@ function mostrarFinal() {
   $('#final-eyebrow').textContent = 'jueves santo, por la noche';
   $('#final-titulo').textContent = '¡La fanesca está lista!';
   $('#final-cuerpo').textContent = 'Toda la semana pasó por tus manos: grano por grano, vaina por vaina, hasta la tonga de anoche. Que hierva despacio — mañana es Viernes Santo, y mañana se sirve.';
-  const total = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
-  const cuch = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
+  /* la cuenta es de la CAMPAÑA: el viernes —lo de encima del plato—
+     viene después de este altar, y medirlo aquí lo haría deuda */
+  const cuenta = RUTA.filter(n => !n.sirve);
+  const total = cuenta.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
+  const cuch = cuenta.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
   $('#final-cierre').textContent = CIERRE;
   $('#final-voz').innerHTML = `«${CACUANGO_PARAMO.texto}»<span>${CACUANGO_PARAMO.quien}</span>`;
-  $('#final-total').textContent = `${cuch} de ${RUTA.length * 3} cucharas · ${tiempoBonito(total)} en total`;
+  $('#final-total').textContent = `${cuch} de ${cuenta.length * 3} cucharas · ${tiempoBonito(total)} en total`;
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
   sfx('fiesta');

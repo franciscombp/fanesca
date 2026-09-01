@@ -26,6 +26,7 @@ import './lenteja.js';
 import './quinua.js';
 import './mani.js';
 import './bacalao.js';
+import './despensa.js';
 
 export { registrar, pieza, parte, partes, cargarGLB, tieneGLB, registradas } from './registro.js';
 export { PIEZAS, CATEGORIAS, piezasPorCategoria, variantesDe, datosExportacion, listadoExportacion } from './builders.js';

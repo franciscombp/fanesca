@@ -197,49 +197,104 @@ export const NIVELES = [
     bicho: 'la mosca',
     cucharas: [55, 85, 130],
   },
+  {
+    id: 'garbanzo',
+    emoji: '🫘',
+    cuenta: 'garbanzos',
+    nombre: 'El garbanzo',
+    tarea: 'Pelar remojado',
+    icono: 'granos_mixtos',
+    modulo: () => import('./nivel-garbanzo.js'),
+    gesto: '<b>Frota</b> cada garbanzo con pasadas cortas y la camisita se suelta sola.',
+
+    nota: 'El garbanzo llegó con los españoles y se quedó. Pasa la noche en agua, y a la mañana la piel ya no está pegada: está puesta, como una camisita, y sale frotando.',
+    bicho: 'el gusanito',
+    cucharas: [45, 68, 99],
+  },
+  {
+    id: 'sambo',
+    emoji: '🥒',
+    cuenta: 'pasadas',
+    nombre: 'El sambo',
+    tarea: 'Rallar',
+    icono: 'zapallo',
+    modulo: () => import('./nivel-sambo.js'),
+    gesto: 'Agarra la media y <b>pásala por el rallador</b>, de arriba abajo, hasta que quede hebra.',
+
+    nota: 'El sambo es el primo pálido del zapallo, y de esta misma tierra. Tierno no se pica: se ralla, y la hebra se deshace en la olla hasta que nadie sabe decir dónde quedó.',
+    bicho: 'el gusanito',
+    cucharas: [55, 83, 121],
+  },
+  {
+    id: 'arroz',
+    emoji: '🍚',
+    cuenta: 'aguas',
+    nombre: 'El arroz',
+    tarea: 'Lavar',
+    icono: 'quinua',
+    modulo: () => import('./nivel-arroz.js'),
+    gesto: '<b>Agita de lado a lado</b>; cuando el agua salga blanca, bótala y pon otra.',
+
+    nota: 'Tres aguas, como la quinua, pero al revés: aquí no hay espuma que mirar — se mira el color. El agua sale blanca de almidón, y cuando sale clara, el arroz está listo.',
+    bicho: 'el gorgojo',
+    cucharas: [45, 68, 99],
+  },
+  {
+    id: 'queso',
+    emoji: '🧀',
+    cuenta: 'migas',
+    nombre: 'El queso y la leche',
+    tarea: 'Desmenuzar',
+    icono: 'granos_mixtos',
+    modulo: () => import('./nivel-queso.js'),
+    gesto: '<b>Pellizca</b> el bloque y se desmigaja; al final, la leche de un solo golpe.',
+    avisoBicho: '🪰 Si se posa <b>la mosca</b>: espántala de un roce. <b>No la aplastes</b> contra el queso.',
+
+    nota: 'El queso fresco se desmigaja con los dedos, nunca se corta: la miga se deshace en la sopa y el cuchillo no. La leche entra al final y de un solo golpe — es lo que vuelve crema el caldo.',
+    bicho: 'la mosca',
+    cucharas: [40, 60, 88],
+  },
+  {
+    id: 'huevo',
+    emoji: '🥚',
+    cuenta: 'huevos',
+    nombre: 'El huevo duro',
+    tarea: 'Cascar y pelar',
+    icono: 'granos_mixtos',
+    modulo: () => import('./nivel-huevo.js'),
+    gesto: 'Un <b>golpecito seco</b> para cuartearlo, y <b>jala los cascos</b> desde la grieta.',
+
+    nota: 'El huevo duro va encima, no adentro: en rodajas, coronando el plato. Se casca de un golpecito seco y la cáscara sale en pedazos, jalando desde la grieta.',
+    bicho: 'el gusanito',
+    cucharas: [50, 75, 110],
+  },
+  {
+    id: 'guarnicion',
+    emoji: '🍌',
+    cuenta: 'piezas',
+    nombre: 'La guarnición',
+    tarea: 'Freír y armar',
+    icono: 'hoja',
+    modulo: () => import('./nivel-guarnicion.js'),
+    gesto: 'Frie el maduro y <b>voltéalo cuando dore</b>; al final arma el plato con todo encima.',
+
+    nota: 'La fanesca no se sirve pelada: maduro frito, empanaditas de viento y el ají al lado. Lo de arriba del plato, que en esta casa importa tanto como lo de abajo.',
+    bicho: 'el gusanito',
+    cucharas: [75, 113, 165],
+  },
 ];
 
 /* ============================================================
-   EL RESTO DEL MAPA
+   EL RESTO DEL MAPA — vacío, y ojalá se quede así.
 
-   La fanesca no son solo los doce granos. Estos ya están en la
-   receta y en el cuaderno, pero todavía no tienen minijuego: se
-   muestran en la mesa apagados, con el gesto que van a pedir
-   cuando les toque.
-
-   Están aquí y no escondidos en una rama a propósito. El mapa
-   completo es lo que hace que la mesa se lea como una cocina de
-   verdad —donde ves todo lo que falta antes de empezar— en vez de
-   como una lista de niveles que se estira sola. Y a quien juegue
-   le dice la verdad: esto todavía se está cocinando.
+   Aquí vivieron seis ingredientes esperando minijuego, apagados en
+   la despensa de la mesa. Ya cocinan todos. La lista se queda por
+   si un día la receta crece (¿el mote? ¿la cebolla del refrito?):
+   lo que se agregue aquí aparece solo en la despensa, con su gesto
+   prometido, hasta que tenga su `nivel-<id>.js`.
    ============================================================ */
 
-export const POR_VENIR = [
-  {
-    id: 'sambo', nombre: 'El sambo', tarea: 'Rallar', icono: 'zapallo',
-    gesto: 'El hermano del zapallo, pero rallado: pasarlo por el rallador de un lado a otro hasta que quede hebra.',
-  },
-  {
-    id: 'garbanzo', nombre: 'El garbanzo', tarea: 'Pelar remojado', icono: 'granos_mixtos',
-    gesto: 'Después de la noche en agua, la piel se suelta sola: frotar un puñado entre las dos manos y las camisitas flotan.',
-  },
-  {
-    id: 'arroz', nombre: 'El arroz', tarea: 'Lavar', icono: 'quinua',
-    gesto: 'Tres aguas, como la quinua, pero sin espuma: aquí lo que se mira es cuándo el agua deja de salir blanca.',
-  },
-  {
-    id: 'queso', nombre: 'El queso y la leche', tarea: 'Desmenuzar', icono: 'granos_mixtos',
-    gesto: 'El queso fresco se desmigaja con los dedos, nunca se corta. La leche entra al final y de un solo golpe.',
-  },
-  {
-    id: 'huevo', nombre: 'El huevo duro', tarea: 'Cascar y pelar', icono: 'granos_mixtos',
-    gesto: 'Un golpecito seco, y después la cáscara sale en pedazos jalando desde la grieta. Va encima, no dentro.',
-  },
-  {
-    id: 'guarnicion', nombre: 'La guarnición', tarea: 'Freír y armar', icono: 'hoja',
-    gesto: 'Plátano maduro, empanaditas de viento y el ají al lado. Lo que va arriba del plato, que en esta casa importa tanto como lo de abajo.',
-  },
-];
+export const POR_VENIR = [];
 
 /* ============================================================
    Y EL FINAL: LA OLLA

@@ -516,6 +516,90 @@ export const ZAPALLO_NIVELES = {
   },
 };
 
+// FROTAR — Garbanzo
+export const GARBANZO_NIVELES = {
+  'garbanzo-1-remojado': {
+    nombre: 'El garbanzo · la camisita',
+    dificultad: 2, bloque: 'FROTAR',
+    tiempoBase: 45,
+    config: {
+      cantidad: 10,
+      resistencia: 1,      // cuánto frote pide cada camisita
+      gusanos: 1,
+    }
+  },
+};
+
+// RALLAR — Sambo
+export const SAMBO_NIVELES = {
+  'sambo-1-tierno': {
+    nombre: 'El sambo · a la hebra',
+    dificultad: 3, bloque: 'RALLAR',
+    tiempoBase: 55,
+    config: {
+      cantidad: 2,         // medias lunas
+      resistencia: 1,      // pasadas que pide cada media
+      gusanos: 1,
+    }
+  },
+};
+
+// AGITAR — Arroz
+export const ARROZ_NIVELES = {
+  'arroz-1-tres-aguas': {
+    nombre: 'El arroz · tres aguas',
+    dificultad: 2, bloque: 'AGITAR',
+    tiempoBase: 45,
+    config: {
+      lavadas_requeridas: 3,
+      agitadas_por_agua: 10,
+      gusanos: 1,
+    }
+  },
+};
+
+// DESMENUZAR — Queso y leche
+export const QUESO_NIVELES = {
+  'queso-1-fresco': {
+    nombre: 'El queso · a la miga',
+    dificultad: 2, bloque: 'DESMENUZAR',
+    tiempoBase: 40,
+    config: {
+      pedazos: 12,
+      moscas_frecuencia: 0.35,
+      gusanos: 0,
+    }
+  },
+};
+
+// CASCAR — Huevo duro
+export const HUEVO_NIVELES = {
+  'huevo-1-duro': {
+    nombre: 'El huevo · cascar y pelar',
+    dificultad: 2, bloque: 'CASCAR',
+    tiempoBase: 50,
+    config: {
+      cantidad: 3,
+      golpes: 4,
+      gusanos: 0,
+    }
+  },
+};
+
+// ARMAR — La guarnición
+export const GUARNICION_NIVELES = {
+  'guarnicion-1-completa': {
+    nombre: 'La guarnición · el plato',
+    dificultad: 3, bloque: 'ARMAR',
+    tiempoBase: 75,
+    config: {
+      presas: 3,           // tajadas de maduro que se fríen
+      resistencia: 0,      // aprieta la ventana del volteo
+      gusanos: 0,
+    }
+  },
+};
+
 // COMPILAR TODO
 export const TODOS_NIVELES = {
   DESGRANAR: MAIZ,
@@ -529,6 +613,12 @@ export const TODOS_NIVELES = {
   REVENTAR: FREJOL_NIVELES,
   DESALAR: BACALAO_NIVELES,
   MULTIGESTOS: ZAPALLO_NIVELES,
+  FROTAR: GARBANZO_NIVELES,
+  RALLAR: SAMBO_NIVELES,
+  AGITAR: ARROZ_NIVELES,
+  DESMENUZAR: QUESO_NIVELES,
+  CASCAR: HUEVO_NIVELES,
+  ARMAR: GUARNICION_NIVELES,
 };
 
 /* LISTA PLANA ORDENADA (para menú)
@@ -620,8 +710,8 @@ export const DIAS = [
     nombre: 'Martes', titulo: 'El costal de la tía',
     paradas: [
       'escoger-1-facil', 'col-1-facil', 'maiz-4-dos',
-      'quinua-1-facil', 'habas-2-normal', 'mani-1-facil',
-      'maiz-5-primer-duro', 'chochos-2-normal',
+      'quinua-1-facil', 'garbanzo-1-remojado', 'habas-2-normal',
+      'mani-1-facil', 'maiz-5-primer-duro', 'chochos-2-normal',
     ],
   },
   {
@@ -629,17 +719,17 @@ export const DIAS = [
     nombre: 'Miércoles', titulo: 'Los primos al desgrane',
     paradas: [
       'bacalao-1-facil', 'arveja-2-normal', 'maiz-6-duro',
-      'zapallo-1-facil', 'melloco-2-normal', 'maiz-7-primer-danado',
-      'col-2-fino', 'frejol-2-normal',
+      'zapallo-1-facil', 'sambo-1-tierno', 'melloco-2-normal',
+      'maiz-7-primer-danado', 'col-2-fino', 'frejol-2-normal',
     ],
   },
   {
     id: 'jueves',
     nombre: 'Jueves por la mañana', titulo: 'La casa llena',
     paradas: [
-      'quinua-2-normal', 'maiz-8-danado-duro', 'mani-2-rapido',
-      'escoger-2-normal', 'maiz-9-picada', 'bacalao-2-normal',
-      'zapallo-2-normal', 'arveja-3-dificil',
+      'quinua-2-normal', 'maiz-8-danado-duro', 'arroz-1-tres-aguas',
+      'mani-2-rapido', 'escoger-2-normal', 'maiz-9-picada',
+      'bacalao-2-normal', 'zapallo-2-normal', 'arveja-3-dificil',
     ],
   },
   {
@@ -650,6 +740,17 @@ export const DIAS = [
       'zapallo-3-rapido', 'maiz-12-seco-duro', 'maiz-13-tonga',
       'maiz-14-morocho', 'maiz-15-ultima',
     ],
+  },
+  /* EL VIERNES SE JUEGA. La olla ya hirvió la noche anterior; lo que
+     queda es lo de ENCIMA — el queso desmigado, el huevo en rodajas,
+     el maduro frito— y por eso esta página se abre con la fanesca
+     servida (`sirve: true` es el candado que mira la olla, no la
+     parada anterior). Después de armar el plato, El Apuro: servir a
+     una casa que no deja de llenarse. */
+  {
+    id: 'viernes', sirve: true,
+    nombre: 'Viernes Santo', titulo: 'Se sirve',
+    paradas: ['queso-1-fresco', 'huevo-1-duro', 'guarnicion-1-completa'],
   },
 ];
 
@@ -746,6 +847,16 @@ export const APURO = {
     { base: 'mani',    porcion: 0.35 },
     { base: 'bacalao', porcion: 0.30 },
     { base: 'zapallo', porcion: 0.25 },
+    /* los seis que llegaron después, medidos con la misma vara: que
+       una ración cueste alrededor de diez segundos de manos */
+    { base: 'garbanzo',   porcion: 0.60 },
+    { base: 'sambo',      porcion: 0.50 },
+    { base: 'arroz',      porcion: 0.34 },
+    { base: 'queso',      porcion: 0.45 },
+    { base: 'huevo',      porcion: 0.34 },
+    /* una sola tajada: freír tiene reloj propio y dos raciones de
+       sartén seguidas ya son media partida */
+    { base: 'guarnicion', porcion: 0.35, ajustes: { presas: 1 } },
   ],
 };
 
@@ -787,6 +898,12 @@ const SIN_FIN = {
   mani:    { velocidad_minima: { por: 0.08, tope: 0.7 }, resistencia: { por: 0.5, tope: 2 } },
   bacalao: { sal_nivel: { por: 0.1, tope: 1 }, moscas_frecuencia: { por: 0.1, tope: 0.9 } },
   zapallo: { resistencia: { por: 0.5, tope: 2 }, gusanos: { por: 0.5, tope: 3 } },
+  garbanzo:   { resistencia: { por: 0.5, tope: 3 }, gusanos: { por: 1, tope: 5 } },
+  sambo:      { resistencia: { por: 0.5, tope: 3 }, gusanos: { por: 0.5, tope: 3 } },
+  arroz:      { gusanos: { por: 0.5, tope: 3 } },
+  queso:      { moscas_frecuencia: { por: 0.1, tope: 0.9 } },
+  huevo:      { golpes: { por: 0.5, tope: 7 } },
+  guarnicion: { resistencia: { por: 0.5, tope: 2 } },
 };
 
 /* La config de una ración según la tanda. Dentro de la escalera de

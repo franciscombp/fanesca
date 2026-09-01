@@ -80,6 +80,7 @@ const PRECACHE = [
   './modelos/quinua.js',
   './modelos/mani.js',
   './modelos/bacalao.js',
+  './modelos/despensa.js',
   './modelos/glb/indice.json',
   './nivel-maiz.js',
   './nivel-habas.js',
@@ -93,6 +94,12 @@ const PRECACHE = [
   './nivel-quinua.js',
   './nivel-mani.js',
   './nivel-bacalao.js',
+  './nivel-garbanzo.js',
+  './nivel-sambo.js',
+  './nivel-arroz.js',
+  './nivel-queso.js',
+  './nivel-huevo.js',
+  './nivel-guarnicion.js',
 ];
 
 self.addEventListener('install', (e) => {

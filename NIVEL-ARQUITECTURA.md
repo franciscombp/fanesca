@@ -241,15 +241,21 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
 ## Progreso — la semana, y un solo candado
 
 - **La campaña es una semana y se presenta como el RECETARIO de la
-  abuela**: cinco días de ocho paradas (`DIAS` en
-  `niveles-config.js`) que entrelazan las doce presentaciones con las
-  variantes bravas. Cada día es una página de libreta y cada parada
-  un renglón numerado (`.pagina`/`.renglon` — no `.paso`, que es el
+  abuela**: cinco días de preparación con 43 paradas (`DIAS` en
+  `niveles-config.js`) que entrelazan las DIECIOCHO presentaciones
+  con las variantes bravas, más la página del Viernes Santo — que
+  también se juega: el queso, el huevo duro y la guarnición son lo
+  de encima del plato y se abren con la olla servida (`sirve: true`
+  en el día; `desbloqueado()` mira `ollaVista` en vez de la parada
+  anterior). Cada día es una página de libreta y cada parada un
+  renglón numerado (`.pagina`/`.renglon` — no `.paso`, que es el
   kill-switch del HUD viejo del zapallo); la receta grande de la
-  fanesca cierra el cuaderno llenándose parada a parada, y la última
-  página es el Viernes Santo con El Apuro. La narrativa vive en
-  `DIAS_RELATO` y `VIERNES` (`historia.js`); cada cierre de día se
-  celebra una vez (`estado.diasVistos`).
+  fanesca va entre la noche y el viernes, llenándose con la campaña.
+  La narrativa vive en `DIAS_RELATO` y `VIERNES` (`historia.js`);
+  cada cierre de día se celebra una vez (`estado.diasVistos`). La
+  despensa quedó vacía: los seis que esperaban minijuego (garbanzo,
+  sambo, arroz, queso, huevo, guarnición) ya cocinan, con sus piezas
+  en `modelos/despensa.js`.
 - **Un solo candado, el de adelante**: la parada siguiente se abre al
   terminar la anterior. Se puede porque el reparto de la semana ya
   entrelaza los ingredientes (nunca hay quince maíces en fila) y los
