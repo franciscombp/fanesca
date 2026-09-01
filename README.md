@@ -23,6 +23,14 @@ barrio —talavera, rosa mexicano, peltre— el `git merge` no vio ningún
 conflicto y sin esto habría quedado con los colores de una versión que
 ya no existe.
 
+Desde la 2.0 la interfaz es **la cocina de noche**: fondo hondo y
+cálido con la lumbre de la hornilla, cobre y oro como único acento,
+papel crema para lo que escribe la abuela y cristal oscuro para lo que
+flota sobre el mesón. Los nombres de la paleta anterior (`--madera-*`,
+`--maiz-*`, `--nopal-*`, `--peltre-*`, `--rosa-*`) siguen existiendo
+como alias hacia la nueva, porque la escena y los escenarios los leen
+por nombre.
+
 ## El plato es la historia
 
 La fanesca es una fiesta de cosecha andina —la **uchucuta** del

@@ -30,10 +30,30 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.22.0';
+const APP_VERSION = '2.0.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.0.0',
+    fecha: '2026-09-01',
+    titulo: 'La cocina de noche',
+    cambios: [
+      'Toda la interfaz, hecha de nuevo: fondo hondo y cálido con la lumbre de la hornilla, cobre y oro como único acento, papel crema para lo que escribe la abuela y cristal oscuro para lo que flota sobre el mesón.',
+      'La portada es una pantalla de título: la fanesca y los ingredientes flotando sobre el vapor, el nombre en oro, y —con partida guardada— el anillo de la semana con el día por el que vas.',
+      'Cada día del recetario es una tarjeta con su anillo que se llena parada a parada; la olla es una tarjeta de cobre al final, y el Viernes Santo trae El Apuro en rojo brasa.',
+      'Al entrar a una parada baja una cortina con su tarjeta: qué día, qué parada, qué se hace — mientras el mesón se arma detrás.',
+      'El HUD del mesón es cristal: atrás, la tarea con su barra, el reloj. Nada tapa el centro, que es donde están las manos.',
+      'Las ventanas ahora suben desde abajo como hojas, con su asa; el ingrediente terminado sale grande, con tu tiempo y tu mejor en fichas, y cae confeti cuando algo sale bien.',
+      'Todo lo que se toca responde con un resorte, y con «reducir movimiento» activado nada se mueve de más.',
+    ],
+    internos: [
+      'design-system.css reescrito: tokens noche/cobre/oro/crema/hoja/brasa, alias del sistema anterior (maiz, nopal, chile, madera, peltre) apuntando a la paleta nueva; .btn píldora, .icono-boton, .cristal, .anillo (--p), .stats/.stat, .modal como hoja inferior con asa, .sheet con max-height y scroll.',
+      'fanesca.css reescrito de una sola capa (sin las siete pasadas con !important): marco, .fondo-cocina + .vapor, transiciones .screen.saliendo, portada (lockup, platos flotantes, tarjeta de avance), recetario (pagina-head en grid con .pagina-anillo, .receta-final de cobre, .btn-sigue dock), cuaderno, mesón, .cortina/.tarjeta-parada, .confeti, editor.',
+      'main.js: mostrar() marca .saliendo en la pantalla previa; tarjetaDeParada(n) en jugar(); celebrar(n) en listo/día/final/Apuro; pintarPortada pinta #portada-tarjeta (anillo y día); renderMesa emite .pagina-head-txt + .anillo; #listo-icono y #listo-mejor-n; #cuaderno-volver-arriba.',
+      'index.html: portada nueva, cabeceras con .icono-boton, #cortina y #confeti fuera de las pantallas, modales con .sheet-hero y .stats; manifest y theme-color en el color de la noche.',
+    ],
+  },
   {
     v: '1.22.0',
     fecha: '2026-09-01',

@@ -9,14 +9,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="La fanesca">
-  <meta name="theme-color" content="#1b5faa">
+  <meta name="theme-color" content="#171009">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Caveat:wght@600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-  <!-- tokens y componentes: el sistema de diseño del puesto -->
+  <!-- tokens y componentes: el sistema de diseño de la cocina de noche -->
   <link rel="stylesheet" href="design-system.css">
   <link rel="stylesheet" href="fanesca.css">
   <script type="importmap">
@@ -26,26 +26,40 @@
 <body>
 <div id="stage">
 
-  <!-- ================= Portada ================= -->
+  <!-- ================= Portada: la pantalla de título ================= -->
   <main id="screen-portada" class="screen active">
-    <span class="mundo-puesto" aria-hidden="true"></span>
+    <div class="fondo-cocina" aria-hidden="true">
+      <span class="vapor">
+        <i style="--x:22%; --d:13s; --t:-2s; --dx:30px"></i>
+        <i style="--x:48%; --d:16s; --t:-7s; --dx:-24px"></i>
+        <i style="--x:74%; --d:14s; --t:-4s; --dx:18px"></i>
+      </span>
+    </div>
     <div class="portada">
-      <span class="portada-sol" aria-hidden="true"></span>
-      <p class="portada-over">una semana para una olla · con las manos</p>
-      <h1 class="portada-title">La fanesca</h1>
-      <p class="portada-sub">desgranar · desvainar · raspar · majar</p>
-      <div class="portada-peek" aria-hidden="true">
-        <span class="plate" data-icon="maiz"></span>
-        <span class="plate" data-icon="zapallo"></span>
-        <span class="plate" data-icon="bacalao"></span>
+      <!-- los ingredientes flotando sobre la lumbre -->
+      <div class="portada-escena" aria-hidden="true">
+        <span class="portada-lumbre"></span>
+        <span class="portada-plato" style="--x:50%; --y:52%; --w:112px; --d:5.2s; --r:3deg"><span class="plate" data-icon="fanesca"></span></span>
+        <span class="portada-plato" style="--x:18%; --y:38%; --w:76px; --d:6s; --t:-1.5s; --r:-6deg"><span class="plate" data-icon="maiz"></span></span>
+        <span class="portada-plato" style="--x:82%; --y:34%; --w:72px; --d:5.6s; --t:-3s; --r:5deg"><span class="plate" data-icon="zapallo"></span></span>
+        <span class="portada-plato" style="--x:24%; --y:82%; --w:62px; --d:6.4s; --t:-2.4s; --r:4deg"><span class="plate" data-icon="habas"></span></span>
+        <span class="portada-plato" style="--x:79%; --y:80%; --w:66px; --d:5.8s; --t:-4.2s; --r:-4deg"><span class="plate" data-icon="bacalao"></span></span>
       </div>
-      <div class="panel portada-quote">
-        <p>Le dicen la sopa de los doce apóstoles. Debajo hay una fiesta más vieja: darle gracias a la <b>Pachamama</b> por la cosecha. Se cocina en una semana, entre toda la familia — y todo pasa por las manos.</p>
-        <p class="muted">Desgrana con el dedo, abre las vainas, tiende el bacalao. Y si sale un gusanito: <b>no lo aplastes</b> — sácalo a la composta o se arruina la olla entera.</p>
+      <div class="portada-lockup">
+        <p class="portada-over">una semana · una olla · tus manos</p>
+        <h1 class="portada-title">La fanesca</h1>
+        <p class="portada-sub">desgranar · desvainar · raspar · majar</p>
       </div>
       <div class="portada-acciones">
-        <button type="button" id="btn-empezar" class="btn btn--lg btn--block">Abrir el recetario</button>
-        <p id="portada-avance" class="portada-sub hidden"></p>
+        <!-- con partida guardada: el anillo de la semana y por dónde vas -->
+        <div id="portada-tarjeta" class="portada-tarjeta cristal hidden">
+          <span class="anillo" id="portada-anillo" style="--p:0"><b id="portada-anillo-n">0%</b></span>
+          <span class="portada-tarjeta-txt">
+            <b id="portada-dia">Lunes</b>
+            <span id="portada-avance"></span>
+          </span>
+        </div>
+        <button type="button" id="btn-empezar" class="btn btn--maiz btn--lg btn--block">Abrir el recetario</button>
       </div>
       <div class="portada-secundario">
         <button type="button" id="btn-reiniciar" class="portada-link portada-link--peligro hidden">Empezar de nuevo</button>
@@ -55,34 +69,32 @@
     </div>
   </main>
 
-  <!-- ================= La mesa de prep (mapa de ingredientes) ================= -->
+  <!-- ================= El recetario: la semana, página a página ================= -->
   <main id="screen-mesa" class="screen">
-    <span class="mundo-puesto" aria-hidden="true"></span>
+    <div class="fondo-cocina" aria-hidden="true"></div>
     <div class="hoja">
       <header class="hoja-head">
         <div class="sign">
-          <h2 class="sign-title">El recetario de la abuela</h2>
-          <p class="sign-sub"><span id="mesa-progreso">0 / 40 paradas · lunes</span></p>
+          <h2 class="sign-title">El recetario</h2>
+          <p class="sign-sub"><span id="mesa-progreso">0 / 46 paradas · lunes</span></p>
         </div>
-        <button type="button" id="btn-cuaderno" class="cuaderno-acceso" aria-label="El cuaderno de la fanesca">
+        <button type="button" id="btn-cuaderno" class="icono-boton cuaderno-acceso" aria-label="El cuaderno de la fanesca">
           <span aria-hidden="true">📖</span>
           <span class="cuaderno-acceso-txt">el cuaderno</span>
           <span id="cuaderno-nuevo" class="cuaderno-nuevo hidden" aria-hidden="true"></span>
         </button>
       </header>
       <div class="scroll">
-        <!-- La olla vive UNA vez: como destino, al final del camino.
-             El panel que la duplicaba aquí arriba le robaba el papel. -->
+        <!-- La olla vive UNA vez: como destino, al final del recetario. -->
         <p id="olla-frase" class="mesa-frase">Todavía está el agua sola. Prepara un ingrediente.</p>
         <!-- dónde cocinar: la misma mesa, otro sitio -->
         <div class="escenarios">
           <p class="escenarios-tit">¿Dónde cocinas hoy?</p>
           <div id="escenarios-lista" class="escenarios-lista"></div>
         </div>
-        <!-- El Apuro nace aquí con sus eventos, pero VIVE al fondo
-             del mapa: renderMesa lo muda a la zona del Viernes
-             Santo, que es su sitio en la historia — la campaña
-             cocina de lunes a jueves, el viernes se sirve. -->
+        <!-- El Apuro nace aquí con sus eventos, pero VIVE al fondo del
+             recetario: renderMesa lo muda a la página del Viernes Santo,
+             que es su sitio en la historia. -->
         <button type="button" id="btn-apuro" class="btn-apuro">
           <span class="btn-apuro-ico" aria-hidden="true">⏱</span>
           <span class="btn-apuro-txt">
@@ -93,17 +105,18 @@
         </button>
         <div id="mesa-lista" class="mesa-lista"></div>
       </div>
-      <!-- desde cualquier punto del cuaderno, un toque va a la parada
-           que toca: el recetario se hojea, este botón cocina -->
+      <!-- desde cualquier punto del recetario, un toque va a la parada
+           que toca: el recetario se hojea, este dock cocina -->
       <button type="button" id="btn-sigue" class="btn-sigue hidden"></button>
     </div>
   </main>
 
   <!-- ================= El cuaderno: lo que el plato cuenta ================= -->
   <main id="screen-cuaderno" class="screen">
-    <span class="mundo-puesto" aria-hidden="true"></span>
+    <div class="fondo-cocina" aria-hidden="true"></div>
     <div class="hoja">
       <header class="hoja-head">
+        <button type="button" id="cuaderno-volver-arriba" class="icono-boton" aria-label="Volver al recetario">‹</button>
         <div class="sign">
           <h2 class="sign-title">El cuaderno</h2>
           <p class="sign-sub">de dónde sale esta olla</p>
@@ -116,7 +129,7 @@
           <p class="label">de dónde salió esto</p>
           <ul id="cuaderno-fuentes-lista"></ul>
         </section>
-        <button type="button" id="cuaderno-volver" class="btn btn--peltre btn--block">Volver a la mesa</button>
+        <button type="button" id="cuaderno-volver" class="btn btn--peltre btn--block">Volver al recetario</button>
       </div>
     </div>
   </main>
@@ -127,6 +140,7 @@
     <div id="destello" class="destello" aria-hidden="true"></div>
 
     <header id="juego-hud" class="juego-hud">
+      <button type="button" id="btn-salir" class="icono-boton hud-salir" aria-label="Volver al recetario">‹</button>
       <div class="hud-centro">
         <span id="hud-icono" class="hud-icono" aria-hidden="true"></span>
         <div class="hud-centro-txt">
@@ -137,8 +151,7 @@
           </div>
         </div>
       </div>
-      <span id="hud-tiempo" class="pill hud-tiempo"><span class="hud-crono" aria-hidden="true">⏱</span><span id="hud-tiempo-n">0.0s</span></span>
-      <button type="button" id="btn-salir" class="hud-salir" aria-label="Volver a la mesa">⏸</button>
+      <span id="hud-tiempo" class="hud-tiempo"><span class="hud-crono" aria-hidden="true">⏱</span><span id="hud-tiempo-n">0.0s</span></span>
     </header>
 
     <!-- el combo, grande, a la izquierda -->
@@ -152,21 +165,26 @@
     <!-- los puntos que suben al acertar -->
     <div id="hud-flotantes" class="hud-flotantes" aria-hidden="true"></div>
 
-
-
     <p id="hud-alerta" class="hud-alerta" role="status" aria-live="polite"></p>
     <div id="voz" class="voz" role="status" aria-live="polite">
       <p id="voz-texto" class="voz-texto"></p>
       <p id="voz-quien" class="voz-quien"></p>
     </div>
-    <!-- la pista se puede VOLVER A LEER: la ventana de enseñanza era
-         de diez segundos irrepetibles, y quien parpadeaba se quedaba
-         sin instrucción. El «?» repite la última que se mostró. -->
-    <button type="button" id="btn-pista" class="btn-pista" aria-label="Volver a leer la pista">?</button>
+    <!-- la pista se puede VOLVER A LEER: el «?» repite la última -->
+    <button type="button" id="btn-pista" class="icono-boton btn-pista" aria-label="Volver a leer la pista">?</button>
     <div id="juego-controles" class="juego-controles"></div>
     <p id="juego-pista" class="juego-pista"></p>
-
   </main>
+
+  <!-- ================= La cortina: la tarjeta de parada ================= -->
+  <div id="cortina" class="cortina" aria-hidden="true">
+    <div class="tarjeta-parada">
+      <span id="cortina-icono" class="tarjeta-parada-icono"><span class="plate"></span></span>
+      <p id="cortina-dia" class="tarjeta-parada-dia"></p>
+      <h2 id="cortina-nombre"></h2>
+      <p id="cortina-tarea"></p>
+    </div>
+  </div>
 
   <!-- ================= Modal: fin de El Apuro ================= -->
   <div id="modal-apuro" class="modal" role="dialog" aria-modal="true" aria-labelledby="apuro-eyebrow">
@@ -182,18 +200,22 @@
         <p id="apuro-tarjeta-texto" class="tarjeta-texto"></p>
       </section>
       <button type="button" id="apuro-otra" class="btn btn--nopal btn--lg btn--block">Otra vez</button>
-      <button type="button" id="apuro-salir" class="btn btn--peltre btn--sm btn--block">Volver a la mesa</button>
+      <button type="button" id="apuro-salir" class="btn btn--fantasma btn--sm btn--block">Volver al recetario</button>
     </div>
   </div>
 
   <!-- ================= Modal: listo ================= -->
   <div id="modal-listo" class="modal" role="dialog" aria-modal="true" aria-labelledby="listo-nombre">
     <div class="sheet">
+      <div id="listo-icono" class="sheet-hero" aria-hidden="true"></div>
       <p class="sheet-eyebrow">a la olla</p>
       <h3 id="listo-nombre" class="sheet-title"></h3>
       <div id="listo-cucharas" class="cucharas" aria-hidden="true"></div>
       <p class="cucharas-pie">tu tiempo, en cucharas — tres es mano de abuela</p>
-      <p id="listo-tiempo" class="listo-tiempo"></p>
+      <div class="stats">
+        <div class="stat"><span id="listo-tiempo" class="stat-n"></span><span class="stat-l">tu tiempo</span></div>
+        <div class="stat"><span id="listo-mejor-n" class="stat-n"></span><span class="stat-l">tu mejor</span></div>
+      </div>
       <p id="listo-mejor" class="listo-mejor"></p>
       <section id="listo-tarjeta" class="tarjeta">
         <p class="label">lo que llevas a la olla</p>
@@ -205,26 +227,26 @@
         </blockquote>
       </section>
       <button type="button" id="listo-seguir" class="btn btn--nopal btn--lg btn--block">Siguiente parada</button>
-      <button type="button" id="listo-repetir" class="btn btn--peltre btn--sm btn--block">Repetirlo más rápido</button>
+      <button type="button" id="listo-repetir" class="btn btn--fantasma btn--sm btn--block">Repetirlo más rápido</button>
     </div>
   </div>
 
   <!-- ================= Modal: se arruinó ================= -->
   <div id="modal-arruinado" class="modal" role="dialog" aria-modal="true" aria-labelledby="arruinado-titulo">
     <div class="sheet sheet--mal">
-      <span class="arruinado-ic" aria-hidden="true">🪱</span>
+      <div class="sheet-hero sheet-hero--mal" aria-hidden="true"><span class="arruinado-ic">🪱</span></div>
       <p class="sheet-eyebrow">se arruinó la olla</p>
       <h3 id="arruinado-titulo" class="sheet-title">Un gusanito en la fanesca</h3>
       <p id="arruinado-motivo" class="sheet-body"></p>
-      <button type="button" id="arruinado-reintentar" class="btn btn--lg btn--block">Empezar de nuevo</button>
-      <button type="button" id="arruinado-salir" class="btn btn--peltre btn--sm btn--block">Dejarlo por hoy</button>
+      <button type="button" id="arruinado-reintentar" class="btn btn--chile btn--lg btn--block">Empezar de nuevo</button>
+      <button type="button" id="arruinado-salir" class="btn btn--fantasma btn--sm btn--block">Dejarlo por hoy</button>
     </div>
   </div>
 
   <!-- ================= Modal: se acabó el día ================= -->
   <div id="modal-dia" class="modal" role="dialog" aria-modal="true" aria-labelledby="dia-titulo">
     <div class="sheet">
-      <span class="dia-ic" aria-hidden="true">🌆</span>
+      <div class="sheet-hero sheet-hero--dia" aria-hidden="true"><span class="dia-ic">🌆</span></div>
       <p id="dia-eyebrow" class="sheet-eyebrow"></p>
       <h3 id="dia-titulo" class="sheet-title"></h3>
       <p id="dia-escena" class="sheet-body"></p>
@@ -236,18 +258,19 @@
   <!-- ================= Modal: la fanesca servida ================= -->
   <div id="modal-final" class="modal" role="dialog" aria-modal="true" aria-labelledby="final-titulo">
     <div class="sheet">
-      <div class="final-art" data-icon="fanesca"></div>
+      <div class="sheet-hero sheet-hero--olla final-art" data-icon="fanesca" aria-hidden="true"></div>
       <p id="final-eyebrow" class="sheet-eyebrow">jueves santo</p>
       <h3 id="final-titulo" class="sheet-title">¡La fanesca está servida!</h3>
       <p id="final-cuerpo" class="sheet-body">Todo lo que va adentro pasó por tus manos: grano por grano, vaina por vaina. Ahora sí, que hierva despacio.</p>
       <p id="final-cierre" class="final-cierre"></p>
       <blockquote id="final-voz" class="final-voz"></blockquote>
       <p id="final-total" class="final-total"></p>
-      <button type="button" id="final-cuaderno" class="btn btn--peltre btn--sm btn--block">Leer el cuaderno</button>
       <button type="button" id="final-ok" class="btn btn--maiz btn--lg btn--block">Servir</button>
+      <button type="button" id="final-cuaderno" class="btn btn--fantasma btn--sm btn--block">Leer el cuaderno</button>
     </div>
   </div>
 
+  <div id="confeti" class="confeti" aria-hidden="true"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </div>
 

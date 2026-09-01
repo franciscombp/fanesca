@@ -3,416 +3,592 @@
    Composición de las pantallas del juego SOBRE el sistema de
    diseño (design-system.css). Aquí no se inventan colores ni
    sombras: todo sale de los tokens.
-   Solo se agregan los tokens propios de esta cocina de prep.
+
+   ESCRITO DE UNA VEZ. La versión anterior era siete pasadas
+   apiladas, cada una corrigiendo a la de abajo con !important;
+   esto es una sola capa, en el orden en que se ve el juego:
+   el marco, la portada, el recetario, el cuaderno, el mesón,
+   las hojas emergentes, la cortina y el confeti. Lo que no
+   está aquí no existe en pantalla.
    ============================================================ */
 
 :root {
-  /* 62px es el alto de contenido; el safe-area-inset-top se SUMA
-     aparte (ver .juego-hud) — si no, en un iPhone con notch o
-     Dynamic Island la cabecera del nivel queda debajo de esa zona. */
+  /* 62px de contenido; el safe-area-inset-top se SUMA aparte (ver
+     .juego-hud) — si no, en un iPhone con isla la cabecera del nivel
+     queda debajo de la cámara */
   --prep-hud-h: calc(62px + env(safe-area-inset-top));
   --prep-ctrl-h: 74px;             /* la fila de botones del nivel */
+  --dock-h: 84px;                  /* el dock «Sigue» al pie del recetario */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; font-size: 17px; }
 /* Es un juego de mantener el dedo apretado: sin esto, el toque largo
-   del fréjol dispara la selección de texto del navegador y la
-   pantalla entera se pinta de celeste. Nada aquí se selecciona. */
-html, body {
-  user-select: none; -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-html, body { height: 100%; }
+   del fréjol dispara la selección de texto y la pantalla entera se
+   pinta de celeste. Nada aquí se selecciona. */
+html, body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; height: 100%; }
 
 body {
   font-family: var(--font-text);
   color: var(--text);
   line-height: var(--lead);
-  background: radial-gradient(120% 90% at 50% 0%, #5b7f92 0%, #3e5666 60%, #2c3d49 100%);
+  background: var(--noche-950);
   min-height: 100vh;
   overflow: hidden;
 }
-button { font: inherit; color: inherit; cursor: pointer; background: none; border: none; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 a { color: inherit; }
 svg { display: block; width: 100%; height: 100%; }
 /* icons.js inyecta su bloque de <defs> como un <svg width="0" height="0">.
-   La regla de arriba le ganaba a esos atributos y lo estiraba a pantalla
-   completa: invisible, pero dejaba el documento del doble de alto y un
-   scroll fantasma que en móvil se siente como que la página "rebota". */
+   La regla de arriba lo estiraría a pantalla completa y dejaría un
+   scroll fantasma que en móvil se siente como "rebote". */
 svg[width="0"] { width: 0; height: 0; }
 
-/* ---------- El marco: la misma regla que el juego grande ----------
-   marco neutro, y el decorado lo pone cada pantalla. Así la escena 3D
-   del nivel nunca parece un cuadro colgado encima de otra escena. */
+/* ============================================================
+   EL MARCO — un teléfono en medio de la mesa
+   En un teléfono ocupa todo. En escritorio se ve como el juego que
+   es: una columna con esquinas redondas sobre una sobremesa cálida
+   desenfocada, no una página angosta perdida en un fondo gris.
+   ============================================================ */
 #stage {
   position: relative;
   width: 100%; max-width: var(--frame);
   margin: 0 auto;
   height: 100vh; height: 100dvh;
   overflow: hidden;
-  background: var(--pizarra-700);
+  background: var(--noche-900);
   box-shadow: var(--e-4);
 }
+@media (min-width: 600px) {
+  body {
+    background:
+      radial-gradient(70% 60% at 50% 100%, rgba(224,138,69,.28), transparent 70%),
+      radial-gradient(60% 50% at 20% 0%, rgba(255,211,106,.1), transparent 60%),
+      var(--noche-950);
+  }
+}
+@media (min-width: 600px) and (min-height: 760px) {
+  #stage { height: min(100dvh, 920px); margin-top: calc((100dvh - min(100dvh, 920px)) / 2); border-radius: 34px; }
+}
 
-/* el mundo del puesto: zócalo de talavera, filo de madera y cal.
-   Lo llevan las pantallas de papel (portada, mesa, cuaderno); el
-   nivel no, porque su fondo ES el mesón 3D. Copiado del juego
-   grande a propósito: es el mismo puesto, un directorio más abajo. */
-.mundo-puesto {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+/* ---------- la cocina de noche: el fondo de las pantallas de papel ----------
+   Una lumbre desde abajo (la hornilla), una viñeta que hunde las
+   esquinas, y vapor que sube despacio. Lo llevan la portada, el
+   recetario y el cuaderno; el mesón no, porque su fondo ES la mesa 3D. */
+.fondo-cocina {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
   background:
-    var(--patron-mantel),
-    linear-gradient(180deg,
-      transparent 0, transparent 128px,
-      var(--madera-500) 128px, var(--madera-300) 133px, var(--madera-600) 140px,
-      var(--peltre-200) 140px, var(--peltre-200) 100%);
+    radial-gradient(90% 55% at 50% 108%, rgba(224,138,69,.42) 0%, rgba(200,112,47,.16) 40%, transparent 72%),
+    radial-gradient(80% 40% at 50% -10%, rgba(255,211,106,.12), transparent 70%),
+    linear-gradient(180deg, var(--noche-900) 0%, var(--noche-800) 55%, var(--noche-900) 100%);
 }
-.mundo-puesto::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 128px;
-  background: var(--patron-talavera);
-  background-size: var(--patron-talavera-size);
-  box-shadow: inset 0 -6px 12px -6px rgba(43,33,41,.35);
+/* el grano fino de la pared, casi invisible, que quita lo "digital" */
+.fondo-cocina::before {
+  content: ''; position: absolute; inset: 0; opacity: .5;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,235,200,.012) 3px 4px),
+    repeating-linear-gradient(90deg, transparent 0 5px, rgba(0,0,0,.02) 5px 6px);
 }
-.mundo-puesto::after {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 30px;
-  background: var(--papel-picado) repeat-x top left;
-  background-size: 112px 30px;
-  filter: drop-shadow(0 3px 3px rgba(20,12,18,.35));
+/* la viñeta */
+.fondo-cocina::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(110% 80% at 50% 45%, transparent 55%, rgba(8,4,2,.55) 100%);
 }
-
-.screen { display: none; position: relative; z-index: var(--z-scene); height: 100%; }
-.screen.active { display: block; animation: pantalla-entra var(--dur-slow) var(--ease-pop) both; }
-@keyframes pantalla-entra {
-  from { opacity: 0; transform: translateY(14px) scale(.985); }
-  to   { opacity: 1; transform: none; }
+.vapor { position: absolute; inset: 0; }
+.vapor i {
+  position: absolute; bottom: -20%; left: var(--x, 50%);
+  width: 140px; height: 220px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255,240,220,.16), transparent 68%);
+  filter: blur(18px);
+  animation: vapor-sube var(--d, 14s) linear infinite;
+  animation-delay: var(--t, 0s);
+  will-change: transform, opacity;
 }
-
-/* la .hoja del sistema asume barra de navegación abajo; aquí no hay,
-   pero igual hay que respetar el notch/isla arriba y la barra de
-   gestos abajo — si no, "La mesa de prep" queda debajo del reloj. */
-.hoja {
-  padding-top: calc(env(safe-area-inset-top) + var(--sp-4));
-  padding-bottom: calc(env(safe-area-inset-bottom) + var(--sp-4));
+@keyframes vapor-sube {
+  0%   { transform: translate(-50%, 0) scale(.6); opacity: 0; }
+  20%  { opacity: .9; }
+  100% { transform: translate(calc(-50% + var(--dx, 0px)), -120vh) scale(1.5); opacity: 0; }
 }
 
 /* ============================================================
-   PORTADA
+   LAS PANTALLAS — y cómo se pasa de una a otra
+   La que llega sube con resorte; la que se va se hunde un poco y
+   se apaga. Dos capas que se cruzan, como en cualquier consola.
+   ============================================================ */
+.screen { display: none; position: relative; z-index: var(--z-scene); height: 100%; }
+.screen.active { display: block; animation: pantalla-entra var(--dur-slow) var(--ease-out) both; }
+.screen.saliendo {
+  display: block; position: absolute; inset: 0; z-index: 0;
+  pointer-events: none;
+  animation: pantalla-sale .32s var(--ease-in-out) both;
+}
+@keyframes pantalla-entra {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pantalla-sale {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(-10px) scale(.97); }
+}
+
+/* ============================================================
+   LA PORTADA — la pantalla de título
+   Un lockup grande, los ingredientes flotando con la lumbre detrás,
+   y UNA sola acción. Lo demás (reiniciar, versión, modo dev) vive
+   al pie, en letra chica, como los créditos.
    ============================================================ */
 .portada {
   position: relative; z-index: 1;
   height: 100%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: var(--sp-3);
-  padding: var(--sp-6) var(--sp-5) var(--sp-5);
+  gap: var(--sp-4);
+  padding: calc(env(safe-area-inset-top) + var(--sp-6)) var(--sp-5) calc(env(safe-area-inset-bottom) + var(--sp-5));
   text-align: center;
 }
-.portada-sol {
-  position: absolute; top: -40px; right: -30px; width: 190px; height: 190px;
-  background: radial-gradient(circle, rgba(255,210,77,.55) 0%, rgba(255,210,77,0) 68%);
-  border-radius: 50%; pointer-events: none;
+
+/* los platos flotando sobre la lumbre: crecen hasta donde la
+   pantalla dé, y el aire que sobra se reparte arriba y abajo */
+.portada-escena {
+  position: relative; flex: 1 1 auto; width: 100%;
+  min-height: 160px; max-height: 380px;
+  pointer-events: none;
 }
+.portada-lumbre {
+  position: absolute; left: 50%; bottom: -6%; transform: translateX(-50%);
+  width: 320px; height: 220px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255,211,106,.55) 0%, rgba(240,168,102,.25) 40%, transparent 70%);
+  filter: blur(14px);
+  animation: lumbre-late 4s ease-in-out infinite;
+}
+@keyframes lumbre-late { 50% { transform: translateX(-50%) scale(1.08); opacity: .85; } }
+.portada-plato {
+  position: absolute; left: var(--x); top: var(--y);
+  width: var(--w, 88px);
+  transform: translate(-50%, -50%);
+  animation: plato-flota var(--d, 5s) ease-in-out infinite;
+  animation-delay: var(--t, 0s);
+  filter: drop-shadow(0 18px 22px rgba(0,0,0,.45));
+  will-change: transform;
+}
+.portada-plato .plate { width: 100%; }
+@keyframes plato-flota {
+  0%, 100% { transform: translate(-50%, -50%) rotate(var(--r, 0deg)); }
+  50%      { transform: translate(-50%, calc(-50% - 12px)) rotate(calc(var(--r, 0deg) * -1)); }
+}
+
+/* el lockup */
+.portada-lockup { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
 .portada-over {
   font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
   letter-spacing: var(--track-caps); text-transform: uppercase;
-  color: var(--madera-700);
+  color: var(--oro-300);
+  text-shadow: 0 1px 0 rgba(0,0,0,.4);
 }
 .portada-title {
-  font-family: var(--font-display); font-size: var(--t-3xl); font-weight: 800; line-height: 1;
-  color: var(--tinta-invert);
-  text-shadow: 0 3px 0 var(--rosa-600), 0 5px 12px rgba(0,0,0,.32);
+  font-family: var(--font-display); font-size: clamp(3rem, 15vw, 4.2rem); font-weight: 800; line-height: .95;
+  letter-spacing: -.02em;
+  color: var(--oro-200);
+  background: linear-gradient(180deg, #fff3cf 0%, var(--oro-300) 45%, var(--oro-500) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(120, 60, 10, .55)) drop-shadow(0 12px 24px rgba(0,0,0,.5));
+  animation: titulo-entra .9s var(--ease-spring) both;
 }
+@keyframes titulo-entra { from { opacity: 0; transform: translateY(16px) scale(.92); } }
 .portada-sub {
   font-family: var(--font-display); font-size: var(--t-md); font-weight: 600;
-  color: var(--tinta-900); opacity: .78;
-}
-.portada-peek { display: flex; gap: var(--sp-3); margin: var(--sp-1) 0; }
-.portada-peek .plate { width: 74px; box-shadow: var(--e-2); }
-.portada-peek .plate:nth-child(2) { transform: translateY(-10px) scale(1.08); }
-.portada-quote { font-size: var(--t-sm); line-height: var(--lead); }
-.portada-quote p + p { margin-top: var(--sp-2); }
-/* modo dev: discreto a propósito — es una herramienta de prueba, no
-   una opción del juego. Cuando está activo, se marca claro. */
-.portada-dev {
-  margin-top: var(--sp-2);
-  padding: .2rem .7rem;
-  font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 600;
-  color: var(--text-muted);
-  background: rgba(0,0,0,.06);
-  border: 1.5px dashed var(--hairline);
-  border-radius: var(--r-pill);
-  opacity: .7;
-}
-.portada-dev.activo {
-  color: #fff; opacity: 1;
-  background: linear-gradient(180deg, var(--rosa-400), var(--rosa-600));
-  border-style: solid; border-color: var(--rosa-700);
+  color: rgba(255,246,232,.72);
 }
 
-/* ============================================================
-   LA MESA DE PREP (mapa de ingredientes)
-   ============================================================ */
-.olla-estado { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); }
-.olla-visual {
-  position: relative; flex-shrink: 0;
-  width: 68px; height: 56px;
-  background: linear-gradient(180deg, var(--chile-400), var(--chile-600));
-  border: var(--ring); border-top-width: 4px;
-  border-radius: 6px 6px 22px 22px;
-  box-shadow: var(--e-2);
-  overflow: hidden;
-}
-.olla-caldo { position: absolute; inset: 5px; display: block; overflow: hidden; border-radius: 3px 3px 18px 18px; background: rgba(74,44,42,.35); }
-.olla-nivel {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
-  background: linear-gradient(180deg, var(--maiz-300), var(--maiz-400));
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.5);
-  transition: height var(--dur-slow) var(--ease-out);
-}
-.olla-txt { flex: 1; min-width: 0; }
-.olla-frase { font-size: var(--t-sm); color: var(--text-muted); line-height: var(--lead); }
-
-.mesa-lista { display: flex; flex-direction: column; gap: var(--sp-3); }
-
-/* una tarjeta por ingrediente */
-.ingrediente {
+/* la tarjeta de avance: sólo con partida guardada */
+.portada-acciones { display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-3); width: 100%; max-width: 360px; }
+.portada-tarjeta {
   display: flex; align-items: center; gap: var(--sp-3);
-  width: 100%; text-align: left;
-  padding: var(--sp-3);
-  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
-  border: var(--ring);
-  border-radius: var(--r-lg);
-  box-shadow: var(--e-2);
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  animation: pantalla-entra var(--dur-slow) var(--ease-out) both;
 }
-.ingrediente:active { transform: translateY(2px); box-shadow: var(--e-1); }
-.ingrediente .plate { width: 60px; flex-shrink: 0; }
-/* las tres líneas son <span> dentro de un <button>: sin `block` se
-   quedarían en fila y la tarjeta se leería como un párrafo suelto */
-.ing-datos { flex: 1; min-width: 0; display: block; }
-.ing-tarea {
-  display: block;
-  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
-  letter-spacing: var(--track-caps); text-transform: uppercase; color: var(--accent);
+.portada-tarjeta .anillo { flex: 0 0 auto; --anillo-fondo: var(--noche-800); }
+.portada-tarjeta-txt { min-width: 0; display: flex; flex-direction: column; gap: .05rem; }
+.portada-tarjeta-txt b {
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; line-height: 1.15;
+  color: var(--text-invert);
 }
-.ing-nombre { display: block; font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.15; color: var(--text); }
-.ing-marca { display: block; font-size: var(--t-xs); line-height: 1.3; color: var(--text-muted); }
-.ing-estado { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+.portada-tarjeta-txt span, #portada-avance {
+  font-family: var(--font-text); font-size: var(--t-sm); font-weight: 600;
+  color: rgba(255,246,232,.7);
+}
+#btn-empezar { box-shadow: var(--gloss), inset 0 -3px 0 rgba(0,0,0,.18), 0 0 0 1px var(--oro-600), var(--e-3), var(--glow-oro); }
 
-/* cucharas en vez de estrellas: aquí se mide en cucharadas */
-.cucharas { display: flex; gap: .18rem; justify-content: center; }
-.cuchara { width: 1.15rem; height: 1.15rem; filter: grayscale(1) opacity(.32); transition: filter var(--dur) var(--ease-out), transform var(--dur) var(--ease-pop); }
-.cuchara.llena { filter: none; transform: scale(1.12); }
-#listo-cucharas .cuchara { width: 2.3rem; height: 2.3rem; }
-
-.ingrediente.bloqueado { filter: grayscale(.75) opacity(.72); }
-.ingrediente.bloqueado .plate { opacity: .6; }
-.ing-candado { font-size: var(--t-lg); }
-.ing-listo {
+/* los créditos al pie */
+.portada-secundario {
+  display: flex; gap: var(--sp-2); justify-content: center; align-items: center; flex-wrap: wrap;
+}
+.portada-link {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 1.5rem; height: 1.5rem; border-radius: 50%;
-  background: linear-gradient(180deg, var(--nopal-400), var(--nopal-600));
-  border: 2px solid var(--peltre-100);
-  color: #fff; font-size: var(--t-sm); font-weight: 800;
-  box-shadow: var(--e-1);
+  min-height: 44px; padding: .25rem .8rem;
+  font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700;
+  letter-spacing: .04em;
+  color: rgba(255,246,232,.62);
+  background: rgba(255,244,226,.05);
+  border: 1.5px solid rgba(255,244,226,.12); border-radius: var(--r-pill);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
+.portada-link:active { transform: scale(.95); background: rgba(255,244,226,.14); }
+.portada-link--peligro { color: var(--brasa-400); border-color: rgba(229,83,61,.35); }
+.portada-link.activo { color: var(--maiz-800); background: var(--oro-400); border-color: var(--oro-600); }
+[data-version] { opacity: .55; }
 
 /* ============================================================
-   EL NIVEL
+   EL RECETARIO — la semana, página a página
+   Papel crema flotando sobre la cocina de noche. Cada día es una
+   tarjeta; cada parada, un renglón con su icono grande; la olla,
+   la tarjeta de cobre del final; y el dock «Sigue» al pie siempre
+   sabe a dónde ir.
    ============================================================ */
-.escena { position: absolute; inset: 0; z-index: 0; }
-.escena canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-
-/* el flash rojo/verde de "algo pasó" */
-.destello {
-  position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  background: rgba(230,57,70,.5); opacity: 0;
-}
-.destello.activo { animation: destello-va .45s var(--ease-out) both; }
-@keyframes destello-va { 0% { opacity: .85; } 100% { opacity: 0; } }
-
-.juego-hud {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 4;
-  height: var(--prep-hud-h);
-  display: flex; align-items: center; gap: var(--sp-2);
-  /* mismo var(--sp-2) de siempre, sumado al inset del notch/isla */
-  padding: calc(env(safe-area-inset-top) + var(--sp-2)) var(--sp-3) 0;
-  /* la barra es casi toda aire: si capturara el dedo, se comería los
-     toques sobre lo alto del ingrediente, que con el choclo de pie
-     llega hasta arriba. Solo los controles reciben el dedo. */
-  pointer-events: none;
-}
-.hud-salir, .hud-tiempo { pointer-events: auto; }
-.hud-salir {
-  flex-shrink: 0;
-  width: 2.3rem; height: 2.3rem;
-  font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800; line-height: 1;
-  color: var(--text);
-  background: var(--peltre-100);
-  border: 2px solid var(--hairline);
-  border-radius: 50%;
-  box-shadow: var(--e-1);
-}
-.hud-centro { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
-.hud-tarea {
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; line-height: 1.1;
-  color: var(--tinta-invert);
-  text-shadow: 0 1px 0 rgba(74,44,42,.55), 0 2px 6px rgba(0,0,0,.35);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.hud-tiempo { flex-shrink: 0; font-variant-numeric: tabular-nums; min-width: 4.2rem; justify-content: center; }
-.hud-tiempo.apurado { color: #fff; background: linear-gradient(180deg, var(--chile-400), var(--chile-600)); border-color: var(--chile-600); }
-
-/* el aviso grande de peligro, sobre la escena */
-.hud-alerta {
-  position: absolute; top: calc(var(--prep-hud-h) + var(--sp-2)); left: 50%;
-  transform: translateX(-50%) translateY(-8px); z-index: 4;
-  max-width: 90%;
-  padding: .3rem .9rem;
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; text-align: center;
-  color: #fff;
-  background: linear-gradient(180deg, var(--chile-400), var(--chile-600));
-  border: 2px solid var(--peltre-100);
-  border-radius: var(--r-pill);
-  box-shadow: var(--e-2);
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
-}
-.hud-alerta.visible { opacity: 1; transform: translateX(-50%) translateY(0); animation: alerta-late 1s ease-in-out infinite; }
-@keyframes alerta-late { 50% { box-shadow: var(--e-2), 0 0 0 6px rgba(230,57,70,.25); } }
-
-/* botones que cada nivel pide (girar la mazorca, etc.) */
-.juego-controles {
-  position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + var(--sp-3));
-  z-index: 4;
-  display: flex; align-items: center; justify-content: center; gap: var(--sp-3);
-  padding: 0 var(--sp-4);
-  pointer-events: none;
-}
-.ctrl {
-  pointer-events: auto;
-  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
-  min-width: 3.4rem; height: 3.4rem; padding: 0 .7rem;
-  font-family: var(--font-display); font-size: var(--t-2xl); font-weight: 800; line-height: 1;
-  color: var(--tinta-900);
-  background: linear-gradient(180deg, var(--peltre-100), var(--peltre-300));
-  border: 2.5px solid var(--madera-500); border-bottom-width: 5px;
-  border-radius: var(--r-pill);
-  box-shadow: var(--gloss), var(--e-2);
-  transition: transform var(--dur-fast) var(--ease-out), border-bottom-width var(--dur-fast) var(--ease-out);
-}
-.ctrl:active, .ctrl.presionado { transform: translateY(2.5px); border-bottom-width: 2.5px; box-shadow: var(--inset); }
-.ctrl-tip { font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
-
-.juego-pista {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom) + var(--prep-ctrl-h) + var(--sp-3));
-  z-index: 4; width: max-content; max-width: 88%;
-  padding: .4rem 1.1rem;
-  font-family: var(--font-text); font-size: var(--t-xs); font-weight: 600; text-align: center;
-  color: var(--tinta-invert);
-  background: rgba(74,44,42,.86);
-  border: 1.5px solid rgba(255,255,255,.16);
-  /* radio fijo y no píldora: con dos o más líneas el radio de 999px
-     se volvía medio círculo y las primeras palabras de cada línea
-     quedaban FUERA del fondo oscuro, blancas sobre la madera */
-  border-radius: 20px;
-  box-shadow: var(--e-2);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease-out);
-}
-.juego-pista.visible { opacity: 1; }
-
-/* ============================================================
-   MODALES
-   ============================================================ */
-.brief-art { width: 88px; }
-.brief-art .plate { width: 100%; }
-.brief-bicho {
-  font-size: var(--t-xs); font-weight: 700; line-height: var(--lead);
-  color: var(--chile-600);
-  background: rgba(230,57,70,.09);
-  border: 2px dashed rgba(230,57,70,.32);
-  border-radius: var(--r-md);
-  padding: var(--sp-2) var(--sp-3);
-}
-.brief-mejor, .listo-tiempo, .listo-mejor, .final-total {
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
-  color: var(--text-muted);
-}
-.listo-tiempo { font-size: var(--t-xl); color: var(--text); }
-.sheet--mal { border-color: var(--chile-400); }
-.arruinado-ic { font-size: 2.6rem; line-height: 1; animation: bicho-tiembla .6s var(--ease-out) 3; }
-@keyframes bicho-tiembla { 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
-.final-art { width: 110px; }
-.sheet .btn + .btn { margin-top: calc(var(--sp-2) * -.2); }
-
-/* ============================================================
-   PANTALLAS CORTAS: que nada se salga del marco
-   ============================================================ */
-@media (max-height: 680px) {
-  .portada-peek .plate { width: 60px; }
-  .portada-quote { font-size: var(--t-xs); }
-  .portada-title { font-size: var(--t-2xl); }
-}
-
-/* ============================================================
-   EL CUADERNO — lo que el plato cuenta
-   ============================================================ */
+.hoja-head .sign { flex: 1; }
 .cuaderno-acceso {
-  position: relative;
-  display: flex; align-items: center; gap: var(--sp-2);
-  margin: var(--sp-3) auto 0;
-  padding: .34rem .9rem;
-  font-size: var(--t-lg);
-  background: linear-gradient(180deg, var(--peltre-100), var(--peltre-300));
-  border: 2.5px solid var(--madera-500); border-bottom-width: 4px;
-  border-radius: var(--r-pill);
-  box-shadow: var(--gloss), var(--e-1);
+  position: relative; flex: 0 0 auto;
+  width: 48px; height: 48px;
+  font-size: 1.35rem;
 }
-.cuaderno-acceso:active { transform: translateY(1.5px); border-bottom-width: 2.5px; }
-.cuaderno-acceso-txt {
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  letter-spacing: var(--track-caps); text-transform: uppercase; color: var(--text-muted);
-}
+.cuaderno-acceso-txt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 /* el punto que avisa "hay algo nuevo que leer" */
 .cuaderno-nuevo {
-  position: absolute; top: -3px; right: -3px;
-  width: .7rem; height: .7rem; border-radius: 50%;
-  background: var(--chile-500);
-  border: 2px solid var(--peltre-100);
+  position: absolute; top: -2px; right: -2px;
+  width: .8rem; height: .8rem; border-radius: 50%;
+  background: var(--brasa-500);
+  border: 2px solid var(--noche-900);
   animation: nuevo-late 1.6s ease-in-out infinite;
 }
 @keyframes nuevo-late { 50% { transform: scale(1.35); } }
 
-.cuaderno-entradilla {
-  /* cae justo sobre la franja de azulejo y madera del fondo: sin
-     superficie propia, ahí no se lee */
-  font-size: var(--t-sm); line-height: var(--lead); color: var(--text);
-  font-style: italic; text-align: center;
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-3);
-  background: rgba(255,253,246,.92);
-  border: 2px solid var(--hairline);
+.mesa-frase {
+  font-family: var(--font-hand); font-size: 1.3rem; line-height: 1.2;
+  color: var(--oro-200);
+  text-align: center;
+  margin: 0 var(--sp-2) var(--sp-4);
+  opacity: .9;
+}
+
+/* ---- dónde se cocina: un carrusel de fichas ---- */
+.escenarios { margin: 0 calc(var(--sp-4) * -1) var(--sp-4); padding: 0 var(--sp-4); }
+.escenarios-tit {
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  letter-spacing: var(--track-caps); text-transform: uppercase;
+  color: rgba(255,246,232,.55);
+  margin-bottom: var(--sp-2);
+}
+.escenarios-lista {
+  display: flex; gap: var(--sp-2);
+  overflow-x: auto; scrollbar-width: none;
+  padding: 2px 0 var(--sp-2);
+  margin: 0 calc(var(--sp-4) * -1); padding-inline: var(--sp-4);
+  scroll-snap-type: x proximity;
+}
+.escenarios-lista::-webkit-scrollbar { display: none; }
+.escenario {
+  position: relative; flex: 0 0 auto;
+  display: flex; align-items: center; gap: .55rem;
+  min-height: 56px; padding: .45rem .9rem .45rem .55rem;
+  text-align: left;
+  color: var(--text-invert);
+  background: var(--vidrio);
+  border: 1.5px solid var(--vidrio-borde);
   border-radius: var(--r-md);
+  scroll-snap-align: start;
+  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+.escenario:active { transform: scale(.96); }
+.escenario--activo {
+  background: linear-gradient(180deg, rgba(255,211,106,.22), rgba(255,211,106,.1));
+  border-color: var(--oro-400);
+  box-shadow: var(--glow-oro);
+}
+.escenario-emoji { font-size: 1.6rem; line-height: 1; }
+.escenario-txt { display: flex; flex-direction: column; min-width: 0; }
+.escenario-txt b { font-family: var(--font-display); font-size: var(--t-sm); line-height: 1.15; white-space: nowrap; }
+.escenario-txt i { font-style: normal; font-size: var(--t-2xs); color: rgba(255,246,232,.6); line-height: 1.1; white-space: nowrap; }
+.escenario-check {
+  position: absolute; top: -6px; right: -6px;
+  width: 1.3rem; height: 1.3rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: .7rem; font-weight: 800; color: var(--maiz-800);
+  background: var(--oro-400); border: 2px solid var(--noche-900);
+}
+
+/* ---- las páginas ---- */
+.recetario { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: var(--sp-2); }
+
+.pagina {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  animation: pagina-entra .45s var(--ease-out) both;
+}
+@keyframes pagina-entra { from { opacity: 0; transform: translateY(16px); } }
+.pagina--porvenir { opacity: .7; }
+.pagina--porvenir .pagina-head { filter: grayscale(.4); }
+
+.pagina-head {
+  position: relative;
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  background: linear-gradient(180deg, rgba(200,112,47,.14), rgba(200,112,47,.03));
+  border-bottom: 1.5px solid var(--hairline);
+}
+.pagina-head-txt { min-width: 0; grid-column: 1; }
+.pagina-dia {
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
+  letter-spacing: var(--track-caps); text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.pagina-titulo {
+  font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800;
+  color: var(--text); line-height: 1.05; letter-spacing: -.01em;
+}
+.pagina-quien {
+  margin-top: .15rem;
+  font-family: var(--font-hand); font-size: 1.2rem; line-height: 1;
+  color: var(--text-muted);
+}
+/* el garabato de margen y el anillo de la página: la deco va dentro
+   del anillo, que se llena con las paradas */
+.pagina-anillo { grid-column: 2; grid-row: 1; --anillo-fondo: var(--crema-50); --anillo-pista: rgba(42,26,18,.1); width: 52px; height: 52px; }
+.pagina-deco { font-size: 1.5rem; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
+.pagina-cuenta, .pagina-sello { grid-column: 1 / -1; }
+.pagina-cuenta {
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  color: var(--text-muted);
+}
+/* el sello de página hecha: tinta verde, torcido, de caucho */
+.pagina-sello {
+  justify-self: start;
+  transform: rotate(-4deg);
+  font-family: var(--font-hand); font-size: 1.15rem; font-weight: 700; line-height: 1;
+  color: var(--hoja-600);
+  border: 2px solid var(--hoja-500); border-radius: 8px;
+  padding: .1rem .5rem;
+  background: rgba(93,181,90,.1);
+}
+
+.pagina-pasos { list-style: none; padding: var(--sp-2) var(--sp-2) var(--sp-2); }
+.renglon {
+  display: flex; align-items: center; gap: .7rem;
+  width: 100%; min-height: 60px;
+  padding: .45rem .6rem;
+  border-radius: var(--r-md);
+  font-family: inherit; text-align: left; color: inherit;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.renglon:active { transform: scale(.98); background: rgba(42,26,18,.06); }
+.renglon-num {
+  flex: 0 0 1.6rem;
+  font-family: var(--font-hand); font-size: 1.25rem; font-weight: 700; line-height: 1;
+  color: var(--text-muted); text-align: right;
+}
+.renglon-icono {
+  flex: 0 0 auto;
+  width: 46px; height: 46px; padding: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #fff 0%, var(--crema-50) 55%, var(--crema-200) 92%);
+  box-shadow: inset 0 -3px 6px rgba(42,26,18,.08), var(--e-1);
+}
+.renglon-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.renglon-nombre {
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700; line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.renglon-dif { font-size: .55rem; letter-spacing: -1px; line-height: 1; filter: saturate(.9); }
+.renglon-estado { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; }
+
+/* cucharas en vez de estrellas: aquí se mide en cucharadas */
+.cucharas { display: flex; gap: .15rem; justify-content: center; }
+.cuchara { width: 1.15rem; height: 1.15rem; filter: grayscale(1) opacity(.3); transition: filter var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring); }
+.cuchara.llena { filter: none; transform: scale(1.12); }
+.renglon-cucharas { display: flex; gap: 1px; }
+.renglon-cucharas .cuchara { width: 15px; height: 15px; }
+
+/* hecho: tachado con tinta suave — en una libreta, tachar ES lograr */
+.renglon--hecho .renglon-nombre {
+  text-decoration: line-through;
+  text-decoration-color: rgba(93,181,90,.8);
+  text-decoration-thickness: 2px;
+  color: var(--text-muted);
+}
+.renglon--hecho .renglon-icono { box-shadow: inset 0 0 0 2.5px var(--hoja-500), var(--e-1); }
+
+/* el siguiente paso lleva el lápiz y respira */
+.renglon--siguiente {
+  background: linear-gradient(90deg, rgba(244,185,66,.28), rgba(244,185,66,.08));
+  box-shadow: inset 0 0 0 1.5px rgba(224,161,44,.5);
+}
+.renglon--siguiente .renglon-icono {
+  box-shadow: inset 0 0 0 2.5px var(--oro-400), 0 0 0 5px rgba(244,185,66,.22), var(--e-2);
+  animation: late-suave 1.8s var(--ease-in-out) infinite;
+}
+@keyframes late-suave {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+.renglon-lapiz { font-size: 1.2rem; animation: lapiz-bob 1.8s ease-in-out infinite; }
+@keyframes lapiz-bob {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-3px) rotate(-8deg); }
+}
+.renglon--bloqueado { opacity: .5; }
+.renglon--bloqueado .renglon-icono { filter: grayscale(.8); }
+.renglon-candado { font-size: 1rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+
+/* ---- la receta grande del final: la olla de cobre ---- */
+.receta-final {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: var(--sp-3);
+  width: 100%; min-height: 96px;
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  color: var(--text-invert);
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(255,211,106,.28), transparent 60%),
+    linear-gradient(135deg, var(--cobre-500), var(--cobre-600) 70%, #6b3512);
+  box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.2);
+  font-family: inherit; text-align: left;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.receta-final:active { transform: scale(.98); }
+.receta-plato {
+  flex: 0 0 auto; width: 64px; height: 64px;
+  display: grid; place-items: center;
+  background: rgba(255,244,226,.12);
+  border: 1.5px solid rgba(255,244,226,.25);
+  border-radius: 50%;
+}
+.receta-plato svg { width: 74%; height: 74%; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+.receta-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.receta-txt .pagina-dia { color: var(--oro-300); }
+.receta-txt strong { font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800; line-height: 1.05; }
+.receta-txt small { font-size: var(--t-xs); color: rgba(255,246,232,.75); }
+.receta-final .renglon-candado { flex: 0 0 auto; font-size: 1.2rem; opacity: .8; }
+.receta-final--lista { box-shadow: var(--e-3), var(--glow-oro); animation: late-suave 1.8s var(--ease-in-out) infinite; }
+.receta-final--servida { background: radial-gradient(80% 120% at 100% 0%, rgba(165,224,143,.3), transparent 60%), linear-gradient(135deg, var(--hoja-600), #2f6a2c); }
+
+/* la olla se llena: la barra es la promesa de que esto termina */
+.olla-carga {
+  width: 100%; max-width: 200px; height: 8px;
+  margin-top: .25rem;
+  border-radius: var(--r-pill);
+  background: rgba(0,0,0,.28);
+  overflow: hidden;
+}
+.olla-carga i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--oro-400), var(--oro-200));
+  border-radius: inherit;
+  box-shadow: 0 0 10px rgba(255,211,106,.6);
+  transition: width .5s var(--ease-out);
+}
+
+/* ---- la última página: el Viernes Santo, con El Apuro dentro ---- */
+.pagina--viernes { background: linear-gradient(180deg, #fff6e0, #fbe9c4); }
+.viernes-promesa {
+  margin: 0; padding: 0 var(--sp-4) var(--sp-3);
+  font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted);
+}
+.btn-apuro {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: .8rem;
+  width: calc(100% - var(--sp-4) * 2); min-height: 72px;
+  margin: 0 var(--sp-4) var(--sp-4);
+  padding: .8rem 1rem;
+  border-radius: var(--r-md);
+  color: #fff;
+  background:
+    radial-gradient(70% 120% at 100% 0%, rgba(255,211,106,.3), transparent 60%),
+    linear-gradient(135deg, var(--brasa-500), #c23a20 60%, var(--brasa-600));
+  box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.22);
+  text-align: left; font-family: inherit;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.btn-apuro:active { transform: scale(.98); }
+.btn-apuro-ico {
+  flex: 0 0 auto; width: 2.6rem; height: 2.6rem;
+  display: grid; place-items: center;
+  font-size: 1.5rem; line-height: 1;
+  background: rgba(255,255,255,.18);
+  border: 1.5px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+}
+.btn-apuro-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.btn-apuro-txt strong { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.1; }
+.btn-apuro-txt small { font-size: var(--t-xs); opacity: .9; }
+.btn-apuro-ir { font-size: 1rem; opacity: .85; }
+.btn-apuro--cerrado {
+  background: linear-gradient(135deg, #8a7a68, #6e6053);
   box-shadow: var(--e-1);
+  color: rgba(255,246,232,.85);
+}
+.btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.1); }
+
+/* ---- el dock «Sigue»: siempre a un toque de la parada que toca ---- */
+.btn-sigue {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--sp-4));
+  z-index: 6;
+  display: inline-flex; align-items: center; gap: .5rem;
+  max-width: calc(100% - var(--sp-4) * 2); min-height: 56px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: .65rem 1.4rem .65rem 1.2rem;
+  border-radius: var(--r-pill);
+  color: var(--maiz-800);
+  background: linear-gradient(180deg, var(--oro-300), var(--oro-500));
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700;
+  box-shadow: var(--gloss), inset 0 -3px 0 rgba(0,0,0,.14), 0 0 0 1px var(--oro-600), var(--e-3), var(--glow-oro);
+  animation: sigue-entra .45s var(--ease-spring) both;
+}
+.btn-sigue b { font-weight: 800; }
+.btn-sigue:active { transform: translateX(-50%) scale(.96); }
+@keyframes sigue-entra {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(.9); }
+  to   { opacity: 1; transform: translateX(-50%); }
+}
+/* que el fondo del recetario no quede tapado por el dock */
+#screen-mesa .scroll { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-h)); }
+
+/* la despensa: chips apagados, tocables para leer qué viene */
+.despensa { margin-top: var(--sp-4); padding-bottom: var(--sp-6); }
+.mesa-sep { font-family: var(--font-display); font-size: var(--t-xs); color: rgba(255,246,232,.6); text-align: center; }
+.despensa-fila { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2); margin-top: var(--sp-2); }
+.despensa-chip {
+  display: flex; align-items: center; gap: .4rem;
+  min-height: 44px; padding: .3rem .8rem .3rem .4rem;
+  background: var(--vidrio); border: 1.5px dashed var(--vidrio-borde);
+  border-radius: var(--r-pill);
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  color: rgba(255,246,232,.7);
+}
+.despensa-chip .despensa-icono { width: 30px; height: 30px; filter: grayscale(.6); }
+
+/* ============================================================
+   EL CUADERNO — lo que el plato cuenta
+   ============================================================ */
+.cuaderno-entradilla {
+  font-family: var(--font-hand); font-size: 1.35rem; line-height: 1.25;
+  color: var(--oro-200); text-align: center;
+  margin: 0 var(--sp-2) var(--sp-4);
 }
 .capitulo {
-  margin-bottom: var(--sp-4);
+  margin-bottom: var(--sp-3);
   padding: var(--sp-4);
-  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
-  border: var(--ring); border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--crema-50), var(--crema-100));
+  border-radius: var(--r-lg);
   box-shadow: var(--e-2);
+  animation: pagina-entra .45s var(--ease-out) both;
 }
-.capitulo.cerrado { filter: grayscale(.9) opacity(.62); }
+.capitulo.cerrado { opacity: .55; filter: grayscale(.8); }
 .capitulo-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-.capitulo-head .plate { width: 46px; flex-shrink: 0; }
-.capitulo-titulo {
-  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
-  line-height: 1.15; color: var(--text);
-}
+.capitulo-head .plate { width: 52px; flex-shrink: 0; }
+.capitulo-titulo { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.1; color: var(--text); }
 .capitulo p { font-size: var(--t-sm); line-height: var(--lead); color: var(--text); }
 .capitulo p + p { margin-top: var(--sp-3); }
 .capitulo-cerrojo { font-size: var(--t-sm); color: var(--text-muted); font-style: italic; }
@@ -423,519 +599,153 @@ svg[width="0"] { width: 0; height: 0; }
   display: inline-flex; align-items: center; gap: .28rem;
   padding: .16rem .6rem;
   font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
-  border-radius: var(--r-pill);
-  border: 2px solid transparent;
+  border-radius: var(--r-pill); border: 1.5px solid transparent;
 }
 .grano-chip::before { content: ''; width: .45rem; height: .45rem; border-radius: 50%; }
-.grano-chip.aca  { color: var(--nopal-600); background: rgba(108,191,90,.14); border-color: rgba(108,191,90,.4); }
-.grano-chip.aca::before  { background: var(--nopal-500); }
-.grano-chip.alla { color: var(--rosa-700); background: rgba(217,79,114,.12); border-color: rgba(217,79,114,.36); }
-.grano-chip.alla::before { background: var(--rosa-500); }
+.grano-chip.aca  { color: var(--hoja-600); background: rgba(93,181,90,.14); border-color: rgba(93,181,90,.4); }
+.grano-chip.aca::before  { background: var(--hoja-500); }
+.grano-chip.alla { color: var(--rosa-700); background: rgba(232,80,138,.1); border-color: rgba(232,80,138,.35); }
+.grano-chip.alla::before { background: var(--fiesta-500); }
 .granos-leyenda { display: flex; gap: var(--sp-4); margin-top: var(--sp-3); font-size: var(--t-2xs); }
 
 /* la cita, tratada como cita */
 .cita {
   margin-top: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
-  background: rgba(242,179,31,.12);
-  border-left: 4px solid var(--maiz-400);
+  background: rgba(244,185,66,.14);
+  border-left: 4px solid var(--oro-400);
   border-radius: 0 var(--r-md) var(--r-md) 0;
 }
-.cita p {
-  font-size: var(--t-md); line-height: var(--lead); font-style: italic; color: var(--text);
-}
-.cita footer {
-  margin-top: var(--sp-2);
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  color: var(--accent-ink);
-}
+.cita p { font-size: var(--t-md); line-height: var(--lead); font-style: italic; color: var(--text); }
+.cita footer { margin-top: var(--sp-2); font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700; color: var(--accent-ink); }
 .cita footer span { display: block; font-family: var(--font-text); font-weight: 400; color: var(--text-muted); font-style: normal; }
 
-.cuaderno-fuentes { margin-bottom: var(--sp-4); }
+.cuaderno-fuentes { margin: var(--sp-2) 0 var(--sp-4); color: var(--text-invert); border-color: var(--vidrio-borde); background: var(--vidrio); }
+.cuaderno-fuentes .label { color: var(--oro-300); }
 .cuaderno-fuentes ul { list-style: none; margin-top: var(--sp-2); }
 .cuaderno-fuentes li { font-size: var(--t-xs); line-height: 1.5; margin-bottom: .3rem; }
-.cuaderno-fuentes a { color: var(--accent-ink); }
-
-/* ---------- la voz sobre la escena ---------- */
-.voz {
-  position: absolute; left: 50%; top: 38%;
-  transform: translate(-50%, -6px); z-index: 5;
-  width: min(340px, 88%);
-  padding: var(--sp-4);
-  text-align: center;
-  background: rgba(74, 44, 42, .93);
-  border: 2px solid var(--maiz-400);
-  border-radius: var(--r-lg);
-  box-shadow: var(--e-4);
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
-}
-.voz.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; cursor: pointer; }
-.voz-texto {
-  font-family: var(--font-text); font-size: var(--t-md); font-style: italic; line-height: var(--lead);
-  color: var(--tinta-invert);
-}
-.voz-quien {
-  margin-top: var(--sp-2);
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  letter-spacing: var(--track-caps); text-transform: uppercase;
-  color: var(--maiz-300);
-}
-
-/* ---------- la tarjeta que se gana al terminar ---------- */
-.tarjeta {
-  width: 100%; text-align: left;
-  margin-top: var(--sp-2);
-  padding: var(--sp-3);
-  background: rgba(74,44,42,.05);
-  border: 2px dashed var(--hairline);
-  border-radius: var(--r-md);
-}
-.tarjeta .label { margin-bottom: var(--sp-1); }
-.tarjeta-titulo {
-  font-family: var(--font-display); font-size: var(--t-md); font-weight: 800;
-  line-height: 1.2; color: var(--text); margin-bottom: var(--sp-1);
-}
-.tarjeta-texto { font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted); }
-.tarjeta-cita {
-  margin-top: var(--sp-3); padding: var(--sp-2) var(--sp-3);
-  background: rgba(242,179,31,.14);
-  border-left: 3px solid var(--maiz-400);
-  border-radius: 0 var(--r-sm) var(--r-sm) 0;
-}
-.tarjeta-cita p { font-size: var(--t-sm); font-style: italic; line-height: var(--lead); color: var(--text); }
-.tarjeta-cita footer {
-  margin-top: var(--sp-1);
-  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700; color: var(--accent-ink);
-}
-.brief-nota {
-  font-size: var(--t-xs); line-height: var(--lead); font-style: italic;
-  color: var(--text-muted);
-}
-.final-cierre { font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted); }
-
-.final-voz {
-  margin-top: var(--sp-2);
-  padding: var(--sp-3);
-  font-size: var(--t-sm); font-style: italic; line-height: var(--lead);
-  color: var(--text);
-  background: rgba(245,166,35,.13);
-  border-left: 3px solid var(--maiz-400);
-  border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  text-align: left;
-}
-.final-voz span {
-  display: block; margin-top: var(--sp-1);
-  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
-  font-style: normal; color: var(--accent-ink);
-}
-
-
+.cuaderno-fuentes a { color: var(--oro-200); }
+#cuaderno-volver { color: var(--text-invert); box-shadow: inset 0 0 0 1.5px var(--vidrio-borde); background: var(--vidrio); }
 
 /* ============================================================
-   EL CAMINO — la mesa como mapa de viaje.
-   Nodos redondos que serpentean hacia la olla, el sendero
-   dibujado detrás, y lo recorrido en dorado. La lista de
-   tarjetas se leía como un menú; esto se lee como "vas aquí".
+   EL MESÓN — el nivel 3D y su HUD
+   Todo lo que flota sobre la escena es cristal oscuro con un filo
+   claro. La regla: nada tapa el centro, que es donde están las
+   manos. Arriba la tarea y el reloj, abajo la pista y los botones.
    ============================================================ */
+.escena { position: absolute; inset: 0; z-index: 0; }
+.escena canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+/* la viñeta cálida hunde las esquinas y deja el centro como lo más
+   claro del cuadro: es lo que separa "escena 3D" de "producto" */
+.escena::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 60%, transparent 38%, rgba(20,10,4,.36) 76%, rgba(12,6,2,.62) 100%);
+}
 
-.camino { position: relative; }
+/* el flash rojo/verde de "algo pasó" */
+.destello { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: rgba(229,83,61,.5); opacity: 0; }
+.destello.activo { animation: destello-va .45s var(--ease-out) both; }
+@keyframes destello-va { 0% { opacity: .85; } 100% { opacity: 0; } }
 
-.camino-svg {
-  position: absolute; top: 0; left: 0;
-  width: 100%; height: 100%;
+/* ---- la cabecera ---- */
+.juego-hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 4;
+  height: var(--prep-hud-h);
+  display: flex; align-items: flex-start; gap: var(--sp-2);
+  padding: calc(env(safe-area-inset-top) + var(--sp-2)) var(--sp-3) 0;
+  /* la barra es casi toda aire: si capturara el dedo se comería los
+     toques sobre lo alto del ingrediente. Solo los controles reciben
+     el dedo. */
   pointer-events: none;
 }
-.tramo {
-  fill: none;
-  stroke: var(--madera-500, #93491c);
-  stroke-opacity: .38;
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-dasharray: 0.1 9;
-  /* el sendero se estira con preserveAspectRatio=none: sin esto el
-     grosor del trazo se deformaría con él */
-  vector-effect: non-scaling-stroke;
+.hud-salir, .hud-tiempo { pointer-events: auto; }
+.hud-salir {
+  flex: 0 0 auto;
+  width: 46px; height: 46px;
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; line-height: 1;
+  order: -1;
 }
-.tramo--hecho {
-  stroke: var(--maiz-500, #f2b31f);
-  stroke-opacity: .85;
-  stroke-dasharray: none;
-}
-
-.nodo {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex; flex-direction: column; align-items: center;
-  gap: .3rem;
-  width: 118px;
-  animation: nodo-entra .4s var(--ease-pop) both;
-}
-@keyframes nodo-entra {
-  from { opacity: 0; transform: translate(-50%, -38%) scale(.7); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-.nodo-plato {
-  display: block;
-  width: 84px; height: 84px;
-  padding: 10px;
-  border-radius: 50%;
-  background: radial-gradient(120% 120% at 32% 26%, var(--surface-raised, #fff) 0%, var(--surface, #f4ead6) 100%);
-  border: 4px solid var(--madera-400, #b4632c);
+.hud-centro {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: .5rem;
+  height: 46px; padding: 0 .75rem 0 .3rem;
+  border-radius: var(--r-pill);
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
   box-shadow: var(--e-2);
-  transition: transform var(--dur-fast) var(--ease-out);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
 }
-.nodo:active .nodo-plato { transform: scale(.92); }
-
-/* el siguiente paso LATE: nadie debería tener que buscar dónde seguir */
-.nodo--siguiente .nodo-plato {
-  width: 96px; height: 96px;
-  border-color: var(--maiz-500, #f2b31f);
-  box-shadow: 0 0 0 6px rgba(242, 179, 31, .28), var(--e-3);
-  animation: nodo-late 1.6s var(--ease-pop) infinite;
+.hud-icono {
+  flex: 0 0 auto; width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 38%, rgba(255,244,226,.22), rgba(255,244,226,.06));
+  border: 1.5px solid var(--vidrio-borde); border-radius: 50%;
 }
-@keyframes nodo-late {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 6px rgba(242,179,31,.28), var(--e-3); }
-  50%      { transform: scale(1.06); box-shadow: 0 0 0 11px rgba(242,179,31,.14), var(--e-3); }
+.hud-icono svg { width: 76%; height: 76%; }
+.hud-centro-txt { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: .2rem; }
+.hud-tarea {
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; line-height: 1.1;
+  color: var(--text-invert);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
-.nodo--hecho .nodo-plato { border-color: var(--nopal-500, #6cbf5a); }
-
-.nodo--bloqueado .nodo-plato { filter: grayscale(.75); opacity: .55; border-color: var(--hairline); }
-.nodo--bloqueado .nodo-nombre { opacity: .6; }
-.nodo-candado {
-  position: absolute; top: 26px;
-  font-size: 26px;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.3));
-  pointer-events: none;
+.hud-barra-fila { display: flex; align-items: center; gap: .45rem; }
+.hud-barra-fila .meter { height: 7px; background: rgba(255,244,226,.16); box-shadow: none; }
+.hud-centro .meter-fill { background: linear-gradient(90deg, var(--oro-400), var(--oro-200)); box-shadow: 0 0 10px rgba(255,211,106,.55); }
+.hud-pct {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-2xs);
+  color: var(--oro-300); min-width: 2.4rem; text-align: right;
+  font-variant-numeric: tabular-nums;
 }
-
-/* la olla: el nodo grande del final */
-.nodo--olla .nodo-plato,
-.nodo-plato--olla {
-  width: 108px; height: 108px;
-  border-color: var(--chile-500, #d94f30);
-  border-width: 5px;
-}
-.nodo--olla:not(.nodo--bloqueado) .nodo-plato {
-  animation: nodo-late 1.6s var(--ease-pop) infinite;
-  box-shadow: 0 0 0 8px rgba(217, 79, 48, .22), var(--e-3);
-}
-
-.nodo-nombre {
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 800;
-  color: var(--text);
-  background: var(--surface-raised, #fff);
-  border: var(--ring);
-  border-radius: var(--r-pill);
-  padding: .12rem .6rem;
-  box-shadow: var(--e-1);
-  /* Parte en dos líneas antes que cortarse con puntos. Con las
-     variantes del choclo, el recorte dejaba cinco nodos que decían
-     todos "choclo · prime…" y no se distinguían entre sí. */
-  text-align: center;
-  line-height: 1.15;
-  max-width: 122px;
-  overflow-wrap: anywhere;
-}
-
-/* Los chiles de dificultad, debajo del nombre. Van chiquitos y sin
-   caja: son una temperatura, no un dato que haya que leer. */
-.nodo-dif {
-  font-size: .58rem;
-  letter-spacing: -1px;
-  line-height: 1;
-  margin-top: 2px;
-  filter: saturate(.9);
-}
-.nodo--bloqueado .nodo-dif { opacity: .45; filter: grayscale(1); }
-
-.nodo-cucharas {
-  position: absolute; top: -8px; right: 2px;
-  display: flex; gap: 1px;
-  background: var(--surface-raised, #fff);
-  border: var(--ring); border-radius: var(--r-pill);
-  padding: 2px 5px;
-  box-shadow: var(--e-1);
-}
-.nodo-cucharas .cuchara { width: 13px; height: 13px; }
-
-/* la despensa: chips apagados, tocables para leer qué viene */
-.despensa { margin-top: var(--sp-5); padding-bottom: var(--sp-6); }
-.despensa-fila {
-  display: flex; flex-wrap: wrap; justify-content: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-}
-.despensa-chip {
-  display: flex; align-items: center; gap: .4rem;
-  padding: .3rem .7rem .3rem .35rem;
-  background: var(--surface);
-  border: 1.5px dashed var(--hairline);
-  border-radius: var(--r-pill);
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  color: var(--text-muted);
-  opacity: .75;
-  min-height: 44px;
-}
-.despensa-chip .despensa-icono { width: 30px; height: 30px; filter: grayscale(.6); }
-
-/* ============================================================
-   EL JUGO
-   Lo que hace que un acierto se sienta acierto. Todo cuelga de
-   `progreso()` en main.js, así que ningún nivel tiene que pedirlo.
-   ============================================================ */
-
 /* la barra late cuando sube */
-.meter-fill.late { animation: barra-late .34s var(--ease-pop); }
-@keyframes barra-late {
-  0%   { filter: brightness(1); }
-  35%  { filter: brightness(1.5) saturate(1.3); }
-  100% { filter: brightness(1); }
+.meter-fill.late { animation: barra-late .34s var(--ease-spring); }
+@keyframes barra-late { 35% { filter: brightness(1.6) saturate(1.3); } }
+
+/* el reloj, con su cronómetro */
+.hud-tiempo {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center; gap: .3rem;
+  height: 46px; min-width: 4.6rem; padding: 0 .8rem;
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
+  color: var(--text-invert);
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
+  border-radius: var(--r-pill);
+  box-shadow: var(--e-2);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
+  font-variant-numeric: tabular-nums;
 }
-
-/* el contador de racha, junto al reloj */
-.hud-racha {
-  position: absolute; right: calc(var(--sp-3) + 76px);
-  top: calc(env(safe-area-inset-top) + 14px);
-  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
-  color: var(--maiz-300, #ffd24d);
-  text-shadow: 0 2px 0 rgba(90,50,20,.55), 0 0 14px rgba(255,210,77,.7);
-  opacity: 0; transform: scale(.6);
-  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-  pointer-events: none;
+.hud-crono { font-size: .95em; }
+/* el reloj en rojo cuando se acaba: late para que se mire sin leerlo */
+.hud-tiempo--rojo {
+  color: #fff; background: linear-gradient(180deg, var(--brasa-400), var(--brasa-600));
+  border-color: rgba(255,255,255,.35);
+  animation: apuro-late .6s ease-in-out infinite;
 }
-.hud-racha.visible { opacity: 1; transform: scale(1); }
-.hud-racha.brinca { animation: racha-brinca .3s var(--ease-pop); }
-@keyframes racha-brinca {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.45) rotate(-5deg); }
-  100% { transform: scale(1); }
-}
+@keyframes apuro-late { 50% { transform: scale(1.08); } }
 
-/* las fichas de la mesa entran escalonadas: la lista se arma sola
-   delante de quien mira, en vez de aparecer de golpe ya hecha */
-.mesa-lista .ingrediente {
-  animation: ficha-entra .34s var(--ease-pop) both;
-}
-.mesa-lista .ingrediente:nth-child(1)  { animation-delay: .00s; }
-.mesa-lista .ingrediente:nth-child(2)  { animation-delay: .03s; }
-.mesa-lista .ingrediente:nth-child(3)  { animation-delay: .06s; }
-.mesa-lista .ingrediente:nth-child(4)  { animation-delay: .09s; }
-.mesa-lista .ingrediente:nth-child(5)  { animation-delay: .12s; }
-.mesa-lista .ingrediente:nth-child(6)  { animation-delay: .15s; }
-.mesa-lista .ingrediente:nth-child(7)  { animation-delay: .18s; }
-.mesa-lista .ingrediente:nth-child(n+8) { animation-delay: .21s; }
-@keyframes ficha-entra {
-  from { opacity: 0; transform: translateY(12px) scale(.97); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* el toque, más gordo: en un juego que se juega con el dedo, la
-   ficha tiene que hundirse de verdad al tocarla */
-.ingrediente:active { transform: translateY(3px) scale(.985); }
-
-/* Objetivos de toque grandes. Es la regla más aburrida de este
-   archivo y la que más decide si alguien de setenta puede jugar:
-   nada que haya que tocar mide menos de 44px de alto. */
-.ctrl { min-height: 56px; }
-.cuaderno-acceso { min-height: 48px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .mesa-lista .ingrediente,
-  .hud-racha.brinca,
-  .meter-fill.late,
-  .ingrediente--olla:not(.bloqueado) { animation: none; }
-}
-
-
-/* ============================================================
-   CALMA Y LEGIBILIDAD (auditoría UX)
-   ============================================================ */
-
-/* El reloj se ve. Estuvo escondido una versión —la idea era quitarle
-   presión al juego— pero las cucharas se ganan con él: taparlo dejaba
-   al jugador compitiendo contra un número que no podía mirar. Vuelve
-   sin alarmas: nadie le pone la clase `apurado`, así que no se pone
-   rojo nunca, y sigue deteniéndose solo mientras se lee una cita. */
-.hud-tiempo { font-size: var(--t-md); }
-
-/* la instrucción del nivel, en letra de leerse sin lentes */
-/* ---- QUE LOS MENSAJES SE VEAN ----
-   Los tres canales (pista, alerta, toast) se perdían: letra chica,
-   poco contraste sobre una escena 3D que cambia de color, y entradas
-   por opacidad, que el ojo no detecta cuando está mirando los dedos.
-   Ahora entran con movimiento, pesan más y se distinguen entre sí. */
-.juego-pista {
-  font-size: var(--t-md); padding: .6rem 1.2rem;
-  background: rgba(40, 26, 20, .93);
-  border: 2px solid rgba(255, 235, 200, .3);
-  box-shadow: var(--e-3), 0 0 0 4px rgba(0, 0, 0, .18);
-  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-pop);
-  transform: translateX(-50%) translateY(10px);
-}
-.juego-pista.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* la alerta: más grande, con golpe de entrada y dos tonos */
+/* el aviso grande de peligro, sobre la escena */
 .hud-alerta {
-  font-size: var(--t-md); padding: .5rem 1.1rem;
-  border-width: 3px;
-  max-width: 92%;
+  position: absolute; top: calc(var(--prep-hud-h) + var(--sp-2)); left: 50%;
+  transform: translateX(-50%) translateY(-8px); z-index: 4;
+  /* deja libre la esquina del combo a la izquierda y el «?» a la derecha */
+  max-width: 62%;
+  padding: .5rem 1.1rem;
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700; text-align: center; line-height: 1.2;
+  color: #fff;
+  background: linear-gradient(180deg, var(--brasa-400), var(--brasa-600));
+  border: 2px solid rgba(255,255,255,.7);
+  border-radius: var(--r-md);
+  box-shadow: var(--e-3);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
 }
-.hud-alerta.tono-bien {
-  background: linear-gradient(180deg, var(--hierba-400, #6cbf5a), var(--hierba-600, #3f8b3a));
-  border-color: #eafbe4;
-}
-.hud-alerta.entra { animation: alerta-entra .42s var(--ease-pop); }
+.hud-alerta.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.hud-alerta.tono-bien { background: linear-gradient(180deg, var(--hoja-400), var(--hoja-600)); }
+.hud-alerta.entra { animation: alerta-entra .42s var(--ease-spring); }
 @keyframes alerta-entra {
   0%   { transform: translateX(-50%) translateY(-14px) scale(.8); }
   60%  { transform: translateX(-50%) translateY(0) scale(1.06); }
   100% { transform: translateX(-50%) translateY(0) scale(1); }
-}
-
-/* el toast, que era el más invisible de los tres */
-#toast {
-  font-size: var(--t-md); font-weight: 700;
-  padding: .55rem 1.15rem;
-  border: 2px solid rgba(255, 235, 200, .34);
-  box-shadow: var(--e-3);
-}
-/* Con el mesón activo, el toast SUBE: abajo vive la pista —la única
-   enseñanza del juego— y el toast de celebración se le plantaba
-   encima comiéndole las líneas de en medio. Arriba celebra igual y
-   no tapa clase. `#stage:has()` porque el toast vive fuera de las
-   pantallas y no hereda de #screen-juego. */
-#stage:has(#screen-juego.active) #toast {
-  bottom: auto;
-  top: calc(env(safe-area-inset-top) + 5.4rem);
-}
-#stage:has(#screen-juego.active) #toast.visible { transform: translateX(-50%) translateY(0); }
-
-@media (prefers-reduced-motion: reduce) {
-  .hud-alerta.entra { animation: none; }
-  .juego-pista, .juego-pista.visible { transform: translateX(-50%); }
-}
-
-/* la tarea del HUD con superficie propia: sobre la escena 3D el
-   text-shadow solo aguanta hasta que el fondo cambia de color */
-.hud-centro {
-  background: rgba(58, 42, 32, .72);
-  border-radius: var(--r-pill);
-  padding: .3rem .9rem;
-}
-.hud-tarea { font-size: var(--t-md); color: #fff; text-shadow: none; }
-.hud-centro .meter { height: 9px; }
-
-/* el botón de salir, alcanzable */
-.hud-salir { width: 2.9rem; height: 2.9rem; }
-
-/* la cuchara que cae al revelarse en el modal de listo */
-.cuchara.cae { animation: cuchara-cae .38s var(--ease-pop) both; }
-@keyframes cuchara-cae {
-  0%   { transform: translateY(-16px) scale(1.5); opacity: 0; }
-  60%  { transform: translateY(2px) scale(1.05); opacity: 1; }
-  100% { transform: none; opacity: 1; }
-}
-
-
-/* pulido del camino (auditoría UI) */
-.mesa-frase {
-  font-size: var(--t-sm); color: var(--text-muted);
-  text-align: center; line-height: var(--lead);
-  margin-bottom: var(--sp-3); padding: 0 var(--sp-4);
-}
-.tramo-base {
-  fill: none;
-  stroke: var(--madera-600, #6b3a16); stroke-opacity: .32;
-  stroke-width: 13; stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-.tramo { stroke-width: 7; stroke-opacity: .55; stroke-dasharray: 0.1 15; }
-.tramo--hecho { stroke-opacity: .95; }
-
-/* los bloqueados, más chicos: la jerarquía se lee por tamaño antes
-   que por color — hecho (84) > siguiente (96) > bloqueado (64) */
-.nodo--bloqueado .nodo-plato { width: 64px; height: 64px; padding: 7px; }
-.nodo-candado { top: auto; bottom: 34px; right: 12px; font-size: 18px; }
-
-/* la barra de progreso con canal visible: vacía también se ve */
-.hud-centro .meter { background: rgba(43, 33, 41, .34); border-radius: 5px; }
-
-
-/* ============================================================
-   HUD DE JUEGO, SEGUNDA PASADA
-   La referencia era un juego de móvil "premium": paneles de vidrio
-   oscuro con filo dorado, cifras grandes, y todo lo que importa
-   legible sin buscarlo. La regla al armarlo fue una sola: nada de
-   esto puede tapar el centro de la pantalla, que es donde están
-   las manos trabajando.
-   ============================================================ */
-
-:root {
-  --vidrio: linear-gradient(180deg, rgba(28,18,14,.92), rgba(16,10,8,.95));
-  --filo-oro: rgba(255, 201, 60, .55);
-  --oro-glow: 0 0 16px rgba(255, 201, 60, .28);
-}
-
-/* ---- cabecera ---- */
-.juego-hud { align-items: flex-start; gap: var(--sp-2); }
-
-.hud-centro {
-  display: flex; align-items: center; gap: .55rem;
-  padding: .4rem .8rem .45rem .45rem;
-  background: var(--vidrio);
-  border: 2px solid var(--filo-oro);
-  border-radius: var(--r-pill);
-  box-shadow: var(--e-3), var(--oro-glow);
-  min-width: 0; flex: 1;
-}
-.hud-icono {
-  flex: 0 0 auto; width: 2.5rem; height: 2.5rem;
-  display: grid; place-items: center;
-  background: radial-gradient(circle at 40% 32%, rgba(255,210,110,.34), rgba(0,0,0,.28));
-  border: 2px solid var(--filo-oro); border-radius: 50%;
-}
-.hud-icono svg { width: 78%; height: 78%; }
-.hud-centro-txt { min-width: 0; flex: 1; }
-.hud-tarea {
-  font-family: var(--font-display); font-weight: 800;
-  font-size: var(--t-md); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.6);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-bottom: .2rem;
-}
-.hud-barra-fila { display: flex; align-items: center; gap: .45rem; }
-.hud-barra-fila .meter { flex: 1; height: 11px; border-radius: 6px; }
-.hud-centro .meter-fill {
-  background: linear-gradient(180deg, #ffe08a, var(--maiz-400));
-  box-shadow: 0 0 10px rgba(255,201,60,.55);
-}
-.hud-pct {
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-sm);
-  color: var(--maiz-300); text-shadow: 0 1px 2px rgba(0,0,0,.7);
-  min-width: 2.6rem; text-align: right;
-}
-
-/* el reloj, con su cronómetro */
-.hud-tiempo {
-  display: inline-flex; align-items: center; gap: .34rem;
-  padding: .42rem .8rem;
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-lg);
-  color: #fff;
-  background: var(--vidrio);
-  border: 2px solid var(--filo-oro);
-  box-shadow: var(--e-3), var(--oro-glow);
-  min-width: 0;
-}
-.hud-crono { font-size: 1em; filter: saturate(1.2); }
-
-/* pausa */
-.hud-salir {
-  flex: 0 0 auto;
-  background: var(--vidrio);
-  border: 2px solid var(--filo-oro);
-  color: #fff; font-size: var(--t-lg);
-  box-shadow: var(--e-3), var(--oro-glow);
 }
 
 /* ---- el combo, grande, a la izquierda ---- */
@@ -944,34 +754,35 @@ svg[width="0"] { width: 0; height: 0; }
   top: calc(var(--prep-hud-h) + var(--sp-5)); z-index: 5;
   text-align: center; pointer-events: none;
   opacity: 0; transform: scale(.7) translateY(6px);
-  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-pop);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
 }
 .hud-combo.visible { opacity: 1; transform: scale(1) translateY(0); }
 .hud-combo-tit {
   font-family: var(--font-display); font-weight: 800; font-size: var(--t-sm);
-  color: var(--nopal-300); letter-spacing: .06em;
-  text-shadow: 0 2px 0 rgba(30,60,10,.6), 0 0 12px rgba(140,198,63,.7);
+  color: var(--hoja-300); letter-spacing: .06em;
+  text-shadow: 0 2px 0 rgba(30,60,10,.6), 0 0 12px rgba(125,203,111,.7);
 }
 .hud-combo-x {
-  font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; line-height: .95;
+  font-family: var(--font-display); font-weight: 800; font-size: 2.8rem; line-height: .95;
   color: #fff;
-  text-shadow: 0 3px 0 rgba(120,70,10,.75), 0 0 20px rgba(255,201,60,.85);
+  text-shadow: 0 3px 0 rgba(120,70,10,.75), 0 0 22px rgba(255,211,106,.85);
 }
 .hud-combo-pie {
   font-family: var(--font-display); font-weight: 800; font-size: var(--t-xs);
-  color: var(--maiz-300); letter-spacing: .16em;
+  color: var(--oro-300); letter-spacing: .16em;
   text-shadow: 0 2px 3px rgba(0,0,0,.6);
 }
-.hud-combo.brinca .hud-combo-x { animation: combo-brinca .32s var(--ease-pop); }
-@keyframes combo-brinca { 0% { transform: scale(1); } 45% { transform: scale(1.28); } 100% { transform: scale(1); } }
+.hud-combo.brinca .hud-combo-x { animation: combo-brinca .32s var(--ease-spring); }
+@keyframes combo-brinca { 45% { transform: scale(1.28); } }
+.hud-racha { display: none; }
 
-/* ---- los +N que suben ---- */
+/* ---- los +N que suben, y el ±Ns del reloj ---- */
 .hud-flotantes { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 .flota {
   position: absolute; transform: translate(-50%, -50%);
   font-family: var(--font-display); font-weight: 800; font-size: var(--t-xl);
-  color: var(--nopal-300);
-  text-shadow: 0 2px 0 rgba(30,60,10,.7), 0 0 14px rgba(140,198,63,.8);
+  color: var(--hoja-300);
+  text-shadow: 0 2px 0 rgba(30,60,10,.7), 0 0 14px rgba(125,203,111,.8);
   animation: flota-sube .9s var(--ease-out) forwards;
 }
 @keyframes flota-sube {
@@ -979,357 +790,297 @@ svg[width="0"] { width: 0; height: 0; }
   22%  { opacity: 1; transform: translate(-50%, -78%) scale(1.12); }
   100% { opacity: 0; transform: translate(-50%, -190%) scale(1); }
 }
-
-/* ---- contadores de los cuencos ---- */
-.hud-cuencos { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
-.cuenco-chip {
-  position: absolute; transform: translate(-50%, 0);
-  display: inline-flex; align-items: center; gap: .3rem;
-  padding: .22rem .6rem;
-  background: var(--vidrio);
-  border: 2px solid var(--filo-oro); border-radius: var(--r-pill);
-  box-shadow: var(--e-2);
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
-  color: #fff; white-space: nowrap;
-  opacity: 0; transition: opacity var(--dur) var(--ease-out);
-}
-.cuenco-chip.visible { opacity: 1; }
-.cuenco-chip i { font-style: normal; font-size: var(--t-2xs); letter-spacing: .08em; opacity: .8; }
-.cuenco-chip--bueno { border-color: rgba(140,198,63,.65); }
-.cuenco-chip--malo  { border-color: rgba(180,99,44,.7); }
-.cuenco-chip.brinca { animation: combo-brinca .28s var(--ease-pop); }
-
-/* ---- pasos del nivel, a la derecha ---- */
-.hud-pasos {
-  position: absolute; right: var(--sp-3);
-  top: calc(var(--prep-hud-h) + var(--sp-5)); z-index: 5;
-  width: 5.6rem; padding: .5rem .4rem;
-  background: var(--vidrio);
-  border: 2px solid var(--filo-oro); border-radius: var(--r-lg);
-  box-shadow: var(--e-3);
-  opacity: 0; transition: opacity var(--dur) var(--ease-out);
+.flota-tiempo {
+  position: absolute; right: 12%; top: calc(var(--prep-hud-h) + .4rem);
+  font-family: var(--font-display); font-weight: 800; font-size: 1.7rem;
+  text-shadow: 0 2px 0 rgba(0,0,0,.3), 0 0 16px rgba(0,0,0,.4);
+  animation: flota-t 1.1s var(--ease-spring) forwards;
   pointer-events: none;
 }
-.hud-pasos.visible { opacity: 1; }
-.paso { text-align: center; padding: .34rem .1rem; }
-.paso + .paso { border-top: 1.5px solid rgba(255,255,255,.14); }
-.paso-ico { font-size: 1.35rem; line-height: 1.1; display: block; }
-.paso-txt {
-  font-family: var(--font-text); font-weight: 700; font-size: var(--t-2xs);
-  color: rgba(255,255,255,.86); line-height: 1.18; display: block; margin-top: .12rem;
-}
-.paso--hecho { opacity: .42; }
-.paso--hecho .paso-txt { text-decoration: line-through; }
-.paso--activo .paso-txt { color: var(--maiz-300); }
-.paso--activo { background: rgba(255,201,60,.12); border-radius: var(--r-md); }
-
-/* ---- el ritmo contra el reloj ---- */
-.hud-ritmo {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom) + var(--prep-riel-h) + var(--sp-2));
-  z-index: 4; width: min(88%, 21rem);
-  opacity: 0; transition: opacity var(--dur) var(--ease-out);
-  pointer-events: none;
-}
-.hud-ritmo.visible { opacity: 1; }
-.ritmo-barra {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
-  border: 2px solid rgba(255,255,255,.22); border-radius: var(--r-pill);
-  overflow: hidden; box-shadow: var(--e-2);
-}
-.ritmo-tramo {
-  padding: .2rem 0; text-align: center;
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-2xs);
-  letter-spacing: .05em; color: rgba(255,255,255,.92);
-  text-shadow: 0 1px 2px rgba(0,0,0,.5);
-}
-.ritmo-tramo--perfecto { background: linear-gradient(180deg, #4c8f2a, #2f6417); }
-.ritmo-tramo--bien     { background: linear-gradient(180deg, #7d9b23, #5a7314); }
-.ritmo-tramo--regular  { background: linear-gradient(180deg, #b4632c, #8a4519); }
-.ritmo-tramo--fallo    { background: linear-gradient(180deg, #8e2b22, #641914); }
-.ritmo-aguja {
-  position: absolute; top: -7px; left: 12%;
-  width: 0; height: 0; transform: translateX(-50%);
-  border-left: 7px solid transparent; border-right: 7px solid transparent;
-  border-top: 9px solid #fff;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6));
-  transition: left var(--dur) var(--ease-out);
+.flota-tiempo--gana   { color: var(--hoja-300); }
+.flota-tiempo--pierde { color: var(--brasa-400); }
+@keyframes flota-t {
+  0%   { opacity: 0; transform: translateY(6px) scale(.7); }
+  22%  { opacity: 1; transform: translateY(-4px) scale(1.12); }
+  100% { opacity: 0; transform: translateY(-40px) scale(1); }
 }
 
-/* ---- el riel de los doce, mientras juegas ---- */
-:root { --prep-riel-h: 3.6rem; }
-.hud-riel {
+/* ---- botones que cada nivel pide (girar la mazorca, etc.) ---- */
+.juego-controles {
   position: absolute; left: 0; right: 0;
-  bottom: env(safe-area-inset-bottom); z-index: 5;
-  height: var(--prep-riel-h);
-  display: flex; align-items: center; gap: .1rem;
-  padding: 0 var(--sp-2);
-  overflow-x: auto; overflow-y: hidden;
-  scrollbar-width: none;
-  background: linear-gradient(180deg, rgba(20,12,9,.0), rgba(20,12,9,.86) 38%);
+  bottom: calc(env(safe-area-inset-bottom) + var(--sp-4));
+  z-index: 4;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-3);
+  padding: 0 var(--sp-4);
   pointer-events: none;
-}
-.hud-riel::-webkit-scrollbar { display: none; }
-.riel-item {
-  flex: 0 0 auto; width: 3.05rem; text-align: center;
-  position: relative;
-}
-.riel-plato {
-  width: 2.2rem; height: 2.2rem; margin: 0 auto;
-  display: grid; place-items: center;
-  background: radial-gradient(circle at 40% 32%, rgba(255,225,160,.22), rgba(0,0,0,.42));
-  border: 2px solid rgba(255,255,255,.22); border-radius: 50%;
-}
-.riel-plato svg { width: 74%; height: 74%; }
-.riel-item--hecho .riel-plato { border-color: rgba(140,198,63,.8); }
-.riel-item--ahora .riel-plato {
-  border-color: var(--maiz-300);
-  box-shadow: 0 0 0 3px rgba(255,201,60,.28), 0 0 14px rgba(255,201,60,.6);
-}
-.riel-item--porvenir { opacity: .45; }
-.riel-txt {
-  display: block; margin-top: .1rem;
-  font-family: var(--font-text); font-weight: 700; font-size: 9px;
-  color: rgba(255,255,255,.8); letter-spacing: .02em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.riel-item--ahora .riel-txt { color: var(--maiz-300); }
-.riel-marca {
-  position: absolute; right: .22rem; top: 1.35rem;
-  width: 1rem; height: 1rem; border-radius: 50%;
-  display: grid; place-items: center;
-  font-size: 9px; font-weight: 800; color: #10240a;
-  background: var(--nopal-300); border: 1.5px solid rgba(255,255,255,.7);
-}
-.riel-item--porvenir .riel-marca { background: rgba(255,255,255,.55); color: #333; }
-
-/* con el riel abajo, las pistas y los controles suben */
-.juego-controles { bottom: calc(env(safe-area-inset-bottom) + var(--prep-riel-h) + var(--sp-4)); }
-.juego-pista { bottom: calc(env(safe-area-inset-bottom) + var(--prep-riel-h) + var(--prep-ctrl-h) + var(--sp-4)); }
-
-/* los controles, en columna a la izquierda como en la referencia */
-.juego-controles { flex-direction: column; align-items: flex-start; padding-left: var(--sp-3); }
-.ctrl { min-width: 4.4rem; }
-
-@media (prefers-reduced-motion: reduce) {
-  .flota { animation-duration: .01ms; }
-  .hud-combo.brinca .hud-combo-x, .cuenco-chip.brinca { animation: none; }
-}
-
-
-/* ============================================================
-   AJUSTES DESPUÉS DE VERLO EN PANTALLA
-   La primera pasada se veía mal por tres razones concretas, y todas
-   se arreglan aquí porque este bloque va último y gana.
-   ============================================================ */
-
-/* 1 · La cabecera se apilaba: había un `flex-direction: column` más
-   arriba que le ganaba a mi `display:flex`. En fila, y con radio de
-   caja —el radio de píldora sobre una caja alta se veía como un
-   huevo. */
-.hud-centro {
-  flex-direction: row; align-items: center;
-  border-radius: var(--r-lg);
-  padding: .34rem .7rem .34rem .34rem;
-  gap: .5rem;
-}
-.hud-centro-txt { display: flex; flex-direction: column; gap: .18rem; }
-/* la barra no se veía: canal oscuro sobre panel oscuro */
-.hud-centro .meter {
-  background: rgba(255, 240, 210, .22);
-  border: 1px solid rgba(0, 0, 0, .35);
-}
-.hud-tarea { font-size: var(--t-sm); }
-
-/* 2 · La pila de abajo se pisaba entre sí. Cada cosa con su altura
-   declarada y su sitio, de abajo hacia arriba:
-   riel → medidor de ritmo → botones → pista. */
-:root {
-  --prep-riel-h: 3.5rem;
-  --prep-ritmo-h: 1.5rem;
-  --base-riel: calc(env(safe-area-inset-bottom) + var(--prep-riel-h));
-}
-.hud-ritmo { bottom: calc(var(--base-riel) + .3rem); width: min(92%, 22rem); }
-.juego-controles {
-  bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + .7rem);
-  align-items: flex-start;
-}
-.juego-pista {
-  bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + var(--prep-ctrl-h) + 1rem);
-  font-size: var(--t-sm); max-width: 82%;
-  padding: .45rem 1rem;
-}
-
-/* 3 · La escena se veía plana y azul: el azulejo del fondo pesaba
-   más que la comida. Una viñeta cálida hunde las esquinas y deja el
-   centro —donde están las manos— como lo más claro del cuadro. Es
-   lo que separa "escena 3D" de "producto". */
-/* OJO: `.escena` ya es `position:absolute; inset:0`, así que sirve de
-   contexto para este ::after tal cual. Ponerle `position: relative`
-   —como se hizo en el primer intento— la saca del inset y la
-   colapsa a la altura del contenido: la cocina se quedaba en una
-   franja de arriba y el resto de la pantalla era fondo vacío. */
-.escena::after {
-  content: ''; position: absolute; inset: 0; z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(120% 78% at 50% 62%, rgba(0,0,0,0) 34%, rgba(28,14,6,.38) 74%, rgba(20,10,4,.62) 100%);
-}
-
-/* ---- segunda revisión visual ---- */
-
-/* el emoji del riel, que distingue de verdad un ingrediente de otro */
-.riel-emoji { font-size: 1.15rem; line-height: 1; }
-
-/* Los botones eran dos pastillas blancas enormes tapando los cuencos.
-   En la referencia son un panel de vidrio a media altura, a la
-   izquierda, lejos de donde caen las cosas. */
-/* a media altura los botones caían justo sobre el chip de la
-   composta; suben al hueco que queda bajo la cabecera, donde no
-   estorban ni a los cuencos ni al ingrediente */
-.juego-controles {
-  top: 29%; bottom: auto; left: 0; right: auto;
-  width: auto;
-  flex-direction: column; align-items: flex-start; gap: .4rem;
-  padding-left: var(--sp-3);
 }
 .ctrl {
-  min-width: 3.5rem; height: 2.9rem; padding: 0 .6rem;
-  font-size: var(--t-lg);
-  color: #fff;
-  background: var(--vidrio);
-  border: 2px solid var(--filo-oro); border-bottom-width: 3px;
-  box-shadow: var(--e-2), var(--oro-glow);
+  pointer-events: auto;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 4.6rem; min-height: 58px; padding: .3rem .9rem;
+  font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800; line-height: 1;
+  color: var(--text-invert);
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
+  border-radius: var(--r-pill);
+  box-shadow: var(--e-2), inset 0 1px 0 rgba(255,255,255,.12);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
-.ctrl:active, .ctrl.presionado { border-bottom-width: 2px; }
-.ctrl-tip { color: var(--maiz-300); opacity: .95; }
+.ctrl:active, .ctrl.presionado { transform: scale(.94); background: rgba(255,211,106,.28); border-color: var(--oro-400); }
+.ctrl-tip { font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--oro-300); }
 
-/* con los botones fuera de abajo, la pista baja a su sitio */
-.juego-pista { bottom: calc(var(--base-riel) + var(--prep-ritmo-h) + 1rem); }
+/* ---- la pista: la única enseñanza del juego ---- */
+.juego-pista {
+  position: absolute; left: 50%; transform: translateX(-50%) translateY(10px);
+  bottom: calc(env(safe-area-inset-bottom) + var(--prep-ctrl-h) + var(--sp-4));
+  z-index: 4; width: max-content; max-width: 86%;
+  padding: .6rem 1.2rem;
+  font-family: var(--font-text); font-size: var(--t-sm); font-weight: 600; text-align: center; line-height: 1.4;
+  color: var(--text-invert);
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
+  border-left: 4px solid var(--oro-400);
+  border-radius: var(--r-md);
+  box-shadow: var(--e-3);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+}
+.juego-pista.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.juego-pista b { color: var(--oro-200); }
 
+/* el «?»: la última pista, otra vez */
+.btn-pista {
+  position: absolute; right: var(--sp-3);
+  top: calc(var(--prep-hud-h) + var(--sp-3));
+  z-index: 5;
+  width: 44px; height: 44px;
+  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
+}
+
+/* ---- la voz sobre la escena ---- */
+.voz {
+  position: absolute; left: 50%; top: 40%;
+  transform: translate(-50%, -6px) scale(.98); z-index: 5;
+  width: min(340px, 88%);
+  padding: var(--sp-4) var(--sp-5);
+  text-align: center;
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
+  border-top: 3px solid var(--oro-400);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e-4);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-spring);
+}
+.voz.visible { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; cursor: pointer; }
+.voz-texto { font-family: var(--font-text); font-size: var(--t-md); font-style: italic; line-height: var(--lead); color: var(--text-invert); }
+.voz-quien {
+  margin-top: var(--sp-2);
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  letter-spacing: var(--track-caps); text-transform: uppercase;
+  color: var(--oro-300);
+}
+
+/* ---- el toast sube cuando el mesón está activo: abajo vive la pista.
+   Y va DEBAJO de la alerta, que tiene su sitio justo bajo la cabecera:
+   los dos a la misma altura se tapaban las palabras del medio ---- */
+#stage:has(#screen-juego.active) #toast { bottom: auto; top: calc(var(--prep-hud-h) + 6.4rem); }
 
 /* ============================================================
-   MENOS INTERFAZ ENCIMA DEL JUEGO
-   Se probó y sobraba: el riel de ingredientes no llevaba a
-   ninguna parte, los contadores de los cuencos y el panel fijo de
-   instrucciones se metían entre el dedo y la mesa, y la barra de
-   ritmo medía algo que al jugador no le decía nada. Fuera los
-   cuatro. Lo que queda —cabecera, combo, pista que va y viene— es
-   lo que informa sin estorbar.
+   LA CORTINA — la tarjeta de parada
+   Al entrar al mesón la pantalla se va a negro un instante y sale
+   el título de la parada: qué día es, qué toca, con qué gesto.
+   Es lo que separa "cargó un nivel" de "empieza una escena".
    ============================================================ */
-.hud-cuencos, .cuenco-chip,
-.hud-pasos, .paso,
-.hud-ritmo, .ritmo-barra, .ritmo-aguja,
-.hud-riel, .riel-item { display: none !important; }
+.cortina {
+  position: absolute; inset: 0; z-index: var(--z-cortina);
+  display: grid; place-items: center;
+  background:
+    radial-gradient(80% 50% at 50% 110%, rgba(224,138,69,.28), transparent 70%),
+    var(--noche-950);
+  opacity: 0; pointer-events: none;
+}
+/* `abre` la deja puesta; main.js le pone `cierra` cuando el mesón
+   está armado (y nunca antes de un segundo) */
+.cortina.abre { opacity: 1; }
+.cortina.cierra { animation: cortina-sale .5s var(--ease-in-out) both; }
+@keyframes cortina-sale { from { opacity: 1; } to { opacity: 0; } }
+.tarjeta-parada {
+  display: flex; flex-direction: column; align-items: center; gap: .35rem;
+  padding: 0 var(--sp-6);
+  text-align: center;
+  opacity: 0;
+}
+.cortina.abre .tarjeta-parada { animation: parada-entra .5s var(--ease-spring) both; }
+.cortina.cierra .tarjeta-parada { animation: parada-sale .5s var(--ease-in-out) both; }
+@keyframes parada-entra {
+  from { opacity: 0; transform: translateY(16px) scale(.94); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes parada-sale {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(-12px) scale(1.03); }
+}
+.tarjeta-parada-icono { width: 84px; height: 84px; margin-bottom: .4rem; }
+.tarjeta-parada-icono .plate { width: 100%; }
+.tarjeta-parada-dia {
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
+  letter-spacing: var(--track-caps); text-transform: uppercase;
+  color: var(--oro-300);
+}
+.tarjeta-parada h2 {
+  font-family: var(--font-display); font-size: var(--t-2xl); font-weight: 800; line-height: 1.05;
+  color: var(--text-invert); letter-spacing: -.01em;
+}
+.tarjeta-parada p { font-family: var(--font-text); font-size: var(--t-md); color: rgba(255,246,232,.7); }
 
-/* sin riel abajo, los botones y la pista vuelven al pie */
-:root { --base-riel: env(safe-area-inset-bottom); --prep-ritmo-h: 0rem; }
-.juego-controles {
-  top: auto; bottom: calc(env(safe-area-inset-bottom) + var(--sp-4));
-  left: 0; right: 0;
-  flex-direction: row; align-items: center; justify-content: center;
-  gap: var(--sp-3); padding: 0 var(--sp-4);
-}
-.juego-pista {
-  bottom: calc(env(safe-area-inset-bottom) + var(--prep-ctrl-h) + var(--sp-4));
-}
-
-/* ---- dónde se cocina: el selector de escenario ----
-   El escenario es la piel del juego: dónde se cocina la fanesca.
-   Debe ser visible, atractivo, y dejar claro cuál está elegido.
-   Se pone como un panel destacado, no escondido entre los niveles. */
-.escenarios {
-  margin: var(--sp-5) 0 var(--sp-6);
-  padding: var(--sp-4);
-  background: linear-gradient(135deg, var(--surface-raised), var(--surface));
-  border: 2px solid var(--ring);
-  border-radius: var(--r-xl);
-  box-shadow: var(--e-2);
-}
-.escenarios-tit {
-  font-family: var(--font-display); font-weight: 700; font-size: var(--t-base);
-  color: var(--text-main); margin-bottom: var(--sp-3);
-  display: flex; align-items: center; gap: var(--sp-2);
-}
-.escenarios-tit::before {
-  content: '🏠';
-  font-size: 1.3rem;
-  display: inline-block;
-}
-.escenarios-lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
-  gap: var(--sp-3);
-}
-.escenario {
-  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
-  text-align: center; padding: var(--sp-3) var(--sp-2);
-  background: linear-gradient(180deg, var(--surface), var(--surface-sunken));
-  border: 2px solid var(--ring);
-  border-radius: var(--r-md);
-  box-shadow: var(--e-1);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-.escenario:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--e-2);
-  border-color: var(--text-muted);
-}
-.escenario--activo {
-  border-color: var(--maiz-600);
-  background: linear-gradient(180deg, rgba(255, 201, 60, 0.15), rgba(255, 201, 60, 0.08));
-  box-shadow: var(--e-2), 0 0 0 2px rgba(255, 201, 60, .4);
-  font-weight: 600;
-}
-.escenario--activo .escenario-emoji {
-  transform: scale(1.15);
-}
-.escenario-emoji {
-  font-size: 2.2rem;
-  display: block;
-  transition: transform 0.2s ease;
-}
-.escenario-txt {
-  display: flex; flex-direction: column; min-width: 0; flex: 1;
-}
-.escenario-txt b {
-  font-family: var(--font-display); font-size: var(--t-sm);
-  line-height: 1.2;
-  color: var(--text-main);
-}
-.escenario-txt i {
-  font-style: normal; font-size: 0.75rem; color: var(--text-muted);
-  line-height: 1.1; margin-top: var(--sp-1);
-}
-.escenario-check {
-  position: absolute; top: var(--sp-2); right: var(--sp-2);
-  font-size: 1.2rem; color: var(--maiz-600);
-  background: rgba(255, 201, 60, 0.2);
-  width: 1.8rem; height: 1.8rem;
-  display: flex; align-items: center; justify-content: center;
+/* ============================================================
+   LAS HOJAS EMERGENTES — listo, arruinado, fin de día, la olla,
+   El Apuro. Todas suben desde abajo (design-system.css); aquí va
+   lo propio de cada una.
+   ============================================================ */
+.sheet-hero {
+  width: 96px; height: 96px; margin: var(--sp-2) 0 var(--sp-1);
+  display: grid; place-items: center;
   border-radius: 50%;
-  font-weight: 700;
+  background: radial-gradient(circle at 50% 35%, #fff, var(--crema-100) 70%);
+  box-shadow: 0 0 0 6px rgba(244,185,66,.22), var(--e-2);
+  animation: hero-entra .6s var(--ease-spring) both;
+  font-size: 2.6rem; line-height: 1;
+}
+.sheet-hero svg { width: 70%; height: 70%; filter: drop-shadow(0 3px 4px rgba(42,26,18,.25)); }
+@keyframes hero-entra { from { opacity: 0; transform: scale(.5); } }
+.sheet-hero--mal { box-shadow: 0 0 0 6px rgba(229,83,61,.2), var(--e-2); }
+.sheet-hero--mal span { animation: bicho-tiembla .6s var(--ease-out) 3; display: block; }
+@keyframes bicho-tiembla { 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+.sheet-hero--dia { box-shadow: 0 0 0 6px rgba(95,168,211,.2), var(--e-2); }
+.sheet-hero--olla { width: 120px; height: 120px; box-shadow: 0 0 0 8px rgba(244,185,66,.25), var(--glow-oro), var(--e-3); }
+
+#listo-cucharas .cuchara { width: 2.4rem; height: 2.4rem; }
+.cucharas-pie { margin: -.1rem 0 .2rem; font-size: var(--t-2xs); color: var(--text-muted); }
+/* la cuchara que cae al revelarse */
+.cuchara.cae { animation: cuchara-cae .4s var(--ease-spring) both; }
+@keyframes cuchara-cae {
+  0%   { transform: translateY(-16px) scale(1.5); opacity: 0; }
+  60%  { transform: translateY(2px) scale(1.05); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+.listo-mejor, .final-total { font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; color: var(--text-muted); }
+.sheet .stats { margin-top: var(--sp-1); }
+
+/* la tarjeta que se gana al terminar */
+.tarjeta {
+  width: 100%; text-align: left;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: rgba(42,26,18,.05);
+  border: 1.5px dashed var(--hairline-strong);
+  border-radius: var(--r-md);
+}
+.tarjeta .label { margin-bottom: var(--sp-1); }
+.tarjeta-titulo { font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; line-height: 1.2; color: var(--text); margin-bottom: var(--sp-1); }
+.tarjeta-texto { font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted); }
+.tarjeta-cita {
+  margin-top: var(--sp-3); padding: var(--sp-2) var(--sp-3);
+  background: rgba(244,185,66,.14);
+  border-left: 3px solid var(--oro-400);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.tarjeta-cita p { font-size: var(--t-sm); font-style: italic; line-height: var(--lead); color: var(--text); }
+.tarjeta-cita footer { margin-top: var(--sp-1); font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700; color: var(--accent-ink); }
+
+/* se arruinó */
+.sheet--mal .sheet-eyebrow { color: var(--brasa-600); }
+
+/* fin de día */
+.dia-refri {
+  display: flex; flex-direction: column; gap: .15rem;
+  width: 100%; margin: var(--sp-2) 0 var(--sp-3);
+  padding: .6rem .9rem;
+  border-radius: var(--r-md);
+  background: rgba(93,181,90,.12);
+  border: 1.5px solid rgba(93,181,90,.3);
+  font-size: var(--t-sm); text-align: left;
+}
+.dia-refri .label { font-size: var(--t-2xs); color: var(--hoja-600); }
+
+/* la fanesca servida */
+.final-cierre { font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted); }
+.final-voz {
+  width: 100%; margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--t-sm); font-style: italic; line-height: var(--lead);
+  color: var(--text);
+  background: rgba(244,185,66,.14);
+  border-left: 3px solid var(--oro-400);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  text-align: left;
+}
+.final-voz span { display: block; margin-top: var(--sp-1); font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700; font-style: normal; color: var(--accent-ink); }
+
+/* El Apuro: la cifra grande del resultado */
+.apuro-cifra {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 4.6rem; line-height: 1;
+  color: var(--hoja-600);
+  margin-top: var(--sp-2);
+  animation: hero-entra .6s var(--ease-spring) both;
+}
+.apuro-cifra-pie { margin: -.2rem 0 .3rem; font-size: var(--t-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+.listo-tiempo { font-family: var(--font-display); font-size: var(--t-md); font-weight: 700; color: var(--text); }
+/* la escalera de logros: pendientes en gris, el nuevo brilla */
+.logros { list-style: none; width: 100%; margin: .4rem 0 .2rem; display: flex; flex-direction: column; gap: .35rem; }
+.logro {
+  display: flex; flex-direction: column; text-align: left;
+  padding: .5rem .8rem;
+  border-radius: var(--r-md);
+  background: linear-gradient(100deg, rgba(244,185,66,.22), rgba(244,185,66,.08));
+  border: 1.5px solid rgba(224,161,44,.3);
+  animation: logro-entra .42s var(--ease-spring) both;
+}
+.logro:nth-child(2) { animation-delay: .08s; }
+.logro:nth-child(3) { animation-delay: .16s; }
+.logro:nth-child(4) { animation-delay: .24s; }
+.logro:nth-child(n+5) { animation-delay: .32s; }
+.logro strong { font-family: var(--font-display); font-size: var(--t-sm); }
+.logro span { font-size: var(--t-xs); color: var(--text-muted); }
+@keyframes logro-entra { from { opacity: 0; transform: translateX(-10px) scale(.96); } }
+.logro--pendiente { background: rgba(42,26,18,.05); border-color: var(--hairline); }
+.logro--pendiente strong { color: var(--text-muted); }
+.logro--nuevo { background: linear-gradient(100deg, rgba(244,185,66,.45), rgba(244,185,66,.16)); border-color: var(--oro-500); box-shadow: var(--glow-oro); }
+
+/* ============================================================
+   EL CONFETI — lo que cae cuando algo sale bien
+   Papelitos de la fiesta: se generan desde main.js con su color,
+   su columna y su giro en variables, y el CSS los deja caer.
+   ============================================================ */
+.confeti { position: absolute; inset: 0; z-index: calc(var(--z-modal) + 1); pointer-events: none; overflow: hidden; }
+.confeti i {
+  position: absolute; top: -4%; left: var(--x, 50%);
+  width: var(--w, 9px); height: var(--h, 14px);
+  background: var(--c, var(--oro-400));
+  border-radius: 2px;
+  opacity: 0;
+  animation: confeti-cae var(--d, 1.6s) cubic-bezier(.2, .6, .4, 1) both;
+  animation-delay: var(--t, 0s);
+}
+@keyframes confeti-cae {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  8%   { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--dx, 0px), 110vh, 0) rotate(var(--r, 720deg)); }
 }
 
-/* ---- el editor de escena: de ESCRITORIO ----
-   En un teléfono el panel se acostaba encima de la cocina y tapaba
-   justo lo que estabas afinando. En escritorio no hace falta: el
-   juego se dibuja en una columna del ancho de un móvil y los dos
-   costados están vacíos. El editor vive ahí, al lado y no encima,
-   que es lo que separa afinar mirando de afinar a ciegas. */
-
+/* ============================================================
+   EL EDITOR DE ESCENA — de escritorio, en modo dev
+   ============================================================ */
 .btn-editor {
   position: absolute; right: var(--sp-3);
-  top: calc(var(--prep-hud-h) + var(--sp-3)); z-index: 6;
-  width: 2.6rem; height: 2.6rem; font-size: 1.2rem;
-  display: grid; place-items: center;
-  background: var(--vidrio); color: #fff;
-  border: 2px solid var(--filo-oro); border-radius: 50%;
-  box-shadow: var(--e-2), var(--oro-glow);
+  top: calc(var(--prep-hud-h) + var(--sp-3) + 54px); z-index: 6;
+  width: 44px; height: 44px; font-size: 1.2rem;
 }
-
 .editor {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 30;
   width: 340px; max-width: 38vw;
@@ -1337,43 +1088,38 @@ svg[width="0"] { width: 0; height: 0; }
   overflow-y: auto;
   padding: var(--sp-4);
   background: linear-gradient(180deg, rgba(22,14,10,.98), rgba(12,8,6,.99));
-  border-left: 2px solid var(--filo-oro);
+  border-left: 1.5px solid var(--vidrio-borde);
   box-shadow: -10px 0 30px rgba(0,0,0,.45);
   transform: translateX(101%);
   transition: transform var(--dur) var(--ease-out);
   color: #fff;
 }
 .editor.abierto { transform: translateX(0); }
-
-/* con el editor abierto, el juego se corre a la izquierda en vez de
-   quedar debajo del panel */
 body.con-editor #stage { margin-right: 340px; }
-
 .ed-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
 .ed-head b { font-family: var(--font-display); font-size: var(--t-lg); }
 .ed-x { margin-left: auto; color: #fff; font-size: var(--t-lg); padding: .2rem .5rem; }
-
 .ed-sec { margin-bottom: var(--sp-4); }
 .ed-sec-tit {
   font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
   letter-spacing: .14em; text-transform: uppercase;
-  color: var(--maiz-300); margin-bottom: .4rem;
+  color: var(--oro-300); margin-bottom: .4rem;
   border-bottom: 1px solid rgba(255,255,255,.16); padding-bottom: .22rem;
 }
 .ed-sel {
   width: 100%; padding: .4rem .5rem; margin-bottom: .3rem;
   font: inherit; font-size: var(--t-xs); color: #fff;
   background: rgba(0,0,0,.45);
-  border: 1.5px solid rgba(255,255,255,.24); border-radius: var(--r-md);
+  border: 1.5px solid rgba(255,255,255,.24); border-radius: var(--r-sm);
 }
 .ed-fila { display: grid; grid-template-columns: 6.6rem 1fr 2.9rem; align-items: center; gap: .5rem; margin-bottom: .28rem; }
 .ed-et { font-size: var(--t-2xs); color: rgba(255,255,255,.82); }
-.ed-fila input[type=range] { width: 100%; accent-color: var(--maiz-300); }
-.ed-fila output { font-family: var(--font-display); font-size: var(--t-2xs); text-align: right; color: var(--maiz-300); }
+.ed-fila input[type=range] { width: 100%; accent-color: var(--oro-300); }
+.ed-fila output { font-family: var(--font-display); font-size: var(--t-2xs); text-align: right; color: var(--oro-300); }
 .ed-codigo {
   margin: var(--sp-2) 0; padding: .5rem .6rem;
   background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   font-family: ui-monospace, monospace; font-size: 10px; line-height: 1.45;
   color: #d8f3c0; white-space: pre-wrap; word-break: break-word;
 }
@@ -1381,460 +1127,26 @@ body.con-editor #stage { margin-right: 340px; }
 .ed-pie { display: flex; gap: var(--sp-2); }
 .ed-btn {
   flex: 1; padding: .45rem; font-size: var(--t-xs); font-weight: 700;
-  color: var(--tinta-900); background: linear-gradient(180deg, var(--maiz-300), var(--maiz-400));
-  border: 2px solid var(--maiz-600); border-radius: var(--r-pill);
+  color: var(--tinta-900); background: linear-gradient(180deg, var(--oro-300), var(--oro-400));
+  border: 2px solid var(--oro-600); border-radius: var(--r-pill);
 }
-.ed-btn--flojo {
-  color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.28);
-}
-
-/* por si acaso: en pantalla angosta el editor no existe */
+.ed-btn--flojo { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.28); }
 @media (max-width: 999px) {
   .editor, .btn-editor { display: none !important; }
   body.con-editor #stage { margin-right: 0; }
 }
 
-/* ---- que las hojas largas se puedan leer ----
-   `.sheet` no tenía alto máximo: una nota de versión con seis
-   puntos —o un brief largo— crecía más que la pantalla y lo de
-   abajo, incluido el botón para cerrarla, quedaba fuera de
-   alcance sin manera de bajar. */
-.modal .sheet {
-  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2 * var(--sp-5));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.nota-version-lista {
-  text-align: left; align-self: stretch;
-  display: flex; flex-direction: column; gap: var(--sp-2);
-  margin: var(--sp-1) 0 var(--sp-2); padding-left: 1.1rem;
-  font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted);
-}
-
-/* ---- la portada, con sus opciones de siempre ---- */
-.portada-acciones { display: flex; flex-direction: column; gap: var(--sp-2); width: 100%; }
-.portada-secundario {
-  display: flex; gap: var(--sp-2); justify-content: center; align-items: center;
-  flex-wrap: wrap; margin-top: var(--sp-1);
-}
-.portada-link {
-  padding: .25rem .7rem;
-  /* 44px de alto tocable: "Empezar de nuevo" borra una semana de
-     progreso y merece un blanco al que se le pueda apuntar */
-  min-height: 44px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700;
-  color: var(--text-muted);
-  background: rgba(0,0,0,.05);
-  border: 1.5px solid var(--hairline); border-radius: var(--r-pill);
-}
-.portada-link--peligro { color: var(--chile-600); border-color: rgba(206,32,41,.35); }
-
-
 /* ============================================================
-   EL APURO — el modo contrarreloj
+   PANTALLAS CORTAS Y MOVIMIENTO REDUCIDO
    ============================================================ */
-
-.btn-apuro {
-  display: flex; align-items: center; gap: .7rem;
-  width: 100%; margin: 0 0 1rem;
-  padding: .7rem .9rem;
-  border-radius: var(--r-lg, 18px);
-  border: var(--ring);
-  background: linear-gradient(135deg, #d94f30 0%, #e8813a 100%);
-  color: #fff;
-  box-shadow: var(--e-2);
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-}
-.btn-apuro:active { transform: translateY(1px); }
-.btn-apuro-ico {
-  font-size: 1.5rem; line-height: 1;
-  width: 2.2rem; height: 2.2rem; flex: 0 0 auto;
-  display: grid; place-items: center;
-  background: rgba(255,255,255,.22);
-  border-radius: 50%;
-}
-.btn-apuro-txt { flex: 1 1 auto; display: flex; flex-direction: column; }
-.btn-apuro-txt strong { font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; }
-.btn-apuro-txt small { font-size: var(--t-xs); opacity: .9; }
-.btn-apuro-ir { font-size: .8rem; opacity: .85; }
-
-/* el reloj en rojo cuando se acaba: late para que se mire sin leerlo */
-.hud-tiempo--rojo {
-  background: #d94f30 !important;
-  color: #fff !important;
-  animation: apuro-late .6s ease-in-out infinite;
-}
-@keyframes apuro-late {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.09); }
+@media (max-height: 680px) {
+  .portada-escena { min-height: 120px; max-height: 200px; }
+  .portada-title { font-size: clamp(2.4rem, 12vw, 3.2rem); }
+  .portada { gap: var(--sp-3); }
 }
 
-/* el ±Ns que salta del reloj */
-.flota-tiempo {
-  position: absolute; right: 12%; top: 3.4rem;
-  font-family: var(--font-display); font-weight: 800; font-size: 1.6rem;
-  text-shadow: 0 2px 0 rgba(0,0,0,.28);
-  animation: flota-t 1.1s var(--ease-pop, ease-out) forwards;
-  pointer-events: none;
-}
-.flota-tiempo--gana   { color: #8ee06a; }
-.flota-tiempo--pierde { color: #ff8b7a; }
-@keyframes flota-t {
-  0%   { opacity: 0; transform: translateY(6px) scale(.7); }
-  22%  { opacity: 1; transform: translateY(-4px) scale(1.12); }
-  100% { opacity: 0; transform: translateY(-40px) scale(1); }
-}
-
-/* la cifra grande del resultado */
-.apuro-cifra {
-  font-family: var(--font-display); font-weight: 800;
-  font-size: 4.2rem; line-height: 1;
-  color: var(--nopal, #6cbf5a);
-  text-align: center; margin: .2rem 0 0;
-}
-.apuro-cifra-pie {
-  text-align: center; margin: 0 0 .6rem;
-  font-size: var(--t-xs); letter-spacing: .14em; text-transform: uppercase;
-  color: var(--text-muted, #7a6a55);
-}
-
-/* los logros nuevos de la partida */
-.logros { list-style: none; margin: .6rem 0 .2rem; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
-.logro {
-  display: flex; flex-direction: column;
-  padding: .45rem .7rem;
-  border-radius: var(--r-md, 12px);
-  background: linear-gradient(100deg, rgba(242,179,31,.22), rgba(242,179,31,.08));
-  border: 1px solid rgba(150,98,43,.32);
-  animation: logro-entra .42s var(--ease-pop, ease-out) both;
-}
-.logro:nth-child(2) { animation-delay: .12s; }
-.logro:nth-child(3) { animation-delay: .24s; }
-.logro:nth-child(4) { animation-delay: .36s; }
-.logro:nth-child(n+5) { animation-delay: .48s; }
-.logro strong { font-family: var(--font-display); font-size: var(--t-sm); }
-.logro span { font-size: var(--t-xs); color: var(--text-muted, #7a6a55); }
-@keyframes logro-entra {
-  from { opacity: 0; transform: translateX(-10px) scale(.96); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* los rótulos de acto en el camino */
-.camino-acto {
-  position: absolute; left: 0; right: 0;
-  display: flex; flex-direction: column; align-items: center; gap: .1rem;
-  margin: 0; padding: 0 1rem;
-  text-align: center;
-  pointer-events: none;
-}
-.camino-acto strong {
-  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
-  color: var(--text);
-  background: var(--surface-raised, #fff);
-  border: var(--ring); border-radius: var(--r-pill);
-  padding: .18rem .9rem;
-  box-shadow: var(--e-1);
-}
-.camino-acto span {
-  font-size: var(--t-xs); color: var(--text-muted, #7a6a55);
-  text-shadow: 0 1px 0 rgba(255,255,255,.7);
-}
-
-/* El Apuro con candado: se ve, se sabe qué falta, no grita */
-.btn-apuro--cerrado {
-  background: linear-gradient(135deg, #9a8672 0%, #b09a83 100%);
-  box-shadow: var(--e-1);
-}
-.btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.14); }
-
-/* ============================================================
-   EL RECETARIO — la semana en la libreta de la abuela.
-
-   Cada día es una página de papel con sus renglones; cada parada,
-   un paso numerado que se tacha al hacerse. El papel manda: fondo
-   crema, renglones punteados, la línea roja de margen de las
-   libretas de toda la vida, y la letra a mano (Caveat) solo para lo
-   que la abuela escribiría — quién vino, el sello de "hecho". */
-
-.recetario {
-  display: flex; flex-direction: column;
-  gap: var(--sp-5);
-  padding: var(--sp-2) 0 var(--sp-4);
-}
-
-.pagina {
-  position: relative;
-  background:
-    linear-gradient(90deg, transparent 0 40px, rgba(217, 79, 48, .35) 40px 41.5px, transparent 41.5px),
-    linear-gradient(180deg, #fffdf4, #fbf4e0);
-  border: var(--ring);
-  border-radius: var(--r-lg, 18px);
-  box-shadow: var(--e-2);
-  padding: .85rem 1rem .5rem 1rem;
-  animation: pagina-entra .4s var(--ease-pop, ease-out) both;
-}
-/* levemente torcidas y alternadas, como pegadas a mano */
-.pagina:nth-child(odd)  { transform: rotate(.35deg); }
-.pagina:nth-child(even) { transform: rotate(-.3deg); }
-@keyframes pagina-entra {
-  from { opacity: 0; translate: 0 14px; }
-  to   { opacity: 1; translate: 0 0; }
-}
-.pagina--porvenir { opacity: .68; }
-.pagina--porvenir .pagina-titulo { color: var(--text-muted, #7a6a55); }
-
-.pagina-head {
-  position: relative;
-  padding: 0 3.4rem .5rem 0;
-  border-bottom: 2px solid rgba(150, 98, 43, .25);
-  margin-bottom: .15rem;
-}
-.pagina-deco {
-  position: absolute; top: 0; right: 0;
-  font-size: 1.7rem;
-  opacity: .6;
-  filter: saturate(.85) drop-shadow(0 2px 2px rgba(0,0,0,.12));
-}
-.pagina-dia {
-  margin: 0;
-  font-family: var(--font-display); font-size: var(--t-2xs, .68rem); font-weight: 800;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: var(--chile-600, #b93f24);
-}
-.pagina-titulo {
-  margin: 0;
-  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
-  color: var(--text); line-height: 1.1;
-}
-.pagina-quien {
-  margin: .05rem 0 0;
-  font-family: 'Caveat', 'Segoe Script', cursive;
-  font-size: 1.15rem; line-height: 1;
-  color: var(--text-muted, #7a6a55);
-}
-/* el sello de página hecha: tinta verde, torcido, de caucho */
-.pagina-sello {
-  position: absolute; right: -4px; bottom: 4px;
-  transform: rotate(-8deg);
-  font-family: 'Caveat', 'Segoe Script', cursive;
-  font-size: 1.2rem; font-weight: 700;
-  color: var(--nopal-600, #4e9c3e);
-  border: 2px solid var(--nopal-500, #6cbf5a);
-  border-radius: 8px;
-  padding: 0 .45rem;
-  background: rgba(108, 191, 90, .1);
-}
-.pagina-cuenta {
-  position: absolute; right: 0; bottom: 6px;
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  color: var(--text-muted, #7a6a55);
-}
-
-.pagina-pasos { list-style: none; margin: 0; padding: 0; }
-.renglon {
-  display: flex; align-items: center; gap: .55rem;
-  width: 100%;
-  padding: .42rem .1rem;
-  background: none; border: 0;
-  border-bottom: 1px dashed rgba(150, 98, 43, .28);   /* el renglón de la libreta */
-  font-family: inherit; text-align: left; color: inherit;
-  cursor: pointer;
-}
-.pagina-pasos li:last-child .renglon { border-bottom: 0; }
-.renglon:active { background: rgba(150, 98, 43, .07); }
-
-.renglon-num {
-  flex: 0 0 1.7rem;
-  font-family: 'Caveat', 'Segoe Script', cursive;
-  font-size: 1.15rem; font-weight: 700; line-height: 1;
-  color: var(--text-muted, #7a6a55);
-  text-align: right;
-}
-.renglon-icono {
-  flex: 0 0 auto;
-  width: 40px; height: 40px;
-  padding: 5px;
-  border-radius: 50%;
-  background: radial-gradient(120% 120% at 32% 26%, var(--surface-raised, #fff) 0%, var(--surface, #f4ead6) 100%);
-  border: 2.5px solid var(--madera-400, #b4632c);
-}
-.renglon-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.renglon-nombre {
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-}
-.renglon-dif { font-size: .52rem; letter-spacing: -1px; line-height: 1; margin-top: 2px; filter: saturate(.9); }
-.renglon-estado { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; }
-.renglon-cucharas { display: flex; gap: 1px; }
-.renglon-cucharas .cuchara { width: 14px; height: 14px; }
-
-/* hecho: tachado con tinta suave — en una libreta, tachar ES lograr */
-.renglon--hecho .renglon-nombre {
-  text-decoration: line-through;
-  text-decoration-color: rgba(108, 191, 90, .75);
-  text-decoration-thickness: 2px;
-  color: var(--text-muted, #7a6a55);
-}
-.renglon--hecho .renglon-icono { border-color: var(--nopal-500, #6cbf5a); }
-
-/* el siguiente paso lleva el lápiz y respira */
-.renglon--siguiente {
-  background: linear-gradient(90deg, rgba(242, 179, 31, .22), rgba(242, 179, 31, .06));
-  border-radius: 10px;
-  border-bottom-color: transparent;
-}
-.renglon--siguiente .renglon-icono {
-  border-color: var(--maiz-500, #f2b31f);
-  box-shadow: 0 0 0 4px rgba(242, 179, 31, .25);
-  animation: nodo-late 1.6s var(--ease-pop) infinite;
-}
-.renglon-lapiz { font-size: 1.15rem; animation: lapiz-bob 1.6s ease-in-out infinite; }
-@keyframes lapiz-bob {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  50%      { transform: translateY(-3px) rotate(-8deg); }
-}
-
-.renglon--bloqueado { opacity: .5; }
-.renglon--bloqueado .renglon-icono { filter: grayscale(.75); }
-.renglon-candado { font-size: .95rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
-
-/* la receta grande del final: la fanesca, llenándose */
-.receta-final {
-  display: flex; align-items: center; gap: .8rem;
-  width: 100%;
-  padding: .8rem 1rem;
-  border-radius: var(--r-lg, 18px);
-  border: 3px solid var(--chile-500, #d94f30);
-  background: linear-gradient(135deg, #fffdf4, #fbeede);
-  box-shadow: var(--e-2);
-  font-family: inherit; text-align: left; color: inherit;
-  cursor: pointer;
-}
-.receta-plato { width: 64px; height: 64px; flex: 0 0 auto; }
-.receta-plato svg { width: 100%; height: 100%; }
-.receta-txt { flex: 1 1 auto; display: flex; flex-direction: column; gap: .1rem; }
-.receta-txt strong { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.05; }
-.receta-txt small { font-size: var(--t-xs); color: var(--text-muted, #7a6a55); }
-.receta-final--lista { animation: nodo-late 1.6s var(--ease-pop) infinite; }
-.receta-final--servida { border-color: var(--nopal-500, #6cbf5a); }
-
-/* la olla se llena: la barra es la promesa de que esto termina */
-.olla-carga {
-  width: 100%; max-width: 190px; height: 9px;
-  margin-top: .2rem;
-  border-radius: var(--r-pill);
-  background: var(--surface-raised, #fff);
-  border: var(--ring);
-  overflow: hidden;
-  box-shadow: var(--e-1);
-}
-.olla-carga i {
-  display: block; height: 100%;
-  background: linear-gradient(90deg, var(--maiz-500, #f2b31f), var(--chile-500, #d94f30));
-  border-radius: inherit;
-  transition: width .5s var(--ease-out);
-}
-
-/* la última página: el Viernes Santo, con El Apuro dentro */
-.pagina--viernes {
-  background:
-    linear-gradient(90deg, transparent 0 40px, rgba(217, 79, 48, .35) 40px 41.5px, transparent 41.5px),
-    linear-gradient(180deg, #fff8e6, #fdeecd);
-  padding-bottom: .9rem;
-}
-.viernes-promesa {
-  margin: .35rem 0 .6rem;
-  font-size: var(--t-sm); color: var(--text-muted, #7a6a55);
-}
-.pagina--viernes .btn-apuro { margin: 0; }
-
-/* la escalera de logros: pendientes en gris, el nuevo brilla */
-.logro--pendiente {
-  background: rgba(120, 106, 85, .08);
-  border-color: rgba(120, 106, 85, .2);
-}
-.logro--pendiente strong { color: var(--text-muted, #7a6a55); }
-.logro--nuevo {
-  background: linear-gradient(100deg, rgba(242,179,31,.4), rgba(242,179,31,.14));
-  border-color: var(--maiz-500, #f2b31f);
-}
-
-/* ============================================================
-   HOJEAR ES UNA COSA, COCINAR ES OTRA — el botón «Sigue» y el «?».
-
-   El recetario invita a hojearse, pero encontrar el renglón que
-   late obligaba a buscarlo con el pulgar. «Sigue» va flotando al
-   pie de la mesa y siempre lleva a la parada que toca. Y en el
-   mesón, el «?» repite la última pista: la enseñanza deja de ser
-   una ventana de diez segundos irrepetibles. */
-
-.btn-sigue {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  z-index: 6;
-  max-width: 90%;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding: .55rem 1.15rem;
-  border-radius: var(--r-pill);
-  border: 2.5px solid #fff;
-  background: linear-gradient(135deg, var(--nopal-500, #6cbf5a), #4e9c3e);
-  color: #fff;
-  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
-  box-shadow: var(--e-3);
-  cursor: pointer;
-  animation: sigue-entra .35s var(--ease-pop, ease-out) both;
-}
-.btn-sigue b { font-weight: 800; }
-.btn-sigue:active { transform: translateX(-50%) translateY(1px); }
-@keyframes sigue-entra {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-  to   { opacity: 1; transform: translateX(-50%); }
-}
-/* que el fondo del recetario no quede tapado por el botón */
-#screen-mesa .scroll { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); }
-
-.btn-pista {
-  position: absolute;
-  top: calc(var(--prep-hud-h, 64px) + var(--sp-4));
-  right: var(--sp-3);
-  z-index: 5;
-  width: 2.6rem; height: 2.6rem;
-  border-radius: 50%;
-  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1;
-  color: #fff;
-  background: var(--vidrio, rgba(40, 26, 20, .55));
-  border: 2px solid var(--filo-oro, rgba(255, 220, 140, .5));
-  box-shadow: var(--e-2);
-  cursor: pointer;
-}
-.btn-pista:active { transform: scale(.92); }
-
-/* las cucharas, explicadas donde se miran por primera vez */
-.cucharas-pie {
-  margin: -.1rem 0 .3rem;
-  text-align: center;
-  font-size: var(--t-2xs, .68rem);
-  color: var(--text-muted, #7a6a55);
-}
-
-/* el modal de fin de día */
-.dia-ic { display: block; text-align: center; font-size: 2.2rem; margin-bottom: .2rem; }
-.dia-refri {
-  display: flex; flex-direction: column; gap: .15rem;
-  margin: .6rem 0 .8rem;
-  padding: .55rem .8rem;
-  border-radius: var(--r-md, 12px);
-  background: rgba(108, 191, 90, .12);
-  border: 1px solid rgba(108, 191, 90, .3);
-  font-size: var(--t-sm);
-  text-align: left;
-}
-.dia-refri .label {
-  font-size: var(--t-xs); letter-spacing: .12em; text-transform: uppercase;
-  color: var(--text-muted, #7a6a55);
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .cortina.abre .tarjeta-parada { animation: none; opacity: 1; }
+  .vapor i, .portada-lumbre { display: none; }
 }

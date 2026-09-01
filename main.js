@@ -314,7 +314,17 @@ function mostrar(pantalla) {
      no, el reloj sigue bajando desde la mesa y la partida se pierde
      sola mientras nadie mira */
   if (pantalla !== 'juego' && Apuro.activo) { Apuro.parar(); pararReloj(); }
-  $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + pantalla));
+  const id = 'screen-' + pantalla;
+  /* LA QUE SE VA se hunde y se apaga mientras la nueva sube: dos
+     capas que se cruzan, como en cualquier consola. Un instante
+     después deja de existir del todo (display:none), para que no
+     capture ni un toque por debajo de la nueva. */
+  const previa = $('.screen.active');
+  if (previa && previa.id !== id) {
+    previa.classList.add('saliendo');
+    setTimeout(() => previa.classList.remove('saliendo'), 340);
+  }
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === id));
   Motor.setActive(pantalla === 'juego');
   if (pantalla === 'mesa') { renderMesa(); marcaCuaderno(); }
   if (pantalla === 'cuaderno') { renderCuaderno(); estado.cuadernoVisto = true; guardar(); }
@@ -328,14 +338,26 @@ function pintarPortada() {
   const avance = $('#portada-avance');
   const reiniciar = $('#btn-reiniciar');
   if (btn) btn.textContent = hechos ? 'Seguir cocinando' : 'Abrir el recetario';
+  /* el avance habla en el idioma del recetario: paradas y día */
+  const paradas = RUTA.filter(n => estaListo(n.id)).length;
+  const dia = DIAS.find(d => !diaCompleto(d));
   if (avance) {
-    /* el avance habla en el idioma del recetario: paradas y día */
-    const paradas = RUTA.filter(n => estaListo(n.id)).length;
-    const dia = DIAS.find(d => !diaCompleto(d));
     avance.textContent = hechos
       ? `${paradas} de ${RUTA.length} paradas · vas por el ${dia ? dia.nombre.toLowerCase() : 'final'}`
       : '';
     avance.classList.toggle('hidden', !hechos);
+  }
+  /* LA TARJETA DE AVANCE, sólo con partida: el anillo de la semana
+     y el día en curso con su título. Es la ficha de "continuar" de
+     cualquier juego — se ve de un vistazo cuánto hay y dónde ibas. */
+  const tarjeta = $('#portada-tarjeta');
+  if (tarjeta) {
+    tarjeta.classList.toggle('hidden', !hechos);
+    const pct = Math.round(paradas / RUTA.length * 100);
+    const anillo = $('#portada-anillo'); if (anillo) anillo.style.setProperty('--p', pct);
+    const cifra = $('#portada-anillo-n'); if (cifra) cifra.textContent = pct + '%';
+    const d = $('#portada-dia');
+    if (d) d.textContent = dia ? `${dia.nombre} · ${dia.titulo}` : 'La mesa, puesta y servida';
   }
   /* reiniciar siempre está disponible, aunque no haya progreso */
   if (reiniciar) {
@@ -485,12 +507,17 @@ function renderMesa() {
     const pag = document.createElement('section');
     pag.className = 'pagina pagina--' + dia.id + (completo ? ' pagina--hecha' : (abiertoDia ? '' : ' pagina--porvenir'));
     pag.style.animationDelay = Math.min(d * 0.07, 0.4) + 's';
+    /* el anillo de la página se llena con sus paradas; el garabato
+       de margen vive dentro de él, que es utilería y no información */
+    const pctDia = Math.round(hechasDia / dia.paradas.length * 100);
     pag.innerHTML = `
       <header class="pagina-head">
-        <span class="pagina-deco" aria-hidden="true">${DECO[dia.id] || ''}</span>
-        <p class="pagina-dia">${dia.nombre}</p>
-        <h3 class="pagina-titulo">${dia.titulo}</h3>
-        <p class="pagina-quien">${relato.quien || ''}</p>
+        <div class="pagina-head-txt">
+          <p class="pagina-dia">${dia.nombre}</p>
+          <h3 class="pagina-titulo">${dia.titulo}</h3>
+          <p class="pagina-quien">${relato.quien || ''}</p>
+        </div>
+        <span class="anillo pagina-anillo" style="--p:${pctDia}" aria-hidden="true"><span class="pagina-deco">${DECO[dia.id] || ''}</span></span>
         ${completo
           ? '<span class="pagina-sello" aria-hidden="true">✓ hecho</span>'
           : `<span class="pagina-cuenta">${hechasDia} de ${dia.paradas.length}</span>`}
@@ -691,6 +718,91 @@ function mostrarDia(dia) {
   $('#dia-refri').textContent = relato.refri;
   $('#modal-dia').classList.add('open');
   sfx('fiesta'); buzz([15, 30, 15]);
+  celebrar(30);
+}
+
+/* ---------- el confeti ----------
+   Papelitos de la fiesta cuando algo sale bien: cada uno nace con
+   su columna, su color, su giro y su demora en variables, y el CSS
+   lo deja caer. Se quitan solos; con movimiento reducido no salen. */
+const CONFETI_COLORES = ['#f4b942', '#ffd36a', '#e8508a', '#5db55a', '#5fa8d3', '#e08a45', '#fff6e8'];
+function celebrar(cuantos = 28) {
+  const caja = $('#confeti');
+  if (!caja) return;
+  try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  const piezas = [];
+  for (let i = 0; i < cuantos; i++) {
+    const p = document.createElement('i');
+    p.style.setProperty('--x', (Math.random() * 100).toFixed(1) + '%');
+    p.style.setProperty('--c', CONFETI_COLORES[i % CONFETI_COLORES.length]);
+    p.style.setProperty('--w', (6 + Math.random() * 6).toFixed(1) + 'px');
+    p.style.setProperty('--h', (10 + Math.random() * 8).toFixed(1) + 'px');
+    p.style.setProperty('--d', (1.4 + Math.random() * .9).toFixed(2) + 's');
+    p.style.setProperty('--t', (Math.random() * .35).toFixed(2) + 's');
+    p.style.setProperty('--dx', ((Math.random() - .5) * 140).toFixed(0) + 'px');
+    p.style.setProperty('--r', ((360 + Math.random() * 720) * (Math.random() < .5 ? -1 : 1)).toFixed(0) + 'deg');
+    piezas.push(p);
+    caja.appendChild(p);
+  }
+  setTimeout(() => piezas.forEach(p => p.remove()), 2800);
+}
+
+/* ---------- la tarjeta de parada ----------
+   Al entrar al mesón la cortina baja un instante y presenta la
+   escena: qué día es, qué parada, qué se hace. Tapa la carga del
+   módulo y los modelos —que es cuando la pantalla estaba en blanco—
+   y no captura el dedo: si el jugador ya está tocando, se va sola. */
+let cortinaId = null, cortinaT0 = 0;
+const CORTINA_MIN = 1000;         /* ms mínimos con la tarjeta a la vista */
+const CORTINA_TRAS_LISTO = 600;   /* y nunca menos de esto con el mesón YA armado detrás */
+function tarjetaDeParada(n) {
+  const c = $('#cortina');
+  if (!c || !n) return;
+  const dia = DIAS[n.diaIndex];
+  $('#cortina-dia').textContent = `${dia ? dia.nombre : 'la semana'} · parada ${n.num}`;
+  $('#cortina-nombre').textContent = n.intro ? (n.corto || n.nombre) : n.nombre;
+  $('#cortina-tarea').textContent = n.tarea;
+  const ic = $('#cortina-icono .plate'); if (ic) ic.innerHTML = icono(n.icono);
+  c.classList.remove('cierra');
+  c.classList.add('abre');
+  cortinaT0 = performance.now();
+  /* red de seguridad: si el nivel nunca avisa que está listo, la
+     cortina se va sola antes que dejar la pantalla a oscuras */
+  clearTimeout(cortinaId);
+  cortinaId = setTimeout(apagarCortina, 6000);
+}
+/* la cortina se va: fundido de medio segundo y fuera */
+function apagarCortina() {
+  const c = $('#cortina');
+  clearTimeout(cortinaId);
+  if (!c || !c.classList.contains('abre')) return;
+  c.classList.remove('abre');
+  c.classList.add('cierra');
+  cortinaId = setTimeout(() => c.classList.remove('cierra'), 520);
+}
+/* SE CIERRA CUANDO EL NIVEL ESTÁ MONTADO, no a tiempo fijo: armar un
+   mesón bloquea el hilo un buen rato y una animación de CSS con
+   reloj propio se consumía entera debajo del bloqueo — la tarjeta
+   desaparecía antes de que nadie la viera. Y se cuenta desde el
+   PRIMER CUADRO PINTADO con el mesón detrás (dos rAF), no desde que
+   el código terminó: en un teléfono lento el primer cuadro del
+   WebGL tarda más que el respiro entero, y la tarjeta se iría en el
+   mismo instante en que por fin podía verse. Nunca menos de un
+   segundo en total, nunca menos del respiro con el mesón listo.
+   Devuelve una promesa que se cumple cuando la cortina empieza a
+   irse: las pistas de arranque esperan a eso, que hablar detrás de
+   una cortina es hablarle a nadie. */
+function cerrarCortina() {
+  const c = $('#cortina');
+  if (!c || !c.classList.contains('abre')) return Promise.resolve();
+  return new Promise(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!c.classList.contains('abre')) { resolve(); return; }
+      const falta = Math.max(CORTINA_TRAS_LISTO, CORTINA_MIN - (performance.now() - cortinaT0));
+      clearTimeout(cortinaId);
+      cortinaId = setTimeout(() => { apagarCortina(); resolve(); }, falta);
+    }));
+  });
 }
 
 /* ---------- el cuaderno ---------- */
@@ -1147,6 +1259,7 @@ async function jugar(id) {
   pintarReloj();
   alerta(null);
   mostrar('juego');
+  tarjetaDeParada(n);
 
   try {
     const m = await n.modulo();
@@ -1154,6 +1267,7 @@ async function jugar(id) {
   } catch (e) {
     console.error(e);
     toast('No se pudo abrir ese ingrediente 😔');
+    apagarCortina();
     mostrar('mesa');
     return;
   }
@@ -1192,7 +1306,11 @@ async function jugar(id) {
      superada la fila viene vacía, y sin esto repetiría la pista del
      nivel anterior */
   ultimaPista = n.gesto;
-  pistasEnFila(fila);
+  /* el mesón ya está armado detrás: la cortina puede irse, y las
+     pistas arrancan cuando empieza a irse — si para entonces el
+     jugador ya se salió (o entró a otra parada), no hay nada que
+     decir */
+  cerrarCortina().then(() => { if (nivelActual === n && modActual) pistasEnFila(fila); });
   Editor.nivel(n.id);
   pintarBotonEditor();
   /* EL RELOJ ARRANCA CON EL PRIMER TOQUE. Leer las pistas de
@@ -1401,6 +1519,7 @@ function cerrarApuro(resumen) {
     } else caja.classList.add('hidden');
 
     $('#modal-apuro').classList.add('open');
+    if (resumen.raciones > 0) celebrar(esRecord ? 44 : 22);
   }, 700);
 }
 
@@ -1433,6 +1552,7 @@ function terminarNivel() {
     /* la parada que presenta un ingrediente se llama como él: "El
        choclo a la olla", no "El choclo · primeros granos a la olla" */
     $('#listo-nombre').textContent = (n.intro ? (n.corto || n.nombre) : n.nombre) + ' a la olla';
+    const heroe = $('#listo-icono'); if (heroe) heroe.innerHTML = icono(n.icono);
     /* las cucharas se revelan de a una, cada una más aguda: el
        redoble del final es la mitad de la celebración */
     $('#listo-cucharas').innerHTML = cucharasHTML(0);
@@ -1445,6 +1565,9 @@ function terminarNivel() {
       }, 500 + i * 330);
     }
     $('#listo-tiempo').textContent = tiempoBonito(tiempoMs);
+    /* la ficha de "tu mejor" enseña el mejor DESPUÉS de esta partida:
+       si fue récord, es este mismo tiempo */
+    const mejorN = $('#listo-mejor-n'); if (mejorN) mejorN.textContent = tiempoBonito(estado.mejores[n.id].ms);
     $('#listo-mejor').textContent = esRecord
       ? (previo ? '¡Nuevo récord! antes: ' + tiempoBonito(previo.ms) : 'Primera vez que lo preparas')
       : 'Tu mejor sigue siendo ' + tiempoBonito(previo.ms);
@@ -1479,6 +1602,8 @@ function terminarNivel() {
       : (cierraDia ? (miDia.sirve ? '¡A la mesa!' : `Cerrar el ${miDia.nombre.toLowerCase()}`) : 'Siguiente parada');
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
+    /* tres cucharas merecen más papelitos que una */
+    celebrar(cuch >= 3 ? 44 : (cuch === 2 ? 28 : 16));
   }, 620);
 }
 
@@ -1507,6 +1632,7 @@ function arruinarNivel(motivo) {
 
 function salirDelNivel() {
   pararReloj();
+  apagarCortina();
   Motor.descargar();
   Motor.setActive(false);
   nivelActual = null; modActual = null;
@@ -1620,6 +1746,8 @@ function bindEventos() {
   });
   $('#btn-cuaderno').addEventListener('click', () => { sfx('tab'); mostrar('cuaderno'); });
   $('#cuaderno-volver').addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
+  const volverArriba = $('#cuaderno-volver-arriba');
+  if (volverArriba) volverArriba.addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
   $('#final-cuaderno').addEventListener('click', () => { cerrarModales(); mostrar('cuaderno'); });
 
   let salirArmado = 0;
@@ -1743,6 +1871,7 @@ function mostrarFinal() {
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
   sfx('fiesta');
+  celebrar(64);
 }
 
 /* ---------- arranque ---------- */

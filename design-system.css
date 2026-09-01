@@ -1,15 +1,17 @@
 /* ============================================================
-   PAMBAMESA — design-system.css
+   LA FANESCA — design-system.css
    El lenguaje visual del juego, en dos capas:
 
    1. TOKENS      — la única fuente de verdad: color, elevación,
                     radios, espaciado, tipografía, movimiento, capas.
    2. COMPONENTES — piezas reusables construidas SOLO con tokens.
 
-   La paleta es de comida popular latinoamericana: azulejo de
-   talavera, rosa mexicano, amarillo cempasúchil, verde nopal,
-   rojo guajillo y blanco de peltre. Nada de crema de cuaderno:
-   los fondos son cal blanca y madera pintada de puesto de mercado.
+   LA COCINA DE NOCHE. La referencia es un juego de consola de
+   bolsillo, no una página: fondo hondo y cálido —la cocina a la
+   hora en que la fanesca hierve—, cobre de olla y oro de caldo
+   como único acento, papel crema para lo que la abuela escribe,
+   cristal oscuro para lo que flota sobre el mesón. Pocos colores,
+   mucho aire, y todo lo que se toca responde con un resorte.
    ============================================================ */
 
 :root {
@@ -17,156 +19,126 @@
      1. TOKENS
      ========================================================== */
 
-  /* --- Rampas del barrio --- */
-  /* talavera: el azul cobalto del azulejo pintado */
-  --talavera-200: #a9c9ec;
-  --talavera-300: #5f97d8;
-  --talavera-500: #1b5faa;
-  --talavera-700: #123f74;
+  /* --- La noche: los fondos --- */
+  --noche-950: #0f0a08;
+  --noche-900: #171009;
+  --noche-800: #22160f;
+  --noche-700: #302016;
+  --noche-600: #43301f;
 
-  /* jade: el verde agua de la loza y los toldos */
-  --jade-200: #8fe0d6;
-  --jade-300: #3fc7bc;
-  --jade-400: #12a9a0;
-  --jade-600: #0a7a74;
+  /* --- El cobre y el oro: el acento --- */
+  --cobre-600: #9a4f1e;
+  --cobre-500: #c8702f;
+  --cobre-400: #e08a45;
+  --cobre-300: #f0a866;
+  --oro-600: #b8781c;
+  --oro-500: #e0a12c;
+  --oro-400: #f4b942;
+  --oro-300: #ffd36a;
+  --oro-200: #ffe7a8;
 
-  /* rosa mexicano: el color de la fiesta, del papel picado */
-  --rosa-300: #ff77ab;
-  --rosa-400: #f53d8a;
-  --rosa-500: #e01b6a;
-  --rosa-600: #b01254;
-  --rosa-700: #7d0a3b;
+  /* --- El papel: lo que escribe la abuela --- */
+  --crema-50:  #fffaf0;
+  --crema-100: #fbf1dc;
+  --crema-200: #f1e3c6;
+  --crema-300: #dfcaa4;
+  --crema-400: #c4aa7e;
 
-  /* chile guajillo: la salsa, las llamadas a la acción */
-  --chile-400: #ef4b40;
-  --chile-500: #ce2029;
-  --chile-600: #9b1219;
+  /* --- La tinta --- */
+  --tinta-900: #2a1a12;
+  --tinta-700: #4a3428;
+  --tinta-600: #6f5545;
+  --tinta-400: #a08674;
+  --tinta-invert: #fff6e8;
 
-  /* cempasúchil: el amarillo del maíz y de las monedas */
-  --maiz-300: #ffc93c;
-  --maiz-400: #f5a623;
-  --maiz-600: #c07610;
-  --maiz-800: #6f4308;
+  /* --- Semánticos de juego --- */
+  --hoja-600: #3f8b3a;    /* lo que salió bien */
+  --hoja-500: #5db55a;
+  --hoja-400: #7ccb6f;
+  --hoja-300: #a5e08f;
+  --brasa-600: #a8321f;   /* lo que arruina la olla */
+  --brasa-500: #e5533d;
+  --brasa-400: #ff7a5c;
+  --fiesta-500: #e8508a;  /* el confeti y la nota de versión */
+  --cielo-400: #5fa8d3;
 
-  /* nopal: el verde del limón y del cilantro */
-  --nopal-300: #a8d95a;
-  --nopal-400: #8cc63f;
-  --nopal-500: #6fae2e;
-  --nopal-600: #4c7c1f;
-
-  /* madera pintada del puesto de mercado */
-  --madera-200: #e8a469;
-  --madera-300: #d07c3f;
-  --madera-400: #b4632c;
-  --madera-500: #93491c;
-  --madera-600: #723713;
-  --madera-700: #4b230b;
-
-  /* peltre: el blanco esmaltado de los platos y la cal de la pared */
-  --peltre-100: #ffffff;
-  --peltre-200: #f3f1ec;
-  --peltre-300: #e3dfd6;
-  --peltre-400: #cbc5b8;
-
-  /* pizarra: el menú escrito con gis */
-  --pizarra-500: #2f2733;
-  --pizarra-700: #1d1822;
-
-  /* metal: los utensilios */
-  --metal-400: #9aa3ae;
-  --metal-600: #6c7683;
-
-  /* tinta */
-  --tinta-900: #2b2129;
-  --tinta-600: #6f626c;
-  --tinta-invert: #fdf8f4;
-
-  /* --- Roles semánticos (lo que usan los componentes) --- */
-  --surface:        var(--peltre-200);
-  --surface-raised: var(--peltre-100);
-  --surface-sunken: var(--peltre-300);
+  /* --- Roles (lo que usan los componentes) --- */
+  --fondo:          var(--noche-900);
+  --fondo-alto:     var(--noche-800);
+  --surface:        var(--crema-100);
+  --surface-raised: var(--crema-50);
+  --surface-sunken: var(--crema-200);
   --text:           var(--tinta-900);
   --text-muted:     var(--tinta-600);
   --text-invert:    var(--tinta-invert);
-  --accent:         var(--rosa-500);
-  --accent-ink:     var(--rosa-700);
-  --hairline:        rgba(43, 33, 41, .16);
-  --hairline-strong: rgba(43, 33, 41, .3);
+  --accent:         var(--oro-400);
+  --accent-ink:     var(--cobre-600);
+  --hairline:        rgba(42, 26, 18, .14);
+  --hairline-strong: rgba(42, 26, 18, .28);
 
-  /* rareza (mismo lenguaje en cartas, chips y bordes) */
-  --rarity-semilla:   var(--madera-400);
-  --rarity-semilla-d: var(--madera-600);
-  --rarity-hallazgo:   var(--nopal-500);
-  --rarity-hallazgo-d: var(--nopal-600);
-  --rarity-receta:   var(--maiz-400);
-  --rarity-receta-d: var(--maiz-600);
-  --rarity-tool:   var(--metal-400);
-  --rarity-tool-d: var(--metal-600);
+  /* --- El cristal: lo que flota sobre la cocina --- */
+  --vidrio:        rgba(255, 244, 226, .08);
+  --vidrio-borde:  rgba(255, 244, 226, .16);
+  --vidrio-oscuro: rgba(20, 12, 8, .66);
+  --vidrio-blur:   18px;
+
+  /* --- Alias del sistema anterior: la escena, el editor y los
+         iconos los nombran; aquí apuntan a la paleta nueva --- */
+  --maiz-300: var(--oro-300); --maiz-400: var(--oro-400); --maiz-500: var(--oro-500);
+  --maiz-600: var(--oro-600); --maiz-800: #5a3806;
+  --nopal-300: var(--hoja-300); --nopal-400: var(--hoja-400); --nopal-500: var(--hoja-500); --nopal-600: var(--hoja-600);
+  --chile-400: var(--brasa-400); --chile-500: var(--brasa-500); --chile-600: var(--brasa-600);
+  --madera-200: var(--cobre-300); --madera-300: var(--cobre-400); --madera-400: var(--cobre-500);
+  --madera-500: var(--cobre-600); --madera-600: #6b3512; --madera-700: #47220b;
+  --peltre-100: var(--crema-50); --peltre-200: var(--crema-100); --peltre-300: var(--crema-200); --peltre-400: var(--crema-300);
+  --pizarra-500: var(--noche-700); --pizarra-700: var(--noche-900);
+  --rosa-400: #f06a9c; --rosa-500: var(--fiesta-500); --rosa-600: #b5306a; --rosa-700: #7d1e49;
+  /* el azulejo del escenario 3D se lee por estos nombres: se quedan
+     con sus valores de siempre para que la cocina no cambie de color */
+  --talavera-200: #a9c9ec; --talavera-300: #5f97d8; --talavera-500: #1b5faa; --talavera-700: #123f74;
+  --jade-400: #2aa89a; --metal-400: #9aa3ae; --metal-600: #6c7683;
 
   /* --- Espaciado (escala 4pt) --- */
   --sp-1: .25rem;  --sp-2: .5rem;   --sp-3: .75rem;  --sp-4: 1rem;
   --sp-5: 1.25rem; --sp-6: 1.5rem;  --sp-8: 2rem;    --sp-10: 2.5rem;
 
-  /* --- Radios --- */
-  --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-xl: 24px; --r-pill: 999px;
+  /* --- Radios: generosos, de consola --- */
+  --r-sm: 12px; --r-md: 18px; --r-lg: 24px; --r-xl: 30px; --r-pill: 999px;
 
-  /* --- Elevación --- */
-  --e-1: 0 2px 6px -2px rgba(43,33,41,.35);
-  --e-2: 0 6px 14px -6px rgba(43,33,41,.45);
-  --e-3: 0 14px 30px -12px rgba(43,33,41,.55);
-  --e-4: 0 24px 54px -18px rgba(20,12,18,.7);
-  --gloss: inset 0 2px 0 rgba(255,255,255,.35);
-  --inset: inset 0 2px 6px rgba(43,33,41,.28);
-  --ring: 3px solid var(--peltre-100);
-
-  /* --- Patrones del barrio --- */
-  /* azulejo de talavera: flor de cuatro pétalos sobre loza blanca */
-  --patron-talavera:
-    radial-gradient(circle at 50% 50%, var(--talavera-500) 0 6px, transparent 6.5px),
-    radial-gradient(circle at 50% 26%, var(--jade-400) 0 5px, transparent 5.5px),
-    radial-gradient(circle at 50% 74%, var(--jade-400) 0 5px, transparent 5.5px),
-    radial-gradient(circle at 26% 50%, var(--jade-400) 0 5px, transparent 5.5px),
-    radial-gradient(circle at 74% 50%, var(--jade-400) 0 5px, transparent 5.5px),
-    radial-gradient(circle at 50% 50%, rgba(27,95,170,.14) 0 17px, transparent 18px),
-    radial-gradient(circle at 0 0, var(--talavera-300) 0 7px, transparent 7.5px),
-    radial-gradient(circle at 100% 0, var(--talavera-300) 0 7px, transparent 7.5px),
-    radial-gradient(circle at 0 100%, var(--talavera-300) 0 7px, transparent 7.5px),
-    radial-gradient(circle at 100% 100%, var(--talavera-300) 0 7px, transparent 7.5px),
-    linear-gradient(180deg, #fff, #eef4f7);
-  --patron-talavera-size: 46px 46px;
-
-  /* papel picado: la guirnalda de la fiesta */
-  --papel-picado: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='30'%3E%3Cpath d='M0 2h112' stroke='%23723713' stroke-width='2'/%3E%3Cpath d='M0 3h28L14 26z' fill='%23e01b6a'/%3E%3Cpath d='M28 3h28L42 26z' fill='%23f5a623'/%3E%3Cpath d='M56 3h28L70 26z' fill='%2312a9a0'/%3E%3Cpath d='M84 3h28L98 26z' fill='%231b5faa'/%3E%3Cg fill='%23ffffff' fill-opacity='.55'%3E%3Ccircle cx='14' cy='10' r='2.4'/%3E%3Ccircle cx='42' cy='10' r='2.4'/%3E%3Ccircle cx='70' cy='10' r='2.4'/%3E%3Ccircle cx='98' cy='10' r='2.4'/%3E%3Ccircle cx='14' cy='17' r='1.5'/%3E%3Ccircle cx='42' cy='17' r='1.5'/%3E%3Ccircle cx='70' cy='17' r='1.5'/%3E%3Ccircle cx='98' cy='17' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
-
-  /* mantel de hule: cuadros de fonda */
-  --patron-mantel:
-    repeating-linear-gradient(90deg, rgba(206,32,41,.045) 0 13px, transparent 13px 26px),
-    repeating-linear-gradient(180deg, rgba(206,32,41,.045) 0 13px, transparent 13px 26px);
+  /* --- Elevación: sombras en dos capas, la corta y la larga --- */
+  --e-1: 0 1px 2px rgba(0,0,0,.18), 0 4px 12px -4px rgba(0,0,0,.28);
+  --e-2: 0 2px 4px rgba(0,0,0,.2), 0 12px 28px -12px rgba(0,0,0,.5);
+  --e-3: 0 4px 10px rgba(0,0,0,.22), 0 26px 50px -18px rgba(0,0,0,.6);
+  --e-4: 0 10px 20px rgba(0,0,0,.28), 0 40px 90px -24px rgba(0,0,0,.75);
+  --gloss: inset 0 1px 0 rgba(255,255,255,.28);
+  --inset: inset 0 2px 8px rgba(0,0,0,.22);
+  --ring: 2px solid rgba(255, 246, 232, .9);
+  --glow-oro: 0 0 0 1px rgba(255, 211, 106, .35), 0 0 28px rgba(255, 190, 80, .35);
+  --glow-hoja: 0 0 0 1px rgba(125, 203, 111, .4), 0 0 24px rgba(93, 181, 90, .4);
 
   /* --- Tipografía --- */
-  --font-display: 'Baloo 2', 'Comic Sans MS', cursive;
+  --font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
   --font-text:    'Nunito', 'Segoe UI', system-ui, sans-serif;
-  --t-2xs: .62rem; --t-xs: .72rem; --t-sm: .84rem; --t-md: .95rem;
-  --t-lg: 1.1rem;  --t-xl: 1.35rem; --t-2xl: 1.7rem; --t-3xl: 2.2rem;
-  --lead-tight: 1.15; --lead: 1.5;
+  --font-hand:    'Caveat', 'Segoe Script', cursive;
+  --t-2xs: .66rem; --t-xs: .74rem; --t-sm: .86rem; --t-md: .98rem;
+  --t-lg: 1.12rem; --t-xl: 1.4rem; --t-2xl: 1.85rem; --t-3xl: 2.5rem; --t-4xl: 3.3rem;
+  --lead-tight: 1.1; --lead: 1.5;
   --track-caps: .16em;
 
-  /* --- Movimiento --- */
-  --dur-fast: .12s; --dur: .22s; --dur-slow: .4s;
-  --ease-out: cubic-bezier(.2, .85, .3, 1);
-  --ease-pop: cubic-bezier(.3, 1.6, .4, 1);
+  /* --- Movimiento: todo lo que se toca responde con resorte --- */
+  --dur-fast: .14s; --dur: .26s; --dur-slow: .5s;
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-pop:    var(--ease-spring);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
 
   /* --- Capas --- */
-  --z-scene: 1; --z-hud: 50; --z-nav: 55; --z-banner: 80; --z-modal: 90; --z-toast: 95;
+  --z-scene: 1; --z-hud: 50; --z-nav: 55; --z-banner: 80; --z-cortina: 85; --z-modal: 90; --z-toast: 95;
 
   /* --- Medidas del marco --- */
   --frame: 480px;
-  /* 78px es el alto de contenido (deja libre la guirnalda de papel
-     picado); el safe-area-inset-top se SUMA aparte, nunca lo
-     reemplaza — si no, en un iPhone con notch/Dynamic Island la
-     cabecera queda debajo del reloj/cámara en vez de debajo de ella. */
   --hud-h: calc(78px + env(safe-area-inset-top));
-  --nav-h: 66px;
+  --nav-h: 0px;
 }
 
 /* ============================================================
@@ -174,96 +146,115 @@
    ============================================================ */
 
 /* ---------- Botón ----------
-   La "cara" y el "canto" se pasan por custom props: cambiar de
-   variante es cambiar dos tokens, no reescribir sombras. */
+   Píldora con cara de gradiente y canto corto. La "cara" y el
+   "canto" se pasan por custom props: cambiar de variante es
+   cambiar tres tokens. Al tocar se hunde con resorte, no con
+   un borde que cambia de grosor. */
 .btn {
-  --btn-face: var(--chile-500);
-  --btn-face-hi: var(--chile-400);
-  --btn-edge: var(--chile-600);
+  --btn-face: var(--cobre-500);
+  --btn-face-hi: var(--cobre-400);
+  --btn-edge: var(--cobre-600);
   --btn-ink: #fff;
-  --btn-lip: 5px;
 
   position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-  padding: .72rem 1.5rem;
+  min-height: 48px;
+  padding: .7rem 1.5rem;
   font-family: var(--font-display); font-size: var(--t-lg); font-weight: 700; line-height: 1;
+  letter-spacing: .01em;
   color: var(--btn-ink);
   background: linear-gradient(180deg, var(--btn-face-hi), var(--btn-face));
-  border: 2.5px solid var(--btn-edge);
-  border-bottom-width: var(--btn-lip);
-  border-radius: var(--r-md);
-  box-shadow: var(--gloss), var(--e-2);
-  text-shadow: 0 1.5px 0 rgba(0,0,0,.22);
-  transition: transform var(--dur-fast) var(--ease-out),
-              border-bottom-width var(--dur-fast) var(--ease-out),
-              filter var(--dur-fast) var(--ease-out);
+  border: 0;
+  border-radius: var(--r-pill);
+  box-shadow: var(--gloss), inset 0 -3px 0 rgba(0,0,0,.18), 0 0 0 1px var(--btn-edge), var(--e-2);
+  text-shadow: 0 1px 0 rgba(0,0,0,.18);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+  will-change: transform;
 }
-.btn:active { transform: translateY(calc(var(--btn-lip) - 2.5px)); border-bottom-width: 2.5px; box-shadow: var(--inset); }
-.btn:disabled { filter: grayscale(.7) brightness(.94); cursor: default; }
-.btn:disabled:active { transform: none; border-bottom-width: var(--btn-lip); box-shadow: var(--gloss), var(--e-2); }
+.btn:active { transform: scale(.965) translateY(1px); box-shadow: var(--inset), 0 0 0 1px var(--btn-edge), var(--e-1); }
+.btn:disabled { filter: grayscale(.7) brightness(.9); cursor: default; }
+.btn:disabled:active { transform: none; }
+.btn:focus-visible { outline: 3px solid var(--oro-300); outline-offset: 3px; }
 
-.btn--rosa   { --btn-face: var(--rosa-500);   --btn-face-hi: var(--rosa-400);   --btn-edge: var(--rosa-700); }
-.btn--jade   { --btn-face: var(--jade-400);   --btn-face-hi: var(--jade-300);   --btn-edge: var(--jade-600); }
-.btn--nopal  { --btn-face: var(--nopal-500);  --btn-face-hi: var(--nopal-400);  --btn-edge: var(--nopal-600); }
-.btn--maiz   { --btn-face: var(--maiz-400);   --btn-face-hi: var(--maiz-300);   --btn-edge: var(--maiz-600); --btn-ink: var(--maiz-800); text-shadow: 0 1.5px 0 rgba(255,255,255,.4); }
-.btn--peltre { --btn-face: var(--peltre-200); --btn-face-hi: var(--peltre-100); --btn-edge: var(--madera-400); --btn-ink: var(--text); text-shadow: none; }
-.btn--madera { --btn-face: var(--madera-400); --btn-face-hi: var(--madera-300); --btn-edge: var(--madera-600); }
+.btn--maiz   { --btn-face: var(--oro-500);  --btn-face-hi: var(--oro-300);  --btn-edge: var(--oro-600);  --btn-ink: var(--maiz-800); text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.btn--nopal  { --btn-face: var(--hoja-500); --btn-face-hi: var(--hoja-400); --btn-edge: var(--hoja-600); }
+.btn--chile  { --btn-face: var(--brasa-500); --btn-face-hi: var(--brasa-400); --btn-edge: var(--brasa-600); }
+.btn--madera { --btn-face: var(--cobre-500); --btn-face-hi: var(--cobre-400); --btn-edge: var(--cobre-600); }
+.btn--rosa   { --btn-face: var(--fiesta-500); --btn-face-hi: var(--rosa-400); --btn-edge: var(--rosa-600); }
+/* peltre: el botón secundario, de cristal claro sobre papel o sobre noche */
+.btn--peltre {
+  --btn-ink: var(--text);
+  background: rgba(42, 26, 18, .06);
+  box-shadow: inset 0 0 0 1.5px var(--hairline-strong);
+  text-shadow: none;
+}
+.btn--peltre:active { box-shadow: inset 0 0 0 1.5px var(--hairline-strong), var(--inset); }
+/* fantasma: solo texto, para lo que no debe competir con el principal */
+.btn--fantasma {
+  --btn-ink: var(--text-muted);
+  background: none; box-shadow: none; text-shadow: none;
+  min-height: 44px;
+}
+.btn--fantasma:active { box-shadow: none; transform: scale(.97); }
 
-.btn--sm    { padding: .42rem .9rem; font-size: var(--t-sm); --btn-lip: 4px; border-radius: var(--r-sm); }
-.btn--lg    { padding: .85rem 1.6rem; font-size: var(--t-xl); --btn-lip: 6px; }
+.btn--sm    { min-height: 40px; padding: .45rem 1rem; font-size: var(--t-sm); }
+.btn--lg    { min-height: 56px; padding: .9rem 1.8rem; font-size: var(--t-xl); }
 .btn--block { display: flex; width: 100%; }
 
-/* ---------- Panel ---------- */
+/* ---------- Botón redondo de icono: cristal sobre lo que sea ---------- */
+.icono-boton {
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px;
+  font-size: 1.2rem; line-height: 1;
+  color: var(--text-invert);
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
+  border-radius: 50%;
+  box-shadow: var(--e-2);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.icono-boton:active { transform: scale(.9); background: rgba(255,244,226,.18); }
+
+/* ---------- Panel de papel ---------- */
 .panel {
   --panel-face: var(--surface-raised);
   --panel-face-2: var(--surface);
   position: relative;
   background: linear-gradient(180deg, var(--panel-face), var(--panel-face-2));
-  border: var(--ring);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
   box-shadow: var(--e-2);
   padding: var(--sp-4);
+  color: var(--text);
 }
-.panel--rosa   { --panel-face: var(--rosa-400); --panel-face-2: var(--rosa-600); color: var(--text-invert); }
-.panel--jade   { --panel-face: var(--jade-300); --panel-face-2: var(--jade-600); color: var(--text-invert); }
-.panel--madera { --panel-face: var(--madera-300); --panel-face-2: var(--madera-500); color: var(--text-invert); }
 .panel--sunken {
-  background: rgba(43,33,41,.06);
-  border: 2px dashed var(--hairline);
+  background: rgba(42, 26, 18, .06);
+  border: 1.5px dashed var(--hairline-strong);
   box-shadow: none;
 }
-.panel--flat { box-shadow: var(--e-1); border-width: 2px; }
+.panel--flat { box-shadow: var(--e-1); }
 
-/* ---------- Rótulo: la pizarra del menú, en su marco de madera ---------- */
-.sign {
-  position: relative;
-  display: flex; flex-direction: column; align-items: center;
-  padding: var(--sp-3) var(--sp-6);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.07), transparent 40%),
-    linear-gradient(180deg, var(--pizarra-500), var(--pizarra-700));
-  border: 5px solid var(--madera-400);
+/* ---------- Panel de cristal: lo que flota sobre la noche ---------- */
+.cristal {
+  background: var(--vidrio);
+  border: 1.5px solid var(--vidrio-borde);
   border-radius: var(--r-lg);
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.08), var(--e-3);
-  text-align: center;
+  box-shadow: var(--e-2);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
+  color: var(--text-invert);
 }
-/* tornillos de latón en las esquinas del marco */
-.sign::before, .sign::after {
-  content: ''; position: absolute; top: .3rem; width: .45rem; height: .45rem;
-  background: radial-gradient(circle at 35% 32%, var(--maiz-300), var(--maiz-600));
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0,0,0,.45);
-}
-.sign::before { left: .35rem; }
-.sign::after  { right: .35rem; }
+
+/* ---------- Rótulo de cabecera: el título de cada pantalla ---------- */
+.sign { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
 .sign-title {
-  font-family: var(--font-display); font-size: var(--t-2xl); font-weight: 800; line-height: 1.05;
-  color: #fff;
-  text-shadow: 0 0 12px rgba(255,255,255,.28);
+  font-family: var(--font-display); font-size: var(--t-2xl); font-weight: 800; line-height: 1;
+  color: var(--text-invert);
+  letter-spacing: -.01em;
 }
 .sign-sub {
-  font-family: var(--font-text); font-size: var(--t-sm); font-weight: 600;
-  color: var(--maiz-300);
+  font-family: var(--font-text); font-size: var(--t-sm); font-weight: 700;
+  color: var(--oro-300);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* ---------- Rótulo pequeño de sección ---------- */
@@ -273,77 +264,107 @@
   letter-spacing: var(--track-caps); text-transform: uppercase;
   color: var(--accent-ink);
 }
-.label::before, .label::after { content: '✦'; font-size: .6em; color: var(--maiz-400); letter-spacing: 0; }
 
-/* ---------- Plato de peltre: el marco de todo icono ---------- */
+/* ---------- Plato: el marco de todo icono ---------- */
 .plate {
   display: flex; align-items: center; justify-content: center;
   aspect-ratio: 1;
-  background: radial-gradient(circle at 50% 40%, #fff 0%, #fff 54%, var(--peltre-300) 88%);
+  background: radial-gradient(circle at 50% 38%, #fff 0%, #fffaf0 52%, var(--crema-200) 90%);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 2px rgba(43,33,41,.05), inset 0 -3px 8px rgba(43,33,41,.08);
+  box-shadow: inset 0 0 0 2px rgba(42,26,18,.05), inset 0 -4px 10px rgba(42,26,18,.1), var(--e-2);
 }
-/* el margen del plato se da con el ancho del icono, NO con padding en %:
-   un padding porcentual se mide contra el contenedor padre y puede
-   comerse el plato entero. height:auto + aspect-ratio evita el 0px. */
-.plate > svg { width: 72%; height: auto; aspect-ratio: 1; filter: drop-shadow(0 2px 2px rgba(43,33,41,.25)); }
+/* el margen del plato se da con el ancho del icono, no con padding
+   en %: un padding porcentual se mide contra el padre y puede comerse
+   el plato entero. height:auto + aspect-ratio evita el 0px. */
+.plate > svg { width: 70%; height: auto; aspect-ratio: 1; filter: drop-shadow(0 2px 2px rgba(42,26,18,.25)); }
 
 /* ---------- Badge ---------- */
 .badge {
-  --badge-face: var(--chile-500);
-  --badge-edge: var(--chile-600);
+  --badge-face: var(--brasa-500);
+  --badge-edge: var(--brasa-600);
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 1.35rem; height: 1.35rem; padding: 0 .28rem;
+  min-width: 1.35rem; height: 1.35rem; padding: 0 .3rem;
   font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800; line-height: 1;
   color: #fff;
   background: linear-gradient(180deg, var(--badge-face), var(--badge-edge));
-  border: 2px solid var(--peltre-100);
+  border: 2px solid var(--crema-50);
   border-radius: var(--r-pill);
   box-shadow: var(--e-1);
 }
-.badge--metal { --badge-face: var(--metal-400); --badge-edge: var(--metal-600); }
-.badge--maiz  { --badge-face: var(--maiz-300);  --badge-edge: var(--maiz-600); color: var(--maiz-800); }
-.badge--nopal { --badge-face: var(--nopal-500); --badge-edge: var(--nopal-600); }
+.badge--maiz  { --badge-face: var(--oro-300); --badge-edge: var(--oro-600); color: var(--maiz-800); }
+.badge--nopal { --badge-face: var(--hoja-500); --badge-edge: var(--hoja-600); }
 
 /* ---------- Pill ---------- */
 .pill {
   display: inline-flex; align-items: center; gap: .3rem;
-  padding: .16rem .7rem;
+  padding: .2rem .75rem;
   font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700; line-height: 1.3;
   color: var(--text);
-  background: var(--peltre-100);
-  border: 2px solid var(--hairline);
+  background: var(--crema-50);
+  border: 1.5px solid var(--hairline);
   border-radius: var(--r-pill);
   box-shadow: var(--e-1);
   white-space: nowrap;
 }
-.pill--dark { color: var(--text-invert); background: rgba(29,24,34,.82); border-color: rgba(255,255,255,.4); }
-.pill--maiz { color: var(--maiz-800); background: linear-gradient(180deg, var(--maiz-300), var(--maiz-400)); border-color: var(--maiz-600); }
-.pill--rosa { color: #fff; background: linear-gradient(180deg, var(--rosa-400), var(--rosa-600)); border-color: var(--rosa-700); }
-
-/* ---------- Moneda ---------- */
-.icono-sucre {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 1.15em; height: 1.15em; border-radius: 50%;
-  background: conic-gradient(from 210deg, var(--maiz-300), var(--maiz-600), var(--maiz-300));
-  color: var(--maiz-800); font-family: var(--font-display); font-weight: 800; font-size: .74em;
-  font-style: normal; line-height: 1;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.3);
-  vertical-align: -0.15em;
-}
+.pill--dark { color: var(--text-invert); background: var(--vidrio-oscuro); border-color: var(--vidrio-borde); }
+.pill--maiz { color: var(--maiz-800); background: linear-gradient(180deg, var(--oro-300), var(--oro-400)); border-color: var(--oro-600); }
 
 /* ---------- Meter ---------- */
 .meter {
-  flex: 1; height: 12px; border-radius: var(--r-pill); overflow: hidden;
-  background: var(--peltre-100);
-  border: 2px solid var(--hairline);
-  box-shadow: var(--inset);
+  flex: 1; height: 10px; border-radius: var(--r-pill); overflow: hidden;
+  background: rgba(42, 26, 18, .12);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.18);
 }
 .meter-fill {
   display: block; height: 100%; border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--rosa-500), var(--maiz-400));
+  background: linear-gradient(90deg, var(--oro-400), var(--oro-300));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
   transition: width var(--dur-slow) var(--ease-out);
+}
+
+/* ---------- Anillo de progreso ----------
+   Un cono de oro sobre cristal. `--p` es el porcentaje (0-100). */
+.anillo {
+  --p: 0;
+  --anillo-grosor: 4px;
+  --anillo-pista: rgba(255, 244, 226, .14);
+  --anillo-color: var(--oro-400);
+  position: relative;
+  display: inline-grid; place-items: center;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(var(--anillo-color) calc(var(--p) * 1%), var(--anillo-pista) 0);
+  transition: --p var(--dur-slow) var(--ease-out);
+}
+.anillo::before {
+  content: ''; position: absolute; inset: var(--anillo-grosor);
+  border-radius: 50%;
+  background: var(--anillo-fondo, var(--noche-800));
+}
+.anillo > * { position: relative; }
+.anillo b {
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 800; line-height: 1;
+  color: var(--text-invert);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Ficha de estadística: cifra grande, nombre chico ---------- */
+.stats { display: flex; gap: var(--sp-2); width: 100%; }
+.stat {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+  padding: .6rem .5rem;
+  background: rgba(42, 26, 18, .05);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-md);
+}
+.stat-n {
+  font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800; line-height: 1;
+  color: var(--text); font-variant-numeric: tabular-nums;
+}
+.stat-l {
+  font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted);
 }
 
 /* ---------- Scroll interno ---------- */
@@ -353,107 +374,89 @@
   overscroll-behavior: contain;
   padding-inline: var(--sp-4);
   padding-bottom: var(--sp-6);
-  mask-image: linear-gradient(180deg, transparent 0, #000 14px);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px);
+  mask-image: linear-gradient(180deg, transparent 0, #000 16px);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px);
 }
 .scroll::-webkit-scrollbar { width: 0; }
 
 /* ---------- Hoja: estructura común de toda pantalla ---------- */
 .hoja {
+  position: relative; z-index: 1;
   display: flex; flex-direction: column;
   height: 100vh; height: 100dvh;
-  padding-top: calc(var(--hud-h) + var(--sp-2));
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-2));
+  padding-top: calc(env(safe-area-inset-top) + var(--sp-3));
+  padding-bottom: env(safe-area-inset-bottom);
 }
-.hoja-head { flex-shrink: 0; padding: 0 var(--sp-4) var(--sp-3); }
+.hoja-head {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
 
 /* ---------- Toast ---------- */
 .toast {
-  position: fixed; left: 50%; transform: translateX(-50%) translateY(14px);
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-4)); z-index: var(--z-toast);
+  position: fixed; left: 50%; transform: translateX(-50%) translateY(14px) scale(.96);
+  bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: var(--z-toast);
   max-width: min(360px, 86vw);
-  font-family: var(--font-display); font-size: var(--t-md); font-weight: 600; text-align: center;
+  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700; text-align: center;
   color: var(--text-invert);
-  background: rgba(29, 24, 34, .96);
-  border: 2px solid rgba(255,255,255,.3);
-  border-radius: var(--r-md); padding: .5rem 1rem;
+  background: rgba(24, 14, 9, .94);
+  border: 1.5px solid var(--vidrio-borde);
+  border-radius: var(--r-md); padding: .6rem 1.15rem;
   box-shadow: var(--e-3);
+  -webkit-backdrop-filter: blur(var(--vidrio-blur)); backdrop-filter: blur(var(--vidrio-blur));
   opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
 }
-.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 
-/* ---------- Modal + hoja emergente ---------- */
+/* ---------- Modal: hoja que sube desde abajo ----------
+   Como en cualquier juego de bolsillo: el fondo se oscurece y
+   desenfoca, la hoja sube con resorte y trae un asa arriba. En
+   pantallas anchas se centra. */
 .modal {
   position: fixed; inset: 0; z-index: var(--z-modal);
-  display: none; align-items: center; justify-content: center;
-  padding: var(--sp-5);
-  background: rgba(20, 12, 18, .68);
-  -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  display: none; align-items: flex-end; justify-content: center;
+  padding: 0;
+  background: rgba(10, 6, 4, .62);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
 .modal.open { display: flex; animation: modal-in var(--dur) var(--ease-out) both; }
 @keyframes modal-in { from { opacity: 0; } }
 
 .sheet {
-  width: 100%; max-width: 340px; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
-  background: linear-gradient(180deg, var(--peltre-100), var(--peltre-200));
-  border: var(--ring);
-  border-radius: var(--r-xl);
-  box-shadow: var(--e-4);
-  padding: var(--sp-5) var(--sp-5) var(--sp-4);
-  animation: sheet-in var(--dur-slow) var(--ease-pop) both;
-}
-@keyframes sheet-in { from { opacity: 0; transform: translateY(20px) scale(.95); } }
-.sheet-title { font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800; color: var(--text); line-height: var(--lead-tight); }
-.sheet-eyebrow { font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700; letter-spacing: var(--track-caps); text-transform: uppercase; color: var(--accent); }
-.sheet-body { font-size: var(--t-md); line-height: var(--lead); color: var(--text-muted); }
-
-/* ---------- Barra de navegación: la tabla del puesto ---------- */
-.tabbar {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  position: relative;
   width: 100%; max-width: var(--frame);
-  z-index: var(--z-nav); display: flex;
-  padding-bottom: env(safe-area-inset-bottom);
-  background: linear-gradient(180deg, var(--madera-400), var(--madera-600));
-  border-top: var(--ring);
-  box-shadow: 0 -8px 20px -10px rgba(20,12,18,.7);
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  color: var(--text);
+  background: linear-gradient(180deg, var(--crema-50), var(--crema-100));
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: var(--e-4);
+  padding: var(--sp-6) var(--sp-5) calc(env(safe-area-inset-bottom) + var(--sp-5));
+  animation: sheet-in var(--dur-slow) var(--ease-spring) both;
+  max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+  overflow-y: auto; overscroll-behavior: contain;
 }
-.tab-btn {
-  position: relative; flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
-  height: var(--nav-h);
-  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
-  letter-spacing: .06em; text-transform: uppercase;
-  color: rgba(255,246,238,.72);
-  text-shadow: 0 1px 0 rgba(0,0,0,.3);
-  transition: color var(--dur) var(--ease-out);
+.sheet::-webkit-scrollbar { width: 0; }
+/* el asa */
+.sheet::before {
+  content: ''; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 5px; border-radius: 3px;
+  background: rgba(42, 26, 18, .18);
 }
-.tab-btn.active { color: #fff; }
-.tab-ic {
-  width: 1.7rem; height: 1.7rem; padding: .2rem;
-  background: radial-gradient(circle at 50% 42%, #fff, var(--peltre-300) 85%);
-  border: 2px solid rgba(43,33,41,.22);
-  border-radius: 50%;
-  box-shadow: var(--e-1);
-  filter: saturate(.35) opacity(.75);
-  transition: filter var(--dur) var(--ease-out), transform var(--dur) var(--ease-pop), border-color var(--dur) var(--ease-out);
-}
-.tab-btn.active .tab-ic {
-  filter: none; transform: translateY(-3px) scale(1.14);
-  border-color: var(--maiz-300);
-  box-shadow: var(--e-2), 0 0 0 3px rgba(255,201,60,.4);
-}
+@keyframes sheet-in { from { opacity: 0; transform: translateY(48px) scale(.97); } }
+.sheet-title { font-family: var(--font-display); font-size: var(--t-2xl); font-weight: 800; color: var(--text); line-height: var(--lead-tight); letter-spacing: -.01em; }
+.sheet-eyebrow { font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700; letter-spacing: var(--track-caps); text-transform: uppercase; color: var(--accent-ink); }
+.sheet-body { font-size: var(--t-md); line-height: var(--lead); color: var(--text-muted); max-width: 34ch; }
+.sheet .btn + .btn { margin-top: -.15rem; }
+.sheet .btn--block { max-width: 360px; }
 
-/* ---------- HUD ---------- */
-.hud {
-  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: var(--frame); height: var(--hud-h);
-  /* mismo 34px de siempre, sumado al inset — así el área de
-     contenido (78px - 34px) queda igual en cualquier dispositivo */
-  padding: calc(env(safe-area-inset-top) + 34px) var(--sp-4) 0;
-  z-index: var(--z-hud);
-  display: flex; align-items: center; gap: var(--sp-2);
+/* en pantalla ancha la hoja se centra como una tarjeta */
+@media (min-width: 640px) and (min-height: 720px) {
+  .modal { align-items: center; padding: var(--sp-6); }
+  .sheet { max-width: 380px; border-radius: var(--r-xl); padding-bottom: var(--sp-5); }
+  .sheet::before { display: none; }
 }
 
 /* ---------- Utilidades mínimas ---------- */
@@ -463,33 +466,13 @@
 .center { text-align: center; }
 .muted  { color: var(--text-muted); }
 
-/* ---------- Repisa: panel que parece un estante de madera ----------
-   Lo usa la despensa para que se sienta una alacena de verdad y no
-   una lista. El borde inferior es el canto del estante. */
-.panel--repisa {
-  --panel-face: var(--madera-200);
-  --panel-face-2: var(--madera-300);
-  border: 3px solid var(--madera-600);
-  border-bottom-width: 9px;
-  border-radius: var(--r-md);
-  box-shadow: var(--gloss), var(--e-2);
-}
-.panel--repisa::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -9px; height: 9px;
-  background: linear-gradient(180deg, var(--madera-500), var(--madera-700));
-  border-radius: 0 0 var(--r-md) var(--r-md);
-}
-
-/* ---------- Página: superficie de papel para el recetario ---------- */
+/* ---------- Página: la superficie de papel del recetario ---------- */
 .pagina {
-  background:
-    repeating-linear-gradient(180deg, transparent 0 27px, rgba(27,95,170,.09) 27px 28px),
-    linear-gradient(180deg, #fffefb, var(--peltre-200));
-  border: 3px solid var(--peltre-100);
-  border-left: 6px solid var(--chile-500);
-  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--crema-50), var(--crema-100));
+  border-radius: var(--r-lg);
   box-shadow: var(--e-2);
-  padding: var(--sp-3);
+  padding: var(--sp-4);
+  color: var(--text);
 }
 
 /* ---------- Ciclo de versión (actualizador.js) ---------- */
@@ -497,9 +480,9 @@
 /* el botón que aparece cuando hay versión nueva descargada */
 .aviso-actualizar {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-3));
+  bottom: calc(env(safe-area-inset-bottom) + 92px);
   z-index: var(--z-toast);
-  animation: aviso-sube var(--dur-slow) var(--ease-pop) both;
+  animation: aviso-sube var(--dur-slow) var(--ease-spring) both;
 }
 .aviso-actualizar b { font-weight: 800; }
 @keyframes aviso-sube { from { opacity: 0; transform: translateX(-50%) translateY(20px); } }
@@ -507,16 +490,16 @@
 /* la nota de versiones */
 .nota-version-ic { font-size: var(--t-3xl); line-height: 1; }
 .nota-version-lista {
-  width: 100%; text-align: left;
+  width: 100%; text-align: left; align-self: stretch;
+  display: flex; flex-direction: column; gap: var(--sp-2);
   margin: var(--sp-1) 0 var(--sp-2);
   padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-6);
   font-size: var(--t-sm); line-height: var(--lead); color: var(--text);
-  background: rgba(43,33,41,.05);
-  border: 2px dashed var(--hairline);
+  background: rgba(42, 26, 18, .05);
+  border: 1.5px dashed var(--hairline-strong);
   border-radius: var(--r-md);
 }
-.nota-version-lista li { margin: .2rem 0; }
-.nota-version-lista li::marker { color: var(--accent); }
+.nota-version-lista li::marker { color: var(--accent-ink); }
 
 /* la etiqueta discreta de versión en la portada */
 .version-tag {
