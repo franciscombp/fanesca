@@ -93,6 +93,9 @@
         </button>
         <div id="mesa-lista" class="mesa-lista"></div>
       </div>
+      <!-- desde cualquier punto del cuaderno, un toque va a la parada
+           que toca: el recetario se hojea, este botón cocina -->
+      <button type="button" id="btn-sigue" class="btn-sigue hidden"></button>
     </div>
   </main>
 
@@ -156,6 +159,10 @@
       <p id="voz-texto" class="voz-texto"></p>
       <p id="voz-quien" class="voz-quien"></p>
     </div>
+    <!-- la pista se puede VOLVER A LEER: la ventana de enseñanza era
+         de diez segundos irrepetibles, y quien parpadeaba se quedaba
+         sin instrucción. El «?» repite la última que se mostró. -->
+    <button type="button" id="btn-pista" class="btn-pista" aria-label="Volver a leer la pista">?</button>
     <div id="juego-controles" class="juego-controles"></div>
     <p id="juego-pista" class="juego-pista"></p>
 
@@ -185,6 +192,7 @@
       <p class="sheet-eyebrow">a la olla</p>
       <h3 id="listo-nombre" class="sheet-title"></h3>
       <div id="listo-cucharas" class="cucharas" aria-hidden="true"></div>
+      <p class="cucharas-pie">tu tiempo, en cucharas — tres es mano de abuela</p>
       <p id="listo-tiempo" class="listo-tiempo"></p>
       <p id="listo-mejor" class="listo-mejor"></p>
       <section id="listo-tarjeta" class="tarjeta">

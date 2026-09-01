@@ -327,9 +327,14 @@ function pintarPortada() {
   const btn = $('#btn-empezar');
   const avance = $('#portada-avance');
   const reiniciar = $('#btn-reiniciar');
-  if (btn) btn.textContent = hechos ? 'Seguir cocinando' : 'A la mesa de prep';
+  if (btn) btn.textContent = hechos ? 'Seguir cocinando' : 'Abrir el recetario';
   if (avance) {
-    avance.textContent = hechos ? `${hechos} de ${NIVELES.length} ingredientes listos` : '';
+    /* el avance habla en el idioma del recetario: paradas y día */
+    const paradas = RUTA.filter(n => estaListo(n.id)).length;
+    const dia = DIAS.find(d => !diaCompleto(d));
+    avance.textContent = hechos
+      ? `${paradas} de ${RUTA.length} paradas · vas por el ${dia ? dia.nombre.toLowerCase() : 'final'}`
+      : '';
     avance.classList.toggle('hidden', !hechos);
   }
   /* reiniciar siempre está disponible, aunque no haya progreso */
@@ -412,6 +417,10 @@ const diaCompleto = (d) => d.paradas.every(id => estaListo(id));
    borrado lo destruiría y con él sus eventos — guardado aquí, el
    elemento sobrevive detached y vuelve a montarse con todo puesto. */
 let btnApuroEl = null;
+
+/* lo que hace el botón «Sigue» ahora mismo: renderMesa lo decide en
+   cada pintada (la parada abierta que toca, o la olla) */
+let sigueAccion = null;
 
 function renderMesa() {
   renderEscenarios();
@@ -640,6 +649,28 @@ function renderMesa() {
   let sig = desp.nextElementSibling;
   while (sig && sig.classList.contains('despensa')) { const s = sig.nextElementSibling; sig.remove(); sig = s; }
 
+  /* EL BOTÓN «SIGUE»: desde cualquier punto del recetario, un toque
+     va a lo que toca — la parada abierta que sigue, o la olla si ya
+     no queda semana. Sin él, seguir jugando era buscar con el pulgar
+     el renglón que late. */
+  const btnSigue = $('#btn-sigue');
+  if (btnSigue) {
+    const sig = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
+    if (sig) {
+      btnSigue.classList.remove('hidden');
+      btnSigue.innerHTML = `✎ Sigue: <b>${sig.num} · ${sig.intro ? sig.corto : (sig.corto || sig.nombre)}</b>`;
+      sigueAccion = () => jugar(sig.id);
+    } else if (todas && !estado.ollaVista) {
+      btnSigue.classList.remove('hidden');
+      btnSigue.innerHTML = '🍲 <b>¡A la olla!</b>';
+      sigueAccion = () => mostrarFinal();
+    } else {
+      /* todo cocinado y servido: no hay "siguiente" que prometer */
+      btnSigue.classList.add('hidden');
+      sigueAccion = null;
+    }
+  }
+
   /* EL CIERRE DE UN DÍA SE CELEBRA AQUÍ, al volver a la mesa: la
      escena se lee con el mapa detrás enseñando la banda nueva, que
      es justo lo que la escena está abriendo. Una sola vez por día. */
@@ -787,6 +818,12 @@ function pararReloj() { corriendo = false; relojEnEspera = false; clearInterval(
    llega tarde por definición. */
 let pistaId = null;
 let pistaFila = [];        /* timeouts de la secuencia de arranque */
+/* LA ÚLTIMA PISTA SE GUARDA para poder releerla: la ventana de
+   enseñanza duraba diez segundos irrepetibles, y quien parpadeaba se
+   quedaba sin instrucción para siempre. El botón «?» del mesón la
+   vuelve a poner — la última que se mostró, que es la que aplica al
+   momento en que el jugador está. */
+let ultimaPista = null;
 const duracionDe = (msg) => {
   const palabras = String(msg).replace(/<[^>]*>/g, ' ').trim().split(/\s+/).length;
   return Math.max(2600, Math.min(12000, 1400 + palabras * 340));
@@ -796,6 +833,7 @@ function pistaAhora(msg, dur) {
   const p = $('#juego-pista');
   p.innerHTML = msg;
   p.classList.add('visible');
+  ultimaPista = msg;
   clearTimeout(pistaId);
   pistaId = setTimeout(() => p.classList.remove('visible'), dur);
 }
@@ -1150,6 +1188,10 @@ async function jugar(id) {
   if (!yaJugada && traeBichos) {
     fila.push({ msg: n.avisoBicho || `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>` });
   }
+  /* el «?» arranca con el gesto del ingrediente: en una parada ya
+     superada la fila viene vacía, y sin esto repetiría la pista del
+     nivel anterior */
+  ultimaPista = n.gesto;
   pistasEnFila(fila);
   Editor.nivel(n.id);
   pintarBotonEditor();
@@ -1225,6 +1267,7 @@ async function montarRacion(base, config) {
     fila.push({ msg: '<b>El Apuro:</b> haz una parte de cada ingrediente y el reloj te <b>devuelve segundos</b>. Los bichos te los quitan.' });
   }
   fila.push({ msg: ficha.gesto }, ...capturadas);
+  ultimaPista = ficha.gesto;
   pistasEnFila(fila);
 }
 
@@ -1562,6 +1605,19 @@ function bindEventos() {
 
 
   $('#voz').addEventListener('click', () => voz(null));
+
+  /* «Sigue»: lo que renderMesa haya decidido que toca */
+  $('#btn-sigue').addEventListener('click', () => {
+    sfx('tab');
+    if (sigueAccion) sigueAccion();
+  });
+
+  /* «?»: la última pista, otra vez. No cuesta nada — el reloj corre
+     igual, que releer no es trampa. */
+  $('#btn-pista').addEventListener('click', () => {
+    sfx('tab');
+    if (ultimaPista) pistaAhora(ultimaPista, duracionDe(ultimaPista));
+  });
   $('#btn-cuaderno').addEventListener('click', () => { sfx('tab'); mostrar('cuaderno'); });
   $('#cuaderno-volver').addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
   $('#final-cuaderno').addEventListener('click', () => { cerrarModales(); mostrar('cuaderno'); });

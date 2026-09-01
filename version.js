@@ -30,10 +30,26 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.21.0';
+const APP_VERSION = '1.22.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.22.0',
+    fecha: '2026-09-01',
+    titulo: 'Sigue, y la pista que se relee',
+    cambios: [
+      'El botón «Sigue» flota al pie del recetario: desde cualquier punto, un toque te lleva a la parada que toca — y a la olla cuando ya no queda semana.',
+      'En el mesón apareció el «?»: repite la última pista, las veces que haga falta. La enseñanza deja de ser una ventana de diez segundos irrepetibles.',
+      'Las cucharas por fin se explican donde se ven: «tu tiempo, en cucharas — tres es mano de abuela».',
+      'La portada con progreso habla claro: cuántas paradas llevas y por qué día vas.',
+    ],
+    internos: [
+      'ultimaPista se guarda en pistaAhora y arranca en el gesto del ingrediente por nivel (jugar/montarRacion); #btn-pista la repite sin parar el reloj.',
+      '#btn-sigue pintado por renderMesa (sigueAccion): siguiente parada abierta, o mostrarFinal con la campaña lista; oculto con todo servido. .scroll de la mesa con padding para no taparlo.',
+      'pintarPortada: avance en paradas y día; botón «Abrir el recetario» sin progreso.',
+    ],
+  },
   {
     v: '1.21.0',
     fecha: '2026-09-01',

@@ -1763,6 +1763,65 @@ body.con-editor #stage { margin-right: 340px; }
   border-color: var(--maiz-500, #f2b31f);
 }
 
+/* ============================================================
+   HOJEAR ES UNA COSA, COCINAR ES OTRA — el botón «Sigue» y el «?».
+
+   El recetario invita a hojearse, pero encontrar el renglón que
+   late obligaba a buscarlo con el pulgar. «Sigue» va flotando al
+   pie de la mesa y siempre lleva a la parada que toca. Y en el
+   mesón, el «?» repite la última pista: la enseñanza deja de ser
+   una ventana de diez segundos irrepetibles. */
+
+.btn-sigue {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  z-index: 6;
+  max-width: 90%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: .55rem 1.15rem;
+  border-radius: var(--r-pill);
+  border: 2.5px solid #fff;
+  background: linear-gradient(135deg, var(--nopal-500, #6cbf5a), #4e9c3e);
+  color: #fff;
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
+  box-shadow: var(--e-3);
+  cursor: pointer;
+  animation: sigue-entra .35s var(--ease-pop, ease-out) both;
+}
+.btn-sigue b { font-weight: 800; }
+.btn-sigue:active { transform: translateX(-50%) translateY(1px); }
+@keyframes sigue-entra {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%); }
+}
+/* que el fondo del recetario no quede tapado por el botón */
+#screen-mesa .scroll { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); }
+
+.btn-pista {
+  position: absolute;
+  top: calc(var(--prep-hud-h, 64px) + var(--sp-4));
+  right: var(--sp-3);
+  z-index: 5;
+  width: 2.6rem; height: 2.6rem;
+  border-radius: 50%;
+  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1;
+  color: #fff;
+  background: var(--vidrio, rgba(40, 26, 20, .55));
+  border: 2px solid var(--filo-oro, rgba(255, 220, 140, .5));
+  box-shadow: var(--e-2);
+  cursor: pointer;
+}
+.btn-pista:active { transform: scale(.92); }
+
+/* las cucharas, explicadas donde se miran por primera vez */
+.cucharas-pie {
+  margin: -.1rem 0 .3rem;
+  text-align: center;
+  font-size: var(--t-2xs, .68rem);
+  color: var(--text-muted, #7a6a55);
+}
+
 /* el modal de fin de día */
 .dia-ic { display: block; text-align: center; font-size: 2.2rem; margin-bottom: .2rem; }
 .dia-refri {
