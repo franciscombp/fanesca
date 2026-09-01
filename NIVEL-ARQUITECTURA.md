@@ -238,25 +238,29 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
 
 ---
 
-## Progreso — dos candados, y no son el mismo
+## Progreso — la semana, y un solo candado
 
-- **Dentro de la temporada** de un ingrediente se va en fila: el
-  choclo duro se abre cuando pasaste el tierno, y así hasta la última
-  tonga. Eso es lo que hace que quince paradas se sientan una
-  temporada y no un menú.
-- **Al cambiar de ingrediente** basta con haber cocinado el anterior
-  una vez. Si no, las habas quedarían detrás de las quince paradas del
-  maíz y la olla detrás de la campaña entera: quien quisiera ver la
-  fanesca tendría que agotar el maíz primero. Terminado el primer
-  choclo se abren a la vez el segundo choclo y las primeras habas.
+- **El mapa es una semana**: cinco días de ocho paradas (`DIAS` en
+  `niveles-config.js`) que entrelazan las doce presentaciones con las
+  variantes bravas, la olla al final como clímax del jueves por la
+  noche, y el Viernes Santo debajo — la zona de El Apuro. La
+  narrativa vive en `DIAS_RELATO` y `VIERNES` (`historia.js`); cada
+  cierre de día se celebra una vez (`estado.diasVistos`).
+- **Un solo candado, el de adelante**: la parada siguiente se abre al
+  terminar la anterior. Se puede porque el reparto de la semana ya
+  entrelaza los ingredientes (nunca hay quince maíces en fila) y los
+  peldaños de cada escalera caen en orden dentro de la semana. Lo
+  hecho no se re-cierra nunca: un guardado viejo con paradas sueltas
+  abre un frente detrás de cada una.
 - En `devMode`, todo abierto.
-- **La olla** se abre con los **doce ingredientes**, no con las
-  variantes: `ingredienteListo(base)` es cierto en cuanto una
-  cualquiera de sus variantes está hecha. Las de más arriba son para
-  bajarse el tiempo.
+- **La olla** se cocina al final de la semana (las cuarenta) y se va
+  llenando parada a parada en el propio nodo. `El Apuro` se abre
+  terminando el lunes.
 - **Los récords viejos migran**: `migrar()` mueve `mejores.maiz` a
-  `maiz-1-introduccion`. Sin eso, a quien ya lo cocinó se le borraba
-  el récord y se le cerraba el camino entero detrás.
+  `maiz-1-introduccion`, aplica `RENOMBRADOS`, infiere `ollaVista`
+  para guardados del mapa viejo (los sin marca `mapa: 'semana'` — en
+  aquel mapa tener una variante brava probaba haber cocinado la
+  olla), y marca como vistos los días que ya estaban completos.
 
 ---
 

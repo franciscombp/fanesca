@@ -59,7 +59,7 @@
    siguiente, se agarra lo que se puede y se sigue.
    ============================================================ */
 
-import { APURO, variantesDe } from './niveles-config.js';
+import { APURO, configApuro } from './niveles-config.js';
 
 /* ---------- estado de la partida ---------- */
 
@@ -69,6 +69,8 @@ let raciones = 0;           /* raciones terminadas */
 let tanda = 1;
 let mejorCadena = 0, cadena = 0;   /* raciones seguidas sin castigo */
 let tocados = new Set();    /* qué ingredientes salieron, para la tarjeta final */
+let servidos = new Set();   /* cuáles se llegaron a SERVIR: el logro de los doce
+                               es por cocinarlos, no por que te hayan tocado */
 let castigos = 0;           /* cuántos desastres */
 let segundosGanados = 0;
 let racionActual = null;    /* { base, cuota, total, hechos } */
@@ -102,17 +104,15 @@ function sacarDeLaBolsa(evitar) {
 }
 
 /* ---------- la dificultad de cada ración ----------
-   Sale de la CAMPAÑA, no de una tabla propia. Cada ingrediente ya
-   tiene su escalera de variantes ordenada de suave a brava, así que
-   la tanda simplemente sube por esa escalera. Una segunda tabla de
-   dificultades para el modo sería la misma curva escrita dos veces,
-   y a la tercera semana ya no coincidirían. */
+   Sale de la CAMPAÑA, no de una tabla propia: la tanda sube por la
+   escalera de variantes de cada ingrediente, y cuando la escalera se
+   acaba sigue subiendo por SIN_FIN (niveles-config), parámetro a
+   parámetro con topes. Una segunda tabla de dificultades para el
+   modo sería la misma curva escrita dos veces, y a la tercera semana
+   ya no coincidirían. */
 
 function configDe(racion, tandaActual) {
-  const escalera = variantesDe(racion.base);
-  if (!escalera.length) return { ...(racion.ajustes || {}) };
-  const i = Math.min(tandaActual - 1, escalera.length - 1);
-  return { ...escalera[i].config, ...(racion.ajustes || {}) };
+  return { ...configApuro(racion.base, tandaActual), ...(racion.ajustes || {}) };
 }
 
 const bonoDeTanda = (t) => Math.max(APURO.bonoMinimo, APURO.bonoBase - (t - 1));
@@ -126,6 +126,7 @@ function arrancar(g) {
   raciones = 0; tanda = 1; cadena = 0; mejorCadena = 0;
   castigos = 0; segundosGanados = 0;
   tocados = new Set();
+  servidos = new Set();
   cuotaBase = {};
   racionActual = null;
   pendiente = null;
@@ -201,6 +202,7 @@ function completar() {
 function servida() {
   if (!activo || !racionActual || racionActual.servida) return;
   racionActual.servida = true;
+  servidos.add(racionActual.base);
   raciones++;
   cadena++;
   if (cadena > mejorCadena) mejorCadena = cadena;
@@ -250,6 +252,7 @@ function terminar(porque) {
     castigos,
     segundosGanados,
     ingredientes: [...tocados],
+    servidos: [...servidos],
   };
   /* qué logros CUMPLE esta partida. Cuáles son nuevos lo decide el
      juego, que es quien tiene el guardado: aquí no se sabe —ni hace

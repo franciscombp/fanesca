@@ -10,10 +10,10 @@
 
 import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
 import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niveles.js';
-import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
+import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO, DIAS_RELATO, VIERNES } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
-import { variantesDe, nivelPor as configPor, APURO } from './niveles-config.js';
+import { variantesDe, nivelPor as configPor, APURO, DIAS } from './niveles-config.js';
 import Apuro from './modo-apuro.js';
 
 const $ = (s) => document.querySelector(s);
@@ -39,6 +39,12 @@ function nuevoEstado() {
     escenario: POR_DEFECTO,
     /* el último nivel jugado: para scrollear a él cuando regresas a la mesa */
     ultimoNivel: null,
+    /* qué cierres de día ya se celebraron: cada escena se lee una vez */
+    diasVistos: [],
+    /* la generación del guardado: 'semana' desde v1.18. Un guardado
+       sin esta marca viene del mapa de actos y pasa por las
+       inferencias de migración una sola vez. */
+    mapa: 'semana',
   };
 }
 let estado = nuevoEstado();
@@ -49,7 +55,10 @@ function cargar() {
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || typeof s !== 'object') return null;
-    return migrar(Object.assign(nuevoEstado(), s));
+    /* la marca de generación NO se hereda del default: un guardado
+       viejo sin `mapa` debe llegar a migrar() sin ella, o las
+       inferencias de migración no sabrían que es viejo */
+    return migrar(Object.assign(nuevoEstado(), s, { mapa: s.mapa }));
   } catch (e) { return null; }
 }
 
@@ -83,6 +92,7 @@ function migrar(s) {
     if (!m || typeof m !== 'object' || typeof m.ms !== 'number') delete s.mejores[k];
   }
   if (!Array.isArray(s.leidos)) s.leidos = [];
+  if (!Array.isArray(s.diasVistos)) s.diasVistos = [];
   if (!s.dias || typeof s.dias !== 'object') s.dias = { ultima: null, seguidos: 0 };
   /* el ingrediente entero pasó a ser una temporada: su récord es el
      de la primera parada */
@@ -94,16 +104,28 @@ function migrar(s) {
     delete s.mejores[base];
     if (s.ultimoNivel === base && primera) s.ultimoNivel = primera.id;
   });
-  /* quien ya jugó paradas de la temporada cocinó la olla en el orden
-     viejo: sin esta huella el mapa le pintaría hecho lo que el
-     candado le niega */
-  if (!s.ollaVista && RUTA.some(n => n.acto === 2 && s.mejores[n.id])) s.ollaVista = true;
+  /* SOLO PARA GUARDADOS DEL MAPA VIEJO (sin la marca 'semana'): allí
+     las variantes bravas únicamente se abrían tras cocinar la olla,
+     así que tener una es prueba de haber visto el final — y eso no
+     se le vuelve a cerrar a nadie. En el mapa de la semana esa
+     deducción sería falsa: las variantes van ANTES de la olla. */
+  if (!s.mapa && !s.ollaVista) {
+    const primeras = new Set(NIVELES.map(n => (variantesDe(n.id)[0] || {}).id));
+    if (Object.keys(s.mejores).some(id => !primeras.has(id))) s.ollaVista = true;
+  }
+  s.mapa = 'semana';
   for (const [viejo, nuevo] of Object.entries(RENOMBRADOS)) {
     if (!s.mejores[viejo]) continue;
     if (!s.mejores[nuevo]) s.mejores[nuevo] = s.mejores[viejo];
     delete s.mejores[viejo];
     if (s.ultimoNivel === viejo) s.ultimoNivel = nuevo;
   }
+  /* un día que ya estaba completo al llegar la semana no estrena su
+     escena: celebrarle cinco cierres de golpe a quien vuelve sería
+     confeti a destiempo */
+  DIAS.forEach(d => {
+    if (!s.diasVistos.includes(d.id) && d.paradas.every(id => !!s.mejores[id])) s.diasVistos.push(d.id);
+  });
   return s;
 }
 
@@ -114,31 +136,27 @@ const estaListo = (id) => !!estado.mejores[id];
 const ingredienteListo = (base) => RUTA.some(n => n.base === base && estaListo(n.id));
 const listos = () => NIVELES.filter(n => ingredienteListo(n.id)).length;
 
-/* DOS CANDADOS, Y NO SON EL MISMO.
+/* UN SOLO CANDADO: EL DE ADELANTE.
 
-   Dentro de la temporada de un ingrediente se va EN FILA: el choclo
-   duro se abre cuando pasaste el tierno, y así hasta la última tonga.
-   Eso es lo que hace que quince paradas de maíz se sientan una
-   temporada y no un menú.
+   El camino es una semana y la semana va en orden — la parada
+   siguiente se abre al terminar la anterior, como en cualquier mapa
+   de este género. Se puede porque el propio orden ya entrelaza los
+   ingredientes: nunca hay que tragarse quince maíces para llegar a
+   las habas, el reparto de la semana lo impide por construcción.
+   Los peldaños de cada ingrediente caen en orden dentro de la
+   semana, así que el candado de la fila viene gratis.
 
-   Pero al CAMBIAR de ingrediente basta con haber cocinado el anterior
-   una vez. Si no, las habas quedarían detrás de las quince paradas del
-   maíz, y la olla —que pide los doce— detrás de la campaña entera:
-   quien quisiera ver la fanesca tendría que agotar el maíz primero.
-   Así, terminado el primer choclo se abren a la vez el segundo choclo
-   y la primera arveja, y cada quien elige si profundiza o avanza.
+   Lo hecho no se re-cierra nunca: un guardado del mapa viejo trae
+   paradas sueltas por toda la semana, y cada una de esas sigue
+   abierta — y abre la que le sigue, así que quien vuelve tiene
+   varios frentes en vez de un muro.
 
    En modo dev, todo abierto: probar una mecánica no debería costar
    jugarse la campaña. */
 function desbloqueado(i) {
   if (estado.devMode || i === 0) return true;
-  const n = RUTA[i], previo = RUTA[i - 1];
-  /* EL ACTO II SE ABRE CON LA OLLA. Los doce ingredientes son el
-     juego completo y la olla es su final: pasar de largo hacia las
-     variantes bravas sin haberla cocinado se saltaría el único
-     momento en que este juego cierra. */
-  if (n.acto === 2 && previo.acto === 1) return estado.ollaVista || false;
-  return estaListo(previo.id);
+  if (estaListo(RUTA[i].id)) return true;
+  return estaListo(RUTA[i - 1].id);
 }
 
 /* ============================================================
@@ -168,95 +186,47 @@ const CON_VARIANTES = new Set([
    con la misma proporción que traían los ingredientes a mano */
 const cucharasDeTiempo = (base) => [base, Math.round(base * 1.5), Math.round(base * 2.2)];
 
+/* LA RUTA ES LA SEMANA. El orden vive en DIAS (niveles-config): cinco
+   días de ocho paradas que entrelazan las presentaciones con las
+   variantes bravas, y la olla espera al final del camino. Aquí solo
+   se viste cada parada con lo suyo: su ingrediente, su día, su
+   número en la semana y si es la primera vez que ese ingrediente
+   aparece — que es lo que decide cómo se llama en el mapa. */
 function construirRuta() {
   const ruta = [];
-
-  /* ACTO I — LA PRIMERA OLLA. La variante más suave de cada uno de los
-     doce, ordenada por lo difícil que es APRENDER su gesto, no por lo
-     que cuesta ejecutarlo. Aquí la dificultad es descubrir qué te
-     pide el ingrediente: el choclo se desgrana, la arveja hay que
-     deshilarla primero, el zapallo son cuatro faenas seguidas.
-
-     Doce paradas y la olla. Eso ya es un juego entero y con final —
-     media hora larga— y es lo que ve alguien que lo abre por primera
-     vez. */
-  const ACTO_I = [
-    'maiz', 'habas', 'chochos', 'frejol', 'arveja', 'melloco',
-    'escoger', 'col', 'quinua', 'mani', 'bacalao', 'zapallo',
-  ];
-  const usados = new Set();
-  ACTO_I.forEach(base => {
-    const ing = NIVELES.find(n => n.id === base);
-    if (!ing) return;
-    const v = variantesDe(base)[0];
-    if (!v) { ruta.push({ ...ing, base, acto: 1, config: {} }); return; }
-    usados.add(v.id);
-    ruta.push(nodoDeVariante(ing, base, v, 1));
+  const presentados = new Set();
+  DIAS.forEach((dia, d) => {
+    dia.paradas.forEach(id => {
+      const v = configPor(id);
+      if (!v) return;
+      const ing = NIVELES.find(n => n.id === v.base);
+      if (!ing) return;
+      const intro = !presentados.has(v.base);
+      presentados.add(v.base);
+      ruta.push(nodoDeVariante(ing, v.base, v, { dia: dia.id, diaIndex: d, intro, num: ruta.length + 1 }));
+    });
   });
-
-  /* ACTO II — LA TEMPORADA. Todo lo que queda, ordenado por
-     DIFICULTAD y no por ingrediente.
-
-     Agrupado por ingrediente, el camino ponía las quince paradas de
-     maíz seguidas y luego bajaba de golpe a la arveja fácil: el juego
-     hacía pico en la parada 15 y ya no volvía a subir en las
-     veinticinco restantes. Medido, la dificultad bajaba once veces de
-     treinta y nueve. Ordenado por dificultad sube de verdad, y de
-     paso el maíz deja de ser un muro de quince y se reparte por toda
-     la temporada.
-
-     El orden dentro de un ingrediente se respeta solo: sus variantes
-     ya vienen de suave a brava, y ordenar por dificultad de forma
-     estable no las puede adelantar. */
-  const porIngrediente = new Map();
-  NIVELES.forEach(ing => {
-    const suyas = variantesDe(ing.id).filter(v => !usados.has(v.id))
-      .map(v => nodoDeVariante(ing, ing.id, v, 2));
-    if (suyas.length) porIngrediente.set(ing.id, suyas);
-  });
-
-  /* Dentro de cada banda de dificultad se reparte PROPORCIONALMENTE:
-     al j-ésimo de los k que un ingrediente trae en la banda le toca
-     el hueco ideal (j+½)·N/k, y la banda se ordena por esos huecos.
-     La rueda simple —un turno por ingrediente— repartía bien mientras
-     todos tenían paradas, pero al agotarse los demás dejaba las siete
-     del maíz en cola: las últimas seis paradas del juego eran todas
-     choclo. Con huecos ideales, siete entre quince caen una de cada
-     dos, de la primera a la última. */
-  const bandas = [...new Set([...porIngrediente.values()].flat().map(n => n.dificultad))].sort((a, b) => a - b);
-  bandas.forEach(dif => {
-    const enBanda = [...porIngrediente.values()]
-      .map(ns => ns.filter(n => n.dificultad === dif))
-      .filter(ns => ns.length);
-    const N = enBanda.reduce((a, ns) => a + ns.length, 0);
-    const conHueco = [];
-    enBanda.forEach(ns => ns.forEach((n, j) =>
-      conHueco.push({ n, hueco: (j + 0.5) * N / ns.length })));
-    conHueco.sort((a, b) => a.hueco - b.hueco);
-    conHueco.forEach(({ n }) => ruta.push(n));
-  });
-
   return ruta;
 }
 
-function nodoDeVariante(ing, base, v, acto) {
+function nodoDeVariante(ing, base, v, extra) {
   return {
     ...ing,
     id: v.id,
     base,
-    acto,
     nombre: v.nombre,
-    /* En el Acto I la parada PRESENTA al ingrediente, así que se llama
-       como él: "Las habas". En el Acto II pasa lo contrario: cuatro
-       ingredientes comparten icono, y un nodo que sólo dice
-       "Apretadas" no dice de quién — el nombre completo de la
-       variante ya trae al ingrediente dentro. */
-    corto: acto === 1
+    /* La PRIMERA parada de un ingrediente lo presenta, así que se
+       llama como él: "Las habas". Las siguientes al revés: cuatro
+       ingredientes comparten icono, y un nodo que solo dice
+       "Apretadas" no dice de quién — pero a esas alturas el nombre
+       corto de la variante ya basta, el ingrediente se conoce. */
+    corto: extra.intro
       ? ing.nombre
-      : v.nombre.replace(/^(El|La|Los|Las)\s/, '').replace(/^\w/, c => c.toUpperCase()),
+      : (v.corto || v.nombre.replace(/^(El|La|Los|Las)\s/, '').replace(/^\w/, c => c.toUpperCase())),
     dificultad: v.dificultad,
     config: v.config,
     cucharas: cucharasDeTiempo(v.tiempoBase),
+    ...extra,
   };
 }
 
@@ -307,12 +277,14 @@ function sfx(tipo, tono = 1) {
 function buzz(p) { if (navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
 
 let toastId = null;
-function toast(msg) {
+/* `ms` opcional: un toast con oración entera (los chips de la
+   despensa) no se lee en los 1.9 s del aviso corto */
+function toast(msg, ms = 1900) {
   const t = $('#toast');
   t.textContent = msg;
   t.classList.add('visible');
   clearTimeout(toastId);
-  toastId = setTimeout(() => t.classList.remove('visible'), 1900);
+  toastId = setTimeout(() => t.classList.remove('visible'), ms);
 }
 
 /* ---------- piezas de interfaz ---------- */
@@ -422,47 +394,46 @@ function renderEscenarios() {
   });
 }
 
+/* un día está completo cuando sus ocho paradas fueron a la olla */
+const diaCompleto = (d) => d.paradas.every(id => estaListo(id));
+
+/* EL BOTÓN DE EL APURO VIVE EN EL HTML pero se muda al fondo del
+   mapa (la zona del viernes) en cada render. La referencia se guarda
+   ANTES del primer `innerHTML = ''`: una vez dentro de la lista, ese
+   borrado lo destruiría y con él sus eventos — guardado aquí, el
+   elemento sobrevive detached y vuelve a montarse con todo puesto. */
+let btnApuroEl = null;
+
 function renderMesa() {
   renderEscenarios();
-  /* la primera visita va al grano: el selector de cocinas y El Apuro
-     son de quien ya cocina, y empujaban el único nodo tocable fuera
-     de la pantalla justo para quien más lo necesitaba ver */
+  /* la primera visita va al grano: el selector de cocinas es de
+     quien ya cocina, y empujaba el único nodo tocable fuera de la
+     pantalla justo para quien más lo necesitaba ver */
   const algunHecho = listos() > 0;
   const esc = document.querySelector('.escenarios');
   if (esc) esc.classList.toggle('hidden', !algunHecho && !estado.devMode);
-  const btnA = $('#btn-apuro');
-  if (btnA) {
-    btnA.classList.toggle('hidden', !algunHecho && !estado.devMode);
-    btnA.classList.toggle('btn-apuro--cerrado', listos() < 4 && !estado.devMode);
-    const pie = $('#btn-apuro-pie');
-    if (pie) pie.textContent = listos() < 4 && !estado.devMode
-      ? `Se abre con 4 ingredientes — llevas ${listos()}`
-      : (estado.apuro ? `Tu récord: ${estado.apuro.raciones} raciones` : 'Contra reloj, todo junto');
-  }
+
   const hechos = listos();
-  const todos = hechos >= NIVELES.length;
-  const dias = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
-  /* EL MARCADOR CAMBIA DE VARA CON EL ACTO. Contar ingredientes tenía
-     sentido mientras la meta era la olla; con la olla cocinada el
-     jugador está en la temporada, y un "12 / 12" clavado durante las
-     veintiocho paradas restantes decía que ya no había nada que
-     hacer en el 70% del mapa. */
   const paradasHechas = RUTA.filter(n => estaListo(n.id)).length;
-  $('#mesa-progreso').textContent = estado.ollaVista
-    ? `${paradasHechas} / ${RUTA.length} paradas de la temporada${dias}`
-    : `${hechos} / ${NIVELES.length} ingredientes listos${dias}`;
+  const todas = paradasHechas >= RUTA.length;
+  const racha = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
+  /* el marcador dice EN QUÉ DÍA de la semana vas: es el mismo número
+     de siempre, pero con el capítulo puesto */
+  const diaEnCurso = DIAS.find(d => !diaCompleto(d));
+  $('#mesa-progreso').textContent = todas
+    ? (estado.ollaVista ? `La semana entera, cocinada${racha}` : `40 / 40 — la olla espera${racha}`)
+    : `${paradasHechas} / ${RUTA.length} paradas · ${diaEnCurso.nombre.toLowerCase()}${racha}`;
   $('#olla-frase').textContent = FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)];
 
   /* ============================================================
-     EL CAMINO — de la cocina a la olla.
+     EL CAMINO — la semana de la fanesca.
 
-     La mesa dejó de ser una lista de tarjetas y es un camino de
-     nodos que serpentea hacia abajo, como el mapa de un juego de
-     puzzles: el progreso se ve de un solo vistazo, el siguiente
-     paso late para que no haya que buscarlo, y el destino —la
-     olla— está literalmente al final del camino. Una lista dice
-     "esto es un menú"; un camino dice "esto es un viaje", y la
-     fanesca es un viaje.
+     El mapa es la semana: cinco días con nombre y con gente, cada
+     uno con su banda de color y su banner, la olla al final como
+     clímax del jueves por la noche, y debajo el Viernes Santo —
+     donde vive El Apuro, porque servir es lo que pasa el viernes.
+     Una lista dice "esto es un menú"; una semana dice "esto es un
+     viaje con final", y la fanesca es exactamente eso.
      ============================================================ */
 
   const lista = $('#mesa-lista');
@@ -471,11 +442,8 @@ function renderMesa() {
 
   const PASO = 132;               /* alto entre nodos */
   const XS = [50, 22, 50, 78];    /* la serpiente, en % del ancho */
-  /* el primer nodo baja para dejarle su hueco al rótulo del Acto I
-     DENTRO del contenedor, como ya lo tiene el del Acto II: con la
-     base vieja el rótulo caía en top negativo y se imprimía encima de
-     lo que hubiera arriba de la mesa — la frase de la olla en la
-     primera visita, el pie de El Apuro después. */
+  /* el primer puesto baja para que el banner del lunes quede DENTRO
+     del contenedor y no encima de lo que hay sobre la mesa */
   const BASE = 176;
   const centros = [];
 
@@ -492,27 +460,47 @@ function renderMesa() {
     return b;
   };
 
-  /* La olla ocupa un puesto en la serpiente, así que las paradas del
-     Acto II van corridas una posición. `puesto` es dónde se DIBUJA;
-     `i` sigue siendo el índice en RUTA, que es lo que manda para el
-     candado y para el nombre de la anterior. */
-  const ACTO_I_N = RUTA.filter(n => n.acto === 1).length;
-  /* +2 y no +1: la olla ocupa un puesto y el siguiente se deja VACÍO
-     para el rótulo del Acto II. Pegados, el nombre de la olla —que
-     va a dos líneas cuando dice cuántos faltan— se metía debajo del
-     rótulo y las dos cosas se leían mal. */
-  const puestoDe = (i) => i < ACTO_I_N ? i : i + 2;
+  /* Cada día ocupa NUEVE puestos de la serpiente: su banner y sus
+     ocho paradas. `puesto` es dónde se DIBUJA; `i` sigue siendo el
+     índice en RUTA, que es lo que manda para el candado. */
+  const puestoDe = (i) => i + 1 + RUTA[i].diaIndex;
+  const PUESTO_OLLA = RUTA.length + DIAS.length;
 
-  /* Los rótulos de acto. Sin ellos, cuarenta nodos son una lista
-     larga; con ellos son dos tramos con nombre, y el jugador sabe
-     que los doce primeros se acaban en algún sitio. */
-  const rotulo = (puesto, sobre, titulo, pie) => {
+  /* el banner de un día: centrado en su puesto de la serpiente, con
+     el título del capítulo y quién está hoy en la cocina */
+  const banner = (puesto, extraClase, tit, quien) => {
     const el = document.createElement('p');
-    el.className = 'camino-acto';
-    el.style.top = (puesto * PASO + BASE - sobre) + 'px';
-    el.innerHTML = `<strong>${titulo}</strong><span>${pie}</span>`;
+    el.className = 'camino-dia' + extraClase;
+    el.style.top = (puesto * PASO + BASE - 44) + 'px';
+    el.innerHTML = `<strong>${tit}</strong><span>${quien}</span>`;
     lista.appendChild(el);
   };
+
+  /* LAS BANDAS DE COLOR: cada día tiñe su tramo del mantel. Van
+     pegadas una a otra —del banner de un día al banner del
+     siguiente— para que la semana se lea como capítulos y no como
+     cuarenta nodos en fila. El decorado va dentro de cada banda. */
+  const DECO = { lunes: ['🧺', '🌽'], martes: ['🥜', '🧂'], miercoles: ['🌿', '🥬'], jueves: ['🔥', '🍲'], noche: ['🕯️', '🌙'] };
+  const inicioBanda = (d) => (9 * d) * PASO + BASE - 98;
+  const finNoche = (PUESTO_OLLA + 1) * PASO + BASE - 98;   /* la olla cierra la noche */
+  DIAS.forEach((dia, d) => {
+    const z = document.createElement('div');
+    z.className = `zona zona--${dia.id}`;
+    const top = inicioBanda(d);
+    const fin = d + 1 < DIAS.length ? inicioBanda(d + 1) : finNoche;
+    z.style.top = top + 'px';
+    z.style.height = (fin - top) + 'px';
+    z.innerHTML = (DECO[dia.id] || []).map((e, k) =>
+      `<span class="zona-deco" style="top:${18 + k * 46}%;${k % 2 ? 'right' : 'left'}:4%" aria-hidden="true">${e}</span>`).join('');
+    lista.appendChild(z);
+  });
+
+  DIAS.forEach((dia, d) => {
+    const estadoDia = diaCompleto(dia) ? ' camino-dia--hecho'
+      : (estaListo(dia.paradas[0]) || desbloqueado(RUTA.findIndex(n => n.id === dia.paradas[0])) ? '' : ' camino-dia--porvenir');
+    const relato = DIAS_RELATO[dia.id] || {};
+    banner(9 * d, estadoDia, `${dia.nombre} · ${dia.titulo}`, relato.quien || '');
+  });
 
   RUTA.forEach((n, i) => {
     const abierto = desbloqueado(i);
@@ -521,24 +509,20 @@ function renderMesa() {
     const b = nodoDe(n, puestoDe(i), mejor ? 'nodo--hecho' : (esSiguiente ? 'nodo--siguiente' : 'nodo--bloqueado'));
     /* las variantes llevan sus chiles de dificultad: de un vistazo se
        ve que el camino sube, que es lo que hace que se lea como
-       campaña y no como doce paradas sueltas */
+       campaña y no como cuarenta paradas sueltas */
     const dif = n.dificultad ? `<span class="nodo-dif" aria-hidden="true">${'🌶️'.repeat(n.dificultad)}</span>` : '';
     b.innerHTML = `
+      <span class="nodo-num" aria-hidden="true">${n.num}</span>
       <span class="nodo-plato">${icono(n.icono)}</span>
       ${!abierto && !mejor ? '<span class="nodo-candado" aria-hidden="true">🔒</span>' : ''}
       ${mejor ? `<span class="nodo-cucharas">${cucharasHTML(mejor.cucharas)}</span>` : ''}
       <span class="nodo-nombre">${n.corto || n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>
       ${dif}`;
-    b.setAttribute('aria-label', n.nombre + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
+    b.setAttribute('aria-label', `Parada ${n.num}: ${n.nombre}` + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
     b.addEventListener('click', () => {
       sfx('tab');
       if (!abierto) {
-        /* el Acto II no está cerrado por la parada anterior sino por la
-           olla, y decir "primero la última tonga" sería mandar al
-           jugador a un sitio que tampoco puede abrir */
-        toast(n.acto === 2 && RUTA[i - 1].acto === 1
-          ? 'Primero cocina la olla 🍲'
-          : 'Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
+        toast('Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
         return;
       }
       /* DIRECTO AL MESÓN, siempre. Había en medio una ficha con el
@@ -556,50 +540,72 @@ function renderMesa() {
     lista.appendChild(b);
   });
 
-  /* LA OLLA VA EN MEDIO, no al final. Se abre con los doce
-     ingredientes —eso no cambió nunca— pero se dibujaba en la parada
-     41, después de veintiocho variantes que no hacen falta para
-     cocinarla. El jugador la veía a una distancia que no era la suya
-     y el final del juego quedaba escondido detrás del contenido
-     opcional. */
-  const olla = nodoDe(OLLA, ACTO_I_N,
-    estado.ollaVista ? 'nodo--olla nodo--hecho' : (todos ? 'nodo--olla' : 'nodo--olla nodo--bloqueado'));
+  /* LA OLLA, AL FINAL DEL CAMINO. Es el clímax del juego y ahora
+     está donde va un clímax: después de la última parada de la
+     semana. Se va LLENANDO parada a parada —la barra es la promesa
+     de que todo esto termina en un solo sitio— y se cocina cuando
+     no queda nada por pelar. */
+  const ollaAbierta = todas || estado.ollaVista;
+  const olla = nodoDe(OLLA, PUESTO_OLLA,
+    estado.ollaVista ? 'nodo--olla nodo--hecho' : (ollaAbierta ? 'nodo--olla nodo--siguiente' : 'nodo--olla nodo--bloqueado'));
+  /* la olla va CENTRADA, no donde le toque en la serpiente: es el
+     altar del final y el viernes entero se alinea con ella */
+  olla.style.left = '50%';
+  centros[RUTA.length].x = 50;
+  const pctOlla = Math.round(paradasHechas / RUTA.length * 100);
   olla.innerHTML = `
     <span class="nodo-plato nodo-plato--olla">${icono(OLLA.icono)}</span>
-    ${todos ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
-    <span class="nodo-nombre">${estado.ollaVista ? 'La fanesca, servida' : (todos ? '¡A cocinar!' : `La olla · faltan ${NIVELES.length - hechos}`)}</span>`;
-  olla.setAttribute('aria-label', todos ? 'Cocinar la olla' : `La olla, faltan ${NIVELES.length - hechos} ingredientes`);
-  /* 146 y no menos: el nodo se dibuja CENTRADO en su (x,y) —su borde
-     de arriba queda 72px por encima— y con menos margen el rótulo le
-     pisaba el plato al primer choclo */
-  rotulo(0, 146, 'Acto I · La primera olla', 'los doce ingredientes, uno por uno');
-  if (RUTA.some(n => n.acto === 2)) {
-    rotulo(ACTO_I_N + 1, 30, 'Acto II · La temporada', 'los mismos doce, cuando se ponen bravos');
-  }
-
+    ${ollaAbierta ? '' : `<span class="olla-carga" aria-hidden="true"><i style="width:${pctOlla}%"></i></span>`}
+    ${ollaAbierta ? '' : '<span class="nodo-candado" aria-hidden="true">🔒</span>'}
+    <span class="nodo-nombre">${estado.ollaVista ? 'La fanesca, servida' : (todas ? '¡A la olla!' : `La olla se llena · ${pctOlla}%`)}</span>`;
+  olla.setAttribute('aria-label', ollaAbierta ? 'Cocinar la olla' : `La olla, al final de la semana — vas ${pctOlla}%`);
   olla.addEventListener('click', () => {
     sfx('tab');
-    if (!todos) { toast(`La olla se abre con los doce — faltan ${NIVELES.length - hechos}`); return; }
+    if (!ollaAbierta) { toast(`La olla se cocina al final de la semana — faltan ${RUTA.length - paradasHechas} paradas`); return; }
     mostrarFinal();
   });
   lista.appendChild(olla);
 
-  /* el sendero dibujado: un tramo por par de nodos, y los tramos ya
-     recorridos van en dorado — el progreso se ve en el propio camino */
-  /* el MÁS PROFUNDO, no el último empujado. La olla se dibuja en medio
-     del camino pero se añade al final, así que tomar el último dejaba
-     el contenedor a la altura de la olla y las veintiocho paradas del
-     Acto II se salían por abajo, encima de la despensa. */
-  const alto = Math.max(...centros.map(c => c.y)) + 140;
+  /* EL VIERNES SANTO, debajo de la olla: la zona de El Apuro. La
+     campaña termina el jueves con la olla hirviendo; servirla —a una
+     casa que no deja de llenarse— es el viernes, y eso es
+     exactamente lo que el modo sin fin juega. El botón vive en el
+     HTML con sus eventos puestos; aquí solo se muda a su sitio en el
+     mapa. */
+  const relV = VIERNES;
+  const viernes = document.createElement('div');
+  viernes.className = 'viernes';
+  viernes.style.top = ((PUESTO_OLLA + 1) * PASO + BASE - 44) + 'px';
+  viernes.innerHTML = `
+    <p class="viernes-tit"><strong>${relV.nombre} · ${relV.titulo}</strong><span>${relV.quien}</span></p>
+    <p class="viernes-promesa">${relV.promesa}</p>`;
+  if (!btnApuroEl) btnApuroEl = document.getElementById('btn-apuro');
+  if (btnApuroEl) {
+    const lunesListo = diaCompleto(DIAS[0]) || estado.devMode;
+    btnApuroEl.classList.remove('hidden');
+    btnApuroEl.classList.toggle('btn-apuro--cerrado', !lunesListo);
+    const pie = btnApuroEl.querySelector('#btn-apuro-pie');
+    if (pie) pie.textContent = !lunesListo
+      ? `Se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`
+      : (estado.apuro ? `Tu récord: ${estado.apuro.raciones} raciones` : 'Raciones sin fin, contra el reloj');
+    viernes.appendChild(btnApuroEl);
+  }
+  lista.appendChild(viernes);
+  const zv = document.createElement('div');
+  zv.className = 'zona zona--viernes';
+  zv.style.top = finNoche + 'px';
+  zv.innerHTML = '<span class="zona-deco" style="top:12%;left:5%" aria-hidden="true">🎉</span><span class="zona-deco" style="top:55%;right:5%" aria-hidden="true">🥣</span>';
+  lista.appendChild(zv);
+
+  /* la altura: hasta cubrir el viernes entero */
+  const alto = (PUESTO_OLLA + 1) * PASO + BASE + 300;
   lista.style.height = alto + 'px';
-  /* EN ORDEN VISUAL, NO DE INSERCIÓN. Los centros se apilan según se
-     añaden los nodos, y la olla se añade la última aunque se dibuje
-     en medio: unir centros consecutivos hacía que el último tramo
-     cruzara el mapa entero — del fondo de la temporada de vuelta a la
-     olla. Y el dorado iba por "cuántos ingredientes van", que topa en
-     doce: las veintiocho paradas de la temporada nunca doraban su
-     tramo. Ahora cada tramo une vecinos DE PANTALLA y se dora cuando
-     su parada de arriba está hecha. */
+  zv.style.height = (alto - finNoche) + 'px';
+
+  /* EL SENDERO, EN ORDEN VISUAL: cada tramo une vecinos DE PANTALLA
+     y se dora cuando su parada de arriba está hecha — el progreso se
+     ve en el propio camino. Termina en la olla: el viernes ya no es
+     camino, es mesa puesta. */
   const visual = RUTA.map((n, i) => ({ ...centros[i], hecho: !!estaListo(n.id) }));
   visual.push({ ...centros[RUTA.length], hecho: !!estado.ollaVista });
   visual.sort((a, b) => a.y - b.y);
@@ -627,7 +633,8 @@ function renderMesa() {
     chip.innerHTML = `<span class="despensa-icono">${icono(n.icono)}</span><span>${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
     chip.addEventListener('click', () => {
       sfx('tab');
-      toast(n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, ''));
+      const texto = n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, '');
+      toast(texto, Math.max(2600, 1200 + texto.split(/\s+/).length * 300));
     });
     fila.appendChild(chip);
   });
@@ -659,6 +666,27 @@ function renderMesa() {
   /* si ya había una despensa de un render anterior, fuera */
   let sig = desp.nextElementSibling;
   while (sig && sig.classList.contains('despensa')) { const s = sig.nextElementSibling; sig.remove(); sig = s; }
+
+  /* EL CIERRE DE UN DÍA SE CELEBRA AQUÍ, al volver a la mesa: la
+     escena se lee con el mapa detrás enseñando la banda nueva, que
+     es justo lo que la escena está abriendo. Una sola vez por día. */
+  const pendiente = DIAS.find(d => diaCompleto(d) && !estado.diasVistos.includes(d.id));
+  if (pendiente) setTimeout(() => mostrarDia(pendiente), 450);
+}
+
+/* la escena de fin de día: dos o tres frases de la familia y el
+   inventario que quedó en la refri. Capítulo cerrado, banda nueva. */
+function mostrarDia(dia) {
+  const relato = DIAS_RELATO[dia.id];
+  if (!relato || estado.diasVistos.includes(dia.id)) return;
+  estado.diasVistos.push(dia.id);
+  guardar();
+  $('#dia-eyebrow').textContent = `se acabó el ${dia.nombre.toLowerCase()}`;
+  $('#dia-titulo').textContent = dia.titulo;
+  $('#dia-escena').textContent = relato.escena;
+  $('#dia-refri').textContent = relato.refri;
+  $('#modal-dia').classList.add('open');
+  sfx('fiesta'); buzz([15, 30, 15]);
 }
 
 /* ---------- el cuaderno ---------- */
@@ -1089,7 +1117,10 @@ async function jugar(id) {
      encima. Con el reloj oculto no se notaba; las cucharas sí lo
      sufrían. */
   pararReloj();
-  $('#hud-tarea').textContent = `${n.tarea} · ${n.nombre.toLowerCase()}`;
+  /* en la parada que presenta al ingrediente el nombre completo de la
+     variante no cabe en el HUD ("Desvainar · las habas · apert…"):
+     con el corto basta y se lee entero */
+  $('#hud-tarea').textContent = `${n.tarea} · ${(n.intro ? (n.corto || n.nombre) : n.nombre).toLowerCase()}`;
   $('#hud-barra').style.width = '0%';
   const pct0 = $('#hud-pct'); if (pct0) pct0.textContent = '0%';
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(n.icono);
@@ -1297,22 +1328,26 @@ function cerrarApuro(resumen) {
       ? (mejor.raciones ? `¡Nuevo récord! antes: ${mejor.raciones}` : 'Tu primera vez en El Apuro')
       : `Tu récord sigue siendo ${mejor.raciones}`;
 
-    /* LOS LOGROS, y sólo los NUEVOS. Repetir "Primera ración" en cada
-       partida los convertiría en decorado: un logro vale porque marca
-       un día concreto en que pasó algo por primera vez. */
+    /* LA ESCALERA DE LOGROS, entera y siempre: los conseguidos en
+       color y los pendientes en gris con su meta — sin la escalera a
+       la vista no hay nada que perseguir, y un modo sin fin vive de
+       que se vea el siguiente peldaño. Los NUEVOS de esta partida
+       brillan y suenan uno a uno; los viejos no vuelven a cantarse,
+       que un logro repetido a la segunda ya es ruido. */
     const ya = estado.logrosApuro || (estado.logrosApuro = []);
     const nuevos = (resumen.logros || []).filter(l => !ya.includes(l.id));
+    nuevos.forEach(l => ya.push(l.id));
+    if (nuevos.length) guardar();
     const cajaL = $('#apuro-logros');
-    if (nuevos.length) {
-      nuevos.forEach(l => ya.push(l.id));
-      guardar();
-      cajaL.classList.remove('hidden');
-      cajaL.innerHTML = nuevos.map(l =>
-        `<li class="logro"><strong>${l.titulo}</strong><span>${l.texto}</span></li>`).join('');
-      /* uno por uno y con su campanita: seis logros apareciendo de
-         golpe se leen como una lista; de uno en uno se sienten */
-      nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
-    } else { cajaL.classList.add('hidden'); cajaL.innerHTML = ''; }
+    cajaL.classList.remove('hidden');
+    cajaL.innerHTML = APURO.logros.map(l => {
+      const esNuevo = nuevos.some(x => x.id === l.id);
+      const hecho = ya.includes(l.id);
+      return `<li class="logro${esNuevo ? ' logro--nuevo' : (hecho ? '' : ' logro--pendiente')}">
+        <strong>${hecho ? l.titulo : '· ' + l.titulo}</strong>
+        <span>${hecho ? l.texto : (l.meta || '')}</span></li>`;
+    }).join('');
+    nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
 
     /* LA PARTE DIDÁCTICA. El Apuro va tan rápido que no da tiempo de
        leer nada mientras se juega — así que lo que se aprende se
@@ -1361,9 +1396,9 @@ function terminarNivel() {
 
   setTimeout(() => {
     Motor.setActive(false);
-    /* en el Acto I la parada se llama como su ingrediente: "El choclo
-       a la olla", no "El choclo · primeros granos a la olla" */
-    $('#listo-nombre').textContent = (n.acto === 1 ? (n.corto || n.nombre) : n.nombre) + ' a la olla';
+    /* la parada que presenta un ingrediente se llama como él: "El
+       choclo a la olla", no "El choclo · primeros granos a la olla" */
+    $('#listo-nombre').textContent = (n.intro ? (n.corto || n.nombre) : n.nombre) + ' a la olla';
     /* las cucharas se revelan de a una, cada una más aguda: el
        redoble del final es la mitad de la celebración */
     $('#listo-cucharas').innerHTML = cucharasHTML(0);
@@ -1399,12 +1434,15 @@ function terminarNivel() {
       [].concat(tarjeta.abre || []).forEach(abrirCapitulo);
     } else caja.classList.add('hidden');
 
-    const quedanIngredientes = NIVELES.some(x => !ingredienteListo(x.id));
+    /* el botón verde dice A DÓNDE va: a la parada que sigue, al
+       cierre del día que acaba de completarse, o a la olla si ya no
+       queda semana */
     const quedanParadas = RUTA.some((x, i) => !estaListo(x.id) && desbloqueado(i));
-    $('#listo-seguir').textContent = quedanIngredientes
-      ? 'Siguiente ingrediente'
-      : (!estado.ollaVista ? 'Servir la fanesca'
-        : (quedanParadas ? 'Siguiente parada' : '¡La cosecha, completa!'));
+    const miDia = DIAS[n.diaIndex];
+    const cierraDia = miDia && diaCompleto(miDia) && !estado.diasVistos.includes(miDia.id);
+    $('#listo-seguir').textContent = !quedanParadas
+      ? (estado.ollaVista ? 'A la mesa' : '¡A la olla!')
+      : (cierraDia ? `Cerrar el ${miDia.nombre.toLowerCase()}` : 'Siguiente parada');
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
   }, 620);
@@ -1516,13 +1554,14 @@ function bindEventos() {
     });
   }
 
-  /* El Apuro: cerrado hasta conocer cuatro gestos. Soltar a alguien
-     que no ha jugado nada en un contrarreloj de ingredientes al azar
-     es soltarlo a perder sin saber por qué. */
+  /* El Apuro: cerrado hasta terminar el lunes. Soltar a alguien que
+     no ha jugado nada en un contrarreloj de ingredientes al azar es
+     soltarlo a perder sin saber por qué; con el primer día hecho ya
+     conoce seis gestos y el primer bicho. */
   $('#btn-apuro').addEventListener('click', () => {
     sfx('tab');
-    if (listos() < 4 && !estado.devMode) {
-      toast(`El Apuro se abre con 4 ingredientes — llevas ${listos()}`);
+    if (!diaCompleto(DIAS[0]) && !estado.devMode) {
+      toast(`El Apuro se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`);
       return;
     }
     arrancarApuro();
@@ -1566,17 +1605,17 @@ function bindEventos() {
   });
 
   $('#listo-seguir').addEventListener('click', () => {
+    const n = nivelActual;
     cerrarModales();
     Motor.descargar();
     nivelActual = null; modActual = null;
-    /* CUANDO EL BOTÓN DICE "SERVIR LA FANESCA", SIRVE LA FANESCA.
-       Antes buscaba la siguiente parada sin hacer en TODA la ruta, y
-       con los doce listos esa era la primera variante del Acto II —
-       todavía cerrada—: el único final del juego, después de media
-       hora, desembocaba en otro choclo. */
-    if (!NIVELES.some(x => !ingredienteListo(x.id)) && !estado.ollaVista) {
+    /* SE ACABÓ UN DÍA → a la mesa: la escena del cierre se lee con
+       la banda nueva del mapa detrás, y el capítulo respira. Es la
+       única escala que el flujo se permite — entre parada y parada
+       se sigue yendo directo al mesón. */
+    const miDia = n && DIAS[n.diaIndex];
+    if (miDia && diaCompleto(miDia) && !estado.diasVistos.includes(miDia.id)) {
       mostrar('mesa');
-      setTimeout(mostrarFinal, 350);
       return;
     }
     /* DIRECTO al siguiente, sin escala en la mesa — pero sólo a una
@@ -1584,11 +1623,10 @@ function bindEventos() {
        colarse por detrás del candado. */
     const sig = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
     if (!sig) {
+      /* no queda parada: la semana está cocinada. A la mesa — la olla
+         late al final del camino, y si aún no se sirvió, se sirve. */
       mostrar('mesa');
-      /* no queda parada abierta sin hacer: si es porque están TODAS,
-         la temporada tiene su propio cierre — hora y media de juego
-         no puede terminar en volver a la mesa sin que nadie diga nada */
-      if (!RUTA.some(x => !estaListo(x.id))) setTimeout(() => mostrarFinal(true), 350);
+      if (!estado.ollaVista) setTimeout(mostrarFinal, 420);
       return;
     }
     jugar(sig.id);
@@ -1609,6 +1647,7 @@ function bindEventos() {
   $('#arruinado-salir').addEventListener('click', () => { cerrarModales(); salirDelNivel(); });
 
   $('#final-ok').addEventListener('click', () => { cerrarModales(); mostrar('mesa'); });
+  $('#dia-seguir').addEventListener('click', () => { sfx('tab'); cerrarModales(); });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -1634,31 +1673,23 @@ function bindEventos() {
   });
 }
 
-function mostrarFinal(temporada = false) {
-  /* cocinar la olla deja huella: es lo que abre el Acto II, y sin
-     este registro el candado de la temporada decía "cocina la olla"
-     mientras en realidad miraba otra cosa */
+function mostrarFinal() {
+  /* servir la olla deja huella: es lo que decide que el mapa la
+     pinte servida y que este altar no vuelva a salir sin que se
+     pida */
   if (!estado.ollaVista) { estado.ollaVista = true; guardar(); }
-  /* DOS FINALES, EL MISMO ALTAR. El de la olla celebra los doce; el
-     de la temporada, las cuarenta — hora y media de juego que antes
-     terminaba devolviéndote a la mesa en silencio, sin un solo
-     acuse de recibo. */
-  $('#final-eyebrow').textContent = temporada ? 'la temporada entera' : 'jueves santo';
-  $('#final-titulo').textContent = temporada ? '¡Se acabó la cosecha!' : '¡La fanesca está servida!';
-  $('#final-cuerpo').textContent = temporada
-    ? 'Las cuarenta paradas: el choclo tierno y el maíz de la tonga, la vaina suave y la apretada. Ya no queda grano en esta cocina que no conozca tu mano.'
-    : 'Todo lo que va adentro pasó por tus manos: grano por grano, vaina por vaina. Ahora sí, que hierva despacio.';
-  /* La cuenta del final es sobre el ACTO I: la olla es el cierre de
-     los doce, y medirla contra las cuarenta paradas —veintiocho de
-     ellas opcionales y aún cerradas— convertía la celebración en un
-     "24 de 120" que suena a suspenso. La temporada lleva su propio
-     marcador en cada parada. */
-  const cuenta = temporada ? RUTA : RUTA.filter(n => n.acto === 1);
-  const total = cuenta.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
-  const cuch = cuenta.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
+  /* UN SOLO FINAL, al final de la semana: el jueves por la noche la
+     olla hierve y esa es la campaña completa. El viernes — servir —
+     ya no es este altar: es El Apuro, y este texto lo deja
+     invitado. */
+  $('#final-eyebrow').textContent = 'jueves santo, por la noche';
+  $('#final-titulo').textContent = '¡La fanesca está lista!';
+  $('#final-cuerpo').textContent = 'Toda la semana pasó por tus manos: grano por grano, vaina por vaina, hasta la tonga de anoche. Que hierva despacio — mañana es Viernes Santo, y mañana se sirve.';
+  const total = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].ms : 0), 0);
+  const cuch = RUTA.reduce((a, n) => a + (estado.mejores[n.id] ? estado.mejores[n.id].cucharas : 0), 0);
   $('#final-cierre').textContent = CIERRE;
   $('#final-voz').innerHTML = `«${CACUANGO_PARAMO.texto}»<span>${CACUANGO_PARAMO.quien}</span>`;
-  $('#final-total').textContent = `${cuch} de ${cuenta.length * 3} cucharas · ${tiempoBonito(total)} en total`;
+  $('#final-total').textContent = `${cuch} de ${RUTA.length * 3} cucharas · ${tiempoBonito(total)} en total`;
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
   sfx('fiesta');
@@ -1722,7 +1753,7 @@ window.Fanesca = {
      prueba automática eso se veía idéntico a un nivel sano. */
   get modulo() { return modActual; },
   jugar,
-  get ruta() { return RUTA.map(n => ({ id: n.id, acto: n.acto, dif: n.dificultad, base: n.base })); },
+  get ruta() { return RUTA.map(n => ({ id: n.id, dia: n.dia, num: n.num, dif: n.dificultad, base: n.base, intro: !!n.intro })); },
   api,
   Apuro,
   sondear: (x, y) => Motor.sondear(x, y),

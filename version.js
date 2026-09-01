@@ -30,10 +30,30 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.17.1';
+const APP_VERSION = '1.18.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.18.0',
+    fecha: '2026-09-01',
+    titulo: 'La semana de la fanesca',
+    cambios: [
+      'El juego ahora es una semana: de lunes a Viernes Santo, con la familia llegando a ayudar día a día — el canasto del mercado, el costal de la tía, los primos al desgrane, la casa llena y la tonga de la noche.',
+      'El mapa se volvió un viaje de verdad: cada día con su color y su gente, las paradas numeradas del 1 al 40, y la olla al final del camino llenándose parada a parada.',
+      'Cada día que termines tiene su escena: quién vino, qué se contó y qué quedó en la refri.',
+      'El Apuro es el Viernes Santo — se abre terminando el lunes y ya no se acaba: pasada la escalera de la campaña, cada tanda sigue apretando de verdad (más bichos, más dañados, más resistencia).',
+      'Los siete logros de El Apuro se ven completos al terminar cada partida: los tuyos en color, los que faltan en gris con lo que piden.',
+      'Los avisos de la despensa ahora duran lo que toma leerlos.',
+    ],
+    internos: [
+      'DIAS en niveles-config: 5 días × 8 paradas entrelazadas (presentaciones en el orden probado + escaleras en orden, dificultad 1-2→4-5); RUTA se construye de ahí; candado lineal con gracia (lo hecho nunca se re-cierra).',
+      'DIAS_RELATO y VIERNES en historia.js; modal-dia una vez por día (estado.diasVistos); un solo final (la olla, tras la parada 40).',
+      'renderMesa: zonas de color por día, banners con quién, nodo-num, olla centrada con barra de llenado, banda del viernes con #btn-apuro mudado dentro (referencia rescatada del innerHTML).',
+      'configApuro(base, tanda) + SIN_FIN: extrapolación con topes de parámetros honestos por ingrediente; logro docena por raciones servidas (set aparte de tocados).',
+      'Guardado con marca de generación mapa:"semana" (no se hereda del default en cargar); migración de mapa viejo: ollaVista inferida solo sin marca, días completos marcados vistos.',
+    ],
+  },
   {
     v: '1.17.1',
     fecha: '2026-08-27',

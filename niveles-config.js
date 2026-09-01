@@ -572,6 +572,93 @@ export function nivelPorBloque(bloque) {
 }
 
 /* ============================================================
+   LA SEMANA — el orden de la campaña.
+
+   La fanesca no se cocina en una tarde: se cocina en una SEMANA.
+   El desgrane es faena de familia — cada día llega alguien más a
+   ayudar y cada día se deja algo listo en la refri — y ese es el
+   viaje del juego: cinco días de preparación que terminan el jueves
+   por la noche con la olla hirviendo, para servirla el Viernes
+   Santo.
+
+   CÓMO ESTÁ REPARTIDO (y por qué así):
+
+   · Los doce ingredientes se PRESENTAN en el orden de siempre —por
+     lo difícil que es aprender su gesto, no ejecutarlo—: maíz,
+     habas, chochos, fréjol, arveja, melloco, lenteja, col, quinua,
+     maní, bacalao, zapallo. Ese orden se probó con jugadores y no
+     se toca; aquí solo se estira a lo largo de tres días.
+
+   · Las variantes bravas de cada uno se ENTRELAZAN con las
+     presentaciones: el lunes deshilas tu primera arveja y el jueves
+     te toca la apretada, que es exactamente como pasa en una cocina
+     de verdad — lo fácil al principio de la semana, la tonga al
+     final. Entrelazado, además, nunca hay quince paradas de maíz
+     seguidas.
+
+   · Dentro de un ingrediente el orden de su escalera SE RESPETA:
+     este reparto solo decide en qué día cae cada peldaño, nunca
+     los adelanta.
+
+   · La dificultad sube por día: lunes 1-2, martes 2-3, miércoles
+     2-3, jueves 3-4, y la noche 4-5 cerrando con el trío de maíz
+     más bravo. La olla va DESPUÉS de la última parada: el clímax
+     del juego está al final del camino, no en la mitad.
+   ============================================================ */
+export const DIAS = [
+  {
+    id: 'lunes',
+    nombre: 'Lunes', titulo: 'El canasto del mercado',
+    paradas: [
+      'maiz-1-introduccion', 'habas-1-facil', 'maiz-2-cascada',
+      'chochos-1-facil', 'frejol-1-facil', 'maiz-3-gusanito',
+      'arveja-1-facil', 'melloco-1-facil',
+    ],
+  },
+  {
+    id: 'martes',
+    nombre: 'Martes', titulo: 'El costal de la tía',
+    paradas: [
+      'escoger-1-facil', 'col-1-facil', 'maiz-4-dos',
+      'quinua-1-facil', 'habas-2-normal', 'mani-1-facil',
+      'maiz-5-primer-duro', 'chochos-2-normal',
+    ],
+  },
+  {
+    id: 'miercoles',
+    nombre: 'Miércoles', titulo: 'Los primos al desgrane',
+    paradas: [
+      'bacalao-1-facil', 'arveja-2-normal', 'maiz-6-duro',
+      'zapallo-1-facil', 'melloco-2-normal', 'maiz-7-primer-danado',
+      'col-2-fino', 'frejol-2-normal',
+    ],
+  },
+  {
+    id: 'jueves',
+    nombre: 'Jueves por la mañana', titulo: 'La casa llena',
+    paradas: [
+      'quinua-2-normal', 'maiz-8-danado-duro', 'mani-2-rapido',
+      'escoger-2-normal', 'maiz-9-picada', 'bacalao-2-normal',
+      'zapallo-2-normal', 'arveja-3-dificil',
+    ],
+  },
+  {
+    id: 'noche',
+    nombre: 'Jueves por la noche', titulo: 'La tonga',
+    paradas: [
+      'maiz-10-plaga', 'escoger-3-dificil', 'maiz-11-seco',
+      'zapallo-3-rapido', 'maiz-12-seco-duro', 'maiz-13-tonga',
+      'maiz-14-morocho', 'maiz-15-ultima',
+    ],
+  },
+];
+
+/* el día de una parada, por id — para el mapa y para saber cuándo
+   se cierra un capítulo */
+export const DIA_DE = {};
+DIAS.forEach((d, i) => d.paradas.forEach(id => { DIA_DE[id] = { dia: d.id, index: i }; }));
+
+/* ============================================================
    EL APURO — el modo contrarreloj
 
    La campaña se juega con calma: un ingrediente, su gesto, su
@@ -614,14 +701,20 @@ export const APURO = {
      cosas que el modo quiere ENSEÑAR a hacer —encadenar sin
      desastres, aguantar hasta las tandas bravas, tocar toda la
      despensa— y no sobre el número gordo, que ya es el marcador. */
+  /* `meta` es la condición dicha ANTES de cumplirla: es lo que se
+     enseña en gris en la escalera de logros. `texto` es lo que se
+     dice al conseguirlo. Son frases distintas porque miran en
+     direcciones distintas. */
   logros: [
-    { id: 'primera',   pide: r => r.raciones >= 1,  titulo: 'Primera ración',        texto: 'Ya sabes de qué va el apuro.' },
-    { id: 'diez',      pide: r => r.raciones >= 10, titulo: 'Diez raciones',         texto: 'Eso ya es media olla.' },
-    { id: 'veinte',    pide: r => r.raciones >= 20, titulo: 'Veinte raciones',       texto: 'La cocina entera contigo.' },
-    { id: 'limpia',    pide: r => r.raciones >= 6 && r.castigos === 0, titulo: 'Sin un solo bicho', texto: 'Seis raciones y ni uno se te fue a la olla.' },
-    { id: 'cadena8',   pide: r => r.mejorCadena >= 8, titulo: 'Ocho seguidas',       texto: 'Encadenar es el truco entero del modo.' },
-    { id: 'tanda4',    pide: r => r.tandas >= 4,     titulo: 'Cuarta tanda',         texto: 'Aguantaste cuando el reloj ya casi no devuelve nada.' },
-    { id: 'docena',    pide: r => r.ingredientes.length >= 12, titulo: 'Los doce',   texto: 'Tocaste la despensa completa en una sola partida.' },
+    { id: 'primera',   pide: r => r.raciones >= 1,  titulo: 'Primera ración',        meta: 'Sirve una ración',                          texto: 'Ya sabes de qué va el apuro.' },
+    { id: 'diez',      pide: r => r.raciones >= 10, titulo: 'Diez raciones',         meta: 'Sirve diez en una partida',                 texto: 'Eso ya es media olla.' },
+    { id: 'veinte',    pide: r => r.raciones >= 20, titulo: 'Veinte raciones',       meta: 'Sirve veinte en una partida',               texto: 'La cocina entera contigo.' },
+    { id: 'limpia',    pide: r => r.raciones >= 6 && r.castigos === 0, titulo: 'Sin un solo bicho', meta: 'Seis raciones sin ningún desastre', texto: 'Seis raciones y ni uno se te fue a la olla.' },
+    { id: 'cadena8',   pide: r => r.mejorCadena >= 8, titulo: 'Ocho seguidas',       meta: 'Encadena ocho sin fallar',                  texto: 'Encadenar es el truco entero del modo.' },
+    { id: 'tanda4',    pide: r => r.tandas >= 4,     titulo: 'Cuarta tanda',         meta: 'Aguanta hasta la tanda 4',                  texto: 'Aguantaste cuando el reloj ya casi no devuelve nada.' },
+    /* por raciones SERVIDAS, no repartidas: que te haya tocado el
+       zapallo y se te haya quemado no es haberlo cocinado */
+    { id: 'docena',    pide: r => (r.servidos || r.ingredientes).length >= 12, titulo: 'Los doce', meta: 'Sirve los doce ingredientes en una partida', texto: 'Serviste la despensa completa en una sola partida.' },
   ],
 
   /* QUÉ ENTRA Y CUÁNTO. `porcion` es qué parte del nivel completo
@@ -655,3 +748,71 @@ export const APURO = {
     { base: 'zapallo', porcion: 0.25 },
   ],
 };
+
+/* ============================================================
+   EL APURO SIN FIN — la dificultad después de la escalera.
+
+   Las tandas suben por la escalera de variantes de la campaña, pero
+   diez de los doce ingredientes solo tienen dos peldaños: de la
+   tanda 3 en adelante subir de tanda ya solo bajaba el bono, y un
+   modo sin fin cuya dificultad se aplana a los dos minutos no es
+   sin fin, es corto con propina.
+
+   Así que pasada la escalera la config SIGUE SUBIENDO, parámetro a
+   parámetro. Cada entrada dice qué se le aprieta a ese ingrediente
+   por tanda extra y hasta dónde — y solo toca parámetros que su
+   nivel LEE de verdad (los mismos que usan sus variantes: subir un
+   número que nadie mira sería dificultad de mentira). Los topes
+   existen porque cada parámetro tiene un punto donde deja de ser
+   más difícil y pasa a ser injusto o imposible: tres gusanos por
+   mazorca todavía se juegan, seis son una lotería.
+
+   Lo que NO se toca aquí: las cantidades. La cuota de la ración
+   está congelada en la de la tanda 1 (modo-apuro), así que subir
+   `cantidad` no encarece la ración — solo alargaría el nivel por
+   detrás de la cuota sin que el jugador lo sienta. La dificultad
+   honesta del sin fin es resistencia y bichos, no volumen. */
+const SIN_FIN = {
+  maiz:    { podridos: { por: 1, tope: 8 }, gusanos: { por: 0.5, tope: 4 } },
+  arveja:  { hilo_friccion: { por: 0.05, tope: 0.9 }, gusanos: { por: 1, tope: 5 } },
+  habas:   { resistencia: { por: 0.5, tope: 2 }, gusanos: { por: 1, tope: 5 } },
+  chochos: { velocidad_salto: { por: 0.1, tope: 0.9 }, gusanos: { por: 1, tope: 5 } },
+  frejol:  { presion_requerida: { por: 0.05, tope: 0.8 }, gusanos: { por: 1, tope: 5 } },
+  melloco: { resistencia: { por: 0.5, tope: 2 }, gusanos: { por: 1, tope: 5 } },
+  col:     { resistencia: { por: 0.5, tope: 2 }, gusanos: { por: 1, tope: 4 } },
+  /* el gorgojo va apagado por `ajustes` y eso manda: aquí solo se
+     ensucia más el costal */
+  escoger: { piedras_pct: { por: 0.03, tope: 0.25 }, defectos_pct: { por: 0.02, tope: 0.2 } },
+  quinua:  { saponina_nivel: { por: 0.1, tope: 1 }, gusanos: { por: 0.5, tope: 3 } },
+  mani:    { velocidad_minima: { por: 0.08, tope: 0.7 }, resistencia: { por: 0.5, tope: 2 } },
+  bacalao: { sal_nivel: { por: 0.1, tope: 1 }, moscas_frecuencia: { por: 0.1, tope: 0.9 } },
+  zapallo: { resistencia: { por: 0.5, tope: 2 }, gusanos: { por: 0.5, tope: 3 } },
+};
+
+/* La config de una ración según la tanda. Dentro de la escalera de
+   variantes, el peldaño que toca; más allá, el último peldaño más el
+   apriete de SIN_FIN por cada tanda extra. Los valores que en la
+   escalera son enteros (gusanos, podridos) se redondean hacia abajo:
+   medio gusano no existe, y así el apriete entra cada dos tandas en
+   vez de a saltos raros. */
+export function configApuro(base, tanda) {
+  const escalera = variantesDe(base);
+  if (!escalera.length) return {};
+  const i = Math.min(tanda - 1, escalera.length - 1);
+  const cfg = { ...escalera[i].config };
+  const extra = tanda - escalera.length;
+  if (extra <= 0) return cfg;
+  const aprietes = SIN_FIN[base] || {};
+  for (const [param, { por, tope }] of Object.entries(aprietes)) {
+    const actual = cfg[param];
+    /* los gusanos por mazorca pueden venir en lista: se aprieta el
+       total repartido, que es lo que el nivel siente */
+    const valorBase = Array.isArray(actual)
+      ? Math.max(...actual)
+      : (typeof actual === 'number' ? actual : 0);
+    let v = Math.min(tope, valorBase + por * extra);
+    if (Number.isInteger(valorBase) && Number.isInteger(tope)) v = Math.floor(v);
+    cfg[param] = v;
+  }
+  return cfg;
+}

@@ -1545,3 +1545,152 @@ body.con-editor #stage { margin-right: 340px; }
   box-shadow: var(--e-1);
 }
 .btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.14); }
+
+/* ============================================================
+   LA SEMANA EN EL MAPA — bandas, banners y el viernes.
+
+   Cada día tiñe su tramo del mantel con un color propio y lleva su
+   banner de capítulo; la olla se llena al final del jueves y debajo
+   está el Viernes Santo con El Apuro. El apilado va explícito
+   porque el orden del DOM ya no coincide con el de pintura: las
+   bandas se añaden al final pero van DEBAJO del sendero, y el
+   sendero debajo de los nodos. */
+
+.zona {
+  position: absolute; left: 0; right: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-top: 2px dashed rgba(150, 98, 43, .28);
+}
+.zona--lunes     { background: linear-gradient(180deg, rgba(242,179,31,.14), rgba(242,179,31,.05)); border-top: none; }
+.zona--martes    { background: linear-gradient(180deg, rgba(150,98,43,.14), rgba(150,98,43,.05)); }
+.zona--miercoles { background: linear-gradient(180deg, rgba(108,191,90,.16), rgba(108,191,90,.05)); }
+.zona--jueves    { background: linear-gradient(180deg, rgba(217,79,48,.13), rgba(217,79,48,.05)); }
+.zona--noche     { background: linear-gradient(180deg, rgba(43,54,94,.18), rgba(43,54,94,.07)); }
+/* sin borde: su corte pasaba justo por detrás de la olla, y el cambio
+   de tinte más la propia olla ya dicen que aquí empieza otra cosa */
+.zona--viernes   { background: linear-gradient(180deg, rgba(242,179,31,.20), rgba(217,79,48,.08)); border-top: none; }
+
+/* el decorado de cada banda: utilería, no información */
+.zona-deco {
+  position: absolute;
+  font-size: 1.7rem;
+  opacity: .5;
+  filter: saturate(.85) drop-shadow(0 2px 2px rgba(0,0,0,.12));
+}
+
+.camino-svg { z-index: 1; }
+.camino .nodo, .camino-dia, .viernes { z-index: 2; }
+
+/* el banner de un día: mismo traje que el rótulo de acto de antes */
+.camino-dia {
+  position: absolute; left: 0; right: 0;
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+  margin: 0; padding: 0 1rem;
+  text-align: center;
+  pointer-events: none;
+}
+.camino-dia strong {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
+  color: var(--text);
+  background: var(--surface-raised, #fff);
+  border: var(--ring); border-radius: var(--r-pill);
+  padding: .18rem .9rem;
+  box-shadow: var(--e-1);
+}
+.camino-dia span {
+  font-size: var(--t-xs); color: var(--text-muted, #7a6a55);
+  text-shadow: 0 1px 0 rgba(255,255,255,.7);
+}
+.camino-dia--hecho strong { border-color: var(--nopal-500, #6cbf5a); }
+.camino-dia--hecho strong::after { content: ' ✓'; color: var(--nopal-500, #6cbf5a); }
+.camino-dia--porvenir { opacity: .55; }
+
+/* el número de parada: chiquito, arriba a la izquierda del plato */
+.nodo-num {
+  position: absolute; top: -6px; left: 4px;
+  min-width: 22px; height: 22px;
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 800; font-size: .72rem;
+  color: var(--text);
+  background: var(--surface-raised, #fff);
+  border: var(--ring); border-radius: var(--r-pill);
+  box-shadow: var(--e-1);
+  padding: 0 4px;
+}
+.nodo--bloqueado .nodo-num { opacity: .55; }
+
+/* la olla se llena: la barra es la promesa de que esto termina */
+.olla-carga {
+  width: 86px; height: 9px;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised, #fff);
+  border: var(--ring);
+  overflow: hidden;
+  box-shadow: var(--e-1);
+}
+.olla-carga i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--maiz-500, #f2b31f), var(--chile-500, #d94f30));
+  border-radius: inherit;
+  transition: width .5s var(--ease-out);
+}
+
+/* el Viernes Santo: la zona de El Apuro al fondo del camino */
+.viernes {
+  position: absolute; left: 0; right: 0;
+  display: flex; flex-direction: column; align-items: center; gap: .35rem;
+  padding: 0 var(--sp-5);
+  text-align: center;
+}
+.viernes-tit {
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+  margin: 0;
+}
+.viernes-tit strong {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-md);
+  color: var(--text);
+  background: var(--surface-raised, #fff);
+  border: var(--ring); border-radius: var(--r-pill);
+  padding: .18rem .9rem;
+  box-shadow: var(--e-1);
+}
+.viernes-tit span {
+  font-size: var(--t-xs); color: var(--text-muted, #7a6a55);
+  text-shadow: 0 1px 0 rgba(255,255,255,.7);
+}
+.viernes-promesa {
+  margin: 0 0 .3rem;
+  font-size: var(--t-sm); color: var(--text-muted, #7a6a55);
+  max-width: 320px;
+  text-shadow: 0 1px 0 rgba(255,255,255,.6);
+}
+.viernes .btn-apuro { margin: 0; max-width: 360px; }
+
+/* la escalera de logros: pendientes en gris, el nuevo brilla */
+.logro--pendiente {
+  background: rgba(120, 106, 85, .08);
+  border-color: rgba(120, 106, 85, .2);
+}
+.logro--pendiente strong { color: var(--text-muted, #7a6a55); }
+.logro--nuevo {
+  background: linear-gradient(100deg, rgba(242,179,31,.4), rgba(242,179,31,.14));
+  border-color: var(--maiz-500, #f2b31f);
+}
+
+/* el modal de fin de día */
+.dia-ic { display: block; text-align: center; font-size: 2.2rem; margin-bottom: .2rem; }
+.dia-refri {
+  display: flex; flex-direction: column; gap: .15rem;
+  margin: .6rem 0 .8rem;
+  padding: .55rem .8rem;
+  border-radius: var(--r-md, 12px);
+  background: rgba(108, 191, 90, .12);
+  border: 1px solid rgba(108, 191, 90, .3);
+  font-size: var(--t-sm);
+  text-align: left;
+}
+.dia-refri .label {
+  font-size: var(--t-xs); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-muted, #7a6a55);
+}

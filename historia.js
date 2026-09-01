@@ -56,6 +56,61 @@ export const CHANCOSO_AGRICULTURA = {
 
 export const VOCES = [AMAGUANA_MAZORCA, CACUANGO_PARAMO, AMAGUANA_SANGRE, CHANCOSO_AGRICULTURA];
 
+/* ============================================================
+   LA SEMANA — la historia que sostiene el mapa.
+
+   El desgrane no es metáfora: en las casas donde todavía se hace
+   fanesca, la semana antes del Viernes Santo la familia se turna
+   para pelar, desvainar y desgranar — es faena de varias tardes y
+   de varias manos, y por eso el juego se cuenta como una semana en
+   la que cada día llega alguien más a ayudar.
+
+   `quien` es la línea del banner en el mapa: quién está hoy en la
+   cocina. `escena` es el cierre del día — se lee UNA vez, cuando
+   se termina la última parada del día, y son dos o tres frases:
+   un capítulo que se cierra, no una novela. `refri` es el
+   inventario que queda listo, porque el progreso también se cuenta
+   en fundas.
+   ============================================================ */
+
+export const DIAS_RELATO = {
+  lunes: {
+    quien: 'tú y la abuela',
+    escena: 'La abuela repasa las fundas una por una y no falta nada. «Mañana viene tu tía con el costal», dice, y apunta en un papelito lo que queda por conseguir. La casa ya huele a víspera.',
+    refri: 'Habas peladas, chochos, fréjol, la primera arveja y tres choclos desgranados.',
+  },
+  martes: {
+    quien: 'llegó la tía con el costal',
+    escena: 'La tía llegó con el costal al hombro y noticias de medio mundo. Entre los tres dejaron la lenteja escogida, la quinua lavada y el maní majado en la piedra. «El jueves esto se llena», advierte. No exagera.',
+    refri: 'La lenteja limpia, la col en tiras, la quinua sin espuma y el maní molido.',
+  },
+  miercoles: {
+    quien: 'los primos, al desgrane',
+    escena: 'Los primos desgranaron más de lo que botaron, que en ellos ya es decir. La vecina mandó col y zapallo de su huerta, y el tío apareció con el bacalao envuelto en papel. La refri ya no cierra a la primera.',
+    refri: 'El bacalao en remojo, el zapallo partido, y la mesa del desgrane llena de tusas.',
+  },
+  jueves: {
+    quien: 'la casa llena',
+    escena: 'Ya no cabe un alma en la cocina y todo el mundo opina de todo. Tú a lo tuyo: la arveja apretada, la mazorca picada, el maní fino. La abuela prueba la sal del bacalao y por primera vez en la semana no corrige nada.',
+    refri: 'Todo lo delicado, listo. Solo queda lo bravo: la tonga.',
+  },
+  noche: {
+    quien: 'la última faena, casi a oscuras',
+    escena: 'La casa por fin se calló. Quedan la abuela, tú y la tonga de maíz seco — la faena que se hace de noche porque de día no dio tiempo. El último grano cae cuando ya nadie lo ve. Ahora sí: la olla.',
+    refri: 'No queda nada por pelar. Mañana solo se sirve.',
+  },
+};
+
+/* la promesa del Viernes: el texto de la zona final del mapa, donde
+   vive El Apuro — la campaña termina el jueves con la olla, y el
+   modo sin fin ES el viernes */
+export const VIERNES = {
+  nombre: 'Viernes Santo',
+  titulo: 'Se sirve',
+  quien: 'todos los que caben, y más',
+  promesa: 'A las once de la mañana la casa se llena y nadie deja de llegar. Sirve raciones mientras el reloj aguante — esto no se acaba: se aguanta.',
+};
+
 export const HISTORIA = {
   entradilla: 'Se come un solo día al año y casi nadie la cocina solo. Debajo del queso y la leche hay una fiesta de cosecha más vieja que las iglesias que hoy le ponen fecha: la de agradecer a la Pachamama por sus frutos.',
 

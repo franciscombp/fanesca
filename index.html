@@ -31,16 +31,16 @@
     <span class="mundo-puesto" aria-hidden="true"></span>
     <div class="portada">
       <span class="portada-sol" aria-hidden="true"></span>
-      <p class="portada-over">jueves santo · con las manos</p>
+      <p class="portada-over">una semana para una olla · con las manos</p>
       <h1 class="portada-title">La fanesca</h1>
-      <p class="portada-sub">desgranar · desvainar · pinchar · picar</p>
+      <p class="portada-sub">desgranar · desvainar · raspar · majar</p>
       <div class="portada-peek" aria-hidden="true">
         <span class="plate" data-icon="maiz"></span>
         <span class="plate" data-icon="zapallo"></span>
         <span class="plate" data-icon="bacalao"></span>
       </div>
       <div class="panel portada-quote">
-        <p>Le dicen la sopa de los doce apóstoles. Debajo hay una fiesta más vieja: darle gracias a la <b>Pachamama</b> por la cosecha. Y todo pasa por las manos.</p>
+        <p>Le dicen la sopa de los doce apóstoles. Debajo hay una fiesta más vieja: darle gracias a la <b>Pachamama</b> por la cosecha. Se cocina en una semana, entre toda la familia — y todo pasa por las manos.</p>
         <p class="muted">Desgrana con el dedo, abre las vainas, tiende el bacalao. Y si sale un gusanito: <b>no lo aplastes</b> — sácalo a la composta o se arruina la olla entera.</p>
       </div>
       <div class="portada-acciones">
@@ -62,7 +62,7 @@
       <header class="hoja-head">
         <div class="sign">
           <h2 class="sign-title">La mesa de prep</h2>
-          <p class="sign-sub"><span id="mesa-progreso">0 / 12 ingredientes listos</span></p>
+          <p class="sign-sub"><span id="mesa-progreso">0 / 40 paradas · lunes</span></p>
         </div>
         <button type="button" id="btn-cuaderno" class="cuaderno-acceso" aria-label="El cuaderno de la fanesca">
           <span aria-hidden="true">📖</span>
@@ -79,9 +79,10 @@
           <p class="escenarios-tit">¿Dónde cocinas hoy?</p>
           <div id="escenarios-lista" class="escenarios-lista"></div>
         </div>
-        <!-- El Apuro: el modo rápido, al alcance desde la mesa. Va
-             ANTES del camino y no dentro: no es una parada más, es
-             otra manera de jugar lo mismo. -->
+        <!-- El Apuro nace aquí con sus eventos, pero VIVE al fondo
+             del mapa: renderMesa lo muda a la zona del Viernes
+             Santo, que es su sitio en la historia — la campaña
+             cocina de lunes a jueves, el viernes se sirve. -->
         <button type="button" id="btn-apuro" class="btn-apuro">
           <span class="btn-apuro-ico" aria-hidden="true">⏱</span>
           <span class="btn-apuro-txt">
@@ -195,7 +196,7 @@
           <footer id="tarjeta-cita-quien"></footer>
         </blockquote>
       </section>
-      <button type="button" id="listo-seguir" class="btn btn--nopal btn--lg btn--block">Siguiente ingrediente</button>
+      <button type="button" id="listo-seguir" class="btn btn--nopal btn--lg btn--block">Siguiente parada</button>
       <button type="button" id="listo-repetir" class="btn btn--peltre btn--sm btn--block">Repetirlo más rápido</button>
     </div>
   </div>
@@ -209,6 +210,18 @@
       <p id="arruinado-motivo" class="sheet-body"></p>
       <button type="button" id="arruinado-reintentar" class="btn btn--lg btn--block">Empezar de nuevo</button>
       <button type="button" id="arruinado-salir" class="btn btn--peltre btn--sm btn--block">Dejarlo por hoy</button>
+    </div>
+  </div>
+
+  <!-- ================= Modal: se acabó el día ================= -->
+  <div id="modal-dia" class="modal" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <span class="dia-ic" aria-hidden="true">🌆</span>
+      <p id="dia-eyebrow" class="sheet-eyebrow"></p>
+      <h3 id="dia-titulo" class="sheet-title"></h3>
+      <p id="dia-escena" class="sheet-body"></p>
+      <p class="dia-refri"><span class="label">quedó en la refri</span><span id="dia-refri"></span></p>
+      <button type="button" id="dia-seguir" class="btn btn--maiz btn--lg btn--block">Seguir con la semana</button>
     </div>
   </div>
 
