@@ -279,6 +279,12 @@ function sfx(tipo, tono = 1) {
 }
 function buzz(p) { if (navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
 
+/* LA FECHA ES LA DEL RELOJ DE LA CASA, no la de Greenwich: con
+   toISOString(), en Ecuador (UTC-5) cocinar después de las siete de
+   la noche contaba como mañana y la racha de días se saltaba sola */
+const fechaLocal = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 let toastId = null;
 /* `ms` opcional: un toast con oración entera (los chips de la
    despensa) no se lee en los 1.9 s del aviso corto */
@@ -731,15 +737,19 @@ let hechosAhora = 0, totalAhora = 1;
    sobra— y se vuelve a contar entero en el modal de listo. */
 function pintarReloj() {
   const el = $('#hud-tiempo');
+  /* SE ESCRIBE EN EL NÚMERO, no en la píldora entera: escribir sobre
+     #hud-tiempo destruía a sus hijos —el ⏱ y el propio span— en el
+     primer repintado, y el cronómetro se quedaba sin reloj dibujado */
+  const n = $('#hud-tiempo-n') || el;
   if (Apuro.activo) {
     /* contra reloj se lee el entero y nada más: las décimas a esta
        velocidad son ruido que parpadea, no información */
-    el.textContent = Math.ceil(Apuro.reloj) + 's';
+    n.textContent = Math.ceil(Apuro.reloj) + 's';
     el.classList.toggle('hud-tiempo--rojo', Apuro.enRojo);
     return;
   }
   el.classList.remove('hud-tiempo--rojo');
-  el.textContent = tiempoBonito(tiempoMs);
+  n.textContent = tiempoBonito(tiempoMs);
 }
 
 function arrancarReloj() {
@@ -818,11 +828,14 @@ let vozPauso = false;   /* la voz detuvo el reloj */
 function voz(cita, ms = 9000, opts = {}) {
   const v = $('#voz');
   if (!cita) { v.classList.remove('visible'); if (vozPauso) { vozPauso = false; if (nivelActual) arrancarReloj(); } return; }
+  /* EN EL APURO NO HAY CITAS. Una cita de nueve segundos en pleno
+     contrarreloj no se lee: se sufre — tapa el mesón mientras el
+     reloj come. La campaña es donde las citas tienen su silencio, y
+     todas se releen en el cuaderno. */
+  if (Apuro.activo) return;
   /* leer una cita no puede costar cucharas: el reloj se detiene
      mientras está en pantalla y sigue cuando se va */
-  /* en El Apuro el reloj ES la partida: congelarlo por una cita lo
-     convertía en 9,5 s de tiempo regalado (o robado al ritmo) */
-  if (corriendo && !Apuro.activo) { pararReloj(); vozPauso = true; }
+  if (corriendo) { pararReloj(); vozPauso = true; }
   /* sobre la escena va la versión corta si la hay: la cita entera se
      lee en el cuaderno, con su contexto y su fuente */
   $('#voz-texto').textContent = '«' + ((opts.corta && cita.corta) || cita.texto) + '»';
@@ -1186,6 +1199,11 @@ async function montarRacion(base, config) {
     modActual = m.default || m;
   } catch (e) { console.error(e); return; }
   await Motor.modelosListos();
+  /* LA PARTIDA PUDO ACABARSE MIENTRAS SE MONTABA: montar es
+     asíncrono, y si el reloj llegó a cero en ese hueco el resumen ya
+     está en pantalla — construir el nivel ahora lo pondría a vivir
+     detrás del modal, encolando pistas para nadie */
+  if (!Apuro.activo) return;
   hechosAhora = 0; totalAhora = 1;
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE ingrediente y no del que se estaba jugando */
@@ -1274,10 +1292,13 @@ function arrancarApuro() {
 function cerrarApuro(resumen) {
   pararReloj();
   Apuro.parar();
-  sfx('fiesta'); buzz([20, 40, 20, 60]);
+  /* la fiesta es para quien sirvió algo: celebrarle el cero a alguien
+     es burlarse sin querer */
+  if (resumen.raciones > 0) { sfx('fiesta'); buzz([20, 40, 20, 60]); }
+  else sfx('tab');
   const mejor = estado.apuro || { raciones: 0 };
   const esRecord = resumen.raciones > mejor.raciones;
-  if (esRecord) estado.apuro = { raciones: resumen.raciones, cadena: resumen.mejorCadena, fecha: new Date().toISOString().slice(0, 10) };
+  if (esRecord) estado.apuro = { raciones: resumen.raciones, cadena: resumen.mejorCadena, fecha: fechaLocal() };
   guardar();
 
   setTimeout(() => {
@@ -1293,7 +1314,10 @@ function cerrarApuro(resumen) {
         (resumen.castigos ? ` · ${resumen.castigos} desastre${resumen.castigos > 1 ? 's' : ''}` : ' · sin un solo desastre');
     $('#apuro-mejor').textContent = esRecord
       ? (mejor.raciones ? `¡Nuevo récord! antes: ${mejor.raciones}` : 'Tu primera vez en El Apuro')
-      : `Tu récord sigue siendo ${mejor.raciones}`;
+      : (mejor.raciones
+        ? `Tu récord sigue siendo ${mejor.raciones}`
+        /* "tu récord sigue siendo 0" no es un récord, es una pulla */
+        : 'Todavía sin récord — la primera ración es la que enseña');
 
     /* LA ESCALERA DE LOGROS, entera y siempre: los conseguidos en
        color y los pendientes en gris con su meta — sin la escalera a
@@ -1351,10 +1375,10 @@ function terminarNivel() {
   /* la racha de días se alimenta terminando CUALQUIER nivel hoy:
      no pide ganar más, pide volver — que es lo único que un juego
      de este tamaño puede pedirle a alguien */
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = fechaLocal();
   const d = estado.dias || (estado.dias = { ultima: null, seguidos: 0 });
   if (d.ultima !== hoy) {
-    const ayer = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+    const ayer = fechaLocal(new Date(Date.now() - 864e5));
     d.seguidos = d.ultima === ayer ? d.seguidos + 1 : 1;
     d.ultima = hoy;
     if (d.seguidos >= 2) setTimeout(() => toast(`🔥 ${d.seguidos} días cocinando seguidos`), 2600);

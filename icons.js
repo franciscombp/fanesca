@@ -163,6 +163,46 @@ ICONS.cuaderno = _svg(`
   <rect x="28" y="32" width="14" height="3.4" rx="1.7" fill="#f6eed9" opacity=".6"/>
   ${face(35, 44, .55)}`);
 
+/* ============ Los seis que salieron de la despensa ============
+   Compartían todos el costalito de granos_mixtos, y siete platos
+   con el mismo dibujo no se distinguen ni abiertos ni con candado.
+   Cada uno con su cara, como manda la casa. */
+
+/* el garbanzo: la pepa con su piquito y la camisita floja */
+ICONS.garbanzo = _svg(`
+  <ellipse cx="32" cy="38" rx="19" ry="17" fill="#f2e3c2" opacity=".6"/>
+  <ellipse cx="32" cy="36" rx="16" ry="15" fill="#e8c98a"/>
+  <path d="M40 24 Q46 20 45 14 Q39 15 38 21 Q39 23 40 24 Z" fill="#dcb878"/>
+  ${face(32, 38, .78)}`);
+
+/* el sambo: el primo pálido, con sus vetas crema */
+ICONS.sambo = _svg(`
+  <rect x="29.5" y="8" width="5" height="8" rx="2.4" fill="#8a9b60"/>
+  <ellipse cx="32" cy="36" rx="19" ry="17" fill="#cfe0a8"/>
+  <path d="M24 20.5 Q20 36 24 51 M32 19 V53 M40 20.5 Q44 36 40 51" stroke="#e9f2cd" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  ${face(32, 37, .8)}`);
+
+/* el queso fresco: la rueda blanca con su tajada de menos */
+ICONS.queso = _svg(`
+  <ellipse cx="32" cy="26" rx="20" ry="8" fill="#fdfaf0"/>
+  <path d="M12 26 V42 Q12 50 32 50 Q52 50 52 42 V26 Q52 34 32 34 Q12 34 12 26 Z" fill="#f4eddc"/>
+  <path d="M32 18.5 L44 21.5 L38 27 Q35 25.6 32 25.8 Z" fill="#e8dfc4"/>
+  ${face(32, 43, .62)}`);
+
+/* el huevo duro: cascado de un golpecito, con su grieta */
+ICONS.huevo = _svg(`
+  <path d="M32 10 Q47 10 47 34 Q47 54 32 54 Q17 54 17 34 Q17 10 32 10 Z" fill="#f6ecd9"/>
+  <path d="M22 22 L27 26 L31 21 L36 26 L41 21.5" stroke="#c9b891" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  ${face(32, 38, .74)}`);
+
+/* el maduro de la guarnición: la banana curva de freír */
+ICONS.maduro = _svg(`
+  <path d="M14 22 Q18 44 38 50 Q52 54 54 44 Q54 40 48 40 Q34 40 26 30 Q20 23 20 18 Q14 16 14 22 Z" fill="#f2c04e"/>
+  <path d="M18 19 Q16 15 19 13 Q22 14 22 18 Z" fill="#8a6240"/>
+  <path d="M50 43 Q53 44 52 47" stroke="#d98f2b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M22 24 Q26 36 38 43" stroke="#e0ac35" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  ${face(38, 33, .6)}`);
+
 /* el comodín: lo que sale cuando se pide un id que no existe */
 ICONS.mezcla_rara = _svg(`
   <path d="M14 38 Q10 26 20 22 Q22 14 32 16 Q42 12 46 22 Q56 26 50 38 Q54 48 42 50 Q36 54 28 50 Q16 52 14 38 Z" fill="#9aa88f"/>

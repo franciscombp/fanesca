@@ -203,7 +203,7 @@ export const NIVELES = [
     cuenta: 'garbanzos',
     nombre: 'El garbanzo',
     tarea: 'Pelar remojado',
-    icono: 'granos_mixtos',
+    icono: 'garbanzo',
     modulo: () => import('./nivel-garbanzo.js'),
     gesto: '<b>Frota</b> cada garbanzo con pasadas cortas y la camisita se suelta sola.',
 
@@ -217,7 +217,7 @@ export const NIVELES = [
     cuenta: 'pasadas',
     nombre: 'El sambo',
     tarea: 'Rallar',
-    icono: 'zapallo',
+    icono: 'sambo',
     modulo: () => import('./nivel-sambo.js'),
     gesto: 'Agarra la media y <b>pásala por el rallador</b>, de arriba abajo, hasta que quede hebra.',
 
@@ -245,7 +245,7 @@ export const NIVELES = [
     cuenta: 'migas',
     nombre: 'El queso y la leche',
     tarea: 'Desmenuzar',
-    icono: 'granos_mixtos',
+    icono: 'queso',
     modulo: () => import('./nivel-queso.js'),
     gesto: '<b>Pellizca</b> el bloque y se desmigaja; al final, la leche de un solo golpe.',
     avisoBicho: '🪰 Si se posa <b>la mosca</b>: espántala de un roce. <b>No la aplastes</b> contra el queso.',
@@ -260,7 +260,7 @@ export const NIVELES = [
     cuenta: 'huevos',
     nombre: 'El huevo duro',
     tarea: 'Cascar y pelar',
-    icono: 'granos_mixtos',
+    icono: 'huevo',
     modulo: () => import('./nivel-huevo.js'),
     gesto: 'Un <b>golpecito seco</b> para cuartearlo, y <b>jala los cascos</b> desde la grieta.',
 
@@ -274,7 +274,7 @@ export const NIVELES = [
     cuenta: 'piezas',
     nombre: 'La guarnición',
     tarea: 'Freír y armar',
-    icono: 'hoja',
+    icono: 'maduro',
     modulo: () => import('./nivel-guarnicion.js'),
     gesto: 'Frie el maduro y <b>voltéalo cuando dore</b>; al final arma el plato con todo encima.',
 

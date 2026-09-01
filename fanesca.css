@@ -1419,6 +1419,10 @@ body.con-editor #stage { margin-right: 340px; }
 }
 .portada-link {
   padding: .25rem .7rem;
+  /* 44px de alto tocable: "Empezar de nuevo" borra una semana de
+     progreso y merece un blanco al que se le pueda apuntar */
+  min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700;
   color: var(--text-muted);
   background: rgba(0,0,0,.05);

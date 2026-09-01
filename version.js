@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '1.20.0';
+const APP_VERSION = '1.21.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '1.21.0',
+    fecha: '2026-09-01',
+    titulo: 'Cada uno con su cara',
+    cambios: [
+      'Los seis nuevos ya tienen su propio dibujo en el recetario: el garbanzo con su piquito, el sambo con sus vetas, la rueda de queso, el huevo con su grieta y el maduro de la guarnición.',
+      'El cronómetro recuperó su relojito ⏱ — se lo comía el primer repintado.',
+      'La racha de días ahora va con el reloj de tu casa: cocinar en la noche ya no cuenta como mañana.',
+      'El Apuro con cero raciones ya no te celebra ni presume «récord: 0» — te dice cómo se empieza.',
+      'Las citas ya no aparecen en pleno Apuro: el contrarreloj no es sitio para leer, y todas se releen en el cuaderno.',
+    ],
+    internos: [
+      'pintarReloj escribe en #hud-tiempo-n (no en la píldora); fechaLocal() en racha y récord del Apuro; voz() sale temprano si Apuro.activo.',
+      'montarRacion aborta si el modo murió durante el montaje asíncrono (el nivel se construía detrás del modal de resumen).',
+      'cerrarApuro: fiesta solo con raciones > 0; apuro-mejor con rama honesta para récord 0.',
+      'aria-labelledby en los cinco modales; .portada-link a 44px tocables; ICONS.garbanzo/sambo/queso/huevo/maduro en icons.js.',
+    ],
+  },
   {
     v: '1.20.0',
     fecha: '2026-09-01',
