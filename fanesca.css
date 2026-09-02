@@ -240,19 +240,108 @@ svg[width="0"] { width: 0; height: 0; }
 [data-version] { opacity: .55; }
 
 /* ============================================================
-   EL RECETARIO — la semana, página a página
-   Papel crema flotando sobre la cocina de noche. Cada día es una
-   tarjeta; cada parada, un renglón con su icono grande; la olla,
-   la tarjeta de cobre del final; y el dock «Sigue» al pie siempre
-   sabe a dónde ir.
+   LA CONSOLA — el recetario y el cuaderno como pantallas de consola
+   en vertical. Cabecera fija, pestañas, un carrusel de pantallas
+   del ancho de la ventana y la barra de acción al pie. NADA SE
+   DESPLAZA: cada pantalla cabe entera, y lo que no cabe se pasa
+   de página, no se baja.
    ============================================================ */
-.hoja-head .sign { flex: 1; }
-.cuaderno-acceso {
-  position: relative; flex: 0 0 auto;
-  width: 48px; height: 48px;
-  font-size: 1.35rem;
+.consola {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
+  padding-top: calc(env(safe-area-inset-top) + var(--sp-2));
 }
-.cuaderno-acceso-txt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.consola-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-2);
+}
+.consola-head .sign { flex: 1; min-width: 0; }
+.consola-anillo { flex: 0 0 auto; --anillo-fondo: var(--noche-800); width: 48px; height: 48px; }
+.consola-anillo b { font-size: var(--t-2xs); }
+
+/* ---- las pestañas: una por pantalla ---- */
+.tabs {
+  flex: 0 0 auto;
+  display: flex; gap: .28rem;
+  padding: .1rem var(--sp-4) var(--sp-2);
+}
+.tab {
+  position: relative;
+  flex: 1 1 0; min-width: 0; min-height: 38px;
+  padding: .2rem .1rem;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
+  letter-spacing: .03em; text-transform: uppercase;
+  color: rgba(255,246,232,.62);
+  background: var(--vidrio);
+  border: 1.5px solid var(--vidrio-borde);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+.tab:active { transform: scale(.94); }
+.tab--activa {
+  color: var(--maiz-800);
+  background: linear-gradient(180deg, var(--oro-300), var(--oro-500));
+  border-color: var(--oro-600);
+  box-shadow: var(--glow-oro);
+}
+.tab--hecha::after {
+  content: '✓'; position: absolute; top: -6px; right: -3px;
+  width: 15px; height: 15px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: .55rem; color: #fff;
+  background: var(--hoja-500); border: 2px solid var(--noche-900);
+}
+.tab--cerrada { opacity: .42; }
+
+/* ---- el carrusel ---- */
+.carrusel { position: relative; flex: 1 1 auto; min-height: 0; }
+.carrusel .scroll {
+  position: absolute; inset: 0;
+  overflow: hidden; padding: 0;
+  mask-image: none; -webkit-mask-image: none;
+  touch-action: none;
+}
+.pista-paginas {
+  display: flex; height: 100%; width: 100%;
+  transition: transform .4s var(--ease-out);
+  will-change: transform;
+}
+.pista-paginas > .pag {
+  flex: 0 0 100%; width: 100%; height: 100%; min-width: 0;
+  display: flex;
+  padding: 2px var(--sp-4) var(--sp-2);
+}
+.pag > .pagina { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.flecha {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+  width: 38px; height: 38px; font-size: 1.25rem;
+  opacity: .9;
+}
+.flecha--izq { left: 2px; }
+.flecha--der { right: 2px; }
+.flecha:active { transform: translateY(-50%) scale(.9); }
+
+/* ---- la barra de acción ---- */
+.dock {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4) calc(env(safe-area-inset-bottom) + var(--sp-3));
+}
+.dock-lado { position: relative; flex: 0 0 auto; width: 52px; height: 52px; font-size: 1.35rem; }
+.dock-principal {
+  flex: 1 1 auto; min-width: 0; min-height: 58px;
+  flex-direction: column; gap: .05rem; line-height: 1.05;
+  padding: .5rem 1rem;
+}
+.dock-principal b { font-size: var(--t-lg); }
+.dock-principal small {
+  font-family: var(--font-text); font-size: var(--t-xs); font-weight: 700;
+  opacity: .82; text-transform: none; letter-spacing: 0;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#btn-sigue { box-shadow: var(--gloss), inset 0 -3px 0 rgba(0,0,0,.14), 0 0 0 1px var(--oro-600), var(--e-3), var(--glow-oro); }
 /* el punto que avisa "hay algo nuevo que leer" */
 .cuaderno-nuevo {
   position: absolute; top: -2px; right: -2px;
@@ -263,77 +352,21 @@ svg[width="0"] { width: 0; height: 0; }
 }
 @keyframes nuevo-late { 50% { transform: scale(1.35); } }
 
-.mesa-frase {
-  font-family: var(--font-hand); font-size: 1.3rem; line-height: 1.2;
-  color: var(--oro-200);
-  text-align: center;
-  margin: 0 var(--sp-2) var(--sp-4);
-  opacity: .9;
-}
-
-/* ---- dónde se cocina: un carrusel de fichas ---- */
-.escenarios { margin: 0 calc(var(--sp-4) * -1) var(--sp-4); padding: 0 var(--sp-4); }
-.escenarios-tit {
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  letter-spacing: var(--track-caps); text-transform: uppercase;
-  color: rgba(255,246,232,.55);
-  margin-bottom: var(--sp-2);
-}
-.escenarios-lista {
-  display: flex; gap: var(--sp-2);
-  overflow-x: auto; scrollbar-width: none;
-  padding: 2px 0 var(--sp-2);
-  margin: 0 calc(var(--sp-4) * -1); padding-inline: var(--sp-4);
-  scroll-snap-type: x proximity;
-}
-.escenarios-lista::-webkit-scrollbar { display: none; }
-.escenario {
-  position: relative; flex: 0 0 auto;
-  display: flex; align-items: center; gap: .55rem;
-  min-height: 56px; padding: .45rem .9rem .45rem .55rem;
-  text-align: left;
-  color: var(--text-invert);
-  background: var(--vidrio);
-  border: 1.5px solid var(--vidrio-borde);
-  border-radius: var(--r-md);
-  scroll-snap-align: start;
-  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
-}
-.escenario:active { transform: scale(.96); }
-.escenario--activo {
-  background: linear-gradient(180deg, rgba(255,211,106,.22), rgba(255,211,106,.1));
-  border-color: var(--oro-400);
-  box-shadow: var(--glow-oro);
-}
-.escenario-emoji { font-size: 1.6rem; line-height: 1; }
-.escenario-txt { display: flex; flex-direction: column; min-width: 0; }
-.escenario-txt b { font-family: var(--font-display); font-size: var(--t-sm); line-height: 1.15; white-space: nowrap; }
-.escenario-txt i { font-style: normal; font-size: var(--t-2xs); color: rgba(255,246,232,.6); line-height: 1.1; white-space: nowrap; }
-.escenario-check {
-  position: absolute; top: -6px; right: -6px;
-  width: 1.3rem; height: 1.3rem; border-radius: 50%;
-  display: grid; place-items: center;
-  font-size: .7rem; font-weight: 800; color: var(--maiz-800);
-  background: var(--oro-400); border: 2px solid var(--noche-900);
-}
-
-/* ---- las páginas ---- */
-.recetario { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: var(--sp-2); }
-
+/* ---- una pantalla de día: papel con cabecera y rejilla ---- */
 .pagina {
   position: relative;
   padding: 0;
   overflow: hidden;
   animation: pagina-entra .45s var(--ease-out) both;
 }
-@keyframes pagina-entra { from { opacity: 0; transform: translateY(16px); } }
-.pagina--porvenir { opacity: .7; }
+@keyframes pagina-entra { from { opacity: 0; transform: translateY(12px); } }
+.pagina--porvenir { opacity: .72; }
 .pagina--porvenir .pagina-head { filter: grayscale(.4); }
 
 .pagina-head {
-  position: relative;
+  position: relative; flex: 0 0 auto;
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  padding: .7rem var(--sp-4) .55rem;
   background: linear-gradient(180deg, rgba(200,112,47,.14), rgba(200,112,47,.03));
   border-bottom: 1.5px solid var(--hairline);
 }
@@ -344,108 +377,145 @@ svg[width="0"] { width: 0; height: 0; }
   color: var(--accent-ink);
 }
 .pagina-titulo {
-  font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800;
+  font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
   color: var(--text); line-height: 1.05; letter-spacing: -.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pagina-quien {
-  margin-top: .15rem;
-  font-family: var(--font-hand); font-size: 1.2rem; line-height: 1;
+  margin-top: .1rem;
+  font-family: var(--font-hand); font-size: 1.15rem; line-height: 1;
   color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* el garabato de margen y el anillo de la página: la deco va dentro
-   del anillo, que se llena con las paradas */
-.pagina-anillo { grid-column: 2; grid-row: 1; --anillo-fondo: var(--crema-50); --anillo-pista: rgba(42,26,18,.1); width: 52px; height: 52px; }
-.pagina-deco { font-size: 1.5rem; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
-.pagina-cuenta, .pagina-sello { grid-column: 1 / -1; }
-.pagina-cuenta {
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  color: var(--text-muted);
-}
+.pagina-anillo { grid-column: 2; grid-row: 1 / span 2; --anillo-fondo: var(--crema-50); --anillo-pista: rgba(42,26,18,.1); width: 48px; height: 48px; }
+.pagina-deco { font-size: 1.35rem; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
+.pagina-cuenta, .pagina-sello { grid-column: 1; grid-row: 2; justify-self: start; }
+.pagina-cuenta { font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700; color: var(--text-muted); }
 /* el sello de página hecha: tinta verde, torcido, de caucho */
 .pagina-sello {
-  justify-self: start;
   transform: rotate(-4deg);
-  font-family: var(--font-hand); font-size: 1.15rem; font-weight: 700; line-height: 1;
+  font-family: var(--font-hand); font-size: 1.05rem; font-weight: 700; line-height: 1;
   color: var(--hoja-600);
   border: 2px solid var(--hoja-500); border-radius: 8px;
-  padding: .1rem .5rem;
+  padding: .08rem .45rem;
   background: rgba(93,181,90,.1);
 }
 
-.pagina-pasos { list-style: none; padding: var(--sp-2) var(--sp-2) var(--sp-2); }
-.renglon {
-  display: flex; align-items: center; gap: .7rem;
-  width: 100%; min-height: 60px;
-  padding: .45rem .6rem;
-  border-radius: var(--r-md);
-  font-family: inherit; text-align: left; color: inherit;
-  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+/* la rejilla: dos columnas, las filas que hagan falta, sin bajar */
+.pagina-pasos {
+  flex: 1 1 auto; min-height: 0;
+  list-style: none;
+  display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr);
+  gap: .4rem;
+  padding: .5rem;
 }
-.renglon:active { transform: scale(.98); background: rgba(42,26,18,.06); }
+.pagina-pasos li { min-height: 0; min-width: 0; display: flex; }
+
+/* la ficha de una parada */
+.renglon {
+  position: relative;
+  flex: 1 1 auto; min-height: 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .12rem;
+  padding: .3rem .4rem;
+  border-radius: var(--r-md);
+  background: rgba(42,26,18,.05);
+  border: 1.5px solid var(--hairline);
+  font-family: inherit; text-align: center; color: inherit;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.renglon:active { transform: scale(.96); }
 .renglon-num {
-  flex: 0 0 1.6rem;
-  font-family: var(--font-hand); font-size: 1.25rem; font-weight: 700; line-height: 1;
-  color: var(--text-muted); text-align: right;
+  position: absolute; top: .22rem; left: .45rem;
+  font-family: var(--font-hand); font-size: 1.05rem; font-weight: 700; line-height: 1;
+  color: var(--text-muted);
 }
 .renglon-icono {
   flex: 0 0 auto;
-  width: 46px; height: 46px; padding: 6px;
+  width: 44px; height: 44px; padding: 5px;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 38%, #fff 0%, var(--crema-50) 55%, var(--crema-200) 92%);
   box-shadow: inset 0 -3px 6px rgba(42,26,18,.08), var(--e-1);
 }
-.renglon-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.renglon-txt { min-width: 0; max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: .05rem; }
 .renglon-nombre {
-  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700; line-height: 1.15;
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700; line-height: 1.12;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   overflow-wrap: anywhere;
 }
-.renglon-dif { font-size: .55rem; letter-spacing: -1px; line-height: 1; filter: saturate(.9); }
-.renglon-estado { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; }
+.renglon-dif { font-size: .5rem; letter-spacing: -1px; line-height: 1; filter: saturate(.9); }
+.renglon-estado { position: absolute; top: .3rem; right: .4rem; display: flex; align-items: center; }
 
 /* cucharas en vez de estrellas: aquí se mide en cucharadas */
 .cucharas { display: flex; gap: .15rem; justify-content: center; }
 .cuchara { width: 1.15rem; height: 1.15rem; filter: grayscale(1) opacity(.3); transition: filter var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring); }
 .cuchara.llena { filter: none; transform: scale(1.12); }
-.renglon-cucharas { display: flex; gap: 1px; }
-.renglon-cucharas .cuchara { width: 15px; height: 15px; }
+.renglon-cucharas { display: flex; gap: 0; }
+.renglon-cucharas .cuchara { width: 12px; height: 12px; }
 
-/* hecho: tachado con tinta suave — en una libreta, tachar ES lograr */
-.renglon--hecho .renglon-nombre {
-  text-decoration: line-through;
-  text-decoration-color: rgba(93,181,90,.8);
-  text-decoration-thickness: 2px;
-  color: var(--text-muted);
-}
+/* hecho: anillo verde y nombre en gris — tachar en una ficha no se lee */
+.renglon--hecho .renglon-nombre { color: var(--text-muted); }
 .renglon--hecho .renglon-icono { box-shadow: inset 0 0 0 2.5px var(--hoja-500), var(--e-1); }
 
 /* el siguiente paso lleva el lápiz y respira */
 .renglon--siguiente {
-  background: linear-gradient(90deg, rgba(244,185,66,.28), rgba(244,185,66,.08));
-  box-shadow: inset 0 0 0 1.5px rgba(224,161,44,.5);
+  background: linear-gradient(180deg, rgba(244,185,66,.28), rgba(244,185,66,.1));
+  border-color: rgba(224,161,44,.5);
 }
 .renglon--siguiente .renglon-icono {
-  box-shadow: inset 0 0 0 2.5px var(--oro-400), 0 0 0 5px rgba(244,185,66,.22), var(--e-2);
+  box-shadow: inset 0 0 0 2.5px var(--oro-400), 0 0 0 4px rgba(244,185,66,.22), var(--e-2);
   animation: late-suave 1.8s var(--ease-in-out) infinite;
 }
 @keyframes late-suave {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.06); }
 }
-.renglon-lapiz { font-size: 1.2rem; animation: lapiz-bob 1.8s ease-in-out infinite; }
+.renglon-lapiz { font-size: 1rem; animation: lapiz-bob 1.8s ease-in-out infinite; }
 @keyframes lapiz-bob {
   0%, 100% { transform: translateY(0) rotate(0); }
   50%      { transform: translateY(-3px) rotate(-8deg); }
 }
-.renglon--bloqueado { opacity: .5; }
+.renglon--bloqueado { opacity: .45; }
 .renglon--bloqueado .renglon-icono { filter: grayscale(.8); }
-.renglon-candado { font-size: 1rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+.renglon-candado { font-size: .85rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
 
-/* ---- la receta grande del final: la olla de cobre ---- */
+/* EL CURSOR: la ficha elegida lleva el marco blanco y oro, como en
+   una consola, y es la que el botón grande de abajo cocina */
+.renglon--foco {
+  z-index: 1;
+  transform: scale(1.03);
+  background: linear-gradient(180deg, rgba(244,185,66,.34), rgba(244,185,66,.14));
+  border-color: transparent;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--oro-400), var(--e-3);
+  animation: foco-late 1.6s var(--ease-in-out) infinite;
+}
+.renglon--foco:active { transform: scale(1); }
+@keyframes foco-late {
+  0%, 100% { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--oro-400), var(--e-3); }
+  50%      { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--oro-300), var(--e-3), 0 0 22px rgba(255,190,80,.5); }
+}
+
+/* ---- la pantalla de la olla ---- */
+.pagina--olla { background: linear-gradient(180deg, #fff6e0, #fbe9c4); }
+.olla-centro {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+.olla-anillo { width: 132px; height: 132px; --anillo-grosor: 8px; --anillo-fondo: var(--crema-50); --anillo-pista: rgba(42,26,18,.1); box-shadow: var(--e-2); }
+.olla-anillo-ic { width: 84px; height: 84px; display: block; }
+.mesa-frase {
+  font-family: var(--font-hand); font-size: 1.35rem; line-height: 1.2;
+  color: var(--text); text-align: center;
+  max-width: 30ch;
+}
 .receta-final {
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; flex: 0 0 auto;
   display: flex; align-items: center; gap: var(--sp-3);
-  width: 100%; min-height: 96px;
-  padding: var(--sp-4);
+  width: calc(100% - var(--sp-3) * 2); min-height: 84px;
+  margin: 0 var(--sp-3) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-lg);
   color: var(--text-invert);
   background:
@@ -457,25 +527,24 @@ svg[width="0"] { width: 0; height: 0; }
 }
 .receta-final:active { transform: scale(.98); }
 .receta-plato {
-  flex: 0 0 auto; width: 64px; height: 64px;
+  flex: 0 0 auto; width: 56px; height: 56px;
   display: grid; place-items: center;
   background: rgba(255,244,226,.12);
   border: 1.5px solid rgba(255,244,226,.25);
   border-radius: 50%;
 }
 .receta-plato svg { width: 74%; height: 74%; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
-.receta-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.receta-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
 .receta-txt .pagina-dia { color: var(--oro-300); }
-.receta-txt strong { font-family: var(--font-display); font-size: var(--t-xl); font-weight: 800; line-height: 1.05; }
+.receta-txt strong { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.05; }
 .receta-txt small { font-size: var(--t-xs); color: rgba(255,246,232,.75); }
 .receta-final .renglon-candado { flex: 0 0 auto; font-size: 1.2rem; opacity: .8; }
 .receta-final--lista { box-shadow: var(--e-3), var(--glow-oro); animation: late-suave 1.8s var(--ease-in-out) infinite; }
 .receta-final--servida { background: radial-gradient(80% 120% at 100% 0%, rgba(165,224,143,.3), transparent 60%), linear-gradient(135deg, var(--hoja-600), #2f6a2c); }
-
 /* la olla se llena: la barra es la promesa de que esto termina */
 .olla-carga {
   width: 100%; max-width: 200px; height: 8px;
-  margin-top: .25rem;
+  margin-top: .2rem;
   border-radius: var(--r-pill);
   background: rgba(0,0,0,.28);
   overflow: hidden;
@@ -488,18 +557,21 @@ svg[width="0"] { width: 0; height: 0; }
   transition: width .5s var(--ease-out);
 }
 
-/* ---- la última página: el Viernes Santo, con El Apuro dentro ---- */
+/* ---- el Viernes Santo: tres fichas y El Apuro ---- */
 .pagina--viernes { background: linear-gradient(180deg, #fff6e0, #fbe9c4); }
+.pagina--viernes .pagina-pasos { flex: 1 1 auto; grid-template-rows: repeat(2, minmax(0, 1fr)); }
 .viernes-promesa {
-  margin: 0; padding: 0 var(--sp-4) var(--sp-3);
-  font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted);
+  flex: 0 0 auto;
+  margin: 0; padding: 0 var(--sp-4) .4rem;
+  font-size: var(--t-xs); line-height: 1.35; color: var(--text-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .btn-apuro {
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; flex: 0 0 auto;
   display: flex; align-items: center; gap: .8rem;
-  width: calc(100% - var(--sp-4) * 2); min-height: 72px;
-  margin: 0 var(--sp-4) var(--sp-4);
-  padding: .8rem 1rem;
+  width: calc(100% - var(--sp-3) * 2); min-height: 64px;
+  margin: 0 var(--sp-3) var(--sp-3);
+  padding: .6rem 1rem;
   border-radius: var(--r-md);
   color: #fff;
   background:
@@ -511,16 +583,16 @@ svg[width="0"] { width: 0; height: 0; }
 }
 .btn-apuro:active { transform: scale(.98); }
 .btn-apuro-ico {
-  flex: 0 0 auto; width: 2.6rem; height: 2.6rem;
+  flex: 0 0 auto; width: 2.4rem; height: 2.4rem;
   display: grid; place-items: center;
-  font-size: 1.5rem; line-height: 1;
+  font-size: 1.4rem; line-height: 1;
   background: rgba(255,255,255,.18);
   border: 1.5px solid rgba(255,255,255,.3);
   border-radius: 50%;
 }
 .btn-apuro-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.btn-apuro-txt strong { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.1; }
-.btn-apuro-txt small { font-size: var(--t-xs); opacity: .9; }
+.btn-apuro-txt strong { font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; line-height: 1.1; }
+.btn-apuro-txt small { font-size: var(--t-2xs); opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn-apuro-ir { font-size: 1rem; opacity: .85; }
 .btn-apuro--cerrado {
   background: linear-gradient(135deg, #8a7a68, #6e6053);
@@ -529,66 +601,72 @@ svg[width="0"] { width: 0; height: 0; }
 }
 .btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.1); }
 
-/* ---- el dock «Sigue»: siempre a un toque de la parada que toca ---- */
-.btn-sigue {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--sp-4));
-  z-index: 6;
-  display: inline-flex; align-items: center; gap: .5rem;
-  max-width: calc(100% - var(--sp-4) * 2); min-height: 56px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding: .65rem 1.4rem .65rem 1.2rem;
-  border-radius: var(--r-pill);
-  color: var(--maiz-800);
-  background: linear-gradient(180deg, var(--oro-300), var(--oro-500));
-  font-family: var(--font-display); font-size: var(--t-md); font-weight: 700;
-  box-shadow: var(--gloss), inset 0 -3px 0 rgba(0,0,0,.14), 0 0 0 1px var(--oro-600), var(--e-3), var(--glow-oro);
-  animation: sigue-entra .45s var(--ease-spring) both;
+/* ---- dónde se cocina: dentro de su hoja, tres fichas en columna ---- */
+.escenarios { width: 100%; }
+.escenarios-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
+.escenario {
+  position: relative; width: 100%;
+  display: flex; align-items: center; gap: .7rem;
+  min-height: 56px; padding: .45rem .9rem .45rem .7rem;
+  text-align: left;
+  color: var(--text);
+  background: rgba(42,26,18,.05);
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-md);
+  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
 }
-.btn-sigue b { font-weight: 800; }
-.btn-sigue:active { transform: translateX(-50%) scale(.96); }
-@keyframes sigue-entra {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(.9); }
-  to   { opacity: 1; transform: translateX(-50%); }
+.escenario:active { transform: scale(.97); }
+.escenario--activo {
+  background: linear-gradient(180deg, rgba(244,185,66,.3), rgba(244,185,66,.12));
+  border-color: var(--oro-500);
+  box-shadow: var(--glow-oro);
 }
-/* que el fondo del recetario no quede tapado por el dock */
-#screen-mesa .scroll { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-h)); }
+.escenario-emoji { font-size: 1.7rem; line-height: 1; }
+.escenario-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.escenario-txt b { font-family: var(--font-display); font-size: var(--t-md); line-height: 1.15; }
+.escenario-txt i { font-style: normal; font-size: var(--t-xs); color: var(--text-muted); line-height: 1.2; }
+.escenario-check {
+  flex: 0 0 auto;
+  width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: .8rem; font-weight: 800; color: var(--maiz-800);
+  background: var(--oro-400);
+}
 
-/* la despensa: chips apagados, tocables para leer qué viene */
-.despensa { margin-top: var(--sp-4); padding-bottom: var(--sp-6); }
-.mesa-sep { font-family: var(--font-display); font-size: var(--t-xs); color: rgba(255,246,232,.6); text-align: center; }
-.despensa-fila { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2); margin-top: var(--sp-2); }
-.despensa-chip {
-  display: flex; align-items: center; gap: .4rem;
-  min-height: 44px; padding: .3rem .8rem .3rem .4rem;
-  background: var(--vidrio); border: 1.5px dashed var(--vidrio-borde);
-  border-radius: var(--r-pill);
-  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700;
-  color: rgba(255,246,232,.7);
-}
-.despensa-chip .despensa-icono { width: 30px; height: 30px; filter: grayscale(.6); }
+/* la despensa (vacía hoy) */
+.despensa { display: none; }
 
 /* ============================================================
-   EL CUADERNO — lo que el plato cuenta
+   EL CUADERNO — se hojea, no se baja
    ============================================================ */
+.puntos { flex: 0 0 auto; display: flex; justify-content: center; gap: .35rem; padding: .25rem 0 0; }
+.punto {
+  width: 10px; height: 10px; min-width: 10px; padding: 0; border-radius: 5px;
+  background: rgba(255,246,232,.25);
+  transition: width var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+.punto--activo { width: 24px; background: var(--oro-400); }
+
+.capitulo-portada {
+  align-items: center; justify-content: center; text-align: center;
+  gap: var(--sp-2); padding: var(--sp-5);
+}
+.capitulo-portada-ic { width: 96px; height: 96px; display: block; margin-bottom: var(--sp-2); }
 .cuaderno-entradilla {
-  font-family: var(--font-hand); font-size: 1.35rem; line-height: 1.25;
-  color: var(--oro-200); text-align: center;
-  margin: 0 var(--sp-2) var(--sp-4);
+  font-family: var(--font-hand); font-size: 1.4rem; line-height: 1.25;
+  color: var(--text); text-align: center; max-width: 30ch;
 }
-.capitulo {
-  margin-bottom: var(--sp-3);
-  padding: var(--sp-4);
-  background: linear-gradient(180deg, var(--crema-50), var(--crema-100));
-  border-radius: var(--r-lg);
-  box-shadow: var(--e-2);
-  animation: pagina-entra .45s var(--ease-out) both;
-}
-.capitulo.cerrado { opacity: .55; filter: grayscale(.8); }
-.capitulo-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.capitulo { padding: var(--sp-4); gap: var(--sp-3); }
+.capitulo.cerrado { opacity: .6; filter: grayscale(.8); }
+/* la página cerrada no deja un papel vacío: el aviso va al centro */
+.capitulo.cerrado .capitulo-cuerpo { display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--sp-4); }
+.capitulo-head { flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-3); }
 .capitulo-head .plate { width: 52px; flex-shrink: 0; }
 .capitulo-titulo { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.1; color: var(--text); }
+/* un capítulo largo se lee dentro de su página: la única lectura
+   que baja en todo el juego, y baja sólo el texto */
+.capitulo-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: .2rem; }
+.capitulo-cuerpo::-webkit-scrollbar { width: 0; }
 .capitulo p { font-size: var(--t-sm); line-height: var(--lead); color: var(--text); }
 .capitulo p + p { margin-top: var(--sp-3); }
 .capitulo-cerrojo { font-size: var(--t-sm); color: var(--text-muted); font-style: italic; }
@@ -620,12 +698,25 @@ svg[width="0"] { width: 0; height: 0; }
 .cita footer { margin-top: var(--sp-2); font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700; color: var(--accent-ink); }
 .cita footer span { display: block; font-family: var(--font-text); font-weight: 400; color: var(--text-muted); font-style: normal; }
 
-.cuaderno-fuentes { margin: var(--sp-2) 0 var(--sp-4); color: var(--text-invert); border-color: var(--vidrio-borde); background: var(--vidrio); }
-.cuaderno-fuentes .label { color: var(--oro-300); }
-.cuaderno-fuentes ul { list-style: none; margin-top: var(--sp-2); }
-.cuaderno-fuentes li { font-size: var(--t-xs); line-height: 1.5; margin-bottom: .3rem; }
-.cuaderno-fuentes a { color: var(--oro-200); }
+.capitulo-fuentes { padding: var(--sp-4); gap: var(--sp-2); }
+.cuaderno-fuentes-lista { list-style: none; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.cuaderno-fuentes-lista li { font-size: var(--t-sm); line-height: 1.45; margin-bottom: .45rem; }
+.cuaderno-fuentes-lista a { color: var(--accent-ink); }
 #cuaderno-volver { color: var(--text-invert); box-shadow: inset 0 0 0 1.5px var(--vidrio-borde); background: var(--vidrio); }
+
+/* ---- pantallas cortas: las fichas se aprietan, nada se baja ---- */
+@media (max-height: 740px) {
+  .renglon-icono { width: 36px; height: 36px; padding: 4px; }
+  .renglon-nombre { font-size: var(--t-2xs); }
+  .pagina-quien { display: none; }
+  .pagina-head { padding: .5rem var(--sp-3) .4rem; }
+  .viernes-promesa { display: none; }
+  .olla-anillo { width: 100px; height: 100px; }
+  .olla-anillo-ic { width: 64px; height: 64px; }
+  .mesa-frase { font-size: 1.15rem; }
+  .consola-head { padding-block: .3rem; }
+  .capitulo-portada-ic { width: 72px; height: 72px; }
+}
 
 /* ============================================================
    EL MESÓN — el nivel 3D y su HUD
@@ -953,7 +1044,7 @@ svg[width="0"] { width: 0; height: 0; }
    lo propio de cada una.
    ============================================================ */
 .sheet-hero {
-  width: 96px; height: 96px; margin: var(--sp-2) 0 var(--sp-1);
+  width: 84px; height: 84px; margin: var(--sp-1) 0 0;
   display: grid; place-items: center;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, #fff, var(--crema-100) 70%);
@@ -992,14 +1083,18 @@ svg[width="0"] { width: 0; height: 0; }
 }
 .tarjeta .label { margin-bottom: var(--sp-1); }
 .tarjeta-titulo { font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; line-height: 1.2; color: var(--text); margin-bottom: var(--sp-1); }
-.tarjeta-texto { font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted); }
+.tarjeta-texto {
+  font-size: var(--t-sm); line-height: var(--lead); color: var(--text-muted);
+  /* la hoja cabe sin bajar: tres líneas — el resto se lee en el cuaderno */
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
 .tarjeta-cita {
   margin-top: var(--sp-3); padding: var(--sp-2) var(--sp-3);
   background: rgba(244,185,66,.14);
   border-left: 3px solid var(--oro-400);
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
 }
-.tarjeta-cita p { font-size: var(--t-sm); font-style: italic; line-height: var(--lead); color: var(--text); }
+.tarjeta-cita p { font-size: var(--t-sm); font-style: italic; line-height: var(--lead); color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tarjeta-cita footer { margin-top: var(--sp-1); font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700; color: var(--accent-ink); }
 
 /* se arruinó */
@@ -1042,7 +1137,9 @@ svg[width="0"] { width: 0; height: 0; }
 .apuro-cifra-pie { margin: -.2rem 0 .3rem; font-size: var(--t-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
 .listo-tiempo { font-family: var(--font-display); font-size: var(--t-md); font-weight: 700; color: var(--text); }
 /* la escalera de logros: pendientes en gris, el nuevo brilla */
-.logros { list-style: none; width: 100%; margin: .4rem 0 .2rem; display: flex; flex-direction: column; gap: .35rem; }
+/* la escalera de logros en rejilla de dos: siete peldaños que caben
+   sin bajar la hoja */
+.logros { list-style: none; width: 100%; margin: .3rem 0 .1rem; display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; }
 .logro {
   display: flex; flex-direction: column; text-align: left;
   padding: .5rem .8rem;
@@ -1055,8 +1152,8 @@ svg[width="0"] { width: 0; height: 0; }
 .logro:nth-child(3) { animation-delay: .16s; }
 .logro:nth-child(4) { animation-delay: .24s; }
 .logro:nth-child(n+5) { animation-delay: .32s; }
-.logro strong { font-family: var(--font-display); font-size: var(--t-sm); }
-.logro span { font-size: var(--t-xs); color: var(--text-muted); }
+.logro strong { font-family: var(--font-display); font-size: var(--t-xs); line-height: 1.15; }
+.logro span { font-size: var(--t-2xs); line-height: 1.25; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @keyframes logro-entra { from { opacity: 0; transform: translateX(-10px) scale(.96); } }
 .logro--pendiente { background: rgba(42,26,18,.05); border-color: var(--hairline); }
 .logro--pendiente strong { color: var(--text-muted); }

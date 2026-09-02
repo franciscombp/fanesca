@@ -63,7 +63,14 @@ const CENTRO = [0, 1.78, 0.12];  /* el choclo en alto, relativo al mesón */
    colgadas en el borde de la silueta, casi imposibles de tocar.) */
 const FRENTE = 0;
 
-const GUSANO_VEL = 0.38;   /* posiciones por segundo que BAJA el bicho */
+/* LA DIFICULTAD DE LA PARADA (api.dificultad, 1 a 5) manda sobre el
+   bicho, igual que en plaga.js: en la presentación baja despacio,
+   perdona el primer apretón y el dedo que pasa sólo lo empuja; en
+   las bravas baja casi al doble, no perdona, y barrer encima de él
+   también lo revienta. */
+const dif = () => Math.max(1, Math.min(5, (api && api.dificultad) || 1));
+const GUSANO_VEL_REF = 0.38;   /* posiciones por segundo que BAJA el bicho */
+const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1));
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 const FUERZA = 1600;
 
@@ -87,7 +94,8 @@ const SUELTA_HOJA = 105;
 /* El bicho sale justo del hueco que acabas de abrir, muchas veces con
    el dedo todavía encima. Sin este respiro, destaparlo sería perder
    sin poder reaccionar. */
-const GRACIA = 1.8;
+const GRACIA_REF = 1.8;
+const gracia = () => GRACIA_REF * (dif() <= 2 ? 0.6 : 0.4);
 /* a qué altura sobre el mesón se lleva el bicho en la mano. Es la
    misma que usa plaga.js: el bicho va en alto, no arrastrándose. */
 const ALTO_CARGA = 0.45;
@@ -476,7 +484,7 @@ let perdonadoPodrido = false;
 function tocado(w) {
   if (!w || w.estado !== 'suelto') return false;
   if (w.inmune && api.reloj < w.inmune) return false;
-  if (api.reloj - w.t0 < GRACIA) {
+  if (api.reloj - w.t0 < gracia()) {
     w.inmune = api.reloj + 1.0;
     w.nodo.position.x += 0.06;
     api.sfx('resist'); api.buzz([20, 20]);
@@ -497,9 +505,11 @@ function tocado(w) {
   return true;
 }
 
-/* el dedo que pasa desgranando: se lo lleva por delante, no lo mata */
+/* el dedo que pasa desgranando: se lo lleva por delante, no lo mata —
+   salvo en las paradas bravas, donde barrer encima es apretar */
 function aplastado(w) {
   if (!w || w.estado !== 'suelto') return false;
+  if (dif() >= 4) return tocado(w);
   if (w.inmune && api.reloj < w.inmune) return false;
   w.inmune = api.reloj + 0.7;
   w.t0 = api.reloj + 0.3;
@@ -864,7 +874,11 @@ export default {
   controlesEn: 'lados',
 
   construir(ctx, levelConfig = {}) {
-    perdonado = false; avisadoRoce = false; perdonadoPodrido = false;
+    /* el perdón del apretón sólo existe en la presentación */
+    /* el perdón del apretón y del picotazo al grano dañado existe
+       hasta los dos chiles; de tres en adelante se cobra */
+    perdonado = dif() > 2; avisadoRoce = false;
+    perdonadoPodrido = dif() > 2;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     hechos = 0; choclo = 0; compostaN = 0;
     modo = null; cargado = null; giroObjetivo = null; girando = 0; pellizcando = false;
@@ -1260,7 +1274,7 @@ export default {
           const dx = api.COMPOSTA.x - pos.x;
           const dz = api.COMPOSTA.z - pos.z;
           const dist = Math.hypot(dx, dz);
-          const vel = GUSANO_VEL * 1.2;
+          const vel = gusanoVel() * 1.2;
 
           if (dist < vel * dt) {
             /* Llegó a la batea */
@@ -1280,7 +1294,7 @@ export default {
           let dA = aFrente - w.a;
           dA = ((dA % A) + A * 1.5) % A - A / 2;   /* el camino corto, con vuelta */
           if (Math.abs(dA) > 0.15) w.a += Math.sign(dA) * Math.min(Math.abs(dA), 2.4 * dt);
-          w.p -= GUSANO_VEL * dt;      /* se descuelga hacia la batea */
+          w.p -= gusanoVel() * dt;      /* se descuelga hacia la batea */
           colocarGusano(w);
         }
       }

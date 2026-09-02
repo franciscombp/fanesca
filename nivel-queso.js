@@ -27,7 +27,11 @@ let TABLA_Z = 0;
 
 const MOSCA_CADA_REF = 12;    /* segundos entre moscas, con frecuencia 0.35 */
 const FRECUENCIA_REF = 0.35;
-const MOSCA_GRACIA = 0.9;     /* recién posada, espantarla no cuenta como aplastarla */
+/* recién posada, espantarla no cuenta como aplastarla — pero el
+   respiro se acorta con la dificultad de la parada (api.dificultad),
+   y el perdón de la primera mosca sólo existe en la presentación */
+const MOSCA_GRACIA_REF = 0.9;
+const moscaGracia = () => MOSCA_GRACIA_REF * ((api.dificultad || 1) <= 2 ? 0.8 : 0.5);
 
 let PEDAZOS = 12;
 let MOSCA_CADA = MOSCA_CADA_REF;
@@ -78,7 +82,7 @@ function desmigar() {
      perdona con susto, la segunda arruina la olla */
   const mosca = moscaPosada();
   if (mosca) {
-    if (api.reloj - mosca.t0 < MOSCA_GRACIA) { espantar(mosca); return; }
+    if (api.reloj - mosca.t0 < moscaGracia()) { espantar(mosca); return; }
     if (!perdonMosca) {
       perdonMosca = true;
       espantar(mosca);
@@ -143,7 +147,8 @@ export default {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     moscas = []; hechos = 0; fase = 'desmigar'; jarraEnMano = false;
-    vertiendo = 0; perdonMosca = false; terminado = false;
+    vertiendo = 0; terminado = false;
+    perdonMosca = (api.dificultad || 1) > 2;   /* de tres chiles en adelante no se perdona */
 
     PEDAZOS = Math.max(2, Math.round(cfg.pedazos ?? 12));
     TOTAL = PEDAZOS + 1;   /* la leche es el último punto */

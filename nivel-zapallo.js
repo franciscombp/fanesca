@@ -45,7 +45,12 @@ let ANCHO_TABLA = 3.4;
 let TABLA_Z = 0;
 const TOL_X = 0.34;             /* cuánto puede desviarse el corte */
 let LARGO_MIN = 0.3;            /* profundidad mínima del trazo */
-const GUSANO_VEL = 0.055;
+/* el gusano de la pulpa también obedece a la dificultad de la parada
+   (api.dificultad): más rápido en las bravas, y allí barrer encima de
+   él también lo aplasta — igual que en plaga.js */
+const dif = () => Math.max(1, Math.min(5, (api && api.dificultad) || 1));
+const GUSANO_VEL_REF = 0.055;
+const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1));
 
 /* Un zapallo no se resiste a golpes —aquí no se golpea nada—, se resiste
    en cuánto dedo hace falta. El tierno se abre con un trazo corto y
@@ -483,9 +488,11 @@ function tocarBicho(w) {
   api.arruinar(ARRUINADO.aplastado('el gusano'));
 }
 
-/* el dedo que pasa cortando o pelando solo lo empuja */
+/* el dedo que pasa cortando o pelando solo lo empuja — salvo en las
+   paradas bravas, donde barrer encima es apretar */
 function aplastarBicho(w) {
   if (!w || w.estado !== 'suelto') return;
+  if (dif() >= 4) { tocarBicho(w); return; }
   if (w.inmune && api.reloj < w.inmune) return;
   w.inmune = api.reloj + 0.7;
   w.x += w.dir * -0.18;
@@ -529,7 +536,9 @@ export default {
 
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     fase = 'partir';
-    perdonado = false; avisadoRoce = false;
+    /* el perdón del apretón existe hasta los dos chiles; de tres en
+       adelante se cobra */
+    perdonado = dif() > 2; avisadoRoce = false;
     mitades = []; tajadas = []; guias = []; cortes = new Set(); hechos = 0;
     terminado = false; modo = null; cargado = false; pellizcando = false;
     bichos = []; cargando = null; entero = null; p0 = null;
@@ -697,7 +706,7 @@ export default {
       if (w.estado !== 'suelto') continue;
       w.gus.animar(t);
       /* se pasea de un lado a otro sobre el zapallo, sin salirse */
-      w.x += w.dir * GUSANO_VEL * dt;
+      w.x += w.dir * gusanoVel() * dt;
       if (w.x > tope) { w.x = tope; w.dir = -1; }
       if (w.x < -tope) { w.x = -tope; w.dir = 1; }
       w.nodo.rotation.y = w.dir > 0 ? Math.PI / 2 : -Math.PI / 2;

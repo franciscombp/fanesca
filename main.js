@@ -444,138 +444,245 @@ let btnApuroEl = null;
    cada pintada (la parada abierta que toca, o la olla) */
 let sigueAccion = null;
 
-function renderMesa() {
-  renderEscenarios();
-  /* la primera visita va al grano: el selector de cocinas es de
-     quien ya cocina, y empujaba el único nodo tocable fuera de la
-     pantalla justo para quien más lo necesitaba ver */
-  const algunHecho = listos() > 0;
-  const esc = document.querySelector('.escenarios');
-  if (esc) esc.classList.toggle('hidden', !algunHecho && !estado.devMode);
+/* ============================================================
+   EL RECETARIO COMO CONSOLA — un día por pantalla, sin desplazarse.
 
-  const hechos = listos();
-  const paradasHechas = RUTA.filter(n => estaListo(n.id)).length;
-  /* LA OLLA MIRA LA CAMPAÑA: los días de preparación, sin el
-     viernes — lo de encima del plato viene DESPUÉS de la olla, no
-     antes */
-  const campana = RUTA.filter(n => !n.sirve);
-  const campanaHecha = campana.filter(n => estaListo(n.id)).length;
-  const todas = campanaHecha >= campana.length;
-  const todo = paradasHechas >= RUTA.length;
-  const racha = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
-  /* el marcador dice EN QUÉ DÍA de la semana vas: es el mismo número
-     de siempre, pero con el capítulo puesto */
-  const diaEnCurso = DIAS.find(d => !diaCompleto(d));
-  $('#mesa-progreso').textContent = (todo && estado.ollaVista)
-    ? `La mesa, puesta y servida${racha}`
-    : (todas && !estado.ollaVista
-      ? `${paradasHechas} / ${RUTA.length} — la olla espera${racha}`
-      : `${paradasHechas} / ${RUTA.length} paradas · ${diaEnCurso.nombre.toLowerCase()}${racha}`);
-  $('#olla-frase').textContent = FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)];
+   La lista larga se leía como una página web: había que bajar con
+   el pulgar para encontrar dónde seguir, y eso no es un juego. Una
+   consola en vertical no desplaza nada: cada día es una PANTALLA
+   con sus paradas en rejilla, se pasa de día con las pestañas, las
+   flechas o deslizando, hay un CURSOR sobre la parada elegida y una
+   barra de acción fija abajo que siempre dice qué toca. Entre el
+   jueves por la noche y el viernes está la pantalla de LA OLLA, que
+   es el destino de toda la semana.
+   ============================================================ */
 
-  /* ============================================================
-     EL RECETARIO — la semana en la libreta de la abuela.
+/* las pantallas del carrusel, en orden: cinco días, la olla, el viernes */
+const PAGINAS = [];
+let focoId = null;            /* la parada bajo el cursor, u 'olla' */
+let mesaCarrusel = null;      /* se arma una sola vez, al primer render */
 
-     La progresión ya no es un mapa: es un cuaderno de recetas, que
-     es lo que de verdad hay en la cocina donde pasa esta historia.
-     Cada día es una PÁGINA con su título y su gente; cada parada,
-     un PASO numerado de la receta — el hecho lleva sus cucharas, el
-     siguiente lleva el lápiz, el cerrado su candado. Al final del
-     cuaderno está la receta grande —la fanesca, que se va llenando
-     parada a parada— y la última página es el Viernes Santo, donde
-     vive El Apuro. Un mapa dice "viaja"; una libreta con pasos
-     tachados dice "esto se está cocinando", y eso es lo que pasa.
-     ============================================================ */
+function armarPaginas() {
+  PAGINAS.length = 0;
+  DIAS.forEach(d => { if (!d.sirve) PAGINAS.push({ tipo: 'dia', dia: d }); });
+  PAGINAS.push({ tipo: 'olla' });
+  DIAS.forEach(d => { if (d.sirve) PAGINAS.push({ tipo: 'dia', dia: d }); });
+}
+const paginaDe = (id) => {
+  if (id === 'olla') return PAGINAS.findIndex(p => p.tipo === 'olla');
+  const n = rutaPorId(id);
+  return n ? PAGINAS.findIndex(p => p.tipo === 'dia' && p.dia.id === n.dia) : -1;
+};
 
-  const lista = $('#mesa-lista');
-  lista.innerHTML = '';
-  lista.className = 'recetario';
-
-  /* el garabato de margen de cada página: utilería, no información */
-  const DECO = { lunes: '🧺', martes: '🥜', miercoles: '🌿', jueves: '🔥', noche: '🕯️', viernes: '🎉' };
-
-  /* las páginas del viernes van DESPUÉS de la receta grande: primero
-     se cocina la olla, después lo de encima */
-  const paginasSirve = [];
-
-  DIAS.forEach((dia, d) => {
-    const relato = DIAS_RELATO[dia.id] || {};
-    const hechasDia = dia.paradas.filter(id => estaListo(id)).length;
-    const completo = hechasDia === dia.paradas.length;
-    const primeraIdx = RUTA.findIndex(n => n.id === dia.paradas[0]);
-    const abiertoDia = hechasDia > 0 || desbloqueado(primeraIdx);
-    const pag = document.createElement('section');
-    pag.className = 'pagina pagina--' + dia.id + (completo ? ' pagina--hecha' : (abiertoDia ? '' : ' pagina--porvenir'));
-    pag.style.animationDelay = Math.min(d * 0.07, 0.4) + 's';
-    /* el anillo de la página se llena con sus paradas; el garabato
-       de margen vive dentro de él, que es utilería y no información */
-    const pctDia = Math.round(hechasDia / dia.paradas.length * 100);
-    pag.innerHTML = `
-      <header class="pagina-head">
-        <div class="pagina-head-txt">
-          <p class="pagina-dia">${dia.nombre}</p>
-          <h3 class="pagina-titulo">${dia.titulo}</h3>
-          <p class="pagina-quien">${relato.quien || ''}</p>
-        </div>
-        <span class="anillo pagina-anillo" style="--p:${pctDia}" aria-hidden="true"><span class="pagina-deco">${DECO[dia.id] || ''}</span></span>
-        ${completo
-          ? '<span class="pagina-sello" aria-hidden="true">✓ hecho</span>'
-          : `<span class="pagina-cuenta">${hechasDia} de ${dia.paradas.length}</span>`}
-      </header>
-      <ol class="pagina-pasos"></ol>`;
-    const ol = pag.querySelector('.pagina-pasos');
-
-    dia.paradas.forEach(id => {
-      const i = RUTA.findIndex(n => n.id === id);
-      const n = RUTA[i];
-      const abierto = desbloqueado(i);
-      const mejor = estado.mejores[n.id];
-      const esSiguiente = abierto && !mejor;
-      const li = document.createElement('li');
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'renglon ' + (mejor ? 'renglon--hecho' : (esSiguiente ? 'renglon--siguiente' : 'renglon--bloqueado'));
-      /* el renglón se escribe como paso de receta: la presentación
-         dice el gesto ("El choclo · desgranar"); la variante ya trae
-         al ingrediente en su nombre y no hace falta repetirlo */
-      const renglon = n.intro ? `${n.corto} · ${n.tarea.toLowerCase()}` : n.nombre;
-      /* los chiles de dificultad: una temperatura, no un dato */
-      const dif = n.dificultad ? `<span class="renglon-dif" aria-hidden="true">${'🌶️'.repeat(n.dificultad)}</span>` : '';
-      b.innerHTML = `
-        <span class="renglon-num">${n.num}.</span>
-        <span class="renglon-icono" aria-hidden="true">${icono(n.icono)}</span>
-        <span class="renglon-txt"><span class="renglon-nombre">${renglon}</span>${dif}</span>
-        <span class="renglon-estado">${mejor
-          ? `<span class="renglon-cucharas">${cucharasHTML(mejor.cucharas)}</span>`
-          : (esSiguiente ? '<span class="renglon-lapiz" aria-hidden="true">✎</span>' : '<span class="renglon-candado" aria-hidden="true">🔒</span>')}</span>`;
-      b.setAttribute('aria-label', `Paso ${n.num}: ${n.nombre}` + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
-      b.addEventListener('click', () => {
-        sfx('tab');
-        if (!abierto) {
-          /* el viernes no está cerrado por la parada anterior sino por
-             la olla, y el candado debe decir la verdad */
-          toast(n.sirve && !estado.ollaVista
-            ? 'Primero se cocina la olla 🍲'
-            : 'Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
-          return;
-        }
-        /* DIRECTO AL MESÓN, siempre: el gesto se explica dentro, en
-           la pista, donde se puede aplicar mientras se lee */
-        jugar(n.id);
-      });
-      li.appendChild(b);
-      ol.appendChild(li);
-    });
-    if (dia.sirve) paginasSirve.push(pag);
-    else lista.appendChild(pag);
+/* ---------- el carrusel: flechas, pestañas y deslizar ----------
+   Un solo mecanismo para el recetario y el cuaderno. La pista es un
+   flex de páginas del ancho de la ventana y se mueve con transform;
+   el dedo la arrastra en vivo y al soltar cae a la página más
+   cercana. Un deslizamiento NO es un toque: el clic que el navegador
+   dispara al soltar sobre una ficha se ignora si se acaba de
+   deslizar, o cada cambio de día jugaría una parada sin querer. */
+function nuevoCarrusel({ viewport, pista, izq, der, alCambiar }) {
+  let i = 0, x0 = 0, y0 = 0, dx = 0, arrastrando = false, gesto = null, deslizadoEn = 0;
+  const total = () => pista.children.length;
+  const pintar = (anim = true) => {
+    pista.style.transition = anim ? '' : 'none';
+    pista.style.transform = `translateX(${-i * 100}%)`;
+    if (!anim) void pista.offsetWidth;
+    if (izq) izq.classList.toggle('hidden', i <= 0);
+    if (der) der.classList.toggle('hidden', i >= total() - 1);
+    if (alCambiar) alCambiar(i, total());
+  };
+  const irA = (n, anim = true) => { i = Math.max(0, Math.min(total() - 1, n)); pintar(anim); };
+  if (izq) izq.addEventListener('click', () => { sfx('tab'); irA(i - 1); });
+  if (der) der.addEventListener('click', () => { sfx('tab'); irA(i + 1); });
+  viewport.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    x0 = e.clientX; y0 = e.clientY; dx = 0; arrastrando = true; gesto = null;
   });
+  viewport.addEventListener('pointermove', (e) => {
+    if (!arrastrando) return;
+    const mx = e.clientX - x0, my = e.clientY - y0;
+    if (!gesto) {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      gesto = Math.abs(mx) > Math.abs(my) ? 'h' : 'v';
+    }
+    if (gesto !== 'h') return;
+    dx = mx;
+    /* en los extremos la pista se resiste: se nota que no hay más */
+    const tope = ((i === 0 && dx > 0) || (i === total() - 1 && dx < 0)) ? 0.3 : 1;
+    pista.style.transition = 'none';
+    pista.style.transform = `translateX(calc(${-i * 100}% + ${Math.round(dx * tope)}px))`;
+  });
+  const soltar = () => {
+    if (!arrastrando) return;
+    arrastrando = false;
+    if (gesto === 'h' && Math.abs(dx) > 44) { deslizadoEn = Date.now(); sfx('tab'); irA(i + (dx < 0 ? 1 : -1)); }
+    else pintar(true);
+    gesto = null; dx = 0;
+  };
+  viewport.addEventListener('pointerup', soltar);
+  viewport.addEventListener('pointercancel', soltar);
+  viewport.addEventListener('pointerleave', soltar);
+  return { irA, get i() { return i; }, get total() { return total(); }, pintar,
+    recienDeslizado: () => Date.now() - deslizadoEn < 350 };
+}
 
-  /* LA RECETA GRANDE, al final del cuaderno: la fanesca. Se va
-     llenando parada a parada —la barra es la promesa de que todas
-     las páginas terminan en una sola olla— y se cocina cuando no
-     queda nada por pelar. */
+const TAB_DE = { lunes: 'Lun', martes: 'Mar', miercoles: 'Mié', jueves: 'Jue', noche: 'Noche', viernes: 'Vie' };
+
+/* las pestañas de arriba: una por pantalla, con la activa en oro, un
+   ✓ en las hechas y apagadas las que aún no se abren */
+function pintarTabs() {
+  const nav = $('#dias-tabs');
+  if (!nav) return;
+  const actual = mesaCarrusel ? mesaCarrusel.i : 0;
+  const campana = RUTA.filter(n => !n.sirve);
+  const todas = campana.every(n => estaListo(n.id));
+  nav.innerHTML = '';
+  PAGINAS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    let hecha, cerrada, txt;
+    if (p.tipo === 'olla') {
+      txt = '🍲'; hecha = !!estado.ollaVista; cerrada = !todas && !estado.ollaVista && !estado.devMode;
+      b.setAttribute('aria-label', 'La olla');
+    } else {
+      const d = p.dia;
+      txt = TAB_DE[d.id] || d.nombre;
+      hecha = diaCompleto(d);
+      const primera = RUTA.findIndex(n => n.id === d.paradas[0]);
+      cerrada = !hecha && !d.paradas.some(id => estaListo(id)) && !desbloqueado(primera);
+      b.setAttribute('aria-label', d.nombre);
+    }
+    b.className = 'tab' + (i === actual ? ' tab--activa' : '') + (hecha ? ' tab--hecha' : '') + (cerrada ? ' tab--cerrada' : '');
+    b.textContent = txt;
+    b.addEventListener('click', () => { sfx('tab'); if (mesaCarrusel) mesaCarrusel.irA(i); });
+    nav.appendChild(b);
+  });
+}
+
+/* la barra de acción: siempre dice qué toca con el cursor donde está */
+function pintarDock() {
+  const b = $('#btn-sigue');
+  if (!b) return;
+  if (focoId === 'olla') {
+    b.classList.remove('hidden');
+    b.innerHTML = '<b>🍲 ¡A la olla!</b><small>toda la semana, en una sola olla</small>';
+    sigueAccion = () => mostrarFinal();
+    return;
+  }
+  const n = focoId ? rutaPorId(focoId) : null;
+  if (!n) { b.classList.add('hidden'); sigueAccion = null; return; }
+  const hecho = estaListo(n.id);
+  b.classList.remove('hidden');
+  b.innerHTML = `<b>${hecho ? '↻ Otra vez' : '▶ Cocinar'}</b><small>${n.num} · ${n.intro ? n.corto : (n.corto || n.nombre)}</small>`;
+  sigueAccion = () => jugar(n.id);
+}
+
+/* mover el cursor: la ficha elegida se marca y el dock la nombra */
+function enfocar(id) {
+  focoId = id;
+  $$('#mesa-lista .renglon--foco').forEach(el => el.classList.remove('renglon--foco'));
+  const el = document.querySelector(`#mesa-lista .renglon[data-id="${id}"]`);
+  if (el) el.classList.add('renglon--foco');
+  pintarDock();
+}
+
+/* una pantalla de día: cabecera con su gente y su anillo, y las
+   paradas en rejilla de dos columnas — ocho fichas grandes que caben
+   sin bajar */
+function paginaDia(dia) {
+  const relato = DIAS_RELATO[dia.id] || {};
+  const hechasDia = dia.paradas.filter(id => estaListo(id)).length;
+  const completo = hechasDia === dia.paradas.length;
+  const primeraIdx = RUTA.findIndex(n => n.id === dia.paradas[0]);
+  const abiertoDia = hechasDia > 0 || desbloqueado(primeraIdx);
+  const DECO = { lunes: '🧺', martes: '🥜', miercoles: '🌿', jueves: '🔥', noche: '🕯️', viernes: '🎉' };
+  const pag = document.createElement('section');
+  pag.className = 'pagina pagina--' + dia.id + (completo ? ' pagina--hecha' : (abiertoDia ? '' : ' pagina--porvenir'));
+  const pctDia = Math.round(hechasDia / dia.paradas.length * 100);
+  pag.innerHTML = `
+    <header class="pagina-head">
+      <div class="pagina-head-txt">
+        <p class="pagina-dia">${dia.nombre}</p>
+        <h3 class="pagina-titulo">${dia.titulo}</h3>
+        <p class="pagina-quien">${relato.quien || ''}</p>
+      </div>
+      <span class="anillo pagina-anillo" style="--p:${pctDia}" aria-hidden="true"><span class="pagina-deco">${DECO[dia.id] || ''}</span></span>
+      ${completo
+        ? '<span class="pagina-sello" aria-hidden="true">✓ hecho</span>'
+        : `<span class="pagina-cuenta">${hechasDia} de ${dia.paradas.length}</span>`}
+    </header>
+    <ol class="pagina-pasos"></ol>`;
+  const ol = pag.querySelector('.pagina-pasos');
+  dia.paradas.forEach(id => {
+    const i = RUTA.findIndex(n => n.id === id);
+    const n = RUTA[i];
+    const abierto = desbloqueado(i);
+    const mejor = estado.mejores[n.id];
+    const esSiguiente = abierto && !mejor;
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.id = n.id;
+    b.className = 'renglon ' + (mejor ? 'renglon--hecho' : (esSiguiente ? 'renglon--siguiente' : 'renglon--bloqueado'))
+      + (focoId === n.id ? ' renglon--foco' : '');
+    /* la ficha dice el gesto en la presentación ("El choclo · desgranar")
+       y el nombre de la variante después, que ya trae al ingrediente */
+    const nombre = n.intro ? `${n.corto} · ${n.tarea.toLowerCase()}` : n.nombre;
+    const dif = n.dificultad ? `<span class="renglon-dif" aria-hidden="true">${'🌶️'.repeat(n.dificultad)}</span>` : '';
+    b.innerHTML = `
+      <span class="renglon-num">${n.num}</span>
+      <span class="renglon-icono" aria-hidden="true">${icono(n.icono)}</span>
+      <span class="renglon-txt"><span class="renglon-nombre">${nombre}</span>${dif}</span>
+      <span class="renglon-estado">${mejor
+        ? `<span class="renglon-cucharas">${cucharasHTML(mejor.cucharas)}</span>`
+        : (esSiguiente ? '<span class="renglon-lapiz" aria-hidden="true">✎</span>' : '<span class="renglon-candado" aria-hidden="true">🔒</span>')}</span>`;
+    b.setAttribute('aria-label', `Paso ${n.num}: ${n.nombre}` + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
+    b.addEventListener('click', () => {
+      if (mesaCarrusel && mesaCarrusel.recienDeslizado()) return;
+      sfx('tab');
+      if (!abierto) {
+        /* el viernes no está cerrado por la parada anterior sino por
+           la olla, y el candado debe decir la verdad */
+        toast(n.sirve && !estado.ollaVista
+          ? 'Primero se cocina la olla 🍲'
+          : 'Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
+        return;
+      }
+      /* PRIMER TOQUE: el cursor se pone encima y el dock la nombra.
+         SEGUNDO TOQUE (o el dock): se cocina. Como en una consola —
+         y de paso ningún roce del pulgar abre un mesón sin querer. */
+      if (focoId === n.id) { jugar(n.id); return; }
+      enfocar(n.id);
+    });
+    li.appendChild(b);
+    ol.appendChild(li);
+  });
+  return pag;
+}
+
+/* la pantalla de la olla: el destino de la semana, con la fanesca
+   llenándose parada a parada */
+function paginaOlla(ctx) {
+  const { campana, campanaHecha, todas, hechos } = ctx;
   const ollaAbierta = todas || estado.ollaVista;
   const pctOlla = Math.round(campanaHecha / campana.length * 100);
+  const pag = document.createElement('section');
+  pag.className = 'pagina pagina--olla' + (estado.ollaVista ? ' pagina--hecha' : (ollaAbierta ? '' : ' pagina--porvenir'));
+  pag.innerHTML = `
+    <header class="pagina-head">
+      <div class="pagina-head-txt">
+        <p class="pagina-dia">jueves por la noche</p>
+        <h3 class="pagina-titulo">La fanesca</h3>
+        <p class="pagina-quien">toda la casa, alrededor de la olla</p>
+      </div>
+      <span class="anillo pagina-anillo" style="--p:${pctOlla}" aria-hidden="true"><span class="pagina-deco">🍲</span></span>
+      ${estado.ollaVista ? '<span class="pagina-sello" aria-hidden="true">✓ servida</span>' : `<span class="pagina-cuenta">${campanaHecha} de ${campana.length} paradas</span>`}
+    </header>
+    <div class="olla-centro">
+      <span class="anillo olla-anillo" style="--p:${pctOlla}" aria-hidden="true"><span class="olla-anillo-ic">${icono(OLLA.icono)}</span></span>
+      <p id="olla-frase" class="mesa-frase">${FRASES_OLLA[Math.min(hechos, FRASES_OLLA.length - 1)]}</p>
+    </div>`;
   const receta = document.createElement('button');
   receta.type = 'button';
   receta.className = 'receta-final' + (estado.ollaVista ? ' receta-final--servida' : (ollaAbierta ? ' receta-final--lista' : ''));
@@ -590,23 +697,77 @@ function renderMesa() {
     ${ollaAbierta ? '' : '<span class="renglon-candado" aria-hidden="true">🔒</span>'}`;
   receta.setAttribute('aria-label', ollaAbierta ? 'Cocinar la olla' : `La olla, al final de la semana — vas ${pctOlla}%`);
   receta.addEventListener('click', () => {
+    if (mesaCarrusel && mesaCarrusel.recienDeslizado()) return;
     sfx('tab');
     if (!ollaAbierta) { toast(`La olla se cocina al final de la semana — faltan ${campana.length - campanaHecha} paradas`); return; }
     mostrarFinal();
   });
-  lista.appendChild(receta);
+  pag.appendChild(receta);
+  return pag;
+}
 
-  /* LA PÁGINA DEL VIERNES va después de la olla y AHORA SE JUEGA: el
-     queso, el huevo y la guarnición son lo de encima del plato, y se
-     abren con la fanesca servida. Debajo de sus tres renglones vive
-     El Apuro — servir a una casa que no deja de llenarse es
-     exactamente lo que el modo sin fin juega. El botón vive en el
-     HTML con sus eventos puestos; aquí solo se muda a su página. */
-  paginasSirve.forEach(pag => {
+function renderMesa() {
+  renderEscenarios();
+  /* la primera visita va al grano: el selector de cocinas es de
+     quien ya cocina; hasta entonces ni el botón ni la hoja existen */
+  const algunHecho = listos() > 0;
+  const puedeCocina = algunHecho || !!estado.devMode;
+  const esc = document.querySelector('.escenarios');
+  if (esc) esc.classList.toggle('hidden', !puedeCocina);
+  const btnCocina = $('#btn-cocina');
+  if (btnCocina) btnCocina.classList.toggle('hidden', !puedeCocina);
+
+  const hechos = listos();
+  const paradasHechas = RUTA.filter(n => estaListo(n.id)).length;
+  /* LA OLLA MIRA LA CAMPAÑA: los días de preparación, sin el
+     viernes — lo de encima del plato viene DESPUÉS de la olla */
+  const campana = RUTA.filter(n => !n.sirve);
+  const campanaHecha = campana.filter(n => estaListo(n.id)).length;
+  const todas = campanaHecha >= campana.length;
+  const todo = paradasHechas >= RUTA.length;
+  const racha = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos} días` : '';
+  const diaEnCurso = DIAS.find(d => !diaCompleto(d));
+  $('#mesa-progreso').textContent = (todo && estado.ollaVista)
+    ? `La mesa, puesta y servida${racha}`
+    : (todas && !estado.ollaVista
+      ? `${paradasHechas} / ${RUTA.length} — la olla espera${racha}`
+      : `${paradasHechas} / ${RUTA.length} paradas · ${diaEnCurso.nombre.toLowerCase()}${racha}`);
+  const pct = Math.round(paradasHechas / RUTA.length * 100);
+  const anillo = $('#mesa-anillo'); if (anillo) anillo.style.setProperty('--p', pct);
+  const cifra = $('#mesa-anillo-n'); if (cifra) cifra.textContent = pct + '%';
+
+  /* EL CURSOR. Se queda donde estaba si esa parada sigue abierta;
+     si no, va a la que toca: la siguiente parada abierta, o la olla
+     cuando ya no queda semana por cocinar. */
+  const siguiente = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
+  /* la olla sólo retiene el cursor mientras espera: servida, el
+     cursor sigue al viernes */
+  const focoVale = focoId === 'olla'
+    ? (todas && !estado.ollaVista)
+    : (() => { const i = RUTA.findIndex(n => n.id === focoId); return i >= 0 && desbloqueado(i); })();
+  if (!focoVale) focoId = siguiente ? siguiente.id : ((todas && !estado.ollaVista) ? 'olla' : null);
+
+  if (!PAGINAS.length) armarPaginas();
+  const lista = $('#mesa-lista');
+  lista.innerHTML = '';
+  lista.className = 'mesa-lista pista-paginas';
+  const ctx = { campana, campanaHecha, todas, hechos };
+  PAGINAS.forEach(p => {
+    const envoltura = document.createElement('div');
+    envoltura.className = 'pag';
+    envoltura.appendChild(p.tipo === 'olla' ? paginaOlla(ctx) : paginaDia(p.dia));
+    lista.appendChild(envoltura);
+  });
+
+  /* EL VIERNES trae debajo de sus tres fichas a El Apuro: servir a una
+     casa que no deja de llenarse es lo que el modo sin fin juega. El
+     botón vive en el HTML con sus eventos puestos; aquí se muda. */
+  const pagViernes = lista.querySelector('.pagina--viernes');
+  if (pagViernes) {
     const promesa = document.createElement('p');
     promesa.className = 'viernes-promesa';
     promesa.textContent = VIERNES.promesa;
-    pag.appendChild(promesa);
+    pagViernes.appendChild(promesa);
     if (!btnApuroEl) btnApuroEl = document.getElementById('btn-apuro');
     if (btnApuroEl) {
       const lunesListo = diaCompleto(DIAS[0]) || estado.devMode;
@@ -616,91 +777,26 @@ function renderMesa() {
       if (pie) pie.textContent = !lunesListo
         ? `Se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`
         : (estado.apuro ? `Tu récord: ${estado.apuro.raciones} raciones` : 'Raciones sin fin, contra el reloj');
-      pag.appendChild(btnApuroEl);
-    }
-    lista.appendChild(pag);
-  });
-
-  /* la despensa: lo que aún no tiene minijuego, dicho sin disimulo.
-     HOY ESTÁ VACÍA —los seis que esperaban ya cocinan— y vacía no se
-     dibuja: una sección que anuncia que no falta nada es ruido. Si
-     un día la receta crece, vuelve sola. */
-  const desp = document.createElement('div');
-  if (POR_VENIR.length) {
-    desp.className = 'despensa';
-    desp.innerHTML = '<p class="mesa-sep">todavía en la despensa <span>· su minijuego viene después</span></p>';
-    const fila = document.createElement('div');
-    fila.className = 'despensa-fila';
-    POR_VENIR.forEach(n => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'despensa-chip';
-      chip.innerHTML = `<span class="despensa-icono">${icono(n.icono)}</span><span>${n.nombre.replace(/^(El|La|Los|Las)\s/, '')}</span>`;
-      chip.addEventListener('click', () => {
-        sfx('tab');
-        const texto = n.nombre + ': ' + n.gesto.replace(/<[^>]+>/g, '');
-        toast(texto, Math.max(2600, 1200 + texto.split(/\s+/).length * 300));
-      });
-      fila.appendChild(chip);
-    });
-    desp.appendChild(fila);
-    lista.insertAdjacentElement('afterend', desp);
-  }
-
-  /* el mapa abre MOSTRANDO el siguiente paso: nadie debería tener
-     que hacer scroll para encontrar dónde seguir.
-     O, si acabas de jugar un nivel, muestra ese nivel en el que estabas */
-  const scrollMesa = document.querySelector('#screen-mesa .scroll');
-  let nodoTarget = null;
-
-  /* primero busca el último nivel que jugaste, si existe */
-  if (estado.ultimoNivel) {
-    const idx = RUTA.findIndex(n => n.id === estado.ultimoNivel);
-    if (idx >= 0) nodoTarget = lista.querySelectorAll('.renglon')[idx];
-  }
-
-  /* si no hay último nivel, usa el siguiente paso */
-  if (!nodoTarget) {
-    nodoTarget = lista.querySelector('.renglon--siguiente') || lista.querySelector('.receta-final');
-  }
-
-  if (scrollMesa && nodoTarget) {
-    requestAnimationFrame(() => {
-      /* por rectángulos y no por offsetTop: los pasos viven anidados
-         en su página y el offset ya no mide contra el contenedor */
-      const d = nodoTarget.getBoundingClientRect().top - scrollMesa.getBoundingClientRect().top;
-      scrollMesa.scrollTop = Math.max(0, scrollMesa.scrollTop + d - scrollMesa.clientHeight * 0.45);
-    });
-  }
-  /* si ya había una despensa de un render anterior, fuera */
-  let sig = desp.nextElementSibling;
-  while (sig && sig.classList.contains('despensa')) { const s = sig.nextElementSibling; sig.remove(); sig = s; }
-
-  /* EL BOTÓN «SIGUE»: desde cualquier punto del recetario, un toque
-     va a lo que toca — la parada abierta que sigue, o la olla si ya
-     no queda semana. Sin él, seguir jugando era buscar con el pulgar
-     el renglón que late. */
-  const btnSigue = $('#btn-sigue');
-  if (btnSigue) {
-    const sig = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
-    if (sig) {
-      btnSigue.classList.remove('hidden');
-      btnSigue.innerHTML = `✎ Sigue: <b>${sig.num} · ${sig.intro ? sig.corto : (sig.corto || sig.nombre)}</b>`;
-      sigueAccion = () => jugar(sig.id);
-    } else if (todas && !estado.ollaVista) {
-      btnSigue.classList.remove('hidden');
-      btnSigue.innerHTML = '🍲 <b>¡A la olla!</b>';
-      sigueAccion = () => mostrarFinal();
-    } else {
-      /* todo cocinado y servido: no hay "siguiente" que prometer */
-      btnSigue.classList.add('hidden');
-      sigueAccion = null;
+      pagViernes.appendChild(btnApuroEl);
     }
   }
 
-  /* EL CIERRE DE UN DÍA SE CELEBRA AQUÍ, al volver a la mesa: la
-     escena se lee con el mapa detrás enseñando la banda nueva, que
-     es justo lo que la escena está abriendo. Una sola vez por día. */
+  /* el carrusel se arma una vez y se abre en la pantalla del cursor */
+  if (!mesaCarrusel) {
+    mesaCarrusel = nuevoCarrusel({
+      viewport: document.querySelector('#screen-mesa .scroll'),
+      pista: lista,
+      izq: $('#mesa-izq'), der: $('#mesa-der'),
+      alCambiar: () => pintarTabs(),
+    });
+  }
+  const destino = paginaDe(focoId);
+  mesaCarrusel.irA(destino >= 0 ? destino : 0, false);
+  pintarTabs();
+  pintarDock();
+
+  /* EL CIERRE DE UN DÍA SE CELEBRA AQUÍ, al volver a la mesa. Una
+     sola vez por día. */
   const pendiente = DIAS.find(d => diaCompleto(d) && !estado.diasVistos.includes(d.id));
   if (pendiente) setTimeout(() => mostrarDia(pendiente), 450);
 }
@@ -820,24 +916,59 @@ function abrirCapitulo(id) {
   return true;
 }
 
+let cuadernoCarrusel = null;
+
+/* los puntos bajo el cuaderno: uno por página, el activo en oro */
+function pintarPuntosCuaderno(i, total) {
+  const caja = $('#cuaderno-puntos');
+  if (!caja) return;
+  caja.innerHTML = '';
+  for (let k = 0; k < total; k++) {
+    const p = document.createElement('button');
+    p.type = 'button';
+    p.className = 'punto' + (k === i ? ' punto--activo' : '');
+    p.setAttribute('aria-label', `Página ${k + 1} de ${total}`);
+    p.addEventListener('click', () => { sfx('tab'); if (cuadernoCarrusel) cuadernoCarrusel.irA(k); });
+    caja.appendChild(p);
+  }
+}
+
+/* EL CUADERNO SE HOJEA, no se baja: una página por capítulo, la
+   entradilla al frente y las fuentes al final. Un capítulo largo se
+   lee dentro de su página — eso sí baja, porque es lectura — pero la
+   pantalla entera nunca se mueve. */
 function renderCuaderno() {
-  $('#cuaderno-entradilla').textContent = HISTORIA.entradilla;
-  const cont = $('#cuaderno-capitulos');
-  cont.innerHTML = '';
+  const pista = $('#cuaderno-capitulos');
+  pista.innerHTML = '';
+  const pagina = (clase, html) => {
+    const env = document.createElement('div');
+    env.className = 'pag';
+    const sec = document.createElement('article');
+    sec.className = clase;
+    sec.innerHTML = html;
+    env.appendChild(sec);
+    pista.appendChild(env);
+    return sec;
+  };
+
+  pagina('pagina capitulo-portada', `
+    <span class="capitulo-portada-ic" aria-hidden="true">${icono(OLLA.icono)}</span>
+    <p class="pagina-dia">el cuaderno</p>
+    <h3 class="pagina-titulo">De dónde sale esta olla</h3>
+    <p id="cuaderno-entradilla" class="cuaderno-entradilla">${HISTORIA.entradilla}</p>
+    <p class="capitulo-cerrojo">Pasa la página →</p>`);
 
   HISTORIA.capitulos.forEach(cap => {
-    const art = document.createElement('article');
-    art.className = 'capitulo' + (capituloAbierto(cap.id) ? '' : ' cerrado');
+    const abierto = capituloAbierto(cap.id);
     const cabeza = `<div class="capitulo-head">
         <span class="plate">${icono(cap.icono)}</span>
         <h3 class="capitulo-titulo">${cap.titulo}</h3>
       </div>`;
-    if (!capituloAbierto(cap.id)) {
-      art.innerHTML = cabeza + '<p class="capitulo-cerrojo">Todavía no. Prepara ingredientes y esta página se abre sola.</p>';
-      cont.appendChild(art);
+    if (!abierto) {
+      pagina('pagina capitulo cerrado', cabeza + '<div class="capitulo-cuerpo"><p class="capitulo-cerrojo">Todavía no. Prepara ingredientes y esta página se abre sola.</p></div>');
       return;
     }
-    let html = cabeza + cap.cuerpo.map(p => `<p>${p}</p>`).join('');
+    let html = cap.cuerpo.map(p => `<p>${p}</p>`).join('');
     if (cap.granos) {
       html += `<div class="granos-mapa">${cap.granos.map(g =>
         `<span class="grano-chip ${g.de}">${g.n}</span>`).join('')}</div>
@@ -851,12 +982,26 @@ function renderCuaderno() {
       html += `<blockquote class="cita"><p>«${c.texto}»</p>
         <footer>${c.quien}<span>${c.datos}</span></footer></blockquote>`;
     });
-    art.innerHTML = html;
-    cont.appendChild(art);
+    pagina('pagina capitulo', cabeza + `<div class="capitulo-cuerpo">${html}</div>`);
   });
 
-  $('#cuaderno-fuentes-lista').innerHTML = HISTORIA.fuentes
-    .map(f => `<li><a href="${f.u}" target="_blank" rel="noopener">${f.t}</a></li>`).join('');
+  pagina('pagina capitulo-fuentes', `
+    <p class="label">de dónde salió esto</p>
+    <ul id="cuaderno-fuentes-lista" class="cuaderno-fuentes-lista">${HISTORIA.fuentes
+      .map(f => `<li><a href="${f.u}" target="_blank" rel="noopener">${f.t}</a></li>`).join('')}</ul>`);
+
+  if (!cuadernoCarrusel) {
+    cuadernoCarrusel = nuevoCarrusel({
+      viewport: document.querySelector('#screen-cuaderno .scroll'),
+      pista,
+      izq: $('#cuaderno-izq'), der: $('#cuaderno-der'),
+      alCambiar: pintarPuntosCuaderno,
+    });
+  }
+  /* se abre en el primer capítulo abierto que aún no se vio: el
+     cuaderno avisa que hay algo nuevo y eso nuevo debe estar a mano */
+  const nuevo = HISTORIA.capitulos.findIndex(c => capituloAbierto(c.id));
+  cuadernoCarrusel.irA(estado.cuadernoVisto ? 0 : Math.max(0, nuevo + 1), false);
 }
 
 function marcaCuaderno() {
@@ -1280,6 +1425,9 @@ async function jugar(id) {
      código y la segunda con los de Blender */
   await Motor.modelosListos();
   const nivelConfig = obtenerConfigNivel(id);
+  /* la dificultad de la parada viaja en la api: los bichos y las
+     moscas la leen para saber cuánto perdonar */
+  api.dificultad = n.dificultad || 1;
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   Motor.cargar(modActual, api, nivelConfig);
@@ -1372,6 +1520,9 @@ async function montarRacion(base, config) {
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE ingrediente y no del que se estaba jugando */
   Apuro.activar();
+  /* en El Apuro la dificultad de los bichos sube con la tanda: la
+     primera enseña, de la cuarta en adelante ya no perdonan */
+  api.dificultad = Math.min(5, Apuro.tanda || 1);
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   Motor.cargar(modActual, api, config);
@@ -1749,6 +1900,11 @@ function bindEventos() {
     if (ultimaPista) pistaAhora(ultimaPista, duracionDe(ultimaPista));
   });
   $('#btn-cuaderno').addEventListener('click', () => { sfx('tab'); mostrar('cuaderno'); });
+  /* la hoja de la cocina: dónde se cocina, fuera del recetario */
+  const btnCocina = $('#btn-cocina');
+  if (btnCocina) btnCocina.addEventListener('click', () => { sfx('tab'); $('#modal-cocina').classList.add('open'); });
+  const cocinaCerrar = $('#cocina-cerrar');
+  if (cocinaCerrar) cocinaCerrar.addEventListener('click', () => { sfx('tab'); cerrarModales(); });
   $('#cuaderno-volver').addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
   const volverArriba = $('#cuaderno-volver-arriba');
   if (volverArriba) volverArriba.addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
@@ -1837,6 +1993,12 @@ function bindEventos() {
       if (Apuro.activo) { Apuro.terminar('salida'); return; }
       if ($('#screen-juego').classList.contains('active')) salirDelNivel();
       else if ($('#screen-cuaderno').classList.contains('active')) mostrar('mesa');
+    }
+    /* las flechas del teclado pasan de pantalla, como el mando */
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !$$('.modal.open').length) {
+      const paso = e.key === 'ArrowLeft' ? -1 : 1;
+      if ($('#screen-mesa').classList.contains('active') && mesaCarrusel) { sfx('tab'); mesaCarrusel.irA(mesaCarrusel.i + paso); }
+      else if ($('#screen-cuaderno').classList.contains('active') && cuadernoCarrusel) { sfx('tab'); cuadernoCarrusel.irA(cuadernoCarrusel.i + paso); }
     }
   });
 

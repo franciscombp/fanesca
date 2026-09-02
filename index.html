@@ -70,69 +70,86 @@
   </main>
 
   <!-- ================= El recetario: la semana, página a página ================= -->
+  <!-- Una consola en vertical: cabecera fija, pestañas de días, una
+       pantalla por día que se pasa con flechas o deslizando, y la
+       barra de acción abajo. Nada se desplaza. -->
   <main id="screen-mesa" class="screen">
     <div class="fondo-cocina" aria-hidden="true"></div>
-    <div class="hoja">
-      <header class="hoja-head">
+    <div class="consola">
+      <header class="consola-head">
         <div class="sign">
           <h2 class="sign-title">El recetario</h2>
           <p class="sign-sub"><span id="mesa-progreso">0 / 46 paradas · lunes</span></p>
         </div>
-        <button type="button" id="btn-cuaderno" class="icono-boton cuaderno-acceso" aria-label="El cuaderno de la fanesca">
+        <span class="anillo consola-anillo" id="mesa-anillo" style="--p:0" aria-hidden="true"><b id="mesa-anillo-n">0%</b></span>
+      </header>
+      <nav id="dias-tabs" class="tabs" aria-label="Las pantallas de la semana"></nav>
+      <div class="carrusel" id="mesa-carrusel">
+        <div class="scroll">
+          <div id="mesa-lista" class="mesa-lista pista-paginas"></div>
+        </div>
+        <button type="button" id="mesa-izq" class="icono-boton flecha flecha--izq hidden" aria-label="Pantalla anterior">‹</button>
+        <button type="button" id="mesa-der" class="icono-boton flecha flecha--der" aria-label="Pantalla siguiente">›</button>
+      </div>
+      <!-- El Apuro nace aquí con sus eventos, pero VIVE en la pantalla
+           del Viernes Santo: renderMesa lo muda ahí en cada pintada. -->
+      <button type="button" id="btn-apuro" class="btn-apuro hidden">
+        <span class="btn-apuro-ico" aria-hidden="true">⏱</span>
+        <span class="btn-apuro-txt">
+          <strong>El Apuro</strong>
+          <small id="btn-apuro-pie">Contra reloj, todo junto</small>
+        </span>
+        <span class="btn-apuro-ir" aria-hidden="true">▶</span>
+      </button>
+      <footer class="dock">
+        <button type="button" id="btn-cuaderno" class="icono-boton dock-lado cuaderno-acceso" aria-label="El cuaderno de la fanesca">
           <span aria-hidden="true">📖</span>
-          <span class="cuaderno-acceso-txt">el cuaderno</span>
           <span id="cuaderno-nuevo" class="cuaderno-nuevo hidden" aria-hidden="true"></span>
         </button>
-      </header>
-      <div class="scroll">
-        <!-- La olla vive UNA vez: como destino, al final del recetario. -->
-        <p id="olla-frase" class="mesa-frase">Todavía está el agua sola. Prepara un ingrediente.</p>
-        <!-- dónde cocinar: la misma mesa, otro sitio -->
-        <div class="escenarios">
-          <p class="escenarios-tit">¿Dónde cocinas hoy?</p>
-          <div id="escenarios-lista" class="escenarios-lista"></div>
-        </div>
-        <!-- El Apuro nace aquí con sus eventos, pero VIVE al fondo del
-             recetario: renderMesa lo muda a la página del Viernes Santo,
-             que es su sitio en la historia. -->
-        <button type="button" id="btn-apuro" class="btn-apuro">
-          <span class="btn-apuro-ico" aria-hidden="true">⏱</span>
-          <span class="btn-apuro-txt">
-            <strong>El Apuro</strong>
-            <small id="btn-apuro-pie">Contra reloj, todo junto</small>
-          </span>
-          <span class="btn-apuro-ir" aria-hidden="true">▶</span>
-        </button>
-        <div id="mesa-lista" class="mesa-lista"></div>
-      </div>
-      <!-- desde cualquier punto del recetario, un toque va a la parada
-           que toca: el recetario se hojea, este dock cocina -->
-      <button type="button" id="btn-sigue" class="btn-sigue hidden"></button>
+        <!-- el botón grande: siempre dice qué toca con el cursor donde está -->
+        <button type="button" id="btn-sigue" class="btn btn--maiz btn--lg dock-principal hidden"></button>
+        <button type="button" id="btn-cocina" class="icono-boton dock-lado hidden" aria-label="Dónde cocinar">🏠</button>
+      </footer>
     </div>
   </main>
 
   <!-- ================= El cuaderno: lo que el plato cuenta ================= -->
   <main id="screen-cuaderno" class="screen">
     <div class="fondo-cocina" aria-hidden="true"></div>
-    <div class="hoja">
-      <header class="hoja-head">
+    <div class="consola">
+      <header class="consola-head">
         <button type="button" id="cuaderno-volver-arriba" class="icono-boton" aria-label="Volver al recetario">‹</button>
         <div class="sign">
           <h2 class="sign-title">El cuaderno</h2>
           <p class="sign-sub">de dónde sale esta olla</p>
         </div>
       </header>
-      <div class="scroll">
-        <p id="cuaderno-entradilla" class="cuaderno-entradilla"></p>
-        <div id="cuaderno-capitulos"></div>
-        <section class="panel panel--sunken cuaderno-fuentes">
-          <p class="label">de dónde salió esto</p>
-          <ul id="cuaderno-fuentes-lista"></ul>
-        </section>
-        <button type="button" id="cuaderno-volver" class="btn btn--peltre btn--block">Volver al recetario</button>
+      <div class="carrusel" id="cuaderno-carrusel">
+        <div class="scroll">
+          <div id="cuaderno-capitulos" class="pista-paginas"></div>
+        </div>
+        <button type="button" id="cuaderno-izq" class="icono-boton flecha flecha--izq hidden" aria-label="Página anterior">‹</button>
+        <button type="button" id="cuaderno-der" class="icono-boton flecha flecha--der" aria-label="Página siguiente">›</button>
       </div>
+      <div id="cuaderno-puntos" class="puntos" aria-hidden="true"></div>
+      <footer class="dock">
+        <button type="button" id="cuaderno-volver" class="btn btn--peltre btn--lg dock-principal">‹ Volver al recetario</button>
+      </footer>
     </div>
   </main>
+
+  <!-- ================= Modal: dónde se cocina ================= -->
+  <div id="modal-cocina" class="modal" role="dialog" aria-modal="true" aria-labelledby="cocina-titulo">
+    <div class="sheet">
+      <p class="sheet-eyebrow">la cocina</p>
+      <h3 id="cocina-titulo" class="sheet-title">¿Dónde cocinas hoy?</h3>
+      <p class="sheet-body">Cambiar de sitio no cambia ni una regla: es puro gusto.</p>
+      <div class="escenarios">
+        <div id="escenarios-lista" class="escenarios-lista"></div>
+      </div>
+      <button type="button" id="cocina-cerrar" class="btn btn--maiz btn--lg btn--block">Listo</button>
+    </div>
+  </div>
 
   <!-- ================= El nivel: el mesón 3D ================= -->
   <main id="screen-juego" class="screen">

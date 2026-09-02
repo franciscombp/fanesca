@@ -30,10 +30,30 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.2.0',
+    fecha: '2026-09-02',
+    titulo: 'Como una consola, de pie',
+    cambios: [
+      'El recetario ya no se baja: cada día es una pantalla con sus paradas en fichas grandes, y se pasa de día con las pestañas de arriba, las flechas o deslizando con el dedo.',
+      'Hay un cursor: la primera vez que tocas una ficha se marca, y el botón grande de abajo dice qué toca — «Cocinar» o «Otra vez» — con el número y el nombre. Segundo toque, o el botón, y al mesón.',
+      'Entre el jueves por la noche y el viernes está la pantalla de la olla: la fanesca llenándose parada a parada.',
+      'El cuaderno se hojea página a página, con la entradilla al frente y las fuentes al final.',
+      'Dónde cocinar salió del recetario: vive en su propia hoja, en el botón de la casita.',
+      'Las hojas de terminado y de El Apuro caben sin bajar: los logros van en rejilla y la tarjeta se lee en tres líneas.',
+      'Los bichos ya no perdonan igual en toda la semana: en las paradas de uno y dos chiles caminan despacio y perdonan un apretón; de tres chiles en adelante van más rápido y no perdonan, y en las bravas (cuatro y cinco) hasta el dedo que pasa barriendo los aplasta. Las moscas y el grano dañado del choclo siguen la misma regla. En El Apuro, la dificultad sube con cada tanda.',
+    ],
+    internos: [
+      'api.dificultad (1–5) la pone jugar() desde n.dificultad y montarRacion() desde Apuro.tanda; plaga.js escala VEL (×1.3 + 0.22 por peldaño), GRACIA (60 %/40 %), PERDONA (dif ≤ 2) y BARRER_APLASTA (dif ≥ 4); maíz y zapallo replican con dif()/gusanoVel()/gracia(); queso y bacalao con moscaGracia() y perdonMosca; maíz perdonado/perdonadoPodrido sólo dif ≤ 2. Tabla en NIVEL-ARQUITECTURA.md.',
+      'main.js: PAGINAS (cinco días, la olla, el viernes), nuevoCarrusel() compartido por recetario y cuaderno (arrastre con umbral, flechas, alCambiar), pintarTabs/pintarDock/enfocar, focoId como cursor, paginaDia/paginaOlla; renderCuaderno arma páginas (portada, capítulos con .capitulo-cuerpo, fuentes) y puntos; flechas del teclado.',
+      'index.html: .consola con .consola-head, .tabs, .carrusel > .scroll > .pista-paginas, .dock; #modal-cocina con .escenarios; #btn-cocina; el cuaderno con el mismo esqueleto y #cuaderno-puntos.',
+      'fanesca.css: sección LA CONSOLA (pestañas, carrusel, .pag > .pagina en columna, rejilla .pagina-pasos 2×N, fichas .renglon con .renglon--foco, olla, viernes, dock) y el cuaderno paginado; hojas compactas (logros en rejilla, tarjeta con line-clamp); pantallas cortas (<740px) con fichas apretadas.',
+    ],
+  },
   {
     v: '2.1.0',
     fecha: '2026-09-02',

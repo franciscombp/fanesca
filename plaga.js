@@ -18,7 +18,20 @@ import { ANCHO_SEGURO } from './motor3d.js';
 
 export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   const nombre = opts.nombre || 'gusanito';
-  const VEL = opts.vel || 0.13;             /* unidades por segundo hacia la batea */
+  /* LA DIFICULTAD MANDA. `api.dificultad` es la de la parada (1 a 5;
+     en El Apuro sube con la tanda). Los bichos eran iguales en la
+     primera parada y en la última, y así el juego perdonaba todo:
+     nueve segundos de camino, segundo y medio sin poder aplastarlos
+     y un apretón gratis por mesón. Ahora el de la presentación
+     enseña —camina despacio y perdona una vez— y el de las bravas
+     cobra: va casi al doble, no perdona, y hasta el dedo que pasa
+     barriendo lo revienta. */
+  const DIF = Math.max(1, Math.min(5, opts.dificultad ?? api.dificultad ?? 1));
+  const VEL = (opts.vel || 0.13) * (1.3 + 0.22 * (DIF - 1));   /* unidades por segundo hacia la batea */
+  /* las presentaciones van con uno o dos chiles: ahí se perdona un
+     apretón, que es donde el bicho se conoce; de tres para arriba no */
+  const PERDONA = DIF <= 2;
+  const BARRER_APLASTA = DIF >= 4;          /* en las bravas, barrer también mata */
   /* Un bicho que nace pegado a la batea es una derrota sin jugada: la
      vaina de la derecha está a un palmo del cuenco. Nazca donde nazca,
      se lo aparta hasta esta distancia para que siempre haya carrera. */
@@ -37,7 +50,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   /* El bicho aparece justo bajo el dedo que lo destapó, y muchas veces
      ese dedo viene barriendo. Sin este respiro, destapar un bicho sería
      perder sin poder reaccionar — que no es dificultad, es injusticia. */
-  const GRACIA = opts.gracia != null ? opts.gracia : 1.5;
+  const GRACIA = (opts.gracia != null ? opts.gracia : 1.5) * (DIF <= 2 ? 0.6 : 0.4);
 
   /* A qué altura viaja el bicho cargado. */
   const ALTO_CARGA = 0.3;
@@ -47,7 +60,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   const lista = [];
   let cargado = null;
   let avisados = 0;
-  let perdonado = false;   /* un apretón perdonado por nivel */
+  let perdonado = !PERDONA;   /* un apretón perdonado por nivel — sólo en la presentación */
   let avisadoRoce = false; /* el "lo empujaste" se explica una vez */
 
   const destino = api.BATEA.clone().setY(api.MESA_Y + ALTO);
@@ -144,6 +157,9 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
        juego pide. Empujarlo igual estorba: hay que ir a buscarlo. */
     aplastar(rec) {
       if (!rec || rec.estado !== 'suelto') return false;
+      /* en las paradas bravas no hay dedo de paso: barrer encima es
+         aplastar, y hay que mirar antes de mover la mano */
+      if (BARRER_APLASTA) return this.tocado(rec);
       if (rec.inmune && api.reloj < rec.inmune) return false;
       rec.inmune = api.reloj + 0.7;
       /* rueda un poco en el sentido en que iba el dedo */

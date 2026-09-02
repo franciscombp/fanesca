@@ -423,3 +423,27 @@ nueva ya estuviera activa, esa llamada tardía le fijaría el total del
 ingrediente viejo y la cuota saldría calculada sobre otra cosa. Por
 eso la ración se activa con `Apuro.activar()`, que el juego llama
 justo antes de `Motor.cargar`.
+
+## La dificultad manda sobre los bichos
+
+Los bichos eran iguales en la primera parada y en la última, y así el
+juego perdonaba todo: nueve segundos de camino hasta la batea,
+segundo y medio sin poder aplastarlos y un apretón gratis por mesón.
+Desde la 2.2 la dificultad de la parada (`dificultad`, de 1 a 5, la
+misma que pintan los chiles) viaja en la api como `api.dificultad`
+— en El Apuro sube con la tanda — y la leen `plaga.js`, el gusano
+propio del maíz, el del zapallo y las moscas del bacalao y el queso:
+
+| | presentaciones (1–2) | 3 | bravas (4–5) |
+|---|---|---|---|
+| velocidad del bicho | ×1.3–1.5 | ×1.7 | ×1.9–2.2 |
+| respiro recién salido | 60 % del de antes | 40 % | 40 % |
+| perdón del primer apretón | sí, uno | no | no |
+| barrer por encima | lo empuja | lo empuja | lo aplasta |
+| moscas: respiro / perdón | 80 % / sí | 50 % / no | 50 % / no |
+| picotazo al grano dañado (maíz) | se perdona | no | no |
+
+Un nivel nuevo con bichos no tiene que hacer nada: `nuevaPlaga()`
+aplica la tabla sola. Si el nivel trae su propio bicho, lea
+`api.dificultad` con el mismo criterio — la regla es una y se nota
+si uno la ignora.

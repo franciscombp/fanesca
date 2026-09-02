@@ -58,7 +58,10 @@ const MOSCA_DURA = 6.5;          /* cuánto se queda posada */
 /* Recién posada, la mosca no mata: el dedo ya venía frotando ahí y
    perder por eso sería castigar un reflejo imposible. En ese respiro,
    rozarla la espanta — que es lo que pasaría de verdad. */
-const MOSCA_GRACIA = 1.2;
+/* el respiro de la mosca recién posada se acorta con la dificultad
+   de la parada (api.dificultad); el perdón, sólo en la presentación */
+const MOSCA_GRACIA_REF = 1.2;
+const moscaGracia = () => MOSCA_GRACIA_REF * ((api.dificultad || 1) <= 2 ? 0.8 : 0.5);
 
 let presasGrupo = null, moscasGrupo = null;
 let presas = [];                 /* {obj, sal:[], limpia, tendida, x, z} */
@@ -211,8 +214,8 @@ export default {
   camara: 'cordel',
 
   construir(ctx, cfg = {}) {
-    perdonMosca = false;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
+    perdonMosca = (api.dificultad || 1) > 2;   /* de tres chiles en adelante no se perdona */
 
     PRESAS = Math.max(1, Math.round(cfg.cantidad ?? 5));
     SAL_POR_PRESA = Math.max(1, Math.round(SAL_POR_PRESA_REF * ((cfg.sal_nivel ?? SAL_REF) / SAL_REF)));
@@ -288,7 +291,7 @@ export default {
     if (terminado || !info.raiz) return;
     if (info.raiz.userData.tipo === 'mosca') {
       const rec = moscas.find(m => m.obj === info.raiz && m.estado === 'posada');
-      if (rec && api.reloj - rec.t0 < MOSCA_GRACIA) { espantar(rec); return; }
+      if (rec && api.reloj - rec.t0 < moscaGracia()) { espantar(rec); return; }
       if (!perdonMosca) {
         perdonMosca = true;
         espantar(rec);
@@ -359,7 +362,7 @@ export default {
       if (!rec) return;
       const mosca = moscaEn(rec);
       if (mosca) {
-        if (api.reloj - mosca.t0 < MOSCA_GRACIA) { espantar(mosca); api.pista('La espantaste a tiempo. <b>No las toques</b>: arrastra desde ellas.', 2800); }
+        if (api.reloj - mosca.t0 < moscaGracia()) { espantar(mosca); api.pista('La espantaste a tiempo. <b>No las toques</b>: arrastra desde ellas.', 2800); }
         else if (!perdonMosca) {
           perdonMosca = true;
           espantar(mosca);
