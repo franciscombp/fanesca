@@ -9,7 +9,7 @@
    ============================================================ */
 
 import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
-import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, cucharasConFallos, tiempoBonito } from './niveles.js';
+import { NIVELES, POR_VENIR, OLLA, ORDEN_OLLA, porId, cucharasDe, cucharasConFallos, tiempoBonito } from './niveles.js';
 import { ARRUINADO } from './arruinado.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO, DIAS_RELATO, VIERNES } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
@@ -79,6 +79,9 @@ const RENOMBRADOS = {
   'maiz-7-danado-duro': 'maiz-8-danado-duro',
   'maiz-8-picada': 'maiz-9-picada',
   'maiz-12-seco-tierno': 'maiz-12-seco-duro',
+  /* el arroz no va en la fanesca: ese mesón pasó a ser el mote (2.4),
+     con la misma mecánica de lavar hasta el agua clara */
+  'arroz-1-tres-aguas': 'mote-1-tres-aguas',
 };
 
 function migrar(s) {
@@ -259,6 +262,9 @@ const SFX = {
   resist:[{ f: 150, d: .08, g: .05, w: 'sawtooth' }],
   corte: [{ f: 950, d: .1, g: .06, w: 'triangle' }, { f: 520, t: .05, d: .12, g: .05, w: 'triangle' }],
   frotar:[{ f: 320, d: .06, g: .035, w: 'sawtooth' }],
+  /* el chapoteo de algo que cae a la olla: grave y corto, sube de
+     tono con cada ingrediente */
+  plop:  [{ f: 300, d: .09, g: .07 }, { f: 170, t: .03, d: .14, g: .06, w: 'triangle' }],
   tab:   [{ f: 620, d: .05, g: .07 }],
   mal:   [{ f: 190, d: .3, g: .11, w: 'sawtooth' }, { f: 120, t: .12, d: .35, g: .1, w: 'sawtooth' }],
   bien:  [{ f: 523, d: .1, g: .1 }, { f: 659, t: .08, d: .1, g: .1 }, { f: 784, t: .16, d: .22, g: .12 }],
@@ -842,6 +848,119 @@ function celebrar(cuantos = 28) {
     caja.appendChild(p);
   }
   setTimeout(() => piezas.forEach(p => p.remove()), 2800);
+}
+
+/* ---------- la olla se llena ----------
+   La escena del final: encima del altar del jueves, los ingredientes
+   caen a la olla uno a uno, en el orden en que entran de verdad
+   (ORDEN_OLLA, en niveles.js). Todo es DOM: aquí se ponen las piezas
+   y el ritmo, el CSS las deja caer. Cada uno deja un trozo en el
+   caldo, que va pasando de agua a fanesca, y el vapor sube con la
+   olla llena. Un toque la salta; con movimiento reducido no se lanza.
+   Devuelve una promesa que se cumple cuando la escena se apagó —o se
+   saltó—: la fiesta del altar espera a eso, para que el confeti caiga
+   sobre la olla lista y no debajo de una cortina negra. */
+const OLLA_TROZOS = {
+  zapallo: '#f0a04b', sambo: '#dfe6b0', mote: '#f3e9c8', garbanzo: '#e8c98a',
+  habas: '#8fae7e', frejol: '#b98aae', maiz: '#f4d35e', arveja: '#7fb069',
+  escoger: '#c98a4b', chochos: '#fbf3e0', melloco: '#f0c352', quinua: '#efe6d2',
+  mani: '#d9b48a', col: '#bcd39a', bacalao: '#fbf3e0', queso: '#fdfaf0',
+};
+const OLLA_AGUA = [0x8f, 0xbf, 0xd0], OLLA_FANESCA = [0xe0, 0xb4, 0x5c];
+const ollaColor = (c) => `rgb(${c.map(Math.round).join(',')})`;
+let ollaEscena = null;   /* la escena en curso: { timers, resolver } */
+
+function escenaOlla() {
+  const esc = $('#olla-escena');
+  if (!esc) return Promise.resolve();
+  try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve(); } catch (e) {}
+  if (ollaEscena) apagarEscenaOlla(true);
+  return new Promise(resolver => {
+    const ctx = { timers: [], resolver };
+    ollaEscena = ctx;
+    const luego = (fn, ms) => ctx.timers.push(setTimeout(fn, ms));
+    const caida = $('#olla-escena-caida'), trozos = $('#olla-trozos'), burbujas = $('#olla-burbujas'), caldo = $('#olla-caldo');
+    const nombre = $('#olla-escena-nombre'), titulo = $('#olla-escena-titulo'), eyebrow = $('#olla-escena-eyebrow'), olla = $('#olla-escena-olla');
+    const reentra = (el) => { el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); };
+
+    caida.innerHTML = ''; trozos.innerHTML = ''; burbujas.innerHTML = ''; nombre.textContent = '';
+    titulo.textContent = 'A la olla'; titulo.classList.remove('entra');
+    eyebrow.textContent = 'jueves santo, por la noche';
+    caldo.setAttribute('fill', ollaColor(OLLA_AGUA));
+    esc.className = 'olla-escena'; esc.hidden = false; esc.style.setProperty('--vapor', '0');
+    requestAnimationFrame(() => esc.classList.add('olla-escena--abre'));
+
+    const lista = ORDEN_OLLA.map(o => ({ ...o, icono: (porId(o.id) || {}).icono || 'granos_mixtos' }));
+    const n = lista.length;
+    let t = 900;
+    lista.forEach((ing, i) => {
+      luego(() => {
+        /* cae, con su nombre arriba */
+        const pieza = document.createElement('span');
+        pieza.className = 'olla-cae';
+        const x = (36 + Math.random() * 28).toFixed(0) + '%';
+        pieza.style.setProperty('--x', x);
+        pieza.style.setProperty('--gira', ((Math.random() - .5) * 60).toFixed(0) + 'deg');
+        pieza.innerHTML = icono(ing.icono);
+        caida.appendChild(pieza);
+        nombre.textContent = ing.nombre;
+        reentra(nombre);
+        /* y aterriza: chapoteo, un trozo en el caldo, la olla que se
+           sacude y el caldo un paso más cerca de la fanesca */
+        luego(() => {
+          pieza.remove();
+          const s = document.createElement('span');
+          s.className = 'olla-salpica'; s.style.setProperty('--x', x);
+          s.innerHTML = '<i></i><b></b><b></b>';
+          caida.appendChild(s);
+          luego(() => s.remove(), 600);
+          const tr = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+          tr.setAttribute('cx', (48 + Math.random() * 144).toFixed(0));
+          tr.setAttribute('cy', (84 + Math.random() * 16).toFixed(0));
+          tr.setAttribute('rx', (5 + Math.random() * 4).toFixed(1));
+          tr.setAttribute('ry', (2.4 + Math.random() * 1.6).toFixed(1));
+          tr.setAttribute('fill', OLLA_TROZOS[ing.id] || '#e8d9b8');
+          trozos.appendChild(tr);
+          const k = (i + 1) / n;
+          caldo.setAttribute('fill', ollaColor(OLLA_AGUA.map((a, j) => a + (OLLA_FANESCA[j] - a) * k)));
+          esc.style.setProperty('--vapor', Math.min(1, k * 1.2).toFixed(2));
+          olla.classList.remove('plop'); void olla.offsetWidth; olla.classList.add('plop');
+          sfx('plop', 0.85 + i * 0.03); buzz(8);
+        }, 600);
+      }, t);
+      /* los dos últimos —el bacalao y el queso— entran más despacio:
+         son el cierre de la receta y se les da su momento */
+      t += i >= n - 2 ? 780 : 470;
+    });
+    /* hierve */
+    luego(() => {
+      titulo.textContent = '¡La fanesca está lista!'; reentra(titulo);
+      eyebrow.textContent = 'que hierva despacio · mañana se sirve';
+      nombre.textContent = 'toda la semana, en una sola olla'; reentra(nombre);
+      esc.classList.add('olla-escena--hierve');
+      for (let i = 0; i < 7; i++) {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', 58 + i * 21); c.setAttribute('cy', 88 + (i % 2) * 7); c.setAttribute('r', 2 + (i % 3));
+        burbujas.appendChild(c);
+      }
+      sfx('bien'); buzz([10, 20, 10]);
+    }, t + 150);
+    luego(() => apagarEscenaOlla(false), t + 2600);
+  });
+}
+
+function apagarEscenaOlla(saltada) {
+  const ctx = ollaEscena;
+  if (!ctx) return;
+  ollaEscena = null;
+  ctx.timers.forEach(clearTimeout);
+  const esc = $('#olla-escena');
+  if (esc) {
+    esc.classList.add('olla-escena--sale');
+    setTimeout(() => { if (!ollaEscena) { esc.hidden = true; esc.className = 'olla-escena'; } }, saltada ? 320 : 560);
+  }
+  if (saltada) sfx('tab');
+  ctx.resolver();
 }
 
 /* ---------- la tarjeta de parada ----------
@@ -2035,6 +2154,10 @@ function bindEventos() {
   $('#arruinado-salir').addEventListener('click', () => { cerrarModales(); salirDelNivel(); });
 
   $('#final-ok').addEventListener('click', () => { cerrarModales(); mostrar('mesa'); });
+  /* un toque en la escena de la olla la salta: el altar ya está
+     abierto debajo */
+  const escOlla = $('#olla-escena');
+  if (escOlla) escOlla.addEventListener('pointerdown', (e) => { e.preventDefault(); apagarEscenaOlla(true); });
   $('#dia-seguir').addEventListener('click', () => { sfx('tab'); cerrarModales(); });
 
   document.addEventListener('keydown', (e) => {
@@ -2089,8 +2212,9 @@ function mostrarFinal() {
   $('#final-total').textContent = `${cuch} de ${cuenta.length * 3} cucharas · ${tiempoBonito(total)} en total`;
   HISTORIA.capitulos.forEach(c => abrirCapitulo(c.id));
   $('#modal-final').classList.add('open');
-  sfx('fiesta');
-  celebrar(64);
+  /* la olla se llena ENCIMA del altar, y la fiesta cae cuando la
+     escena se apaga: el confeti sobre la olla lista, no sobre negro */
+  escenaOlla().then(() => { sfx('fiesta'); celebrar(64); });
 }
 
 /* ---------- arranque ---------- */

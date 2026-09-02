@@ -1,22 +1,29 @@
 /* ============================================================
-   FANESCA — nivel-arroz.js
-   LAVAR HASTA QUE EL AGUA SALGA CLARA.
+   FANESCA — nivel-mote.js
+   LAVAR EL MOTE HASTA QUE EL AGUA SALGA CLARA.
 
-   El arroz es el pariente terco de la quinua, y el gesto es el
-   contrario a propósito: la quinua se remueve EN CÍRCULOS y aquí
-   los círculos no sirven — el arroz se AGITA, de lado a lado, y
-   lo que se mira no es la espuma sino el color del agua: cada
-   vaivén la pone más blanca, y cuando ya salió toda la leche del
-   almidón, se bota y se pone otra. El agua que sale clara es la
-   señal de que se acabó.
+   El mote llega del mercado ya cocido y pelado: es maíz seco que
+   pasó por cal o por lejía de ceniza para soltar el hollejo, y
+   viene con restos de esa cal y de piel entre los granos. Antes
+   de la olla se lava, y el gesto es el contrario a propósito del de
+   la quinua: la quinua se remueve EN CÍRCULOS y aquí los círculos
+   no sirven — el mote se AGITA, de lado a lado, y lo que se mira no
+   es la espuma sino el color del agua: cada vaivén la pone más
+   turbia, y cuando ya soltó toda la cal y el hollejo, se bota y se
+   pone otra. El agua que sale clara es la señal de que se acabó.
 
-     · agita de lado a lado dentro de la batea → el agua se pone blanca
+     · agita de lado a lado dentro de la batea → el agua se enturbia
      · vira la batea hacia un costado          → se bota el agua
      · cuando un agua entera sale clara       → listo
 
+   (Este mesón fue del arroz hasta la 2.4: el arroz no va en la
+   fanesca de la Sierra, el mote sí — es uno de los doce granos. La
+   mecánica de lavar hasta el agua clara es la misma; lo que suelta
+   el grano, no.)
+
    BOTAR ES UN GESTO, como en la quinua: el dedo sale de la batea por
    un costado y la batea se inclina con él hasta que el agua cae.
-   Virarla con el agua todavía clara se lleva arroz — un descuido.
+   Virarla con el agua todavía clara se lleva mote — un descuido.
 
    `lavadas_requeridas` es cuántas aguas pide; `agitadas_por_agua`
    cuántos vaivenes suelta cada una. El gorgojo del costal sale a
@@ -49,7 +56,7 @@ let recorrido = 0;
 let dirPrevia = 0;
 let previo = null;
 let modo = null;
-let avisadoBlanca = false;
+let avisadoTurbia = false;
 let avisadoCirculo = false;
 let anguloAcum = 0;         /* para pescar al que remueve en círculos */
 let pellizcando = false;
@@ -61,17 +68,25 @@ const VIRA_DESDE = 0.12;
 const VIRA_RECORRIDO = 0.5;
 const VIRA_ANGULO = 0.6;
 
+/* el agua del mote no sale lechosa como la del arroz: sale TURBIA,
+   gris-crema de cal y de hollejo. Se distingue de la quinua (espuma)
+   y del arroz de antes (leche) a simple vista, que es lo que enseña
+   qué suelta cada grano. */
+const AGUA_CLARA = '#bcd7dd';
+const AGUA_TURBIA = '#ded8c4';
+const MOTE_LIMPIO = '#f7efd6';
+
 const centro = () => new THREE.Vector3(0, api.MESA_Y + 0.1, TABLA_Z);
 
 function pintar() {
-  /* el agua se pone lechosa con lo agitado del agua ACTUAL, y cada
-     agua nueva arranca menos turbia: el almidón se va acabando */
+  /* el agua se enturbia con lo agitado del agua ACTUAL, y cada
+     agua nueva arranca menos turbia: la cal se va acabando */
   const kAgua = Math.min(1, enAgua / AGITADAS);
-  const base = 1 - (aguas - 1) / LAVADAS;      /* cuánta leche queda por soltar */
-  const clara = new THREE.Color('#bcd7dd');
-  const leche = new THREE.Color('#f2f0e4');
-  aguaMalla.material.color.copy(clara).lerp(leche, kAgua * Math.max(0.25, base));
-  aguaMalla.material.opacity = 0.5 + 0.3 * kAgua;
+  const base = 1 - (aguas - 1) / LAVADAS;      /* cuánta cal queda por soltar */
+  const clara = new THREE.Color(AGUA_CLARA);
+  const turbia = new THREE.Color(AGUA_TURBIA);
+  aguaMalla.material.color.copy(clara).lerp(turbia, kAgua * Math.max(0.25, base));
+  aguaMalla.material.opacity = 0.5 + 0.32 * kAgua;
 }
 
 function agitarHasta(p) {
@@ -103,11 +118,11 @@ function agitarHasta(p) {
   }
 
   if (enAgua >= AGITADAS) {
-    if (!avisadoBlanca) {
-      avisadoBlanca = true;
+    if (!avisadoTurbia) {
+      avisadoTurbia = true;
       api.sfx('resist'); api.buzz([16, 18]);
-      api.aviso('El agua ya salió blanca — vira la batea y pon otra', 'bien');
-      api.pista('Ya soltó toda la leche. <b>Vira la batea</b> hacia un lado para botar el agua.', 3200);
+      api.aviso('El agua ya salió turbia — vira la batea y pon otra', 'bien');
+      api.pista('Ya soltó la cal que traía. <b>Vira la batea</b> hacia un lado para botar el agua.', 3200);
     }
     return;
   }
@@ -121,11 +136,11 @@ function agitarHasta(p) {
     recorrido -= VAIVEN;
     enAgua++; hechos++;
     api.sfx('frotar'); api.buzz(6);
-    if (Math.random() < 0.3) api.chispas(c.clone().setY(api.MESA_Y + 0.34), '#f2f0e4', 3, 0.5);
+    if (Math.random() < 0.3) api.chispas(c.clone().setY(api.MESA_Y + 0.34), AGUA_TURBIA, 3, 0.5);
     pintar();
     api.progreso(hechos, TOTAL);
-    /* la última agua no pide botarse: si ya no queda leche que soltar,
-       el arroz está lavado y el nivel lo dice él solo */
+    /* la última agua no pide botarse: si ya no queda cal que soltar,
+       el mote está lavado y el nivel lo dice él solo */
     if (hechos >= TOTAL) listo();
   }
 }
@@ -134,8 +149,8 @@ function agitarHasta(p) {
 function perderGrano(lado) {
   const c = centro();
   for (let i = 0; i < 3; i++) {
-    const g = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), new THREE.MeshLambertMaterial({ color: '#fdfbf4' }));
-    g.scale.set(1.6, 0.8, 0.8);
+    const g = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 6), new THREE.MeshLambertMaterial({ color: MOTE_LIMPIO }));
+    g.scale.set(1.15, 0.8, 1);
     g.position.set(c.x + lado * RADIO_BATEA * 0.6, api.MESA_Y + 0.3, c.z + (Math.random() - 0.5) * 0.3);
     g.userData.escalaBase = 1;
     raiz.add(g);
@@ -147,20 +162,20 @@ function botarAgua(opts = {}) {
   if (terminado) return;
   const lado = opts.lado || -1;
   if (enAgua < 1) {
-    /* agua clara botada: se va arroz con ella, y eso es un descuido */
+    /* agua clara botada: se va mote con ella, y eso es un descuido */
     api.sfx('resist');
     perderGrano(lado);
-    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#f2f0e4', 8, 0.8);
-    if (api.fallo) api.fallo('agua', 'Esa agua estaba clara: se fue arroz con ella');
+    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), AGUA_CLARA, 8, 0.8);
+    if (api.fallo) api.fallo('agua', 'Esa agua estaba clara: se fue mote con ella');
     else api.aviso('Esa agua está clara todavía — agita primero', 'bien');
     return;
   }
   const completa = enAgua >= AGITADAS;
   aguas += completa ? 1 : 0;
   /* botar a medias no está prohibido: solo no avanza el agua */
-  enAgua = 0; recorrido = 0; dirPrevia = 0; previo = null; avisadoBlanca = false;
+  enAgua = 0; recorrido = 0; dirPrevia = 0; previo = null; avisadoTurbia = false;
   if (!opts.desdeGesto) api.tween(bateaObj.rotation, 'z', -0.34, 0.22, undefined, () => api.tween(bateaObj.rotation, 'z', 0, 0.3));
-  api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#f2f0e4', 10, 0.9);
+  api.chispas(centro().clone().setY(api.MESA_Y + 0.36), AGUA_TURBIA, 10, 0.9);
   api.sfx('frotar'); api.buzz([12, 18, 12]);
   api.composta(Math.min(1, (aguas - 1) / LAVADAS));
   pintar();
@@ -175,23 +190,24 @@ function listo() {
   if (terminado) return;
   if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea', 'bien'); return; }
   terminado = true;
-  /* la prueba final: el agua queda clara y el grano blanquito */
-  aguaMalla.material.color.set('#bcd7dd');
+  /* la prueba final: el agua queda clara y el grano limpio, ya sin
+     el gris de la cal */
+  aguaMalla.material.color.set(AGUA_CLARA);
   aguaMalla.material.opacity = 0.45;
-  granosGrupo.children.forEach(m => m.material.color.set('#fdfbf4'));
+  granosGrupo.children.forEach(m => m.material.color.set(MOTE_LIMPIO));
   api.sfx('bien');
   api.completar();
 }
 
 export default {
-  id: 'arroz',
+  id: 'mote',
   camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     hechos = 0; enAgua = 0; aguas = 1; recorrido = 0; dirPrevia = 0; previo = null;
-    modo = null; avisadoBlanca = false; avisadoCirculo = false; anguloAcum = 0;
+    modo = null; avisadoTurbia = false; avisadoCirculo = false; anguloAcum = 0;
     pellizcando = false; terminado = false; virando = 0; viradoEnGesto = false;
 
     LAVADAS = Math.max(1, Math.round(cfg.lavadas_requeridas ?? 3));
@@ -204,7 +220,7 @@ export default {
     tabla.userData = { tipo: 'tabla' };
     raiz.add(tabla);
 
-    bateaObj = api.pieza('batea-arroz');
+    bateaObj = api.pieza('batea-mote');
     bateaObj.position.copy(centro());
     bateaObj.userData = { tipo: 'batea' };
     raiz.add(bateaObj);
@@ -221,9 +237,9 @@ export default {
     this._sueltos = 0;
     pintar();
     api.progreso(0, TOTAL);
-    api.pista('<b>Agita de lado a lado</b> dentro de la batea; cuando el agua salga blanca, <b>vira la batea</b> hacia un lado.', 4600);
+    api.pista('<b>Agita de lado a lado</b> dentro de la batea; cuando el agua salga turbia, <b>vira la batea</b> hacia un lado.', 4600);
 
-    window.__arroz = {
+    window.__mote = {
       get hechos() { return hechos; },
       agitar() { if (enAgua < AGITADAS) { enAgua++; hechos++; pintar(); api.progreso(hechos, TOTAL); if (hechos >= TOTAL) listo(); } return hechos; },
       botar() { botarAgua(); },
@@ -237,7 +253,7 @@ export default {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     api.sfx('resist');
-    api.pista('Con tocar no suelta el almidón: hay que <b>agitar</b> dentro de la batea.', 2800);
+    api.pista('Con tocar no suelta la cal: hay que <b>agitar</b> dentro de la batea.', 2800);
   },
 
   alArrastrarInicio(info) {
@@ -314,6 +330,6 @@ export default {
     bateaObj = null; aguaMalla = null; granosGrupo = null; plaga = null;
     modo = null; previo = null; pellizcando = false; terminado = false;
     virando = 0; viradoEnGesto = false;
-    delete window.__arroz;
+    delete window.__mote;
   },
 };

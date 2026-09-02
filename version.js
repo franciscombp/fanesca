@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.4.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.4.0',
+    fecha: '2026-09-02',
+    titulo: 'Como se prepara de verdad',
+    cambios: [
+      'La olla se llena: al servir la fanesca, los dieciséis ingredientes caen a la olla uno a uno, en el orden en que entran en la cocina de verdad —el zapallo y el sambo primero, los granos cocidos aparte, el maní con leche, la col, el bacalao con su leche y el queso al final—, con su nombre, su chapoteo y el caldo pasando de agua a fanesca hasta que hierve. Un toque la salta.',
+      'El arroz no va en la fanesca de la Sierra: ese mesón ahora es EL MOTE, uno de los doce granos. Llega cocido y pelado con cal, y se lava agitándolo hasta que el agua sale clara. Tu récord del arroz pasa al mote.',
+      'El bacalao ya no se tiende en un cordel "a orear" (eso es curarlo, no desalarlo): se le sacude la sal gruesa y se lleva a la tina de remojo, donde queda flotando. Los textos cuentan lo que sigue: aguas que se cambian desde la víspera, y al día siguiente, la leche.',
+      'El melloco no se pela ni se raspa: se refriega bajo el agua para sacarle la tierra y la baba. Mismo gesto, nombre de cocina.',
+      'La olla, el cuaderno y las tarjetas dicen ahora cómo se prepara cada cosa: el zapallo y el sambo cocidos con la leche y hechos puré, el maní tostado y molido con leche, el garbanzo remojado desde la víspera.',
+    ],
+    internos: [
+      'nivel-arroz.js → nivel-mote.js (id mote, batea-mote en modelos/despensa.js, COMIDA.mote, ICONS.mote, MOTE_NIVELES/mote-1-tres-aguas, raciones y SIN_FIN). main.js RENOMBRADOS migra arroz-1-tres-aguas → mote-1-tres-aguas. sw.js PRECACHE actualizado.',
+      'nivel-bacalao.js: remojar() en vez de tender(); pieza `tina` (modelos/bacalao.js: cuerpo, filo, agua; userData.nivelAgua) reemplaza a cordel/poste/pinza; TINA_Z −0.48, TINA_LLEGA −0.2; flotación en actualizar; window.__bacalao para pruebas. motor3d.js: cámara `remojo` reemplaza a `cordel`.',
+      'niveles.js: ORDEN_OLLA (dieciséis, con nombre corto) y OLLA.gesto con el orden real. historia.js: granos con Mote, TARJETAS.mote, textos de bacalao/melloco/zapallo/maní/jueves.',
+      'Escena final: #olla-escena en index.html (olla SVG con #olla-caldo, #olla-trozos, #olla-burbujas, fogón y vapor en CSS), escenaOlla()/apagarEscenaOlla() en main.js (promesa; timers cancelables; pointerdown salta; reduced-motion no la lanza), sfx `plop` con tono creciente; mostrarFinal abre el altar de una y lanza la fiesta al apagarse la escena. .confeti sube a z-modal+2.',
+    ],
+  },
   {
     v: '2.3.0',
     fecha: '2026-09-02',

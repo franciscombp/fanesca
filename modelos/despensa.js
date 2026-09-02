@@ -1,6 +1,6 @@
 /* ============================================================
    FANESCA — modelos/despensa.js
-   Las piezas de los seis que faltaban: sambo, garbanzo, arroz,
+   Las piezas de los seis que faltaban: sambo, garbanzo, mote,
    queso y leche, huevo duro y la guarnición.
 
    Van juntos en un archivo porque llegaron juntos —eran la
@@ -12,7 +12,7 @@
    PARTES NOMBRADAS (para que un .glb encaje)
      media-sambo   → 'pulpa' (la cara cortada, se va gastando)
      garbanzo      → 'pepa', 'camisita'
-     batea-arroz   → 'cuenco', 'agua', 'granos'
+     batea-mote    → 'cuenco', 'agua', 'granos'
      bloque-queso  → 'bloque'
      jarra-leche   → 'leche' (el chorro se anima desde el nivel)
      huevo         → 'cascara', 'clara', 'casco0'…'cascoN'
@@ -116,34 +116,36 @@ registrar('garbanzo', (THREE, opts = {}) => {
   return g;
 });
 
-/* ---------- EL ARROZ: la batea del agua lechosa ---------- */
+/* ---------- EL MOTE: la batea del agua turbia ---------- */
 
-registrar('batea-arroz', (THREE, opts = {}) => {
+registrar('batea-mote', (THREE, opts = {}) => {
   const r = opts.radio || 0.66;
   const g = new THREE.Group();
-  g.name = 'batea-arroz';
+  g.name = 'batea-mote';
   const cuenco = pieza('cuenco', THREE, { radio: r });
   cuenco.name = 'cuenco';
   g.add(cuenco);
-  /* el montón de arroz al fondo: granitos alargados, blancos */
+  /* el montón de mote al fondo: granos gordos, pálidos, cada uno con
+     su forma — el mote pelado es maíz seco que se hinchó al cocerse,
+     y ningún grano queda igual al vecino */
   const granos = new THREE.Group();
   granos.name = 'granos';
   granos.position.y = 0.05;
-  const geoG = forma('grano-arroz', () =>
-    achatar(new THREE.SphereGeometry(1, 7, 6), { desde: -0.4, dureza: 0.4 }));
-  const matG = mate(THREE, COMIDA.arroz);
-  for (let i = 0; i < 52; i++) {
+  const geoG = forma('grano-mote', () =>
+    abollar(achatar(new THREE.SphereGeometry(1, 8, 6), { desde: -0.3, dureza: 0.5 }), { fuerza: 0.08, escala: 2.2, semilla: 17 }));
+  const matG = mate(THREE, COMIDA.mote);
+  for (let i = 0; i < 40; i++) {
     const a = i * 2.399963;
-    const rad = Math.sqrt((i + 0.5) / 52) * r * 0.62;
+    const rad = Math.sqrt((i + 0.5) / 40) * r * 0.64;
     const m = new THREE.Mesh(geoG, matG);
-    m.position.set(Math.cos(a) * rad, (i % 3) * 0.005, Math.sin(a) * rad);
-    m.scale.set(0.05, 0.017, 0.02);
-    m.rotation.y = a * 1.7;
+    m.position.set(Math.cos(a) * rad, (i % 3) * 0.008, Math.sin(a) * rad);
+    m.scale.set(0.052, 0.034, 0.046);
+    m.rotation.set(0, a * 1.7, (i % 2) * 0.3);
     m.userData.ignorar = true;
     granos.add(m);
   }
   g.add(granos);
-  /* el agua: arranca clara y el nivel la va poniendo lechosa */
+  /* el agua: arranca clara y el nivel la va enturbiando de cal */
   const agua = new THREE.Mesh(
     new THREE.CylinderGeometry(r * 0.78, r * 0.7, 0.07, 24),
     brillante(THREE, COMIDA.agua, { transparent: true, opacity: 0.5 })

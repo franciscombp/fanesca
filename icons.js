@@ -182,6 +182,20 @@ ICONS.sambo = _svg(`
   <path d="M24 20.5 Q20 36 24 51 M32 19 V53 M40 20.5 Q44 36 40 51" stroke="#e9f2cd" stroke-width="3.4" fill="none" stroke-linecap="round"/>
   ${face(32, 37, .8)}`);
 
+/* el mote: la batea con el grano gordo y pálido, y el agua turbia
+   de cal que hay que cambiar (fue el arroz hasta la 2.4) */
+ICONS.mote = _svg(`
+  <ellipse cx="32" cy="53" rx="19" ry="3.2" fill="#3a2c18" opacity=".16"/>
+  <path d="M10 28 Q10 50 32 50 Q54 50 54 28 Z" fill="#e8d9b8"/>
+  <ellipse cx="32" cy="28" rx="22" ry="7.4" fill="#d9d3c0"/>
+  <g fill="#f3e9c8" stroke="#d8c48e" stroke-width="1">
+    <ellipse cx="21" cy="27" rx="5" ry="3.8"/><ellipse cx="31" cy="24.5" rx="5.6" ry="4.2"/>
+    <ellipse cx="42" cy="27" rx="5" ry="3.8"/><ellipse cx="26" cy="31" rx="4.4" ry="3.2"/>
+    <ellipse cx="37" cy="31" rx="4.6" ry="3.4"/>
+  </g>
+  <path d="M10 28 Q10 50 32 50 Q54 50 54 28" fill="none" stroke="${INK}" stroke-width="1.8" stroke-opacity=".35" stroke-linecap="round"/>
+  ${face(32, 40, .6)}`);
+
 /* el queso fresco: la rueda blanca con su tajada de menos */
 ICONS.queso = _svg(`
   <ellipse cx="32" cy="26" rx="20" ry="8" fill="#fdfaf0"/>

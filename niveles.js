@@ -95,14 +95,14 @@ export const NIVELES = [
     id: 'melloco',
     emoji: '🥔',
     cuenta: 'mellocos',
-    pasos: [{ ico: '🥔', txt: 'Raspa la babaza', desde: 0 }],
+    pasos: [{ ico: '🥔', txt: 'Refriega la baba', desde: 0 }],
     nombre: 'El melloco',
-    tarea: 'Raspar la babaza',
+    tarea: 'Refregar y lavar',
     icono: 'melloco',
     modulo: () => import('./nivel-melloco.js'),
-    gesto: '<b>Raspa</b> parejo y sin arrebato: si lo empujas de golpe, se dispara.',
+    gesto: '<b>Refriega</b> parejo y sin arrebato: si lo empujas de golpe, se dispara.',
 
-    nota: 'El melloco viene forrado en su propia baba. Es el único de la olla que se defiende: apretarlo es perderlo.',
+    nota: 'El melloco no se pela: se refriega bajo el agua hasta sacarle la tierra y la baba que suelta. Es el único de la olla que se defiende: apretarlo es perderlo.',
     bicho: 'el gusanito',
     cucharas: [55, 85, 125],
   },
@@ -185,15 +185,15 @@ export const NIVELES = [
     id: 'bacalao',
     emoji: '🐟',
     cuenta: 'trozos',
-    pasos: [{ ico: '💧', txt: 'Cambia el agua', desde: 0 }, { ico: '🐟', txt: 'Desmenuza', desde: 0.3 }],
+    pasos: [{ ico: '🧂', txt: 'Frota la sal', desde: 0 }, { ico: '💧', txt: 'A la tina, a remojar', desde: 0.3 }],
     nombre: 'El bacalao',
-    tarea: 'Desalar y tender',
+    tarea: 'Desalar',
     icono: 'bacalao',
     modulo: () => import('./nivel-bacalao.js'),
-    gesto: '<b>Frota</b> la sal de cada presa y arrástrala al cordel a orear.',
+    gesto: '<b>Frota</b> la sal gruesa de cada presa y llévala a la tina a remojar.',
     avisoBicho: '🪰 Si se posa <b>la mosca</b>: espántala de un roce. <b>No la aplastes</b> contra la carne.',
 
-    nota: 'El bacalao llega seco y salado desde el norte. Se le saca la sal frotando y se tiende a orear antes de la leche.',
+    nota: 'El bacalao llega seco y enterrado en sal. Se le sacude la sal de encima y se deja en remojo desde la víspera, cambiando el agua; recién entonces se cocina en leche y se desmenuza para la olla.',
     bicho: 'la mosca',
     cucharas: [55, 85, 130],
   },
@@ -226,16 +226,17 @@ export const NIVELES = [
     cucharas: [55, 83, 121],
   },
   {
-    id: 'arroz',
-    emoji: '🍚',
+    id: 'mote',
+    emoji: '🌽',
     cuenta: 'aguas',
-    nombre: 'El arroz',
+    pasos: [{ ico: '🌊', txt: 'Agita de lado a lado', desde: 0 }, { ico: '💧', txt: 'Vira el agua turbia', desde: 0.3 }],
+    nombre: 'El mote',
     tarea: 'Lavar',
-    icono: 'quinua',
-    modulo: () => import('./nivel-arroz.js'),
-    gesto: '<b>Agita de lado a lado</b>; cuando el agua salga blanca, bótala y pon otra.',
+    icono: 'mote',
+    modulo: () => import('./nivel-mote.js'),
+    gesto: '<b>Agita de lado a lado</b>; cuando el agua salga turbia, vira la batea y pon otra.',
 
-    nota: 'Tres aguas, como la quinua, pero al revés: aquí no hay espuma que mirar — se mira el color. El agua sale blanca de almidón, y cuando sale clara, el arroz está listo.',
+    nota: 'El mote llega del mercado ya cocido y pelado con cal. Tres aguas, como la quinua, pero aquí no hay espuma que mirar — se mira el color: el agua sale turbia de cal y de hollejo, y cuando sale clara, el mote está listo.',
     bicho: 'el gorgojo',
     cucharas: [45, 68, 99],
   },
@@ -289,7 +290,7 @@ export const NIVELES = [
 
    Aquí vivieron seis ingredientes esperando minijuego, apagados en
    la despensa de la mesa. Ya cocinan todos. La lista se queda por
-   si un día la receta crece (¿el mote? ¿la cebolla del refrito?):
+   si un día la receta crece (¿la cebolla del refrito? ¿el ají?):
    lo que se agregue aquí aparece solo en la despensa, con su gesto
    prometido, hasta que tenga su `nivel-<id>.js`.
    ============================================================ */
@@ -310,8 +311,39 @@ export const OLLA = {
   nombre: 'La fanesca',
   tarea: 'Cocinar la olla',
   icono: 'fanesca',
-  gesto: 'Los doce granos, cada uno a su tiempo: primero los que más tardan, al final la leche y el queso. Que hierva despacio y no se deje de revolver.',
+  gesto: 'Primero el zapallo y el sambo con la leche, que son el cuerpo; después los granos, cada uno cocido aparte; el maní molido, la col, el bacalao con su leche, y al final el queso. Que hierva despacio y no se deje de revolver.',
 };
+
+/* ============================================================
+   EL ORDEN EN QUE ENTRAN A LA OLLA — la escena final.
+
+   La fanesca de la Sierra no se cocina echando todo junto: el
+   zapallo y el sambo se cuecen primero con la leche y se hacen puré
+   (son el cuerpo del caldo); los granos se cocinan cada uno aparte
+   y entran ya cocidos, empezando por los más duros; el maní tostado
+   va molido con leche; la col picada fina; el bacalao se cocina en
+   leche y entra desmenuzado con esa misma leche; y el queso fresco
+   se desmiga al final, casi con el fuego apagado. El nombre corto
+   es lo que se lee mientras cae.
+   ============================================================ */
+export const ORDEN_OLLA = [
+  { id: 'zapallo',  nombre: 'el zapallo' },
+  { id: 'sambo',    nombre: 'el sambo' },
+  { id: 'mote',     nombre: 'el mote' },
+  { id: 'garbanzo', nombre: 'el garbanzo' },
+  { id: 'habas',    nombre: 'las habas' },
+  { id: 'frejol',   nombre: 'el fréjol' },
+  { id: 'maiz',     nombre: 'el choclo' },
+  { id: 'arveja',   nombre: 'la arveja' },
+  { id: 'escoger',  nombre: 'la lenteja' },
+  { id: 'chochos',  nombre: 'los chochos' },
+  { id: 'melloco',  nombre: 'el melloco' },
+  { id: 'quinua',   nombre: 'la quinua' },
+  { id: 'mani',     nombre: 'el maní con leche' },
+  { id: 'col',      nombre: 'la col' },
+  { id: 'bacalao',  nombre: 'el bacalao con su leche' },
+  { id: 'queso',    nombre: 'el queso, al final' },
+];
 
 export const porId = (id) => NIVELES.find(n => n.id === id);
 

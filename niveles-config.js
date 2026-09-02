@@ -254,10 +254,10 @@ export const VAINAS = {
   },
 };
 
-// RASPAR — Melloco
+// REFREGAR — Melloco (el bloque se sigue llamando RASPAR por dentro)
 export const MELLOCO_NIVELES = {
   'melloco-1-facil': {
-    nombre: 'El melloco · raspe suave',
+    nombre: 'El melloco · refregado suave',
     dificultad: 2, bloque: 'RASPAR',
     tiempoBase: 45,
     config: {
@@ -268,7 +268,7 @@ export const MELLOCO_NIVELES = {
   },
   'melloco-2-normal': {
     nombre: 'El melloco normal',
-    corto: 'Con babaza',
+    corto: 'Con baba',
     dificultad: 3, bloque: 'RASPAR',
     tiempoBase: 55,
     config: {
@@ -544,10 +544,10 @@ export const SAMBO_NIVELES = {
   },
 };
 
-// AGITAR — Arroz
-export const ARROZ_NIVELES = {
-  'arroz-1-tres-aguas': {
-    nombre: 'El arroz · tres aguas',
+// AGITAR — Mote (fue el arroz hasta la 2.4; main.js migra el récord)
+export const MOTE_NIVELES = {
+  'mote-1-tres-aguas': {
+    nombre: 'El mote · tres aguas',
     dificultad: 2, bloque: 'AGITAR',
     tiempoBase: 45,
     config: {
@@ -615,7 +615,7 @@ export const TODOS_NIVELES = {
   MULTIGESTOS: ZAPALLO_NIVELES,
   FROTAR: GARBANZO_NIVELES,
   RALLAR: SAMBO_NIVELES,
-  AGITAR: ARROZ_NIVELES,
+  AGITAR: MOTE_NIVELES,
   DESMENUZAR: QUESO_NIVELES,
   CASCAR: HUEVO_NIVELES,
   ARMAR: GUARNICION_NIVELES,
@@ -727,7 +727,7 @@ export const DIAS = [
     id: 'jueves',
     nombre: 'Jueves por la mañana', titulo: 'La casa llena',
     paradas: [
-      'quinua-2-normal', 'maiz-8-danado-duro', 'arroz-1-tres-aguas',
+      'quinua-2-normal', 'maiz-8-danado-duro', 'mote-1-tres-aguas',
       'mani-2-rapido', 'escoger-2-normal', 'maiz-9-picada',
       'bacalao-2-normal', 'zapallo-2-normal', 'arveja-3-dificil',
     ],
@@ -854,7 +854,7 @@ export const APURO = {
        una ración cueste alrededor de diez segundos de manos */
     { base: 'garbanzo',   porcion: 0.60 },
     { base: 'sambo',      porcion: 0.50 },
-    { base: 'arroz',      porcion: 0.34 },
+    { base: 'mote',       porcion: 0.34 },
     { base: 'queso',      porcion: 0.45 },
     { base: 'huevo',      porcion: 0.34 },
     /* una sola tajada: freír tiene reloj propio y dos raciones de
@@ -903,7 +903,7 @@ const SIN_FIN = {
   zapallo: { resistencia: { por: 0.5, tope: 2 }, gusanos: { por: 0.5, tope: 3 } },
   garbanzo:   { resistencia: { por: 0.5, tope: 3 }, gusanos: { por: 1, tope: 5 } },
   sambo:      { resistencia: { por: 0.5, tope: 3 }, gusanos: { por: 0.5, tope: 3 } },
-  arroz:      { gusanos: { por: 0.5, tope: 3 } },
+  mote:       { gusanos: { por: 0.5, tope: 3 } },
   queso:      { moscas_frecuencia: { por: 0.1, tope: 0.9 } },
   huevo:      { golpes: { por: 0.5, tope: 7 } },
   guarnicion: { resistencia: { por: 0.5, tope: 2 } },

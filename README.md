@@ -78,9 +78,11 @@ fuera de cuadro.
 Doce ingredientes, doce gestos, una sola regla compartida. Doce
 porque son los doce granos —el chiste del plato— y porque ninguno
 repite la mano de otro: en cuanto un ingrediente nuevo iba a pedir un
-gesto que ya estaba, se quedó fuera. El sambo se corta como el
-zapallo; el garbanzo se pela como el chocho; el arroz se escoge como
-la lenteja. Ninguno de los tres entró, y por eso.
+gesto que ya estaba, se quedó fuera. Después llegaron seis más con
+gesto propio (rallar el sambo, frotar el garbanzo remojado, lavar el
+mote hasta el agua clara, desmigar el queso, cascar el huevo, freír
+el maduro), y la receta se quedó en la de siempre: lo que va en la
+olla de la Sierra, y nada que no vaya.
 
 | Nivel | Gesto lento | Gesto rápido | El bicho |
 |---|---|---|---|
@@ -89,13 +91,13 @@ la lenteja. Ninguno de los tres entró, y por eso.
 | **La arveja** | jalar el hilo desde el rabito, a lo largo | correr el pulgar → salen en cadena | gusanito dentro de la vaina |
 | **Los chochos** | apretar uno | arrastrar y van saltando en fila | gorgojo del mismo color |
 | **El fréjol** | — | mantener el dedo hasta que truene, y barrer | gorgojo entre los granos |
-| **El melloco** | raspar parejo la babaza | *no hay* — de golpe se dispara y hay que ir a buscarlo | gusanito entre la tierra |
+| **El melloco** | refregar parejo la baba | *no hay* — de golpe se dispara y hay que ir a buscarlo | gusanito entre la tierra |
 | **El zapallo** | partir, despepitar y pelar | cruzar la línea punteada de un trazo | gusano paseando sobre la pulpa |
 | **La col** | enrollar la hoja de lado a lado | cruzar el rollo → una tira por pasada | gusano del color de la hoja |
 | **La lenteja** | tocar cada piedrita | *no hay* — barrer antes de limpiar arruina la olla | gorgojo igualito a una piedra |
 | **La quinua** | remover en círculos, y botar el agua | *no hay* — el agua saturada no lava | gorgojo, al lado de la batea |
 | **El maní** | vaivén con la mano de piedra | *no hay* — y es a propósito, cierra los doce | gorgojo entre los granos |
-| **El bacalao** | frotar la sal | — | mosca posada en la presa |
+| **El bacalao** | frotar la sal, y a la tina a remojar | — | mosca posada en la presa |
 
 **Tres niveles no tienen atajo rápido, y los tres dicen lo mismo por
 distintos lados.** La lenteja premia la mirada; el melloco castiga el
@@ -136,7 +138,7 @@ entre los dedos.
 Lo que no se sostiene, no se sostiene: el zapallo se corta sobre la
 tabla y el bacalao se frota en el mesón. Cada nivel declara su
 encuadre: uno propio (`camara: { pos, mira, fov }`) o uno de los que
-el motor tiene con nombre (`camara: 'tabla'`, `'cordel'`), y el motor
+el motor tiene con nombre (`camara: 'tabla'`, `'remojo'`), y el motor
 se lo respeta. Diecisiete de los dieciocho piden la `tabla` — picada a
 unos 50° y cerca, para que la tabla y los cuencos llenen dos tercios
 del teléfono en vez de dejar media pantalla de pared — y el choclo,

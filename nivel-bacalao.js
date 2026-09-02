@@ -1,21 +1,27 @@
 /* ============================================================
    FANESCA — nivel-bacalao.js
-   DESALAR Y TENDER EL BACALAO.
+   DESALAR EL BACALAO: SACUDIRLE LA SAL Y PONERLO A REMOJAR.
 
    El único nivel donde una misma presa pide dos gestos distintos,
-   y en orden: primero frotar hasta sacarle la sal, después
-   cargarla al cordel. La presa cambia de comportamiento sola —
-   mientras tenga sal, arrastrar sobre ella es frotar; cuando ya
-   está limpia, arrastrar es levantarla.
+   y en orden: primero frotar hasta sacarle la sal gruesa de encima,
+   después cargarla a la tina de remojo. La presa cambia de
+   comportamiento sola — mientras tenga sal, arrastrar sobre ella es
+   frotar; cuando ya está limpia, arrastrar es levantarla.
+
+   Así se desala de verdad en la Sierra: la sal de encima se sacude
+   o se enjuaga, y el resto sale con horas de remojo y aguas que se
+   cambian, desde la víspera. Al día siguiente se cocina en leche.
+   (Hasta la 2.4 el nivel tendía las presas en un cordel "a orear",
+   que es cosa de curar pescado, no de desalarlo: se corrigió.)
 
    El bicho de este nivel no camina: vuela y se posa. Las moscas
    van a lo salado, así que aparecen justo donde estás trabajando.
    Aplastar una sobre el pescado arruina todo. Para sacarla se
    arrastra desde ella: se espanta y se va.
 
-   Cuántas presas se tienden, cuánta sal traen encima y cada cuánto
-   cae una mosca los pone la config de la parada. El cordel y la
-   tabla son los mismos para el primer desale y para el bacalao que
+   Cuántas presas se remojan, cuánta sal traen encima y cada cuánto
+   cae una mosca los pone la config de la parada. La tina y la
+   tabla son las mismas para el primer desale y para el bacalao que
    viene curado a lo bruto; lo que cambia es el trabajo que hay
    encima de cada presa y la paciencia que dejan las moscas.
    ============================================================ */
@@ -43,8 +49,13 @@ let SAL_POR_PRESA = SAL_POR_PRESA_REF;
 const HONDO_TABLA = 1.4;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
 const FROTE = 0.11;              /* mundo recorrido por cada grano de sal */
-const CORDEL_Z = -0.62;          /* arrastra hacia el fondo para tender */
-const CORDEL_Y = () => api.MESA_Y + 0.92;
+/* La tina va pegada detrás de la tabla: arrastrar "hacia arriba" en
+   la pantalla es ir hacia allá en el mundo. Pasado TINA_LLEGA la
+   presa se suelta y cae al agua. */
+const TINA_Z = -0.48;
+const TINA_LLEGA = -0.2;
+let tinaObj = null;
+let tinaBase = null;             /* la presa flota a esta altura */
 /* Las moscas de la parada normal caen cada once segundos, y eso es la
    frecuencia 0.5. El resto se lee como proporción de ella: el doble de
    frecuencia tiene que ser el doble de moscas, no una tabla de segundos
@@ -68,12 +79,12 @@ let presas = [];                 /* {obj, sal:[], limpia, tendida, x, z} */
 let moscas = [];                 /* {obj, m, presa, t0, estado} */
 let hechos = 0, TOTAL = PRESAS * (SAL_POR_PRESA + 1);
 let modo = null, cargada = null, frotando = null, ultimoPunto = null;
-let tMosca = 4, huecosCordel = [];
+let tMosca = 4, huecosTina = [];
 let terminado = false, avisoLimpia = false;
 let perdonMosca = false;   /* una mosca aplastada perdonada por nivel */
 
-/* La presa con sus vetas y su piel, los cristales de sal y el
-   cordel viven en modelos/bacalao.js. La carne se busca POR NOMBRE
+/* La presa con sus vetas y su piel, los cristales de sal y la
+   tina viven en modelos/bacalao.js. La carne se busca POR NOMBRE
    porque es la única pieza del juego que cambia de material en
    vivo: al quedar sin sal, pasa de salada a limpia. */
 
@@ -82,7 +93,7 @@ let perdonMosca = false;   /* una mosca aplastada perdonada por nivel */
    que la hace parecer puesta a mano y no calculada, así que la fila de
    cinco se conserva tal cual y sólo se reparte a compás cuando la parada
    pide otra cantidad. El ancho no crece con las presas: ensanchar la
-   fila las sacaría de la madera y del cordel de arriba. Que se aprieten
+   fila las sacaría de la madera y de la tina del fondo. Que se aprieten
    no rompe el frotado porque el zigzag en z deja a cada vecina en otra
    hilera, que es justamente para lo que está. */
 /* Un poco más apretada que la original (±1.05): con la cámara de
@@ -97,13 +108,14 @@ function filaDePresas(n) {
   return Array.from({ length: n }, (_, i) => -MEDIA_FILA + i * (MEDIA_FILA * 2 / (n - 1)));
 }
 
-/* Los huecos del cordel sí eran parejos (-1, -0.5, 0, 0.5, 1), y esta
-   cuenta los devuelve clavados para cinco. Se reparten entre los mismos
-   postes de siempre porque el tendedero no se mueve: caben más presas,
-   más juntas, como en un tendedero de verdad. */
-function huecosDelCordel(n) {
+/* Los puestos en la tina van parejos a lo ancho, entre ±0.74: la
+   tina mide 1.15 de semieje y la presa 0.31 de media anchura, así que
+   más allá se saldría por el filo. Con muchas presas se montan un
+   poco unas sobre otras —el zigzag en z y la altura que sube por
+   puesto lo hacen ver como lo que es: bacalao apilado en remojo. */
+function huecosDeLaTina(n) {
   if (n < 2) return [0];
-  return Array.from({ length: n }, (_, i) => -1 + i * (2 / (n - 1)));
+  return Array.from({ length: n }, (_, i) => -0.74 + i * (1.48 / (n - 1)));
 }
 
 function nuevaPresa(x, z) {
@@ -141,29 +153,39 @@ function quitarSal(rec) {
     api.sfx('pop2'); api.buzz([10, 20]);
     if (!avisoLimpia) {
       avisoLimpia = true;
-      api.pista('Ya está sin sal: ahora <b>arrástrala hacia arriba</b>, hasta el cordel.', 4200);
+      api.pista('Ya está sin la sal de encima: ahora <b>arrástrala hacia arriba</b>, a la tina, a remojar.', 4200);
     }
   }
 }
 
-function tender(rec) {
+/* a remojar: la presa cae al agua de la tina y se queda flotando.
+   `tendida` se conserva como nombre del estado —"ya está fuera de la
+   tabla"— porque lo leen las moscas y el frotado. */
+function remojar(rec) {
   rec.tendida = true;
   rec.obj.userData.tipo = null;
   hechos++;
   api.progreso(hechos, TOTAL);
-  const hueco = huecosCordel.shift();
-  const destino = new THREE.Vector3(hueco, CORDEL_Y() - 0.14, CORDEL_Z);
-  api.tween(rec.obj, 'position', destino, 0.3);
-  rec.obj.rotation.set(-Math.PI / 2.1, 0, (Math.random() - 0.5) * 0.2);
-  rec.obj.userData.colgada = { x: hueco, fase: Math.random() * 6 };
+  const hueco = huecosTina.shift();
+  const orden = PRESAS - huecosTina.length - 1;   /* 0..n-1 según orden de llegada */
+  const zig = (orden % 2 ? 0.1 : -0.1);
+  const destino = new THREE.Vector3(hueco, tinaBase + orden * 0.012, TINA_Z + zig);
+  api.tween(rec.obj, 'position', destino, 0.26);
+  /* plana sobre el agua, apenas torcida */
+  rec.obj.rotation.set(0, (Math.random() - 0.5) * 0.5, 0);
+  rec.obj.userData.flotando = { y: destino.y, fase: Math.random() * 6 };
 
-  /* la pinza de ropa */
-  const pinza = api.pieza('pinza');
-  pinza.position.set(0, 0, 0.16);
-  rec.obj.add(pinza);
-
+  /* el chapuzón: agua que salta y el filo del agua que tiembla */
   api.sfx('bien'); api.buzz([15, 25]);
-  api.chispas(destino.clone(), '#fff3c9', 8, 0.8);
+  api.chispas(destino.clone().setY(destino.y + 0.08), '#bcd7dd', 12, 0.9);
+  if (tinaObj) {
+    const agua = api.parte(tinaObj, 'agua');
+    if (agua) {
+      const base = tinaObj.userData.nivelAgua || 0.17;
+      agua.position.y = base + 0.03;
+      api.tween(agua.position, 'y', base, 0.5);
+    }
+  }
   revisarFinal();
 }
 
@@ -208,10 +230,10 @@ const moscaEn = (presa) => moscas.find(m => m.estado === 'posada' && m.presa ===
 
 export default {
   id: 'bacalao',
-  /* las presas se tienden a lo ancho del cordel: la cámara se aleja
-     para que se vea el espacio disponible en el tendedero y las moscas
-     no sorprendan — además necesita verse bien el área de frotado */
-  camara: 'cordel',
+  /* la tina va detrás de la tabla: la cámara se pica un poco menos
+     para que se vea entera y el arrastre "hacia arriba" tenga a dónde
+     ir — además necesita verse bien el área de frotado */
+  camara: 'remojo',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
@@ -253,23 +275,20 @@ export default {
     presas = []; moscas = []; hechos = 0; terminado = false;
     modo = null; cargada = null; frotando = null; ultimoPunto = null;
     avisoLimpia = false;
-    huecosCordel = huecosDelCordel(PRESAS);
+    huecosTina = huecosDeLaTina(PRESAS);
 
     const tabla = api.pieza('tabla', { ancho: 3.1, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
     tabla.userData = { tipo: 'tabla' };
     raiz.add(tabla);
 
-    /* el cordel donde se tiende, al fondo: arrastrar "hacia arriba"
-       en la pantalla es ir hacia allá en el mundo */
-    const cuerda = api.pieza('cordel', { largo: 2.9 });
-    cuerda.position.set(0, CORDEL_Y(), CORDEL_Z);
-    raiz.add(cuerda);
-    [-1.45, 1.45].forEach(x => {
-      const poste = api.pieza('poste');
-      poste.position.set(x, api.MESA_Y + 0.52, CORDEL_Z);
-      raiz.add(poste);
-    });
+    /* la tina de remojo, pegada detrás de la tabla: arrastrar
+       "hacia arriba" en la pantalla es ir hacia allá en el mundo */
+    tinaObj = api.pieza('tina');
+    tinaObj.position.set(0, api.MESA_Y, TINA_Z);
+    tinaObj.userData = { tipo: 'tina' };
+    raiz.add(tinaObj);
+    tinaBase = api.MESA_Y + (tinaObj.userData.nivelAgua || 0.17) - 0.03;
 
     presasGrupo = new THREE.Group();
     moscasGrupo = new THREE.Group();
@@ -283,6 +302,16 @@ export default {
     });
 
     api.progreso(0, TOTAL);
+
+    /* ventanita para las pruebas automáticas, como en los otros
+       mesones: frotar de golpe, echar a la tina, espantar todo */
+    window.__bacalao = {
+      get hechos() { return hechos; },
+      get presas() { return presas.map(p => ({ limpia: p.limpia, tendida: p.tendida, sal: p.sal.length })); },
+      frotar(i) { const p = presas[i]; if (!p) return; while (p.sal.length) quitarSal(p); },
+      remojar(i) { const p = presas[i]; if (p && p.limpia && !p.tendida) remojar(p); },
+      sinMoscas() { moscas.filter(m => m.estado === 'posada').forEach(espantar); },
+    };
   },
 
   objetivos() { return [presasGrupo, moscasGrupo]; },
@@ -308,7 +337,7 @@ export default {
       if (!rec || rec.tendida) return;
       api.sfx('resist');
       api.pista(rec.limpia
-        ? 'Está lista: <b>arrástrala hacia el cordel</b> del fondo.'
+        ? 'Está lista: <b>arrástrala a la tina</b> del fondo, a remojar.'
         : '<b>Frota</b> pasando el dedo de un lado a otro hasta sacarle la sal.', 3200);
     }
   },
@@ -344,10 +373,11 @@ export default {
       const p = api.puntoEnPlano(api.MESA_Y);
       if (!p) return;
       cargada.suelo = { x: p.x, z: p.z };
-      /* al ir hacia el fondo la presa se levanta sola hacia el cordel */
-      const subida = Math.max(0, -(p.z - 0.05)) * 1.05;
+      /* al ir hacia el fondo la presa se levanta un poco, como si la
+         mano la alzara por encima del filo de la tina */
+      const subida = Math.max(0, -(p.z - 0.05)) * 0.4;
       cargada.obj.position.set(p.x, api.MESA_Y + 0.24 + subida, p.z);
-      cargada.obj.rotation.x = -Math.min(1.35, subida * 1.6);
+      cargada.obj.rotation.x = -Math.min(0.5, subida * 1.6);
       return;
     }
 
@@ -405,12 +435,12 @@ export default {
     if (modo === 'cargar' && cargada) {
       const rec = cargada; cargada = null; modo = null;
       const p = rec.suelo || rec.obj.position;
-      if (p.z < -0.3) tender(rec);
+      if (p.z < TINA_LLEGA) remojar(rec);
       else {
         api.tween(rec.obj, 'position', new THREE.Vector3(rec.x, api.MESA_Y + 0.14, rec.z), 0.24);
         rec.obj.rotation.x = 0;
         api.sfx('resist');
-        api.pista('Más arriba: hasta el <b>cordel</b> del fondo.', 2600);
+        api.pista('Más arriba: hasta la <b>tina</b> del fondo.', 2600);
       }
       return;
     }
@@ -434,17 +464,25 @@ export default {
       }
     });
 
-    /* lo tendido se mece en el cordel */
+    /* lo que está en remojo flota: sube y baja apenas, y se ladea */
     presas.forEach(rec => {
-      const c = rec.obj.userData.colgada;
-      if (!c) return;
-      rec.obj.rotation.z = Math.sin(t * 1.6 + c.fase) * 0.09;
+      const f = rec.obj.userData.flotando;
+      if (!f) return;
+      rec.obj.position.y = f.y + Math.sin(t * 1.5 + f.fase) * 0.008;
+      rec.obj.rotation.z = Math.sin(t * 1.1 + f.fase) * 0.035;
+      rec.obj.rotation.x = Math.cos(t * 0.9 + f.fase) * 0.025;
     });
+    /* y el agua de la tina respira */
+    if (tinaObj) {
+      const agua = api.parte(tinaObj, 'agua');
+      if (agua) agua.rotation.z = Math.sin(t * 0.7) * 0.01;
+    }
   },
 
   destruir() {
     presas = []; moscas = [];
-    presasGrupo = moscasGrupo = null;
+    presasGrupo = moscasGrupo = null; tinaObj = null; tinaBase = null;
     cargada = null; frotando = null; modo = null; terminado = false;
+    delete window.__bacalao;
   },
 };

@@ -1,7 +1,7 @@
 /* ============================================================
    FANESCA — modelos/bacalao.js
-   La presa de bacalao con su sal encima, y el cordel donde se
-   tiende a orear.
+   La presa de bacalao con su sal encima, y la tina donde se pone
+   a remojar.
 
    La presa es la única pieza del juego que CAMBIA de material en
    vivo: al quitarle toda la sal, la carne pasa de salada
@@ -13,10 +13,11 @@
      presa-bacalao → 'carne'  (la que se aclara al desalarse)
                      'piel', 'filo', veta0…vetaN
      grano-sal     → una malla suelta
+     tina          → 'cuerpo', 'filo', 'agua'
    ============================================================ */
 
 import { registrar } from './registro.js';
-import { COMIDA, mate } from './paleta.js';
+import { COMIDA, mate, brillante } from './paleta.js';
 import { abollar, forma } from './organico.js';
 
 /* el color de la carne ya desalada: lo pide el nivel para el cambio */
@@ -72,29 +73,62 @@ registrar('grano-sal', (THREE) => {
   return s;
 });
 
-/* la pinza de ropa que sujeta la presa al cordel */
-registrar('pinza', (THREE) => {
-  const p = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.11, 0.035), mate(THREE, COMIDA.cuerda));
-  p.name = 'pinza';
-  p.userData.ignorar = true;
-  return p;
-});
+/* ---------- la tina de remojo ----------
+   Al fondo de la tabla, donde hasta la 2.4 hubo un cordel: el
+   bacalao no se orea, se REMOJA — desde la víspera, cambiando el
+   agua, que es como se le saca la sal de verdad. Una lavacara ancha
+   y baja, de peltre crema con el filo azul, con el agua adentro.
+   Ovalada a propósito (más ancha que honda): las presas se echan
+   una junto a otra y tienen que caber todas sin que la tina se
+   coma la tabla.
 
-/* el cordel del fondo, con sus dos postes */
-registrar('cordel', (THREE, opts = {}) => {
-  const largo = opts.largo || 2.9;
+   PARTES NOMBRADAS
+     tina → 'cuerpo', 'filo', 'agua'
+   `userData.nivelAgua` es la altura de la superficie: el nivel
+   apoya ahí las presas para que floten y no se hundan. */
+registrar('tina', (THREE, opts = {}) => {
+  const ancho = opts.ancho || 1.15;   /* semieje en x */
+  const hondo = opts.hondo || 0.5;    /* semieje en z */
+  const alto = opts.alto || 0.24;
   const g = new THREE.Group();
-  g.name = 'cordel';
-  const mat = mate(THREE, COMIDA.cuerda);
-  const cuerda = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, largo, 8), mat);
-  cuerda.rotation.z = Math.PI / 2;
-  cuerda.name = 'cuerda';
-  g.add(cuerda);
-  return g;
-});
+  g.name = 'tina';
 
-registrar('poste', (THREE) => {
-  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.05, 8), mate(THREE, COMIDA.cuerda));
-  p.name = 'poste';
-  return p;
+  const cuerpo = new THREE.Mesh(
+    new THREE.CylinderGeometry(1, 0.84, alto, 28, 1, true),
+    mate(THREE, COMIDA.peltre, { side: THREE.DoubleSide })
+  );
+  cuerpo.scale.set(ancho, 1, hondo);
+  cuerpo.position.y = alto / 2;
+  cuerpo.name = 'cuerpo';
+
+  const fondo = new THREE.Mesh(new THREE.CircleGeometry(0.84, 28), mate(THREE, COMIDA.peltre_sombra));
+  fondo.rotation.x = -Math.PI / 2;
+  fondo.scale.set(ancho, hondo, 1);
+  fondo.position.y = 0.012;
+  fondo.userData.ignorar = true;
+
+  /* el filo azul, la firma del peltre */
+  const filo = new THREE.Mesh(new THREE.TorusGeometry(1, 0.028, 8, 36), mate(THREE, COMIDA.peltre_filo));
+  filo.rotation.x = Math.PI / 2;
+  filo.scale.set(ancho, hondo, 1);
+  filo.position.y = alto;
+  filo.name = 'filo';
+  filo.userData.ignorar = true;
+
+  const nivelAgua = alto * 0.72;
+  /* el agua más azul que la de las bateas: sobre el peltre crema, el
+     agua clarita de siempre desaparecía y la tina parecía un plato */
+  const agua = new THREE.Mesh(
+    new THREE.CircleGeometry(0.97, 28),
+    brillante(THREE, COMIDA.agua_tina, { transparent: true, opacity: 0.72 })
+  );
+  agua.rotation.x = -Math.PI / 2;
+  agua.scale.set(ancho, hondo, 1);
+  agua.position.y = nivelAgua;
+  agua.name = 'agua';
+  agua.userData.ignorar = true;
+
+  g.add(cuerpo, fondo, filo, agua);
+  g.userData.nivelAgua = nivelAgua;
+  return g;
 });

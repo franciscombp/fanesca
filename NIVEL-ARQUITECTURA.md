@@ -254,8 +254,22 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
   La narrativa vive en `DIAS_RELATO` y `VIERNES` (`historia.js`);
   cada cierre de día se celebra una vez (`estado.diasVistos`). La
   despensa quedó vacía: los seis que esperaban minijuego (garbanzo,
-  sambo, arroz, queso, huevo, guarnición) ya cocinan, con sus piezas
+  sambo, mote, queso, huevo, guarnición) ya cocinan, con sus piezas
   en `modelos/despensa.js`.
+- **La olla se llena** (2.4): servir la olla abre el altar del jueves
+  y, encima, la escena final (`#olla-escena`, `escenaOlla()` en
+  `main.js`): los dieciséis caen uno a uno en el orden real de la
+  receta (`ORDEN_OLLA`, en `niveles.js`), cada uno deja un trozo en
+  el caldo, que pasa de agua a fanesca, y al final hierve. Es DOM y
+  CSS, sin motor; un toque la salta y con movimiento reducido no se
+  lanza. La fiesta (confeti y fanfarria) espera a que la escena se
+  apague.
+- **La receta manda sobre los mesones**: lo que se hace en cada nivel
+  es lo que se hace en la cocina de la Sierra. Por eso el mesón del
+  arroz pasó a ser el del mote (el arroz no va en la fanesca), el
+  bacalao se lleva a una tina de remojo y no a un cordel, y el
+  melloco se refriega en vez de rasparse. Un mesón nuevo tiene que
+  poder explicarse a una abuela quiteña sin que corrija nada.
 - **Un solo candado, el de adelante**: la parada siguiente se abre al
   terminar la anterior. Se puede porque el reparto de la semana ya
   entrelaza los ingredientes (nunca hay quince maíces en fila) y los
@@ -469,7 +483,7 @@ Qué cuenta como descuido, nivel por nivel: un grano reventado o un
 podrido picoteado (maíz), un grano perdido (lenteja), una tajada
 quemada (guarnición), una tira gruesa (col), una mosca perdonada
 (bacalao, queso), un bicho perdonado (todos los que traen bicho), y
-el agua virada antes de tiempo (quinua, arroz). Un nivel nuevo sólo
+el agua virada antes de tiempo (quinua, mote). Un nivel nuevo sólo
 tiene que llamar `api.fallo` donde el cocinero de verdad diría
 «ay»; el mensaje es opcional y sale como alerta si no está cerca
 del tope.

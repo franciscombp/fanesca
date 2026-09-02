@@ -156,14 +156,15 @@ const CAM_POR_DEFECTO = { pos: [0, 3.05, 2.98], mira: [0, 0.98, 0.30] };
    atrás como fondo. Acercarse más no sirve: el motor abre el ángulo
    para que quepan los cuencos y se pierde el zoom que se buscaba.
 
-   La `cordel` es la excepción de la tabla: el bacalao se tiende en
-   un cordel al fondo, a la altura de la cabeza, y una cámara muy
-   picada lo deja pegado a la cabecera. Se levanta la mira y se
-   pica menos, para que el cordel caiga a un cuarto de la pantalla y
-   el arrastre "hacia arriba" tenga a dónde ir. */
+   La `remojo` es la excepción de la tabla: el bacalao se lleva a
+   una tina de remojo que va al fondo, detrás de la tabla, y con la
+   cámara muy picada la tina quedaba pegada a la cabecera. Se pica
+   un poco menos y se mira un poco más atrás, para que la tina caiga
+   a un cuarto de la pantalla y el arrastre "hacia arriba" tenga a
+   dónde ir. */
 export const CAMARAS = {
   tabla:  { pos: [0, 3.4, 2.95], mira: [0, 0.96, 0.72] },
-  cordel: { pos: [0, 3.2, 3.2], mira: [0, 1.15, 0.55] },
+  remojo: { pos: [0, 3.3, 3.1], mira: [0, 0.98, 0.42] },
 };
 const camaraDe = (c) => (typeof c === 'string' ? CAMARAS[c] : c) || null;
 let destelloEl = null;

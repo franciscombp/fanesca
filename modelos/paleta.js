@@ -123,6 +123,12 @@ export const COMIDA = {
   bacalao_veta: '#dcc59c',
   sal: '#ffffff',
   cuerda: '#c9a06c',
+  /* la tina de remojo: lavacara de peltre crema con el filo azul,
+     la de toda cocina de la Sierra */
+  peltre: '#eef0ea',
+  peltre_sombra: '#cfd4cc',
+  peltre_filo: '#1b5faa',
+  agua_tina: '#8dbfd2',
 
   /* los bichos */
   gusano: '#a8d05a',
@@ -152,8 +158,9 @@ export const COMIDA = {
   garbanzo: '#e8c98a',
   garbanzo_camisita: '#f2e3c2',
 
-  /* arroz: grano blanco y el agua que sale lechosa */
-  arroz: '#f7f3e8',
+  /* mote: el grano gordo y pálido, con el gris de la cal encima
+     hasta que se lava; y el agua que sale turbia */
+  mote: '#ede3c4',
   agua_leche: '#f2f0e4',
 
   /* queso y leche: fresco, blanco, de desmigajar */

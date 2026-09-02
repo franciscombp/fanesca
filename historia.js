@@ -86,12 +86,12 @@ export const DIAS_RELATO = {
   },
   miercoles: {
     quien: 'los primos, y el tío con el bacalao',
-    escena: 'Los primos desgranaron más de lo que botaron, que en ellos ya es decir. La vecina mandó col y zapallo de su huerta, y el tío apareció con el bacalao envuelto en papel. La refri ya no cierra a la primera.',
+    escena: 'Los primos desgranaron más de lo que botaron, que en ellos ya es decir. La vecina mandó col y zapallo de su huerta, y el tío apareció con el bacalao envuelto en papel: se le sacudió la sal y quedó en la tina, en remojo. La refri ya no cierra a la primera.',
     refri: 'El bacalao en remojo, el zapallo partido, y la mesa del desgrane llena de tusas.',
   },
   jueves: {
     quien: 'todos, y todos opinan',
-    escena: 'Ya no cabe un alma en la cocina y todo el mundo opina de todo. Tú a lo tuyo: la arveja apretada, la mazorca picada, el maní fino. La abuela prueba la sal del bacalao y por primera vez en la semana no corrige nada.',
+    escena: 'Ya no cabe un alma en la cocina y todo el mundo opina de todo. Tú a lo tuyo: la arveja apretada, la mazorca picada, el mote lavado, el maní fino. La abuela le cambia el agua al bacalao, lo prueba, y por primera vez en la semana no corrige nada.',
     refri: 'Todo lo delicado, listo. Solo queda lo bravo: la tonga.',
   },
   noche: {
@@ -168,7 +168,7 @@ export const HISTORIA = {
         { n: 'Maní', de: 'aca' }, { n: 'Quinua', de: 'aca' },
         { n: 'Habas', de: 'alla' }, { n: 'Arveja', de: 'alla' },
         { n: 'Lenteja', de: 'alla' }, { n: 'Garbanzo', de: 'alla' },
-        { n: 'Col', de: 'alla' }, { n: 'Arroz', de: 'alla' },
+        { n: 'Mote', de: 'aca' }, { n: 'Col', de: 'alla' },
         { n: 'Leche y queso', de: 'alla' }, { n: 'Bacalao', de: 'alla' },
       ],
     },
@@ -179,7 +179,7 @@ export const HISTORIA = {
       cuerpo: [
         'Pregunta incómoda: ¿qué hace un bacalao del mar del norte en una sopa de páramo, en un país con costa propia y pescado fresco a un día de camino?',
         'La respuesta es la Cuaresma. La Iglesia prohibía la carne roja en vigilia, así que había que comer pescado. Pero no había hielo ni trenes: el único pescado capaz de cruzar el Atlántico y después <b>subir a los Andes</b> era el que venía seco y enterrado en sal. La sal no era condimento, era el transporte.',
-        'Por eso el primer gesto de quien cocina fanesca es <b>quitarle la sal</b>: horas de remojo, aguas que se cambian y se botan. Desalar el bacalao es deshacer un viaje de siglos para poder comérselo.',
+        'Por eso el primer gesto de quien cocina fanesca es <b>quitarle la sal</b>: se le sacude la sal gruesa de encima y se pone en remojo desde la víspera, con aguas que se cambian y se botan. Recién entonces se cocina en leche y se desmenuza. Desalar el bacalao es deshacer un viaje de siglos para poder comérselo.',
       ],
     },
     {
@@ -251,7 +251,7 @@ export const TARJETAS = {
   },
   zapallo: {
     titulo: 'Zapallo y sambo, los dos hermanos',
-    texto: 'Zapallo y sambo son americanos y son la base: molidos y hervidos con leche, son lo que le da cuerpo a la fanesca. Lo dulce de abajo, que sostiene los doce granos sin que se note. Casi nunca se los nombra, y sin ellos no hay plato.',
+    texto: 'Zapallo y sambo son americanos y son la base: cocidos con la leche y hechos puré, son lo que le da cuerpo a la fanesca. Lo dulce de abajo, que sostiene los doce granos sin que se note. Casi nunca se los nombra, y sin ellos no hay plato.',
     abre: ['nombre'],
   },
   arveja: {
@@ -261,7 +261,7 @@ export const TARJETAS = {
   },
   melloco: {
     titulo: 'El que se defiende',
-    texto: 'El melloco es andino y es terco: viene forrado en una baba que hay que quitarle raspando, porque apretándolo se dispara. En la sierra se lo come desde antes de que existiera la palabra fanesca, y sigue entrando en la olla sin que casi nadie lo nombre.',
+    texto: 'El melloco es andino y es terco: no se pela, se refriega bajo el agua para sacarle la tierra y la baba que suelta, y apretándolo se dispara. En la sierra se lo come desde antes de que existiera la palabra fanesca, y sigue entrando en la olla sin que casi nadie lo nombre.',
     abre: ['origen'],
   },
   col: {
@@ -276,13 +276,13 @@ export const TARJETAS = {
   },
   mani: {
     titulo: 'Majar, que es el gesto más viejo',
-    texto: 'Moler en piedra es anterior a todo lo demás que hay en esta cocina: a la olla, al fogón, al calendario que le puso fecha al plato. El maní es americano y se maja como se ha majado siempre — yendo y viniendo, sin atajo. Es el único ingrediente que no premia la maña sino la insistencia.',
+    texto: 'Moler en piedra es anterior a todo lo demás que hay en esta cocina: a la olla, al fogón, al calendario que le puso fecha al plato. El maní es americano y se maja como se ha majado siempre — tostado primero, yendo y viniendo, sin atajo, hasta que con la leche se vuelve la crema que espesa el caldo. Es el único ingrediente que no premia la maña sino la insistencia.',
     cita: CHANCOSO_AGRICULTURA,
     abre: ['origen', 'voces'],
   },
   bacalao: {
     titulo: 'La sal era el barco',
-    texto: 'El bacalao llegó por una regla religiosa —nada de carne en vigilia— y se quedó por una razón física: sin frío, el único pescado que podía cruzar el Atlántico y subir a los Andes era el que venía seco y enterrado en sal. Desalarlo, como acabas de hacer, es deshacerle el viaje.',
+    texto: 'El bacalao llegó por una regla religiosa —nada de carne en vigilia— y se quedó por una razón física: sin frío, el único pescado que podía cruzar el Atlántico y subir a los Andes era el que venía seco y enterrado en sal. Sacudirle la sal y dejarlo en remojo, como acabas de hacer, es empezar a deshacerle el viaje; mañana se cocina en leche.',
     abre: ['bacalao'],
   },
   garbanzo: {
@@ -295,9 +295,10 @@ export const TARJETAS = {
     texto: 'El sambo es de estas mismas tierras que el zapallo, y en la fanesca entran los dos: el zapallo en cubos que se ven, el sambo en hebra que desaparece. Rallado y hervido se deshace entero en el caldo — nadie lo encuentra en el plato y sin él el caldo no es el mismo. Hay ingredientes que trabajan así, sin firmar.',
     abre: ['origen'],
   },
-  arroz: {
-    titulo: 'El agua que sale blanca',
-    texto: 'Lo blanco que suelta el arroz al lavarse es almidón, y no es mugre: es lo que se le quita para que no vuelva engrudo la olla. Por eso el arroz no se lava mirando espuma, como la quinua, sino mirando el agua — cuando sale clara, ya soltó lo que tenía que soltar. Cada grano de esta cocina se lava distinto, y saber cuál es cuál también es cocinar.',
+  mote: {
+    titulo: 'El grano que ya vino cocido',
+    texto: 'El mote es maíz seco pelado con cal o con lejía de ceniza —el mismo truco que el nixtamal de México, aprendido en estos Andes por su cuenta— y llega del mercado ya cocido. Lo turbio que suelta al lavarse es la cal y el hollejo que le quedaron, no mugre: por eso no se lava mirando espuma, como la quinua, sino mirando el agua. Cada grano de esta cocina se lava distinto, y saber cuál es cuál también es cocinar.',
+    abre: ['origen'],
   },
   queso: {
     titulo: 'La miga, nunca el cuchillo',

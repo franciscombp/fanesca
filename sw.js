@@ -96,7 +96,7 @@ const PRECACHE = [
   './nivel-bacalao.js',
   './nivel-garbanzo.js',
   './nivel-sambo.js',
-  './nivel-arroz.js',
+  './nivel-mote.js',
   './nivel-queso.js',
   './nivel-huevo.js',
   './nivel-guarnicion.js',

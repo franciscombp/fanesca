@@ -1,12 +1,15 @@
 /* ============================================================
    FANESCA — nivel-melloco.js
-   RASPAR LA BABAZA.
+   REFREGAR EL MELLOCO.
 
-   El melloco viene envuelto en su propia baba, y esa baba no se
-   quita apretando: apretando se te dispara. Se quita <b>raspando</b>
-   —el pulgar de un lado a otro, con paso firme y sin arrebato— y
-   ese es el único gesto de esta cocina que castiga la prisa en el
-   acto y no al final.
+   El melloco no se pela: se lava refregándolo, para sacarle la
+   tierra y la baba que suelta en cuanto se moja. Y esa baba no se
+   quita apretando: apretando se te dispara. Se quita
+   <b>refregando</b> —el pulgar de un lado a otro, con paso firme y
+   sin arrebato— y ese es el único gesto de esta cocina que castiga
+   la prisa en el acto y no al final. (El código sigue diciendo
+   "raspar" por dentro: es el mismo gesto, con el nombre que se le
+   da en la cocina de verdad.)
 
    Es el reverso exacto del choclo. Ahí, ir rápido es la gracia:
    abres un hueco y la hilera se va sola. Aquí, ir rápido es perder
@@ -143,7 +146,7 @@ function resbalar(rec, dx, dz) {
   api.tween(rec.obj.rotation, 'y', rec.obj.rotation.y + 2.6, 0.32);
   api.sfx('resist'); api.buzz([18, 24]);
   if (!resbalados++) {
-    api.pista('Se te disparó. La baba no se quita a lo bruto: <b>raspa parejo</b>, sin arrebato.', 3600);
+    api.pista('Se te disparó. La baba no se quita a lo bruto: <b>refriega parejo</b>, sin arrebato.', 3600);
   }
 }
 
@@ -253,7 +256,7 @@ export default {
     /* un toque seco no raspa nada: la baba pide recorrido */
     if (info.raiz && info.raiz.userData.tipo === 'melloco') {
       api.sfx('resist');
-      api.pista('Con tocarlo no sale. <b>Raspa</b>: pasa el dedo por encima, de lado a lado.', 3200);
+      api.pista('Con tocarlo no sale. <b>Refriega</b>: pasa el dedo por encima, de lado a lado.', 3200);
     }
   },
 

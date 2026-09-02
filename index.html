@@ -48,7 +48,7 @@
       <div class="portada-lockup">
         <p class="portada-over">una semana · una olla · tus manos</p>
         <h1 class="portada-title">La fanesca</h1>
-        <p class="portada-sub">desgranar · desvainar · raspar · majar</p>
+        <p class="portada-sub">desgranar · desvainar · refregar · majar</p>
       </div>
       <div class="portada-acciones">
         <!-- con partida guardada: el anillo de la semana y por dónde vas -->
@@ -288,6 +288,41 @@
       <button type="button" id="final-ok" class="btn btn--maiz btn--lg btn--block">Servir</button>
       <button type="button" id="final-cuaderno" class="btn btn--fantasma btn--sm btn--block">Leer el cuaderno</button>
     </div>
+  </div>
+
+  <!-- ================= La olla se llena: la escena final =================
+       Se abre encima del altar del jueves y muestra los ingredientes
+       cayendo uno a uno, en el orden en que entran de verdad. Un
+       toque la salta. Sin ella, servir la olla era un modal. -->
+  <div id="olla-escena" class="olla-escena" aria-hidden="true" hidden>
+    <div class="olla-escena-cielo" aria-hidden="true"></div>
+    <div class="olla-escena-texto">
+      <p id="olla-escena-eyebrow" class="olla-escena-eyebrow">jueves santo, por la noche</p>
+      <h2 id="olla-escena-titulo" class="olla-escena-titulo">A la olla</h2>
+      <p id="olla-escena-nombre" class="olla-escena-nombre"></p>
+    </div>
+    <div id="olla-escena-olla" class="olla-escena-olla">
+      <div class="olla-fuego" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="olla-vapor" aria-hidden="true"><i></i><i></i><i></i></div>
+      <svg class="olla-svg" viewBox="0 0 240 210" aria-hidden="true">
+        <defs>
+          <radialGradient id="olla-luz" cx="35%" cy="25%" r="85%">
+            <stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/>
+          </radialGradient>
+        </defs>
+        <path d="M22 100 Q2 100 2 118 Q2 136 24 136" fill="none" stroke="#4d2f1c" stroke-width="10" stroke-linecap="round"/>
+        <path d="M218 100 Q238 100 238 118 Q238 136 216 136" fill="none" stroke="#4d2f1c" stroke-width="10" stroke-linecap="round"/>
+        <path d="M26 92 Q16 170 62 194 Q120 212 178 194 Q224 170 214 92 Z" fill="#7a4a2c"/>
+        <path d="M26 92 Q16 170 62 194 Q120 212 178 194 Q224 170 214 92 Z" fill="url(#olla-luz)"/>
+        <ellipse cx="120" cy="92" rx="96" ry="24" fill="#3d2414"/>
+        <ellipse id="olla-caldo" cx="120" cy="92" rx="86" ry="18" fill="#8fbfd0"/>
+        <g id="olla-trozos"></g>
+        <g id="olla-burbujas" fill="#fff6e8" opacity=".55"></g>
+        <ellipse cx="120" cy="92" rx="96" ry="24" fill="none" stroke="#a5744a" stroke-width="8"/>
+      </svg>
+      <div id="olla-escena-caida" class="olla-escena-caida" aria-hidden="true"></div>
+    </div>
+    <p class="olla-escena-pie">toca para saltar</p>
   </div>
 
   <div id="confeti" class="confeti" aria-hidden="true"></div>
