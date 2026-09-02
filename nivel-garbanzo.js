@@ -118,7 +118,7 @@ function frotarHasta(p) {
 
 export default {
   id: 'garbanzo',
-  camara: { pos: [0, 2.7, 3.42], mira: [0, 0.96, 0.44] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
@@ -147,7 +147,11 @@ export default {
     const COLS = Math.max(1, Math.round(Math.sqrt(TOTAL * FORMA_REJILLA)));
     const FILAS = Math.ceil(TOTAL / COLS);
     const MARGEN = 0.35;
-    const pasoX = COLS > 1 ? Math.min(0.62, (ANCHO_TABLA - MARGEN * 2) / (COLS - 1)) : 0.62;
+    /* 0.56 y no 0.62: con cuatro columnas y el corrimiento de las
+       hileras impares, el garbanzo de la orilla derecha llegaba a
+       1.21 y la cámara cercana lo cortaba por el filo (ancho seguro
+       ±1.18). Así queda en 1.1 con margen. */
+    const pasoX = COLS > 1 ? Math.min(0.56, (ANCHO_TABLA - MARGEN * 2) / (COLS - 1)) : 0.56;
     const pasoZ = FILAS > 1 ? Math.min(0.46, (HONDO_TABLA - MARGEN * 2) / (FILAS - 1)) : 0.46;
     for (let i = 0; i < TOTAL; i++) {
       const f = Math.floor(i / COLS), c = i - f * COLS;

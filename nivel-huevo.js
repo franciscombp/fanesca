@@ -145,7 +145,7 @@ function cascoCerca(p, radio = 0.4) {
 
 export default {
   id: 'huevo',
-  camara: { pos: [0, 2.6, 3.3], mira: [0, 0.98, 0.42] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

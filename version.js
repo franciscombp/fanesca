@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.1.0',
+    fecha: '2026-09-02',
+    titulo: 'La mesa, de cerca',
+    cambios: [
+      'La cámara de los mesones se picó y se acercó: la tabla y los cuencos llenan dos tercios de la pantalla y los ingredientes se ven al doble de tamaño. Antes casi la mitad de arriba era pared y un quinto de abajo, cajón.',
+      'Nada se corta por los filos: las habas van en diagonal, las filas del fréjol y del bacalao se apretaron, la media del sambo, la jarra del queso, la sartén y las tajadas de la guarnición caben enteras.',
+      'El bacalao conserva su cordel a la vista, a un cuarto de la pantalla, para que «arrastrar hacia arriba» tenga a dónde ir.',
+      'En la guarnición, al armar el plato, la sartén se retira al fondo y deja sitio a las empanaditas y al ají. Y las tajadas fritas ya no desaparecen al sacarlas de la sartén: se quedan esperando a la derecha, listas para arrastrarlas al plato — antes la parada no se podía terminar a mano.',
+      'Los botones de girar el choclo ya no tapan la batea ni la composta: van a los lados, a media altura.',
+    ],
+    internos: [
+      'motor3d.js: CAMARAS con nombre (tabla: pos [0,3.4,2.95] mira [0,0.96,0.72]; cordel: pos [0,3.2,3.2] mira [0,1.15,0.55]); un nivel puede pedir `camara: \'tabla\'` y camaraDe() la resuelve en cargar(). Diecisiete niveles la piden así; el maíz conserva la suya.',
+      'Repartos dentro del ancho seguro (±1.18): habas PASO_COL 0.82 + giro ±0.6–0.8 rad por columna; fréjol XS_FILA ±0.85 y granos regados hasta ±1.12; bacalao FILA_A_MANO ±0.85; sambo REPOSO -0.88; queso JARRA_REPOSO 0.92; guarnición SARTEN -0.45, ESPERA 0.72, reposo 0.95, toppings -0.85 y SARTEN_RETIRADA al armar.',
+      'controlesEn: \'lados\' en el contrato de nivel; renderControles pone .juego-controles--lados y libera el pie para la pista.',
+      'nivel-guarnicion: deslizar() con tweens en vez de volarA para lo que se queda en el mesón — volarA saca el objeto de la escena al aterrizar (es la parábola al cuenco), y las tajadas fritas se esfumaban.',
+    ],
+  },
   {
     v: '2.0.0',
     fecha: '2026-09-01',

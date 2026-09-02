@@ -1222,8 +1222,12 @@ function renderControles(mod) {
     cont.appendChild(b);
   });
   cont.classList.toggle('hidden', ctrls.length === 0);
+  /* un nivel puede pedir los botones a los lados (el choclo de pie:
+     abajo tapaban los cuencos); entonces el pie queda libre */
+  const enLados = !!(mod && mod.controlesEn === 'lados');
+  cont.classList.toggle('juego-controles--lados', enLados);
   /* la pista se sube si no hay botones que esquivar */
-  $('#juego-pista').style.bottom = ctrls.length
+  $('#juego-pista').style.bottom = (ctrls.length && !enLados)
     ? '' : 'calc(env(safe-area-inset-bottom) + var(--sp-4))';
 }
 

@@ -57,12 +57,16 @@ let terminado = false;
    sólo si hay más vainas que antes: apretar seis o siete en el ancho
    viejo las dejaría montadas unas sobre otras y el barrido no sabría
    de qué vaina vino cada grano. */
-const XS_FILA = [-1.05, -0.52, 0, 0.52, 1.05];
+/* apretada a ±0.92: con la cámara cercana de ahora, a ±1.05 la vaina
+   de la izquierda se cortaba por el filo de la pantalla */
+const XS_FILA = [-0.85, -0.42, 0, 0.42, 0.85];
 
 function filaDeVainas(n) {
   if (n === XS_FILA.length) return XS_FILA;
   if (n <= 1) return [0];
-  const media = n > XS_FILA.length ? 1.35 : 1.05;
+  /* la fila no pasa del ancho seguro de la cámara (±1.18), ni con
+     más vainas: se aprietan, no se ensanchan */
+  const media = n > XS_FILA.length ? 1.0 : 0.85;
   const paso = (media * 2) / (n - 1);
   return Array.from({ length: n }, (_, i) => -media + i * paso);
 }
@@ -102,7 +106,9 @@ function reventar(rec) {
   for (let i = 0; i < POR_VAINA; i++) {
     const a = Math.random() * Math.PI * 2;
     const d = 0.09 + Math.random() * 0.28;
-    const gx = Math.max(-1.35, Math.min(1.35, rec.x + Math.cos(a) * d));
+    /* hasta el ancho seguro de la cámara y no más: un grano regado
+       fuera de pantalla es un grano que no se puede barrer */
+    const gx = Math.max(-1.12, Math.min(1.12, rec.x + Math.cos(a) * d));
     const gz = Math.max(TABLA_Z - 0.62, Math.min(TABLA_Z + 0.62, rec.z + Math.sin(a) * d * 0.7));
     const g = nuevoGrano(rec.x, rec.z);
     g.scale.setScalar(0.4);
@@ -171,7 +177,7 @@ export default {
      altura también ayuda a apreciar cómo quedan repartidos. No se mueve
      con la cantidad: con una sola vaina el plano queda ancho, pero los
      granos se riegan igual y el barrido necesita ese aire */
-  camara: { pos: [0, 3.25, 3.85], mira: [0, 0.98, 0.30] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

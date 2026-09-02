@@ -82,8 +82,11 @@ let perdonMosca = false;   /* una mosca aplastada perdonada por nivel */
    fila las sacaría de la madera y del cordel de arriba. Que se aprieten
    no rompe el frotado porque el zigzag en z deja a cada vecina en otra
    hilera, que es justamente para lo que está. */
-const FILA_A_MANO = [-1.05, -0.52, 0, 0.52, 1.05];
-const MEDIA_FILA = 1.05;
+/* Un poco más apretada que la original (±1.05): con la cámara de
+   ahora las presas de las orillas se cortaban con el filo de la
+   pantalla. El descuadre de medio centímetro se conserva. */
+const FILA_A_MANO = [-0.85, -0.42, 0, 0.42, 0.85];
+const MEDIA_FILA = 0.85;
 
 function filaDePresas(n) {
   if (n === FILA_A_MANO.length) return FILA_A_MANO.slice();
@@ -205,7 +208,7 @@ export default {
   /* las presas se tienden a lo ancho del cordel: la cámara se aleja
      para que se vea el espacio disponible en el tendedero y las moscas
      no sorprendan — además necesita verse bien el área de frotado */
-  camara: { pos: [0, 3.3, 3.9], mira: [0, 0.98, 0.30] },
+  camara: 'cordel',
 
   construir(ctx, cfg = {}) {
     perdonMosca = false;

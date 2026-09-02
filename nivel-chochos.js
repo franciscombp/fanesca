@@ -125,7 +125,7 @@ export default {
   /* trabajo de detalle: la cámara se acerca para que el chocho se vea */
   /* acercada, pero no tanto: la composta y la batea TIENEN que caber
      en cuadro, porque llevar el bicho hasta allá es una regla del juego */
-  camara: { pos: [0, 2.7, 3.42], mira: [0, 0.96, 0.44] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

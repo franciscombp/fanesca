@@ -43,7 +43,8 @@ let vertiendo = 0;
 let perdonMosca = false;
 let terminado = false;
 
-const JARRA_REPOSO = () => new THREE.Vector3(1.05, api.MESA_Y + 0.26, TABLA_Z + 0.15);
+/* a 0.92 la jarra cabe entera en el ancho seguro; a 1.05 se cortaba */
+const JARRA_REPOSO = () => new THREE.Vector3(0.92, api.MESA_Y + 0.26, TABLA_Z + 0.15);
 
 function moscaPosada() { return moscas.find(m => m.estado === 'posada'); }
 
@@ -136,7 +137,7 @@ function verterLeche(dt) {
 
 export default {
   id: 'queso',
-  camara: { pos: [0, 2.8, 3.5], mira: [0, 0.96, 0.42] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

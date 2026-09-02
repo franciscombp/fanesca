@@ -179,7 +179,7 @@ export default {
   /* el nivel entero es mirar de cerca: la cámara acompaña */
   /* acercada, pero con los dos cuencos dentro del encuadre: sin eso
      no hay dónde soltar el gorgojo */
-  camara: { pos: [0, 2.9, 3.75], mira: [0, 1.08, 0.42] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

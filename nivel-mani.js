@@ -171,7 +171,7 @@ function revisarFinal() {
 
 export default {
   id: 'mani',
-  camara: { pos: [0, 2.76, 3.48], mira: [0, 0.97, 0.44] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

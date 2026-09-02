@@ -504,7 +504,7 @@ export default {
   id: 'zapallo',
   /* de cerca: el zapallo entero es lo más grande de la cocina y
      tiene que llenar la pantalla para que partirlo se sienta */
-  camara: { pos: [0, 2.74, 3.4], mira: [0, 1.02, 0.4] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

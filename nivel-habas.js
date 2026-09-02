@@ -28,7 +28,10 @@ let THREE, raiz, api;
    cuarta columna se saldría por los lados; una hilera más solo se mete
    hacia el fondo, que es hacia donde queda sitio. */
 const POR_FILA = 3;
-const PASO_COL = 0.96;                      /* separación entre columnas */
+/* 0.82 y no 0.96: con la cámara picada y cercana de ahora el ancho
+   seguro es ±1.18, y a 0.96 las vainas de las orillas se salían por
+   los filos de la pantalla — la de la izquierda se cortaba a la mitad */
+const PASO_COL = 0.82;                      /* separación entre columnas */
 const PASO_FILA = 0.6;                      /* separación entre hileras */
 /* La tabla no se planta en un z puesto a ojo: `api.FRENTE_TABLA` es
    hasta dónde puede llegar sin meterse dentro de los cuencos, y de
@@ -63,7 +66,14 @@ let terminado = false;
 function nuevaVaina(x, z, conGusano) {
   const v = api.pieza('vaina-haba');
   v.position.set(x, api.MESA_Y + 0.22, z);
-  v.rotation.y = (Math.random() - 0.5) * 0.5;
+  /* EN DIAGONAL, cada columna hacia su lado. La vaina mide casi uno
+     de largo: puesta a lo ancho, las de las orillas se salían del
+     ancho seguro de la cámara (±1.18) aunque las columnas se
+     apretaran. Girada unos 35°, ocupa 0.4 de ancho y cabe entera —
+     y de paso parece puesta a mano, que es como se ponen. El frote
+     de la costura va por cercanía al centro, así que el giro no le
+     cambia nada al gesto. */
+  v.rotation.y = (x < 0 ? -1 : 1) * (0.6 + Math.random() * 0.2);
   v.userData = { tipo: 'vaina', abierta: false };
 
   const bisagra = api.parte(v, 'bisagra');
@@ -185,7 +195,7 @@ export default {
      se abren hacia los lados: la cámara se aleja más de lo normal para
      que todo quepa en pantalla. Un poco más de altura ayuda a ver mejor
      la disposición de las vainas */
-  camara: { pos: [0, 3.2, 3.8], mira: [0, 0.98, 0.30] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

@@ -49,7 +49,9 @@ let avisadoAire = false;
 let pellizcando = false;
 let terminado = false;
 
-const REPOSO = () => new THREE.Vector3(-1.05, 0, TABLA_Z + 0.1);
+/* a -0.88 la media queda entera en pantalla y no toca el marco del
+   rallador (que llega hasta ±0.6); a -1.05 se cortaba por el filo */
+const REPOSO = () => new THREE.Vector3(-0.88, 0, TABLA_Z + 0.1);
 
 function ponerMedia() {
   mediaObj = api.pieza('media-sambo');
@@ -135,7 +137,7 @@ function rallarHasta(p) {
 
 export default {
   id: 'sambo',
-  camara: { pos: [0, 2.9, 3.5], mira: [0, 0.96, 0.4] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

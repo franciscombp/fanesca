@@ -181,7 +181,7 @@ function listo() {
 export default {
   id: 'quinua',
   /* la batea manda el encuadre: tiene que verse el agua entera */
-  camara: { pos: [0, 2.86, 3.4], mira: [0, 0.95, 0.38] },
+  camara: 'tabla',
 
   controles: [{ id: 'botar', txt: '🪣 Botar el agua', tip: 'cuando esté espumosa' }],
 

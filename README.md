@@ -134,8 +134,15 @@ el dedo de lado, y rueda **hacia** el dedo, como rodaría de verdad
 entre los dedos.
 
 Lo que no se sostiene, no se sostiene: el zapallo se corta sobre la
-tabla y el bacalao se frota en el mesón. Cada nivel declara su propio
-encuadre (`camara: { pos, mira }`) y el motor se lo respeta.
+tabla y el bacalao se frota en el mesón. Cada nivel declara su
+encuadre: uno propio (`camara: { pos, mira, fov }`) o uno de los que
+el motor tiene con nombre (`camara: 'tabla'`, `'cordel'`), y el motor
+se lo respeta. Diecisiete de los dieciocho piden la `tabla` — picada a
+unos 50° y cerca, para que la tabla y los cuencos llenen dos tercios
+del teléfono en vez de dejar media pantalla de pared — y el choclo,
+que va de pie, trae la suya. Todo lo que se pone en la tabla cabe en
+el ancho seguro de esa cámara (`ANCHO_SEGURO`, ±1.18): lo que se
+saliera de ahí quedaría fuera de la pantalla y fuera del dedo.
 
 ### La regla que sostiene todo
 

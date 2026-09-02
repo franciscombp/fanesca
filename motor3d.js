@@ -138,6 +138,34 @@ let camMira = new THREE.Vector3();
    pared. El choclo, que va de pie, pide lo contrario y por eso trae
    su propia cámara en nivel-maiz.js. */
 const CAM_POR_DEFECTO = { pos: [0, 3.05, 2.98], mira: [0, 0.98, 0.30] };
+
+/* LAS CÁMARAS CON NOMBRE. Un nivel puede traer su propia cámara
+   (`camara: { pos, mira, fov }`) o pedir una de éstas por nombre
+   (`camara: 'tabla'`), y diecisiete de los dieciocho piden una de
+   éstas: tener el número en un solo sitio es lo que permitió
+   corregir el encuadre de todos a la vez.
+
+   LO QUE SE APRENDIÓ MIRANDO LAS CAPTURAS. Con el ángulo vertical
+   fijo en 72° y un teléfono de pie, la cámara de antes (unos 33° de
+   picado) llenaba el 40 % de arriba con pared y el 20 % de abajo con
+   el cajón y el piso: la tabla, que es lo único que se toca, quedaba
+   en una franja del 15 % con las piezas chiquitas. Picar la cámara a
+   ~50° y acercarla hasta donde el ancho seguro lo permite (ver
+   ANCHO_SEGURO) pone la tabla y los cuencos en dos tercios de la
+   pantalla, con las piezas al doble de tamaño, y deja la pared de
+   atrás como fondo. Acercarse más no sirve: el motor abre el ángulo
+   para que quepan los cuencos y se pierde el zoom que se buscaba.
+
+   La `cordel` es la excepción de la tabla: el bacalao se tiende en
+   un cordel al fondo, a la altura de la cabeza, y una cámara muy
+   picada lo deja pegado a la cabecera. Se levanta la mira y se
+   pica menos, para que el cordel caiga a un cuarto de la pantalla y
+   el arrastre "hacia arriba" tenga a dónde ir. */
+export const CAMARAS = {
+  tabla:  { pos: [0, 3.4, 2.95], mira: [0, 0.96, 0.72] },
+  cordel: { pos: [0, 3.2, 3.2], mira: [0, 1.15, 0.55] },
+};
+const camaraDe = (c) => (typeof c === 'string' ? CAMARAS[c] : c) || null;
 let destelloEl = null;
 let bateaGrupo = null, compostaGrupo = null;
 /* cuánto ha caído en cada cuenco en esta partida, para el marcador */
@@ -717,7 +745,8 @@ export const Motor = {
   /* monta un nivel: limpia lo anterior y le entrega el contexto */
   cargar(mod, api, nivelConfig = {}) {
     this.descargar();
-    this.encuadre(mod.camara && mod.camara.pos, mod.camara && mod.camara.mira, mod.camara && mod.camara.fov);
+    const cam = camaraDe(mod.camara);
+    this.encuadre(cam && cam.pos, cam && cam.mira, cam && cam.fov);
     nivel = mod;
     const ctx = {
       THREE, raiz, api,

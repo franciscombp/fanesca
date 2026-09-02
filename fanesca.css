@@ -829,6 +829,14 @@ svg[width="0"] { width: 0; height: 0; }
 }
 .ctrl:active, .ctrl.presionado { transform: scale(.94); background: rgba(255,211,106,.28); border-color: var(--oro-400); }
 .ctrl-tip { font-family: var(--font-text); font-size: var(--t-2xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--oro-300); }
+/* a los lados, a media altura: el choclo de pie los pide así para que
+   no tapen los cuencos del pie de la pantalla */
+.juego-controles--lados {
+  top: 50%; bottom: auto; transform: translateY(-50%);
+  justify-content: space-between;
+  padding: 0 var(--sp-3);
+}
+.juego-controles--lados .ctrl { min-width: 3.6rem; }
 
 /* ---- la pista: la única enseñanza del juego ---- */
 .juego-pista {

@@ -174,7 +174,7 @@ function revisarFinal() {
 export default {
   id: 'melloco',
   /* de cerca: la baba solo se lee si el melloco ocupa pantalla */
-  camara: { pos: [0, 2.72, 3.46], mira: [0, 0.96, 0.44] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;

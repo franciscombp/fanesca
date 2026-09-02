@@ -157,7 +157,7 @@ function listo() {
 
 export default {
   id: 'arroz',
-  camara: { pos: [0, 2.86, 3.4], mira: [0, 0.95, 0.38] },
+  camara: 'tabla',
 
   controles: [{ id: 'botar', txt: '🪣 Botar el agua', tip: 'cuando salga blanca' }],
 

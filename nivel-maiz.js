@@ -857,6 +857,11 @@ export default {
     { id: 'izq', txt: '⟲', tip: 'girar' },
     { id: 'der', txt: '⟳', tip: 'girar' },
   ],
+  /* A LOS LADOS, no abajo: al pie de la pantalla los dos botones se
+     plantaban justo sobre la batea y la composta, que son destino de
+     juego. A media altura, en las orillas, quedan donde el choclo no
+     llega y el pulgar sí. */
+  controlesEn: 'lados',
 
   construir(ctx, levelConfig = {}) {
     perdonado = false; avisadoRoce = false; perdonadoPodrido = false;

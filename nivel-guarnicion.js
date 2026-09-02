@@ -43,9 +43,15 @@ let enMano = null;       /* lo que va agarrado: {tipo, rec} */
 let avisadoVoltea = false;
 let terminado = false;
 
-const SARTEN = () => new THREE.Vector3(-0.55, api.MESA_Y + 0.2, TABLA_Z);
-const ESPERA = (i) => new THREE.Vector3(0.95, api.MESA_Y + 0.16, TABLA_Z - 0.5 + i * 0.34);
-const PLATO = () => new THREE.Vector3(0.15, api.MESA_Y + 0.18, TABLA_Z + 0.05);
+/* EL REPARTO CABE EN EL ANCHO SEGURO (±1.18): la sartén a la
+   izquierda, las tajadas crudas esperando a la derecha y el plato
+   en medio. A 0.95 las tajadas y a -0.55 la sartén (que mide 0.6 de
+   radio) se salían por los filos con la cámara cercana de ahora. */
+const SARTEN = () => new THREE.Vector3(-0.45, api.MESA_Y + 0.2, TABLA_Z);
+const ESPERA = (i) => new THREE.Vector3(0.72, api.MESA_Y + 0.16, TABLA_Z - 0.5 + i * 0.34);
+const PLATO = () => new THREE.Vector3(0.1, api.MESA_Y + 0.18, TABLA_Z + 0.05);
+/* la sartén se retira del fuego al armar: al fondo, fuera del paso */
+const SARTEN_RETIRADA = () => new THREE.Vector3(-0.95, api.MESA_Y + 0.2, TABLA_Z - 1.25);
 
 function nuevaTajada(i) {
   const obj = api.pieza('maduro', { variante: i });
@@ -98,15 +104,28 @@ function voltear(rec) {
   return true;
 }
 
+/* MOVER SIN VOLAR. `volarA` es la parábola hacia un cuenco y al
+   aterrizar SACA el objeto de la escena (encoge y lo quita: así
+   "entra" en la batea). Las tajadas fritas se movían con eso a su
+   sitio de espera y desaparecían del mesón: al armar el plato no
+   había maduro que arrastrar y la parada no se podía terminar a
+   mano — sólo con el gancho de prueba. Esto las lleva con un
+   saltito y las deja donde van, vivas y tocables. */
+function deslizar(obj, destino, dur = 0.4) {
+  api.tween(obj.position, 'x', destino.x, dur);
+  api.tween(obj.position, 'z', destino.z, dur);
+  api.tween(obj.position, 'y', destino.y + 0.3, dur * 0.45, undefined,
+    () => api.tween(obj.position, 'y', destino.y, dur * 0.55));
+}
+
 function sacarAlPlato(rec) {
   rec.estado = 'frita';
   rec.obj.userData.tipo = null;
   fritas++;
   api.sfx('bien'); api.buzz([10, 14]);
-  rec.obj.userData.escalaBase = 1.5;
   const p = ESPERA((fritas - 1) % 3).clone();
-  p.x = 1.15; p.z += 0.05;
-  api.volarA(rec.obj, p, { dur: 0.4, alto: 0.5 });
+  p.x = 0.95; p.z += 0.05;
+  deslizar(rec.obj, p);
   rec.reposo = p;
 
   if (fritas >= PRESAS) armarFase();
@@ -122,17 +141,25 @@ function armarFase() {
   raiz.add(platoObj);
   api.tween(platoObj.scale, 'x', 1, 0.35); api.tween(platoObj.scale, 'y', 1, 0.35); api.tween(platoObj.scale, 'z', 1, 0.35);
 
+  /* la sartén ya cumplió: se retira al fondo y deja el sitio a lo que
+     va encima del plato — con ella en medio, las empanaditas y el
+     ají no tenían dónde esperar sin montársele */
+  if (sartenObj) {
+    sartenObj.userData.tipo = null;
+    deslizar(sartenObj, SARTEN_RETIRADA(), 0.5);
+  }
+
   /* las empanaditas ya vinieron hechas —son de viento, de la tienda
      de la esquina— y el ají estaba esperando su momento */
   for (let i = 0; i < 2; i++) {
     const e = api.pieza('empanadita');
-    e.position.set(-1.05, api.MESA_Y + 0.14, TABLA_Z - 0.35 + i * 0.42);
+    e.position.set(-0.85, api.MESA_Y + 0.14, TABLA_Z - 0.4 + i * 0.42);
     e.userData = { tipo: 'topping', clase: 'empanadita' };
     raiz.add(e);
     empanaditas.push(e);
   }
   ajiObj = api.pieza('aji-cuenco');
-  ajiObj.position.set(-1.05, api.MESA_Y + 0.12, TABLA_Z + 0.5);
+  ajiObj.position.set(-0.85, api.MESA_Y + 0.12, TABLA_Z + 0.5);
   ajiObj.userData = { tipo: 'topping', clase: 'aji' };
   raiz.add(ajiObj);
   /* las tajadas fritas también se ponen encima */
@@ -151,8 +178,9 @@ function ponerEnPlato(obj) {
   destino.x += Math.cos(a) * 0.28;
   destino.z += Math.sin(a) * 0.22;
   destino.y = api.MESA_Y + 0.3;
-  obj.userData.escalaBase = obj.scale.x;
-  api.volarA(obj, destino, { dur: 0.4, alto: 0.5 });
+  /* se queda ENCIMA del plato, a la vista: con volarA aterrizaba y
+     desaparecía, y el plato armado se veía vacío */
+  deslizar(obj, destino, 0.4);
   api.sfx('pop2'); api.buzz(9);
   api.progreso(hechos, TOTAL);
   if (hechos >= TOTAL && !terminado) {
@@ -166,7 +194,7 @@ const cerca = (a, b, r) => Math.hypot(a.x - b.x, a.z - b.z) < r;
 
 export default {
   id: 'guarnicion',
-  camara: { pos: [0, 3.0, 3.7], mira: [0, 0.95, 0.35] },
+  camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
@@ -215,6 +243,13 @@ export default {
           .find(o => o && o.userData.tipo === 'topping');
         if (obj) ponerEnPlato(obj);
         return hechos;
+      },
+      /* para probar el arrastre CON EL PUNTERO: dónde está en pantalla
+         la próxima tajada frita y dónde el plato */
+      enPantalla() {
+        const M = window.Fanesca.Motor;
+        const t = tajadas.map(t => t.obj).find(o => o && o.userData.tipo === 'topping');
+        return (t && platoObj) ? { de: M.proyectar(t.position), a: M.proyectar(platoObj.position) } : null;
       },
     };
   },
