@@ -325,6 +325,19 @@ export function cucharasDe(nivel, ms) {
   return 1;   /* terminarlo siempre vale al menos una */
 }
 
+/* LOS FALLOS BAJAN CUCHARAS. El tiempo solo no califica: un grano
+   reventado, uno perdido, una tajada quemada o un bicho perdonado
+   son descuidos, y una mano con descuidos no es mano de abuela. En
+   las presentaciones (uno y dos chiles) se cobra recién al tercero;
+   de tres chiles en adelante el primero ya cuesta la tercera cuchara
+   y tres descuidos dejan una sola. */
+export function cucharasConFallos(cuch, fallos, dificultad = 1) {
+  if (!fallos) return cuch;
+  if (dificultad <= 2) return fallos >= 3 ? Math.max(1, cuch - 1) : cuch;
+  if (fallos >= 3) return 1;
+  return Math.min(cuch, 2);
+}
+
 export function tiempoBonito(ms) {
   const s = Math.max(0, ms) / 1000;
   const m = Math.floor(s / 60);

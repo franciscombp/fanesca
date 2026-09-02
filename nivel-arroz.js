@@ -11,8 +11,12 @@
    señal de que se acabó.
 
      · agita de lado a lado dentro de la batea → el agua se pone blanca
-     · botar el agua (el botón)                → agua nueva, más clara
+     · vira la batea hacia un costado          → se bota el agua
      · cuando un agua entera sale clara       → listo
+
+   BOTAR ES UN GESTO, como en la quinua: el dedo sale de la batea por
+   un costado y la batea se inclina con él hasta que el agua cae.
+   Virarla con el agua todavía clara se lleva arroz — un descuido.
 
    `lavadas_requeridas` es cuántas aguas pide; `agitadas_por_agua`
    cuántos vaivenes suelta cada una. El gorgojo del costal sale a
@@ -50,6 +54,12 @@ let avisadoCirculo = false;
 let anguloAcum = 0;         /* para pescar al que remueve en círculos */
 let pellizcando = false;
 let terminado = false;
+/* el viraje: inclinación de la batea (0..1) y si ya se botó en este gesto */
+let virando = 0;
+let viradoEnGesto = false;
+const VIRA_DESDE = 0.12;
+const VIRA_RECORRIDO = 0.5;
+const VIRA_ANGULO = 0.6;
 
 const centro = () => new THREE.Vector3(0, api.MESA_Y + 0.1, TABLA_Z);
 
@@ -96,8 +106,8 @@ function agitarHasta(p) {
     if (!avisadoBlanca) {
       avisadoBlanca = true;
       api.sfx('resist'); api.buzz([16, 18]);
-      api.aviso('El agua ya salió blanca — bótala y pon otra', 'bien');
-      api.pista('Ya soltó toda la leche. <b>Bota el agua</b> y sigue con la nueva.', 3200);
+      api.aviso('El agua ya salió blanca — vira la batea y pon otra', 'bien');
+      api.pista('Ya soltó toda la leche. <b>Vira la batea</b> hacia un lado para botar el agua.', 3200);
     }
     return;
   }
@@ -120,18 +130,36 @@ function agitarHasta(p) {
   }
 }
 
-function botarAgua() {
+/* unos granos que se van con el agua clara */
+function perderGrano(lado) {
+  const c = centro();
+  for (let i = 0; i < 3; i++) {
+    const g = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), new THREE.MeshLambertMaterial({ color: '#fdfbf4' }));
+    g.scale.set(1.6, 0.8, 0.8);
+    g.position.set(c.x + lado * RADIO_BATEA * 0.6, api.MESA_Y + 0.3, c.z + (Math.random() - 0.5) * 0.3);
+    g.userData.escalaBase = 1;
+    raiz.add(g);
+    api.volarA(g, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.45 + i * 0.05, alto: 0.4 });
+  }
+}
+
+function botarAgua(opts = {}) {
   if (terminado) return;
+  const lado = opts.lado || -1;
   if (enAgua < 1) {
+    /* agua clara botada: se va arroz con ella, y eso es un descuido */
     api.sfx('resist');
-    api.aviso('Esa agua está clara todavía — agita primero', 'bien');
+    perderGrano(lado);
+    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#f2f0e4', 8, 0.8);
+    if (api.fallo) api.fallo('agua', 'Esa agua estaba clara: se fue arroz con ella');
+    else api.aviso('Esa agua está clara todavía — agita primero', 'bien');
     return;
   }
   const completa = enAgua >= AGITADAS;
   aguas += completa ? 1 : 0;
   /* botar a medias no está prohibido: solo no avanza el agua */
   enAgua = 0; recorrido = 0; dirPrevia = 0; previo = null; avisadoBlanca = false;
-  api.tween(bateaObj.rotation, 'z', -0.34, 0.22, undefined, () => api.tween(bateaObj.rotation, 'z', 0, 0.3));
+  if (!opts.desdeGesto) api.tween(bateaObj.rotation, 'z', -0.34, 0.22, undefined, () => api.tween(bateaObj.rotation, 'z', 0, 0.3));
   api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#f2f0e4', 10, 0.9);
   api.sfx('frotar'); api.buzz([12, 18, 12]);
   api.composta(Math.min(1, (aguas - 1) / LAVADAS));
@@ -159,14 +187,12 @@ export default {
   id: 'arroz',
   camara: 'tabla',
 
-  controles: [{ id: 'botar', txt: '🪣 Botar el agua', tip: 'cuando salga blanca' }],
-
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     hechos = 0; enAgua = 0; aguas = 1; recorrido = 0; dirPrevia = 0; previo = null;
     modo = null; avisadoBlanca = false; avisadoCirculo = false; anguloAcum = 0;
-    pellizcando = false; terminado = false;
+    pellizcando = false; terminado = false; virando = 0; viradoEnGesto = false;
 
     LAVADAS = Math.max(1, Math.round(cfg.lavadas_requeridas ?? 3));
     AGITADAS = Math.max(2, Math.round(cfg.agitadas_por_agua ?? 10));
@@ -195,7 +221,7 @@ export default {
     this._sueltos = 0;
     pintar();
     api.progreso(0, TOTAL);
-    api.pista('<b>Agita de lado a lado</b> dentro de la batea; cuando el agua salga blanca, bótala.', 4200);
+    api.pista('<b>Agita de lado a lado</b> dentro de la batea; cuando el agua salga blanca, <b>vira la batea</b> hacia un lado.', 4600);
 
     window.__arroz = {
       get hechos() { return hechos; },
@@ -206,10 +232,6 @@ export default {
   },
 
   objetivos() { return [bateaObj, plaga.grupo]; },
-
-  alControl(id, fase) {
-    if (id === 'botar' && fase === 'abajo') botarAgua();
-  },
 
   alTocar(info) {
     if (terminado) return;
@@ -230,11 +252,29 @@ export default {
   alArrastrar() {
     if (terminado) return;
     if (modo === 'cargar') { plaga.mover(api.puntoEnPlano(api.MESA_Y)); return; }
-    if (modo === 'agitar') agitarHasta(api.puntoEnPlano(api.MESA_Y + 0.2));
+    if (modo !== 'agitar') return;
+    const p = api.puntoEnPlano(api.MESA_Y + 0.2);
+    if (!p) return;
+    /* el viraje: el dedo sale por un costado y la batea se inclina
+       con él; pasado el recorrido, se bota. Una botada por gesto. */
+    const c = centro();
+    const fuera = Math.abs(p.x - c.x) - RADIO_BATEA;
+    if (fuera > VIRA_DESDE) {
+      const lado = Math.sign(p.x - c.x) || -1;
+      virando = Math.min(1, (fuera - VIRA_DESDE) / VIRA_RECORRIDO);
+      bateaObj.rotation.z = -lado * virando * VIRA_ANGULO;
+      if (virando >= 1 && !viradoEnGesto) { viradoEnGesto = true; botarAgua({ desdeGesto: true, lado }); }
+      previo = null;
+      return;
+    }
+    if (virando > 0) { virando = 0; api.tween(bateaObj.rotation, 'z', 0, 0.25); }
+    agitarHasta(p);
   },
 
   alArrastrarFin() {
     if (modo === 'cargar') { plaga.soltarMano(); if (hechos >= TOTAL) listo(); }
+    if (virando > 0 && bateaObj) api.tween(bateaObj.rotation, 'z', 0, 0.3);
+    virando = 0; viradoEnGesto = false;
     modo = null; previo = null;
   },
 
@@ -273,6 +313,7 @@ export default {
     if (plaga) plaga.destruir();
     bateaObj = null; aguaMalla = null; granosGrupo = null; plaga = null;
     modo = null; previo = null; pellizcando = false; terminado = false;
+    virando = 0; viradoEnGesto = false;
     delete window.__arroz;
   },
 };

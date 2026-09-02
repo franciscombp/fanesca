@@ -294,6 +294,7 @@ export default {
       if (rec && api.reloj - rec.t0 < moscaGracia()) { espantar(rec); return; }
       if (!perdonMosca) {
         perdonMosca = true;
+        if (api.fallo) api.fallo('mosca');
         espantar(rec);
         api.sfx('mal'); api.buzz([40, 30, 40]);
         api.aviso('💛 ¡Por poquito! Esta te la perdono — espántala de un roce suave');
@@ -365,6 +366,7 @@ export default {
         if (api.reloj - mosca.t0 < moscaGracia()) { espantar(mosca); api.pista('La espantaste a tiempo. <b>No las toques</b>: arrastra desde ellas.', 2800); }
         else if (!perdonMosca) {
           perdonMosca = true;
+          if (api.fallo) api.fallo('mosca');
           espantar(mosca);
           api.sfx('mal'); api.buzz([40, 30, 40]);
           api.aviso('💛 ¡Por poquito! Esta te la perdono');

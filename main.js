@@ -9,7 +9,8 @@
    ============================================================ */
 
 import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
-import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, tiempoBonito } from './niveles.js';
+import { NIVELES, POR_VENIR, OLLA, porId, cucharasDe, cucharasConFallos, tiempoBonito } from './niveles.js';
+import { ARRUINADO } from './arruinado.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO, DIAS_RELATO, VIERNES } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
@@ -1018,6 +1019,48 @@ let motorListo = false;      /* si init() consiguió WebGL; sin él no se entra 
 let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque */
 let hechosAhora = 0, totalAhora = 1;
+let fallosAhora = 0;         /* los descuidos de esta partida */
+
+/* ---------- los fallos ----------
+   El tiempo solo no califica. Cada nivel avisa sus descuidos con
+   `api.fallo(tipo, mensaje)` —un grano reventado, uno perdido, una
+   tajada quemada, un bicho perdonado— y aquí se cuentan una sola vez
+   para todos: bajan cucharas al terminar (ver cucharasConFallos), se
+   ven en el HUD, y de tres chiles en adelante tienen TOPE: pasarlo
+   arruina la parada. Es el objetivo mínimo de calidad que le faltaba
+   al juego — antes bastaba con llegar, y llegar de cualquier manera
+   valía lo mismo que llegar bien. En El Apuro un descuido cuesta
+   segundos, que allí es la única moneda. */
+const TOPE_FALLOS = [Infinity, Infinity, Infinity, 6, 4, 3];   /* índice = dificultad */
+const topeFallos = () => TOPE_FALLOS[Math.min(5, api.dificultad || 1)] ?? Infinity;
+function pintarFallos() {
+  const el = $('#hud-fallos');
+  if (!el) return;
+  /* en El Apuro no hay tope: cada descuido cuesta segundos y ya */
+  const tope = Apuro.activo ? Infinity : topeFallos();
+  el.classList.toggle('visible', fallosAhora > 0);
+  el.textContent = Number.isFinite(tope) ? `✗ ${fallosAhora} / ${tope}` : `✗ ${fallosAhora}`;
+  el.classList.toggle('hud-fallos--rojo', Number.isFinite(tope) && fallosAhora >= tope - 1);
+}
+function registrarFallo(tipo, msg) {
+  if (!Apuro.activo && !corriendo && !relojEnEspera) return;
+  fallosAhora++;
+  sfx('mal', 1.5); buzz([18, 12, 18]);
+  Motor.destello('rgba(230,57,70,.16)');
+  pintarFallos();
+  const el = $('#hud-fallos');
+  if (el) { el.classList.remove('brinca'); void el.offsetWidth; el.classList.add('brinca'); }
+  if (Apuro.activo) {
+    const coste = APURO.fallo || 2;
+    Apuro.descontar(coste);
+    flotarTiempo('−' + coste + 's', 'pierde');
+    return;
+  }
+  const tope = topeFallos();
+  if (fallosAhora >= tope) { arruinarNivel(ARRUINADO.descuidos(fallosAhora)); return; }
+  if (Number.isFinite(tope) && fallosAhora === tope - 1) alerta(`¡Cuidado! Un descuido más y se arruina · ${fallosAhora} de ${tope}`, 'peligro');
+  else if (msg) alerta(msg, 'peligro');
+}
 
 /* El reloj se ve mientras se juega: de él salen las cucharas, así que
    esconderlo era pedirle al jugador que corriera contra un número
@@ -1211,6 +1254,8 @@ const api = {
     if (corriendo || relojEnEspera) { relojEnEspera = false; arruinarNivel(motivo); }
   },
   aviso: alerta,
+  /* un descuido: lo cuenta el juego, no el nivel (ver registrarFallo) */
+  fallo: (tipo, msg) => registrarFallo(tipo, msg),
   pista: (msg, ms) => { if (capturaPista && msg) capturaPista(msg, ms); else pista(msg, ms); },
   /* los pops suben de tono con la racha: la escalerita sonora es la
      recompensa más barata y más efectiva que existe — el jugador la
@@ -1403,7 +1448,7 @@ async function jugar(id) {
   $('#hud-barra').style.width = '0%';
   const pct0 = $('#hud-pct'); if (pct0) pct0.textContent = '0%';
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(n.icono);
-  tiempoMs = 0; hechosAhora = 0; totalAhora = 1;
+  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0;
   reiniciarRacha();
   pintarReloj();
   alerta(null);
@@ -1428,6 +1473,7 @@ async function jugar(id) {
   /* la dificultad de la parada viaja en la api: los bichos y las
      moscas la leen para saber cuánto perdonar */
   api.dificultad = n.dificultad || 1;
+  pintarFallos();
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   Motor.cargar(modActual, api, nivelConfig);
@@ -1516,7 +1562,8 @@ async function montarRacion(base, config) {
      está en pantalla — construir el nivel ahora lo pondría a vivir
      detrás del modal, encolando pistas para nadie */
   if (!Apuro.activo) return;
-  hechosAhora = 0; totalAhora = 1;
+  hechosAhora = 0; totalAhora = 1; fallosAhora = 0;
+  pintarFallos();
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE ingrediente y no del que se estaba jugando */
   Apuro.activar();
@@ -1683,7 +1730,8 @@ function terminarNivel() {
   sfx('bien'); buzz([20, 40, 60]);
   Motor.destello('rgba(108,191,90,.45)');
   const n = nivelActual;
-  const cuch = cucharasDe(n, tiempoMs);
+  /* el tiempo pone las cucharas y los descuidos las quitan */
+  const cuch = cucharasConFallos(cucharasDe(n, tiempoMs), fallosAhora, n.dificultad || 1);
   const previo = estado.mejores[n.id];
   const esRecord = !previo || tiempoMs < previo.ms;
   if (esRecord) estado.mejores[n.id] = { ms: Math.round(tiempoMs), cucharas: cuch };
@@ -1723,6 +1771,11 @@ function terminarNivel() {
     /* la ficha de "tu mejor" enseña el mejor DESPUÉS de esta partida:
        si fue récord, es este mismo tiempo */
     const mejorN = $('#listo-mejor-n'); if (mejorN) mejorN.textContent = tiempoBonito(estado.mejores[n.id].ms);
+    const fallosN = $('#listo-fallos');
+    if (fallosN) {
+      fallosN.textContent = fallosAhora;
+      fallosN.closest('.stat').classList.toggle('stat--mal', fallosAhora > 0);
+    }
     $('#listo-mejor').textContent = esRecord
       ? (previo ? '¡Nuevo récord! antes: ' + tiempoBonito(previo.ms) : 'Primera vez que lo preparas')
       : 'Tu mejor sigue siendo ' + tiempoBonito(previo.ms);

@@ -78,6 +78,7 @@ function colorDeTajada(rec) {
 
 function quemar(rec) {
   rec.estado = 'quemada';
+  if (api.fallo) api.fallo('quemada');
   rec.obj.userData.tipo = null;
   api.sfx('mal'); api.buzz([30, 20, 30]);
   api.aviso('🔥 ¡Se quemó! A la composta — va otra tajada', 'peligro');

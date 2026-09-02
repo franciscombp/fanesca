@@ -124,10 +124,12 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
          cobraba el perdón y la derrota antes de poder leer nada */
       if (rec.inmune && api.reloj < rec.inmune) return false;
 
-      /* recién salido: todavía no lo viste, no cuenta */
+      /* recién salido: todavía no lo viste, no cuenta — pero de tres
+         chiles en adelante el respiro tras ese toque es corto: si
+         vuelves a tocarlo, ya cuenta */
       if (api.reloj - rec.t0 < GRACIA) {
         rec.nodo.position.z += 0.06;
-        rec.inmune = api.reloj + 1.0;
+        rec.inmune = api.reloj + (DIF >= 3 ? 0.35 : 1.0);
         api.sfx('resist'); api.buzz([20, 20]);
         api.pista('¡Casi! <b>No lo aprietes</b>: arrástralo hasta la composta.', 2600);
         return false;
@@ -144,6 +146,8 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
         api.destello('rgba(230,57,70,.3)');
         api.aviso('💛 ¡Casi lo aplastas! Esta te la perdono', 'peligro');
         api.pista('No lo toques con la yema: <b>arrástralo</b> hasta la composta. A la próxima se arruina la olla.', 3800);
+        /* perdonado, pero cuenta como descuido */
+        if (api.fallo) api.fallo('bicho');
         return false;
       }
       api.arruinar(ARRUINADO.aplastado(nombre));
@@ -161,7 +165,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
          aplastar, y hay que mirar antes de mover la mano */
       if (BARRER_APLASTA) return this.tocado(rec);
       if (rec.inmune && api.reloj < rec.inmune) return false;
-      rec.inmune = api.reloj + 0.7;
+      rec.inmune = api.reloj + (DIF >= 3 ? 0.3 : 0.7);
       /* rueda un poco en el sentido en que iba el dedo */
       rec.nodo.position.z += 0.16;
       rec.nodo.position.x += (Math.random() - 0.5) * 0.22;

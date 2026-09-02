@@ -241,6 +241,15 @@ function tick(dt) {
   if (reloj <= 0) { reloj = 0; terminar('reloj'); }
 }
 
+/* un descuido chico —un grano reventado, uno perdido— no tira la
+   ración como el castigo: sólo cuesta segundos, que aquí es la
+   única moneda */
+function descontar(seg) {
+  if (!activo) return;
+  reloj -= seg;
+  if (reloj <= 0) { reloj = 0; terminar('reloj'); }
+}
+
 function terminar(porque) {
   if (!activo) return;
   activo = false;
@@ -277,5 +286,5 @@ export default {
   get cadena() { return cadena; },
   get enRojo() { return activo && reloj <= APURO.avisoRojo; },
   get racion() { return racionActual; },
-  arrancar, parar, activar, progreso, completar, arruinar, tick, terminar,
+  arrancar, parar, activar, progreso, completar, arruinar, descontar, tick, terminar,
 };

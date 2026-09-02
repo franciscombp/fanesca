@@ -793,6 +793,9 @@ export const APURO = {
   racionesPorTanda: 4,
   /* lo que cuesta cada desastre, en segundos */
   castigo: { aplastado: 10, enLaBatea: 12, granoPodrido: 8, otro: 8 },
+  /* un descuido chico (grano reventado, perdido, tajada quemada, agua
+     botada antes de tiempo) no tira la ración: cuesta estos segundos */
+  fallo: 2,
   /* aviso cuando quedan estos segundos: el reloj se pone rojo y late */
   avisoRojo: 10,
 

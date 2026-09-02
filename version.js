@@ -30,10 +30,31 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.3.0',
+    fecha: '2026-09-02',
+    titulo: 'Los descuidos se pagan',
+    cambios: [
+      'El tiempo ya no es lo único que califica: un grano reventado, uno perdido, una tajada quemada, una tira gruesa, agua botada antes de tiempo o un bicho perdonado son DESCUIDOS. Se ven en el mesón, salen en la hoja de terminado y bajan cucharas — de tres chiles en adelante, el primero ya cuesta la tercera cuchara.',
+      'Las paradas bravas tienen un mínimo de calidad: seis descuidos con tres chiles, cuatro con cuatro, tres con cinco, y la parada se arruina. El mesón avisa en rojo cuando queda uno.',
+      'Los bichos ya no se dejan tocar dos veces: de tres chiles en adelante el respiro tras un toque es de un tercio de segundo, y volver a tocarlo cuenta.',
+      'En la quinua y el arroz el agua no se bota con un botón: se VIRA la batea — sacas el dedo por un costado, la batea se inclina contigo y el agua cae. Virarla con el agua limpia se lleva grano, y eso es un descuido.',
+      'El choclo tierno pide más pulso conforme suben los chiles: en las bravas revienta con un dedo que en la presentación habría pasado.',
+      'El zapallo y la col se ven cortar: un cuchillo sigue al dedo, la línea del trazo se pinta mientras se hace, el rollo de col crece en la orilla mientras se enrolla, y cinco tiras finas seguidas se celebran.',
+      'En El Apuro cada descuido cuesta dos segundos.',
+    ],
+    internos: [
+      'api.fallo(tipo, msg) → registrarFallo en main.js: fallosAhora, TOPE_FALLOS por dificultad [∞,∞,∞,6,4,3], #hud-fallos, arruinar con ARRUINADO.descuidos; cucharasConFallos() en niveles.js; #listo-fallos en la hoja; en Apuro, Apuro.descontar(APURO.fallo=2).',
+      'Llaman a api.fallo: plaga.js (perdón), maíz (reventado, podrido perdonado, bicho perdonado), escoger (perdidas), guarnición (quemada), col (gruesa), bacalao y queso (mosca perdonada), zapallo (bicho perdonado), quinua y arroz (agua limpia virada).',
+      'Ventanas de inmunidad: plaga/maíz/zapallo 0.35 s tras el respiro y 0.3 s tras el empujón con dif ≥ 3 (antes 1.0 y 0.7). Maíz fuerzaTope() = 1600 × (1 − 0.1·(dif−1)).',
+      'quinua/arroz: sin `controles`; modo remover/agitar detecta el viraje (fuera > VIRA_DESDE=0.12, recorrido 0.5, ángulo 0.6 rad) y llama botarAgua({desdeGesto, lado}); perderGrano() vuela tres granos a la composta; window.__quinua para pruebas.',
+      'modelos/utileria.js: piezas `cuchillo` y `trazo` (ignorar). Zapallo: mostrar/mover/esconderCuchillo en partir y cortar. Col: rollo `parcial` que crece y gira al enrollar, cuchillo atravesado al cortar, finasSeguidas.',
+    ],
+  },
   {
     v: '2.2.0',
     fecha: '2026-09-02',

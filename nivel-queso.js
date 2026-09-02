@@ -85,6 +85,7 @@ function desmigar() {
     if (api.reloj - mosca.t0 < moscaGracia()) { espantar(mosca); return; }
     if (!perdonMosca) {
       perdonMosca = true;
+      if (api.fallo) api.fallo('mosca');
       espantar(mosca);
       api.pista('💛 ¡Casi la metes a la olla! <b>Espanta la mosca</b> antes de desmigar. Esta te la perdono.', 4600);
       return;

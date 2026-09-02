@@ -447,3 +447,29 @@ Un nivel nuevo con bichos no tiene que hacer nada: `nuevaPlaga()`
 aplica la tabla sola. Si el nivel trae su propio bicho, lea
 `api.dificultad` con el mismo criterio — la regla es una y se nota
 si uno la ignora.
+
+## Los descuidos — la calidad también es un objetivo
+
+Hasta la 2.2 lo único que calificaba era el reloj, y llegar de
+cualquier manera valía lo mismo que llegar bien. Desde la 2.3 cada
+nivel avisa sus errores con `api.fallo(tipo, mensaje)` y el juego
+los cuenta en un solo sitio (`registrarFallo`, en main.js):
+
+- **Bajan cucharas** (`cucharasConFallos` en niveles.js): con uno o
+  dos chiles se cobra recién al tercer descuido; de tres chiles en
+  adelante el primero ya cuesta la tercera cuchara y tres dejan una.
+- **Tienen tope en las bravas**: seis descuidos con tres chiles,
+  cuatro con cuatro, tres con cinco — pasarlo arruina la parada con
+  `ARRUINADO.descuidos`. El HUD (`#hud-fallos`) los lleva y se pone
+  rojo cuando queda uno.
+- **En El Apuro** no hay tope: cada descuido cuesta `APURO.fallo`
+  segundos (`Apuro.descontar`).
+
+Qué cuenta como descuido, nivel por nivel: un grano reventado o un
+podrido picoteado (maíz), un grano perdido (lenteja), una tajada
+quemada (guarnición), una tira gruesa (col), una mosca perdonada
+(bacalao, queso), un bicho perdonado (todos los que traen bicho), y
+el agua virada antes de tiempo (quinua, arroz). Un nivel nuevo sólo
+tiene que llamar `api.fallo` donde el cocinero de verdad diría
+«ay»; el mensaje es opcional y sale como alerta si no está cerca
+del tope.

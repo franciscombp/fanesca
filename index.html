@@ -189,6 +189,8 @@
     </div>
     <!-- la pista se puede VOLVER A LEER: el «?» repite la última -->
     <button type="button" id="btn-pista" class="icono-boton btn-pista" aria-label="Volver a leer la pista">?</button>
+    <!-- los descuidos de la partida, y el tope si la parada lo tiene -->
+    <span id="hud-fallos" class="hud-fallos" role="status" aria-live="polite"></span>
     <div id="juego-controles" class="juego-controles"></div>
     <p id="juego-pista" class="juego-pista"></p>
   </main>
@@ -232,6 +234,7 @@
       <div class="stats">
         <div class="stat"><span id="listo-tiempo" class="stat-n"></span><span class="stat-l">tu tiempo</span></div>
         <div class="stat"><span id="listo-mejor-n" class="stat-n"></span><span class="stat-l">tu mejor</span></div>
+        <div class="stat"><span id="listo-fallos" class="stat-n">0</span><span class="stat-l">descuidos</span></div>
       </div>
       <p id="listo-mejor" class="listo-mejor"></p>
       <section id="listo-tarjeta" class="tarjeta">

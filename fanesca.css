@@ -958,6 +958,27 @@ svg[width="0"] { width: 0; height: 0; }
   font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800;
 }
 
+/* ---- los descuidos: bajo el «?», en rojo cuando queda uno ---- */
+.hud-fallos {
+  position: absolute; right: var(--sp-3);
+  top: calc(var(--prep-hud-h) + var(--sp-3) + 52px);
+  z-index: 5;
+  padding: .2rem .6rem;
+  font-family: var(--font-display); font-size: var(--t-xs); font-weight: 800;
+  color: var(--text-invert);
+  background: var(--vidrio-oscuro);
+  border: 1.5px solid var(--vidrio-borde);
+  border-radius: var(--r-pill);
+  box-shadow: var(--e-2);
+  opacity: 0; transform: scale(.8);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+  pointer-events: none;
+}
+.hud-fallos.visible { opacity: 1; transform: none; }
+.hud-fallos--rojo { color: #fff; background: linear-gradient(180deg, var(--brasa-400), var(--brasa-600)); border-color: rgba(255,255,255,.4); }
+.hud-fallos.brinca { animation: combo-brinca .32s var(--ease-spring); }
+.stat--mal .stat-n { color: var(--brasa-600); }
+
 /* ---- la voz sobre la escena ---- */
 .voz {
   position: absolute; left: 50%; top: 40%;

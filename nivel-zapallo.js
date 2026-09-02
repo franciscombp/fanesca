@@ -99,8 +99,46 @@ let hechos = 0;
 let modo = null, cargado = false, pellizcando = false;
 let p0 = null;
 let terminado = false;
+/* el cuchillo que sigue al dedo y la línea del trazo: se ve el corte
+   formarse mientras se hace, en vez de adivinar al soltar */
+let cuchillo = null, trazo = null;
 
 const ALTO = () => api.MESA_Y + 0.1;
+
+function conCuchillo() { return fase === 'partir' || fase === 'cortar'; }
+function mostrarCuchillo(p) {
+  if (!cuchillo) {
+    cuchillo = api.pieza('cuchillo');
+    raiz.add(cuchillo);
+    trazo = api.pieza('trazo');
+    raiz.add(trazo);
+  }
+  cuchillo.visible = true;
+  trazo.visible = true;
+  moverCuchillo(p);
+}
+function moverCuchillo(p) {
+  if (!cuchillo || !p || !p0) return;
+  /* por ENCIMA del zapallo entero (su cúpula llega a 1.56 radios): a
+     la altura de antes el cuchillo iba por dentro de la calabaza y
+     sólo asomaba una astilla */
+  const alto = fase === 'cortar' ? ALTO() + R + 0.16 : ALTO() + R_ENTERO * 1.75;
+  cuchillo.position.set(p.x, alto, p.z);
+  /* la punta va adelante y la hoja se ladea hacia la cámara: visto
+     desde arriba un cuchillo de canto es una raya, ladeado se lee */
+  cuchillo.rotation.set(0.25, 0, 0.7);
+  const dx = p.x - p0.x, dz = p.z - p0.z, L = Math.hypot(dx, dz);
+  trazo.position.set((p.x + p0.x) / 2, alto - 0.08, (p.z + p0.z) / 2);
+  trazo.rotation.y = Math.atan2(dx, dz);
+  trazo.scale.set(1, 1, Math.max(0.01, L));
+}
+function esconderCuchillo(exito) {
+  if (cuchillo && exito) {
+    /* el golpe: baja y vuelve a esconderse */
+    api.tween(cuchillo.position, 'y', cuchillo.position.y - 0.25, 0.08, undefined, () => { if (cuchillo) cuchillo.visible = false; });
+  } else if (cuchillo) cuchillo.visible = false;
+  if (trazo) trazo.visible = false;
+}
 
 function sumar(n) {
   hechos += n;
@@ -478,6 +516,7 @@ function tocarBicho(w) {
   if (w.inmune && api.reloj < w.inmune) return;
   if (!perdonado) {
     perdonado = true;
+    if (api.fallo) api.fallo('bicho');
     w.inmune = api.reloj + 1.4;
     api.sfx('mal'); api.buzz([40, 30, 40]);
     api.destello('rgba(230,57,70,.3)');
@@ -494,7 +533,7 @@ function aplastarBicho(w) {
   if (!w || w.estado !== 'suelto') return;
   if (dif() >= 4) { tocarBicho(w); return; }
   if (w.inmune && api.reloj < w.inmune) return;
-  w.inmune = api.reloj + 0.7;
+  w.inmune = api.reloj + (dif() >= 3 ? 0.3 : 0.7);
   w.x += w.dir * -0.18;
   api.sfx('resist'); api.buzz(10);
   if (!avisadoRoce) {
@@ -589,6 +628,7 @@ export default {
     }
     modo = 'gesto';
     p0 = api.puntoEnPlano(ALTO());
+    if (conCuchillo() && p0) mostrarCuchillo(p0);
   },
 
   alArrastrar() {
@@ -605,6 +645,7 @@ export default {
       return;
     }
     if (modo !== 'gesto' || !p || !p0) return;
+    if (conCuchillo()) moverCuchillo(p);
 
     const dz = p.z - (this._pz != null ? this._pz : p.z);
     this._pz = p.z;
@@ -642,9 +683,11 @@ export default {
     /* el trazo largo: partir y cortar se juzgan al soltar, porque lo
        que importa es la línea entera, no cada cuadro */
     const p1 = api.puntoEnPlano(ALTO());
+    let corto = false;
     if (modo === 'gesto' && p0 && p1) {
       const largo = Math.abs(p1.z - p0.z);
       const torcido = Math.abs(p1.x - p0.x);
+      corto = largo >= LARGO_MIN * 0.8;
       if (fase === 'partir') {
         /* Cualquier trazo largo que pase por encima del zapallo lo
            parte. La regla anterior rechazaba trazos "torcidos" y
@@ -669,6 +712,7 @@ export default {
         if (mejor > 0 && dMejor < GRUESO * 1.4) cortar(mejor);
       }
     }
+    esconderCuchillo(corto);
     modo = null; p0 = null; this._pz = null;
   },
 
@@ -722,6 +766,7 @@ export default {
   destruir() {
     mitades = []; tajadas = []; guias = []; cortes = new Set();
     grupo = null; entero = null; bichos = []; cargando = null;
+    cuchillo = null; trazo = null;
     modo = null; p0 = null; cargado = false; pellizcando = false; terminado = false;
   },
 };

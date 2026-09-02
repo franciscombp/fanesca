@@ -96,6 +96,7 @@ function sacar(rec) {
     /* tocar una lenteja buena la manda a la composta: no arruina la
        olla, pero se pierde, y eso ya duele lo justo */
     perdidas++;
+    if (api.fallo) api.fallo('perdido');
     api.sfx('resist'); api.buzz(12);
     api.toast('Esa estaba buena 😕');
   } else {

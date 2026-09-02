@@ -77,6 +77,12 @@ let modo = null;
 let ultimoPunto = null;
 let pellizcando = false;
 let terminado = false;
+/* lo que se ve mientras se hace: el rollo que va creciendo al
+   enrollar, el cuchillo que sigue al dedo al cortar, y la racha de
+   tiras finas que se celebra */
+let parcial = null;
+let cuchillo = null;
+let finasSeguidas = 0;
 
 /* ---------- la hoja ---------- */
 
@@ -87,6 +93,15 @@ function ponerHoja() {
   g.userData = { tipo: 'hoja' };
   colGrupo.add(g);
   hoja = { obj: g, lamina: api.parte(g, 'lamina'), nervio: api.parte(g, 'nervio'), enrollado: 0 };
+  /* el rollo parcial: nace chiquito en la orilla y engorda con cada
+     pasada — es lo que hace que "enrollar" se vea enrollar */
+  if (!parcial) {
+    parcial = api.pieza('col-rollo', { largo: LARGO_HOJA });
+    parcial.userData = { tipo: null, ignorar: true };
+    parcial.traverse(o => { o.userData.ignorar = true; });
+    colGrupo.add(parcial);
+  }
+  parcial.visible = false;
   api.rotulo('Enrollar la col');
   api.pista('Empuja la hoja <b>de lado a lado</b> hasta que quede un cigarro.', 3400);
 }
@@ -100,7 +115,17 @@ function enrollar(cuanto) {
   hoja.lamina.scale.x = Math.max(0.06, 1 - k * 0.94);
   hoja.obj.position.x = -ANCHO_HOJA / 2 * k * 0.5;
   if (hoja.nervio) hoja.nervio.position.x = 0;
+  if (parcial) {
+    parcial.visible = k > 0.04;
+    const r = Math.max(0.06, k);
+    parcial.scale.set(r, r, 1);
+    const medio = ANCHO_HOJA / 2 * (1 - k * 0.94);
+    parcial.position.set(hoja.obj.position.x - medio, api.MESA_Y + ALTO * r, TABLA_Z);
+    parcial.rotation.z -= cuanto * 6;     /* gira mientras engorda */
+  }
+  if (Math.random() < 0.15) api.sfx('frotar');
   if (k < 1) return;
+  if (parcial) parcial.visible = false;
 
   const donde = hoja.obj.position.clone();
   colGrupo.remove(hoja.obj);
@@ -193,17 +218,31 @@ function cortarEn(z) {
   api.volarA(t, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.42, alto: 0.55 });
 
   tiras++;
+  /* el golpe del cuchillo: baja y vuelve */
+  if (cuchillo && cuchillo.visible) {
+    const y0 = api.MESA_Y + ALTO + 0.32;
+    cuchillo.position.y = y0 - 0.2;
+    api.tween(cuchillo.position, 'y', y0, 0.12);
+  }
   if (tajada <= FINA) {
     finas++;
+    finasSeguidas++;
     api.sfx('corte');
     api.chispas(t.position.clone().setY(api.MESA_Y + 0.3), '#dcecb8', 5, 0.7);
     api.buzz(9);
+    /* la racha de finitas se celebra: es la maestría del nivel */
+    if (finasSeguidas === 5) { api.toast('¡Cinco finitas seguidas! ✨'); api.sfx('fiesta'); }
+    else if (finasSeguidas > 5 && finasSeguidas % 5 === 0) { api.toast(`¡${finasSeguidas} finitas! 🔪`); api.sfx('bien'); }
   } else if (tajada >= GRUESA) {
+    finasSeguidas = 0;
     gruesas++;
+    /* una tajada gruesa es col desperdiciada: cuenta como descuido */
+    if (api.fallo) api.fallo('gruesa');
     api.sfx('resist'); api.buzz([14, 16]);
     if (gruesas === 1) api.pista('<b>Más finita.</b> Una tajada gruesa es una sola tira: así se te acaba la col.', 3600);
     else api.aviso('Muy gruesa — vas a necesitar otra col', 'bien');
   } else {
+    finasSeguidas = 0;
     api.sfx(tiras % 2 ? 'pop' : 'pop2');
     api.buzz(8);
   }
@@ -260,7 +299,8 @@ export default {
 
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     hoja = null; rollo = null; hojasUsadas = 0;
-    tiras = 0; finas = 0; gruesas = 0;
+    tiras = 0; finas = 0; gruesas = 0; finasSeguidas = 0;
+    parcial = null; cuchillo = null;
     modo = null; ultimoPunto = null; pellizcando = false; terminado = false;
 
     const tabla = api.pieza('tabla', { ancho: ANCHO_TABLA, hondo: HONDO_TABLA });
@@ -278,6 +318,12 @@ export default {
 
     ponerHoja();
     api.progreso(0, OBJETIVO);
+
+    window.__col = {
+      get tiras() { return tiras; },
+      get fase() { return hoja ? 'enrollar' : (rollo ? 'cortar' : null); },
+      sinBichos() { plaga.lista().forEach(r => { r.estado = 'ido'; }); },
+    };
   },
 
   objetivos() { return [colGrupo, plaga.grupo]; },
@@ -300,6 +346,17 @@ export default {
     if (rec && plaga.agarrar(rec)) { modo = 'cargar'; return; }
     modo = hoja ? 'enrollar' : 'cortar';
     ultimoPunto = api.puntoEnPlano(api.MESA_Y + ALTO);
+    /* al cortar, el cuchillo aparece bajo el dedo, atravesado al rollo */
+    if (modo === 'cortar' && ultimoPunto) {
+      if (!cuchillo) {
+        cuchillo = api.pieza('cuchillo', { largo: 0.7 });
+        cuchillo.traverse(o => { o.userData.ignorar = true; });
+        raiz.add(cuchillo);
+      }
+      cuchillo.visible = true;
+      cuchillo.rotation.set(0, Math.PI / 2, 0.28);
+      cuchillo.position.set(ultimoPunto.x, api.MESA_Y + ALTO + 0.32, ultimoPunto.z);
+    }
   },
 
   alArrastrar() {
@@ -310,6 +367,12 @@ export default {
     const prev = ultimoPunto;
     ultimoPunto = p;
     if (!p || !prev) return;
+    if (cuchillo && cuchillo.visible && modo === 'cortar') {
+      cuchillo.position.x = p.x;
+      cuchillo.position.z = p.z;
+      /* la hoja mira hacia donde va el dedo */
+      cuchillo.rotation.y = p.x >= prev.x ? Math.PI / 2 : -Math.PI / 2;
+    }
 
     /* El bicho se aplasta cortando por encima de él, no por pasarle
        el dedo cerca. La diferencia importa justo aquí: el gesto de
@@ -359,6 +422,7 @@ export default {
 
   alArrastrarFin() {
     if (modo === 'cargar') { plaga.soltarMano(); revisarFinal(); }
+    if (cuchillo) cuchillo.visible = false;
     modo = null; ultimoPunto = null;
   },
 
@@ -386,7 +450,9 @@ export default {
   destruir() {
     if (plaga) plaga.destruir();
     hoja = null; rollo = null; plaga = null; colGrupo = null;
+    parcial = null; cuchillo = null; finasSeguidas = 0;
     modo = null; ultimoPunto = null;
+    delete window.__col;
     pellizcando = false; terminado = false;
   },
 };

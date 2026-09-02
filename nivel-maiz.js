@@ -72,7 +72,10 @@ const dif = () => Math.max(1, Math.min(5, (api && api.dificultad) || 1));
 const GUSANO_VEL_REF = 0.38;   /* posiciones por segundo que BAJA el bicho */
 const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1));
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
-const FUERZA = 1600;
+/* y el tierno pide más pulso conforme sube la dificultad: en las
+   bravas revienta con un dedo que en la presentación habría pasado */
+const FUERZA_REF = 1600;
+const fuerzaTope = () => FUERZA_REF * (1 - 0.1 * (dif() - 1));
 
 /* ---------- parámetros, de niveles-config.js ----------
    Todos se sobrescriben en construir() a partir de la config del
@@ -368,6 +371,7 @@ function reventarGrano(a, p) {
   const g = granos[a][p];
   if (!g || g.userData.tipo !== 'grano') return;
   reventados++;
+  if (api.fallo) api.fallo('reventado');
   g.userData.tipo = 'papilla';
   /* si ese grano escondía un bicho, reventarlo lo destapa: sin esto
      el gusano quedaba sepultado en la papilla y desaparecía del
@@ -485,7 +489,7 @@ function tocado(w) {
   if (!w || w.estado !== 'suelto') return false;
   if (w.inmune && api.reloj < w.inmune) return false;
   if (api.reloj - w.t0 < gracia()) {
-    w.inmune = api.reloj + 1.0;
+    w.inmune = api.reloj + (dif() >= 3 ? 0.35 : 1.0);
     w.nodo.position.x += 0.06;
     api.sfx('resist'); api.buzz([20, 20]);
     api.pista('¡Casi! <b>No lo aprietes</b>: arrástralo hasta la composta.', 2600);
@@ -493,6 +497,7 @@ function tocado(w) {
   }
   if (!perdonado) {
     perdonado = true;
+    if (api.fallo) api.fallo('bicho');
     w.t0 = api.reloj + 0.6;
     w.inmune = api.reloj + 1.4;
     api.sfx('mal'); api.buzz([40, 30, 40]);
@@ -511,7 +516,7 @@ function aplastado(w) {
   if (!w || w.estado !== 'suelto') return false;
   if (dif() >= 4) return tocado(w);
   if (w.inmune && api.reloj < w.inmune) return false;
-  w.inmune = api.reloj + 0.7;
+  w.inmune = api.reloj + (dif() >= 3 ? 0.3 : 0.7);
   w.t0 = api.reloj + 0.3;
   w.p += 0.5;                       /* rueda hacia abajo de la hilera */
   api.sfx('resist'); api.buzz(10);
@@ -713,6 +718,7 @@ function picotearPodrido(a, p) {
   api.sfx('crack');
   if (!perdonadoPodrido) {
     perdonadoPodrido = true;
+    if (api.fallo) api.fallo('podrido');
     api.buzz([40, 30, 40]);
     api.destello('rgba(107,68,35,.3)');
     api.sacudir(0.2);
@@ -1132,7 +1138,7 @@ export default {
          no debe reventar un grano — eso castigaba al hardware, no a
          la mano */
       velSuave = velSuave * 0.6 + vel * 0.4;
-      if (madurez.id === 'tierno' && velSuave > FUERZA) { reventarGrano(a, p); return; }
+      if (madurez.id === 'tierno' && velSuave > fuerzaTope()) { reventarGrano(a, p); return; }
       if (suelto(a, p)) sacarGrano(a, p, true, dirActual);
     }
   },

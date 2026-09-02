@@ -29,6 +29,12 @@ const conArticulo = (bicho) => {
 const Mayus = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
 export const ARRUINADO = {
+  /* demasiados descuidos en una parada brava: la calidad también
+     es un objetivo, no sólo el reloj */
+  descuidos: (n = 3) => ({
+    titulo: 'Demasiados descuidos',
+    texto: `${n} fallos en una sola parada — granos reventados, perdidos o quemados. Con esa mano la olla no sale: otra vez, con más cuidado.`,
+  }),
   aplastado: (bicho = 'gusanito') => ({
     clave: 'aplastado',
     titulo: bicho === 'mosca' ? 'La aplastaste' : 'Lo aplastaste',
