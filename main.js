@@ -2260,6 +2260,18 @@ function mostrarFinal() {
 function init() {
   estado = cargar() || nuevoEstado();
 
+  /* EL ATAJO DE AUTOR: `?dev` en la dirección prende el modo dev y
+     `?dev=0` lo apaga, sin ritual de toques — para cuando el ritual
+     falla (un teléfono que no da clics en lo que no es botón) o para
+     abrir el juego ya abierto desde un enlace. */
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.has('dev')) {
+      estado.devMode = q.get('dev') !== '0';
+      guardar();
+    }
+  } catch (e) {}
+
   /* LOS ERRORES SE DICEN. Un error que sólo va a la consola, en un
      teléfono, es un juego que "no deja continuar" sin explicar por
      qué. Lo que se escape sin atrapar sale como aviso, con su texto,

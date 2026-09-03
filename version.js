@@ -44,12 +44,14 @@ const NOVEDADES = [
       'El gusano del zapallo sólo aparece en las paradas bravas, y donde está de verdad: entre las pepas, al raspar.',
       'La lenteja sucia trae dos gorgojos en vez de tres: con tres disfrazados de piedra y sin perdón, escoger dejaba de ser mirar y pasaba a ser adivinar.',
       'Si un mesón no puede abrirse, el juego lo dice y sigue: en El Apuro pasa a otra ración en vez de quedarse mudo con la anterior en pantalla, y en la semana vuelve a la mesa con el aviso. Los errores que antes sólo iban a la consola ahora salen como aviso, con su texto.',
+      'El modo dev vuelve al iPhone: los cinco toques en la versión se perdían porque el número no era un botón. Y hay atajo: abrir el juego con «?dev» al final de la dirección lo prende («?dev=0» lo apaga).',
     ],
     internos: [
       'nivel-zapallo.js reescrito: fases partir | cortar | limpiar; EXIGENCIA[resistencia] {trazo, fino, hueco, chueca, torcido, merma}; tajada tendida (`tajada-plana` en modelos/zapallo.js: cuerpo extruido, pared, cascara0…8, hueco; `trozo-pulpa`); polar() sobre centroPlana(); cortar(b, lejos, torcido) marca chueca y llama api.fallo(\'chueca\'); mermar() cuenta una vez por gesto y api.fallo(\'pulpa\') al llegar a EX.merma; gusano entre las pepas (nacerBicho al primer raspón); window.__zapallo para pruebas.',
       'niveles-config.js: zapallo 4/5/6 tajadas, resistencia 0/1/2, gusanos 0/1/1; escoger-3 gusanos 2. COMIDA.zapallo_cascara.',
       'modo-apuro.js: saltar() (descarta la ración pendiente y pide otra; a la tercera seguida termina con motivo error). main.js: montarRacion salta si no hay ficha, si el import falla o si Motor.cargar revienta; jugar() atrapa Motor.cargar y vuelve a la mesa con toast; listeners de error/unhandledrejection → toast.',
       'sw.js: el precache pide cada archivo con cache: \'reload\' para no mezclar versiones desde la caché HTTP.',
+      'index.html: [data-version] es un <button> (iOS no da click a un span sin cursor:pointer); .portada-link con cursor:pointer y touch-action. main.js init(): ?dev / ?dev=0 fijan estado.devMode.',
     ],
   },
   {

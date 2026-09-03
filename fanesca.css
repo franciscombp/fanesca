@@ -233,6 +233,9 @@ svg[width="0"] { width: 0; height: 0; }
   background: rgba(255,244,226,.05);
   border: 1.5px solid rgba(255,244,226,.12); border-radius: var(--r-pill);
   transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  /* cursor: pointer no es decorativo: sin él, Safari en iOS no
+     dispara click en lo que no considera interactivo */
+  cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
 .portada-link:active { transform: scale(.95); background: rgba(255,244,226,.14); }
 .portada-link--peligro { color: var(--brasa-400); border-color: rgba(229,83,61,.35); }

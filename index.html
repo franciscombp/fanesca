@@ -64,7 +64,10 @@
       <div class="portada-secundario">
         <button type="button" id="btn-reiniciar" class="portada-link portada-link--peligro hidden">Empezar de nuevo</button>
         <button type="button" id="btn-dev" class="portada-link">🛠 modo dev</button>
-        <span class="portada-link" data-version></span>
+        <!-- un BOTÓN y no un span: en iOS Safari un span sin cursor:pointer
+             no recibe `click`, y los cinco toques que revelan el modo dev
+             se perdían en el aire -->
+        <button type="button" class="portada-link portada-link--version" data-version aria-label="versión"></button>
       </div>
     </div>
   </main>
