@@ -264,6 +264,16 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
   CSS, sin motor; un toque la salta y con movimiento reducido no se
   lanza. La fiesta (confeti y fanfarria) espera a que la escena se
   apague.
+- **El reto es la mano, no sólo el bicho** (2.5): el zapallo es el
+  modelo. Partir, tajar por las rayas y, tajada por tajada tendida en
+  la tabla, raspar el hueco y pelar fino. Lo que se mide es técnica:
+  el corte encima de la raya y derecho (si no, la tajada queda
+  chueca), la pulpa que se queda (raspar fuera del hueco o pelar
+  grueso es merma, y la merma de más es descuido) y la franja fina
+  donde el cuchillo agarra la cáscara. `EXIGENCIA` por parada aprieta
+  las franjas y la merma tolerada; el gusano sólo entra entre las
+  pepas y sólo en las paradas bravas. Un mesón nuevo debería poder
+  subir de dificultad sin sumar bichos: más precisión, menos tolerancia.
 - **La receta manda sobre los mesones**: lo que se hace en cada nivel
   es lo que se hace en la cocina de la Sierra. Por eso el mesón del
   arroz pasó a ser el del mote (el arroz no va en la fanesca), el

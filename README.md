@@ -92,7 +92,7 @@ olla de la Sierra, y nada que no vaya.
 | **Los chochos** | apretar uno | arrastrar y van saltando en fila | gorgojo del mismo color |
 | **El fréjol** | — | mantener el dedo hasta que truene, y barrer | gorgojo entre los granos |
 | **El melloco** | refregar parejo la baba | *no hay* — de golpe se dispara y hay que ir a buscarlo | gusanito entre la tierra |
-| **El zapallo** | partir, despepitar y pelar | cruzar la línea punteada de un trazo | gusano paseando sobre la pulpa |
+| **El zapallo** | partir y tajar por las rayas; en cada tajada, raspar el hueco y pelar fino | *no hay* — es el mesón técnico: tajada chueca, raspón hondo o cáscara gruesa son descuidos | gusano entre las pepas, sólo en las paradas bravas |
 | **La col** | enrollar la hoja de lado a lado | cruzar el rollo → una tira por pasada | gusano del color de la hoja |
 | **La lenteja** | tocar cada piedrita | *no hay* — barrer antes de limpiar arruina la olla | gorgojo igualito a una piedra |
 | **La quinua** | remover en círculos, y botar el agua | *no hay* — el agua saturada no lava | gorgojo, al lado de la batea |

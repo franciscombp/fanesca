@@ -1595,7 +1595,21 @@ async function jugar(id) {
   pintarFallos();
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
-  Motor.cargar(modActual, api, nivelConfig);
+  /* SI CONSTRUIR REVIENTA, SE VUELVE A LA MESA CON UN AVISO. Antes la
+     excepción se escapaba de aquí y dejaba la cortina bajada para
+     siempre —la parada "no abría" y no había cómo salir sin recargar. */
+  try {
+    Motor.cargar(modActual, api, nivelConfig);
+  } catch (e) {
+    console.error(e);
+    capturaPista = null;
+    toast(`No se pudo armar el mesón de ${n.nombre.toLowerCase()} 😔 (${(e && e.message) || 'error'})`, 5000);
+    try { Motor.descargar(); } catch (e2) {}
+    nivelActual = null; modActual = null;
+    apagarCortina();
+    mostrar('mesa');
+    return;
+  }
   capturaPista = null;
   renderControles(modActual);
   /* La fila del arranque, con tres reglas aprendidas mirando jugar:
@@ -1667,14 +1681,27 @@ function apuroHUD(nombre) {
    fluidez al juego. La mesa cambia y ya estás en el siguiente. */
 async function montarRacion(base, config) {
   const ficha = porId(base);
-  if (!ficha) return;
+  /* SIN FICHA O SIN MÓDULO NO SE ESPERA: se avisa y el modo pide otra
+     ración. Antes esto hacía `return` a secas y la partida se quedaba
+     con el mesón anterior en pantalla, muda, para siempre. */
+  if (!ficha) {
+    console.error('El Apuro pidió un ingrediente que no existe:', base);
+    toast(`No encontré «${base}» en esta versión: sigo con otro 😔`, 3200);
+    Apuro.saltar();
+    return;
+  }
   nivelActual = ficha;
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(ficha.icono);
   apuroHUD(ficha.nombre);
   try {
     const m = await ficha.modulo();
     modActual = m.default || m;
-  } catch (e) { console.error(e); return; }
+  } catch (e) {
+    console.error(e);
+    toast(`No se pudo abrir ${ficha.nombre.toLowerCase()}: sigo con otro 😔`, 3200);
+    Apuro.saltar();
+    return;
+  }
   await Motor.modelosListos();
   /* LA PARTIDA PUDO ACABARSE MIENTRAS SE MONTABA: montar es
      asíncrono, y si el reloj llegó a cero en ese hueco el resumen ya
@@ -1691,7 +1718,18 @@ async function montarRacion(base, config) {
   api.dificultad = Math.min(5, Apuro.tanda || 1);
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
-  Motor.cargar(modActual, api, config);
+  /* si construir revienta, la ración se salta en vez de dejar medio
+     mesón montado y el modo esperando un progreso que no llega */
+  try {
+    Motor.cargar(modActual, api, config);
+  } catch (e) {
+    console.error(e);
+    capturaPista = null;
+    toast(`Se cayó el mesón de ${ficha.nombre.toLowerCase()}: sigo con otro 😔`, 3200);
+    try { Motor.descargar(); } catch (e2) {}
+    Apuro.saltar();
+    return;
+  }
   capturaPista = null;
   renderControles(modActual);
   Editor.nivel(ficha.id);
@@ -2221,6 +2259,16 @@ function mostrarFinal() {
 
 function init() {
   estado = cargar() || nuevoEstado();
+
+  /* LOS ERRORES SE DICEN. Un error que sólo va a la consola, en un
+     teléfono, es un juego que "no deja continuar" sin explicar por
+     qué. Lo que se escape sin atrapar sale como aviso, con su texto,
+     para que quien lo vea pueda contarlo. */
+  const contarError = (msg) => {
+    try { toast('⚠️ ' + String(msg || 'error').slice(0, 140), 6000); } catch (e) {}
+  };
+  window.addEventListener('error', (e) => contarError(e.message || (e.error && e.error.message)));
+  window.addEventListener('unhandledrejection', (e) => contarError(e.reason && (e.reason.message || e.reason)));
 
   /* los gradientes de acuarela de los iconos */
   if (typeof ICON_DEFS === 'string') document.body.insertAdjacentHTML('beforeend', ICON_DEFS);

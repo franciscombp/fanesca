@@ -20,6 +20,8 @@
      fibra-zapallo  → 'fibra'
      tajada-zapallo → una malla suelta (tres materiales: piel,
                       pulpa, pulpa — en ese orden de grupo)
+     tajada-plana   → 'cuerpo', 'pared', cascara0…cascaraN, 'hueco'
+     trozo-pulpa    → una malla suelta
      guia-zapallo   → raya0 … rayaN (la línea punteada del corte)
      pepa-zapallo   → una malla suelta
    ============================================================ */
@@ -32,6 +34,17 @@ export const N = 7;              /* tajadas */
 export const GRUESO = 0.36;      /* ancho de cada tajada */
 export const R = 0.5;            /* radio del zapallo ya partido */
 export const R_ENTERO = 0.66;    /* y el del zapallo antes de partirlo */
+
+/* la tajada TENDIDA en la tabla, grande, para limpiarla y pelarla:
+   una media luna vista desde arriba, con la cáscara por el arco y el
+   hueco de las pepas al centro de la orilla recta. Es la única pieza
+   del nivel donde la precisión del dedo se mide en milímetros de
+   mundo, así que va enorme: casi todo el ancho seguro de la cámara. */
+export const R_PLANA = 0.88;           /* radio de la media luna */
+export const GRUESO_PLANA = 0.2;       /* su grosor, tendida */
+export const CASCARA = 0.09;           /* ancho de la cáscara vista desde arriba */
+export const HUECO = 0.42;             /* radio del hueco de las pepas, en radios */
+export const SEGMENTOS_CASCARA = 9;    /* la cáscara se pela por tramos */
 
 export const xDeTajada = (i) => (i - (N - 1) / 2) * GRUESO;
 export const xDeFrontera = (b) => (b - N / 2) * GRUESO;
@@ -202,6 +215,97 @@ registrar('cascara-zapallo', (THREE, opts = {}) => {
   });
   const m = new THREE.Mesh(geo, mate(THREE, COMIDA.zapallo_piel, { side: THREE.DoubleSide }));
   m.name = 'cascara';
+  return m;
+});
+
+/* ---------- la tajada tendida: media luna con cáscara y hueco ----------
+   Es la pieza de la faena técnica. El cuerpo es la media luna
+   extruida (con todas sus paredes, que un medio cilindro abierto
+   dejaba ver el interior por la orilla recta); la cáscara va en
+   SEGMENTOS aparte sobre el arco, porque se pela tramo a tramo y
+   cada tramo tiene que poder volar solo a la composta; y el hueco de
+   las pepas es un medio disco hundido de color al centro de la
+   orilla recta, que es donde queda de verdad la cavidad al cortar un
+   zapallo a través del eje.
+
+   Coordenadas: la orilla recta va a lo largo de X pasando por el
+   origen, y el arco mira a -Z (al fondo de la tabla). El ángulo de
+   un punto del arco se mide desde +X hacia -Z, de 0 a π: es el mismo
+   ángulo con que se colocan los segmentos de cáscara.
+
+   PARTES NOMBRADAS
+     tajada-plana → 'cuerpo', 'pared', cascara0…cascaraN, 'hueco' */
+registrar('tajada-plana', (THREE, opts = {}) => {
+  const r = opts.radio || R_PLANA;
+  const h = opts.grueso || GRUESO_PLANA;
+  const g = new THREE.Group();
+  g.name = 'tajada-plana';
+
+  const geo = forma('tajada-plana:' + Math.round(r * 100), () => {
+    const forma2d = new THREE.Shape();
+    forma2d.moveTo(-r, 0);
+    forma2d.absarc(0, 0, r, Math.PI, 0, true);
+    forma2d.lineTo(-r, 0);
+    return new THREE.ExtrudeGeometry(forma2d, { depth: h, bevelEnabled: false, curveSegments: 40 });
+  });
+  const cuerpo = new THREE.Mesh(geo, [
+    mate(THREE, COMIDA.zapallo_pulpa),
+    mate(THREE, COMIDA.zapallo_pulpa),
+  ]);
+  /* la extrusión va en +Z: acostada, +Z pasa a ser arriba y el arco
+     de la forma (+Y) pasa a -Z, al fondo */
+  cuerpo.rotation.x = -Math.PI / 2;
+  cuerpo.name = 'cuerpo';
+  g.add(cuerpo);
+
+  /* la pared de cáscara por el arco, vista de canto */
+  const pared = new THREE.Mesh(
+    new THREE.CylinderGeometry(r + 0.006, r + 0.006, h, 40, 1, true, 0, Math.PI),
+    mate(THREE, COMIDA.zapallo_cascara, { side: THREE.DoubleSide })
+  );
+  pared.rotation.y = Math.PI / 2;
+  pared.position.y = h / 2;
+  pared.name = 'pared';
+  pared.userData.ignorar = true;
+  g.add(pared);
+
+  /* la cáscara vista desde arriba, en tramos que se pelan uno a uno */
+  const K = SEGMENTOS_CASCARA;
+  for (let k = 0; k < K; k++) {
+    const seg = new THREE.Mesh(
+      new THREE.RingGeometry(r - CASCARA, r + 0.006, 6, 1, k * Math.PI / K, Math.PI / K),
+      mate(THREE, COMIDA.zapallo_cascara)
+    );
+    seg.rotation.x = -Math.PI / 2;
+    seg.position.y = h + 0.003;
+    seg.name = 'cascara' + k;
+    seg.userData = { tipo: 'cascara', k, ignorar: true };
+    g.add(seg);
+  }
+
+  /* el hueco de las pepas, al centro de la orilla recta */
+  const hueco = new THREE.Mesh(
+    new THREE.CircleGeometry(r * HUECO, 24, 0, Math.PI),
+    mate(THREE, COMIDA.zapallo_hueco)
+  );
+  hueco.rotation.x = -Math.PI / 2;
+  hueco.position.y = h + 0.002;
+  hueco.name = 'hueco';
+  hueco.userData.ignorar = true;
+  g.add(hueco);
+
+  return g;
+});
+
+/* el pedazo de pulpa que se va con un raspón hondo o con una cáscara
+   gruesa: es lo que el nivel castiga, así que tiene que verse irse */
+registrar('trozo-pulpa', (THREE, opts = {}) => {
+  const geo = forma('trozo-pulpa', () =>
+    abollar(new THREE.SphereGeometry(1, 8, 6), { fuerza: 0.25, escala: 3, semilla: 73 }));
+  const m = new THREE.Mesh(geo, mate(THREE, COMIDA.zapallo_pulpa));
+  const s = opts.tam || 0.075;
+  m.scale.set(s * 1.4, s * 0.6, s);
+  m.name = 'trozo-pulpa';
   return m;
 });
 

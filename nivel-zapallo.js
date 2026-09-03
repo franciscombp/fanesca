@@ -1,41 +1,55 @@
 /* ============================================================
    FANESCA — nivel-zapallo.js
-   PARTIR, DESPEPITAR, PELAR Y CORTAR.
+   PARTIR, TAJAR PAREJO, SACAR LAS PEPAS Y PELAR FINO.
 
-   Un zapallo no llega a la olla en rodajas. Llega redondo y con su
-   rabo, y antes del cuchillo hay tres cosas que hacer con las manos.
-   Este nivel las hace todas, en el orden en que se hacen:
+   Un zapallo no llega a la olla en cubos. Llega redondo y con su
+   rabo, y así es como se prepara en una cocina de la Sierra: se
+   parte, se corta en tajadas, y a cada tajada se le saca el hueco
+   de las pepas y se le quita la cáscara. Este nivel hace eso, en
+   ese orden, y con la tajada TENDIDA en la tabla, grande, una por
+   una — que es como se pela de verdad y como se entiende de un
+   vistazo:
 
-     1. PARTIR    — un trazo largo de adelante hacia atrás, por el
-                    lomo. Se abre en dos mitades que se mecen.
-     2. DESPEPITAR— barrer el hueco: las pepas y las hebras salen a
-                    la composta a puñados.
-     3. PELAR     — jalar cada tira de cáscara a lo largo del gajo.
-     4. CORTAR    — ahora sí, las tajadas, cruzando la línea.
+     1. PARTIR   — un trazo largo por el lomo. Se abre en dos.
+     2. TAJAR    — las mitades boca abajo; un trazo por cada raya.
+     3. LIMPIAR  — cada tajada, tendida: se RASPA el hueco para que
+                   salgan las pepas, y se pasa el cuchillo pegado a
+                   la cáscara, siguiendo el arco. Limpia y pelada,
+                   se va sola a la batea y entra la siguiente.
 
-   Es el mismo arco que el choclo: primero desvestir, después el
-   gesto rápido. Y la lección de siempre en el último tramo —una
-   tajada solo cae cuando quedó suelta por los dos lados— sigue
-   entera, porque es la mejor idea que tenía este nivel.
+   EL RETO ES TÉCNICO, no un bicho. Lo que se mide es lo que mide
+   una abuela mirándote las manos:
+     · la tajada PAREJA: el trazo derecho y encima de la raya. Un
+       trazo que se fue de la línea deja una tajada chueca.
+     · la PULPA SE QUEDA: raspar más allá del hueco se lleva pulpa,
+       y pelar grueso también. Cada pedazo que vuela a la composta
+       es merma, y la merma de más es un descuido.
+     · PELAR FINO: el cuchillo agarra la cáscara sólo en una franja
+       pegada a la orilla. Por fuera no agarra; por dentro corta
+       pulpa.
+   Cuánto perdona cada cosa lo dice la parada (EXIGENCIA): en la
+   presentación las franjas son anchas y la merma se cobra recién a
+   la tercera; en la brava, un solo raspón hondo ya cuesta.
 
-   El gusano aparece cuando la pulpa queda al aire, que es cuando
-   aparece de verdad. No corre a la batea: se pasea sobre el
-   zapallo. El peligro no es que llegue, es que lo partas en dos sin
-   verlo porque estaba justo sobre tu línea.
+   El gusano sólo está en algunas paradas, y donde está de verdad:
+   entre las pepas. Aparece al raspar el hueco de una tajada, se
+   pasea por el hueco y hay que llevarlo a la composta antes de que
+   esa tajada pueda ir a la olla.
+
+   (Hasta la 2.4 el nivel barría pepas de las mitades y jalaba tiras
+   de cáscara de una cúpula, con un gusano siempre paseando encima.
+   No se entendía qué se limpiaba ni por qué, y el bicho era el único
+   reto. Se rehizo entero.)
    ============================================================ */
 
 import { nuevoGusano } from './modelos/bichos.js';
 import { ARRUINADO } from './arruinado.js';
-import { N, GRUESO, R, R_ENTERO } from './modelos/zapallo.js';
+import { N, GRUESO, R, R_ENTERO, R_PLANA, GRUESO_PLANA, CASCARA, HUECO, SEGMENTOS_CASCARA } from './modelos/zapallo.js';
 
 let THREE, raiz, api;
 
-/* El reparto de las tajadas dejó de venir del modelo. xDeTajada y
-   xDeFrontera de allá centran SIEMPRE siete, porque el modelo guarda la
-   medida del zapallo y no sabe nada de paradas; el número de tajadas, en
-   cambio, lo dice ahora la parada. Las cuentas son las mismas —GRUESO,
-   que es la medida de verdad, sigue mandando desde el modelo— pero
-   hechas sobre las tajadas que este nivel puso en la tabla. */
+/* El reparto de las tajadas de pie: GRUESO manda desde el modelo, el
+   número lo dice la parada. */
 let TAJADAS = N;
 const xTajada = (i) => (i - (TAJADAS - 1) / 2) * GRUESO;
 const xFrontera = (b) => (b - TAJADAS / 2) * GRUESO;
@@ -43,69 +57,84 @@ const xFrontera = (b) => (b - TAJADAS / 2) * GRUESO;
 const HONDO_TABLA = 1.6;
 let ANCHO_TABLA = 3.4;
 let TABLA_Z = 0;
-const TOL_X = 0.34;             /* cuánto puede desviarse el corte */
-let LARGO_MIN = 0.3;            /* profundidad mínima del trazo */
-/* el gusano de la pulpa también obedece a la dificultad de la parada
-   (api.dificultad): más rápido en las bravas, y allí barrer encima de
-   él también lo aplasta — igual que en plaga.js */
+let LARGO_MIN = 0.3;            /* largo mínimo del trazo que corta */
 const dif = () => Math.max(1, Math.min(5, (api && api.dificultad) || 1));
-const GUSANO_VEL_REF = 0.055;
+const GUSANO_VEL_REF = 0.05;
 const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1));
 
-/* Un zapallo no se resiste a golpes —aquí no se golpea nada—, se resiste
-   en cuánto dedo hace falta. El tierno se abre con un trazo corto y
-   suelta pepa y cáscara con solo rozarlas de lejos; el duro pide el
-   trazo entero y que la yema pase justo por encima de cada cosa, o sea
-   más pasadas para limpiar el mismo hueco. Se descartó apretar también
-   la puntería del corte: la línea más cercana siempre gana a propósito,
-   y estrechar eso sería desdecir la mejor decisión del nivel. */
+/* LA EXIGENCIA, por `resistencia` de la parada. Todo en mundo:
+     trazo   — largo mínimo del trazo que parte o corta
+     fino    — cuánto puede meterse el cuchillo bajo la cáscara sin
+               que cuente como pulpa (la franja "fina")
+     hueco   — cuánto puede salirse el dedo del hueco al raspar
+     chueca  — a cuántos gruesos de la raya el corte ya sale chueco
+     torcido — cuánto puede irse de lado el trazo (x) de punta a punta
+     merma   — cuántos pedazos de pulpa por tajada antes del descuido */
 const EXIGENCIA = [
-  { trazo: 0.22, pepa: 0.46, tira: 0.50 },   /* suave */
-  { trazo: 0.30, pepa: 0.38, tira: 0.42 },   /* normal: el zapallo de siempre */
-  { trazo: 0.40, pepa: 0.31, tira: 0.34 },   /* apretada */
+  { trazo: 0.22, fino: 0.17, hueco: 0.17, chueca: 0.75, torcido: 0.42, merma: 3 },   /* suave */
+  { trazo: 0.30, fino: 0.11, hueco: 0.11, chueca: 0.55, torcido: 0.28, merma: 2 },   /* normal */
+  { trazo: 0.40, fino: 0.07, hueco: 0.07, chueca: 0.42, torcido: 0.20, merma: 1 },   /* apretada */
 ];
-let RADIO_PEPA = 0.38;          /* cuán cerca hay que barrer para llevarse la pepa */
-let RADIO_TIRA = 0.42;          /* y cuán cerca hay que pasar para despegar la tira */
+let EX = EXIGENCIA[1];
+let CON_GUSANO = 0;
 
-let CON_GUSANO = 1;
+const PEPAS = 6;                /* por tajada tendida */
+const FIBRAS = 3;
+const RADIO_PEPA = 0.2;         /* cuán cerca hay que pasar para llevarse la pepa */
 
-const PEPAS = 5;                /* por mitad */
-const TIRAS = 4;                /* tiras de cáscara por mitad */
-/* Cuánto se separan al partirse. Con 0.62 las tiras de cáscara de
-   los flancos caían a 30px del filo de la pantalla: alcanzables, pero
-   pidiendo puntería de borde, que es justo lo que este juego no
-   quiere. Más juntas caben con holgura. */
-const SEP_MITAD = 0.5;
+/* el marcador suma las tres faenas: partir, cada corte, y limpiar y
+   pelar cada tajada */
+let TOTAL = 1 + (N - 1) + N * 2;
 
-/* el marcador va sumando las cuatro faenas, para que la barra se
-   mueva desde el primer gesto y no se quede plana media partida */
-let TOTAL = 1 + PEPAS * 2 + TIRAS * 2 + N;
-
-let fase = 'partir';            /* partir | despepitar | pelar | cortar */
+let fase = 'partir';            /* partir | cortar | limpiar */
 let grupo = null;
 let entero = null;
-let mitades = [];               /* {obj, lado, pepas[], tiras[], pelada} */
-let tajadas = [];
+let mitades = [];
+let tajadas = [];               /* de pie: {mesh, i, chueca} */
 let guias = [];
 let cortes = new Set();
-/* varios bichos donde antes había uno: el nivel siempre supo pasear un
-   gusano por el lomo del zapallo, pero con dos el peligro cambia de
-   naturaleza —ya no basta con mirar dónde está EL gusano antes de
-   trazar la línea— y por eso el que se agarra, el que se perdona y el
-   que se parte en dos tienen que decidirse uno por uno */
+let cola = [];                  /* tajadas de pie esperando su turno */
+let actual = null;              /* la tendida: ver siguienteTajada() */
+let conGusano = new Set();      /* índices de tajada con gusano entre las pepas */
 let bichos = [];
-let cargando = null;            /* el bicho que va en la mano ahora mismo */
+let cargando = null;
 let hechos = 0;
 let modo = null, cargado = false, pellizcando = false;
 let p0 = null;
+let gesto = null;               /* el gesto en curso sobre la tendida */
 let terminado = false;
-/* el cuchillo que sigue al dedo y la línea del trazo: se ve el corte
-   formarse mientras se hace, en vez de adivinar al soltar */
 let cuchillo = null, trazo = null;
+let generacion = 0;             /* mata los setTimeout de una partida vieja */
+let avisado = {};
+let mermaTotal = 0;             /* pedazos de pulpa perdidos en toda la faena */
 
 const ALTO = () => api.MESA_Y + 0.1;
+const ALTO_PLANA = () => ALTO() + GRUESO_PLANA;
+/* la tajada tendida: la orilla recta (con el hueco) hacia el jugador
+   y el arco al fondo, para que raspar quede cerca del pulgar */
+const centroPlana = () => new THREE.Vector3(0, ALTO(), TABLA_Z + 0.5);
+const COLA_Z = () => TABLA_Z - 0.68;
+const xCola = (k, n) => (n < 2 ? 0 : -1.0 + k * (2.0 / (n - 1)));
 
-function conCuchillo() { return fase === 'partir' || fase === 'cortar'; }
+/* dónde cae un punto respecto a la tendida: distancia al centro de la
+   orilla y ángulo desde +X hacia el fondo, de 0 a π — el mismo con que
+   están puestos los tramos de cáscara */
+function polar(p) {
+  const c = centroPlana();
+  const dx = p.x - c.x, dz = c.z - p.z;
+  return { d: Math.hypot(dx, dz), ang: Math.atan2(dz, dx), dz, dx };
+}
+
+/* ---------- el cuchillo que sigue al dedo ---------- */
+
+function conCuchillo() {
+  return fase === 'partir' || fase === 'cortar' || (fase === 'limpiar' && gesto && gesto.tipo === 'pelar');
+}
+function alturaCuchillo() {
+  if (fase === 'partir') return ALTO() + R_ENTERO * 1.75;
+  if (fase === 'cortar') return ALTO() + R + 0.16;
+  return ALTO_PLANA() + 0.14;
+}
 function mostrarCuchillo(p) {
   if (!cuchillo) {
     cuchillo = api.pieza('cuchillo');
@@ -114,19 +143,17 @@ function mostrarCuchillo(p) {
     raiz.add(trazo);
   }
   cuchillo.visible = true;
-  trazo.visible = true;
+  /* la línea del trazo sólo sirve en los cortes rectos: al pelar el
+     dedo va en arco y una recta de punta a punta confunde */
+  trazo.visible = fase !== 'limpiar';
   moverCuchillo(p);
 }
 function moverCuchillo(p) {
   if (!cuchillo || !p || !p0) return;
-  /* por ENCIMA del zapallo entero (su cúpula llega a 1.56 radios): a
-     la altura de antes el cuchillo iba por dentro de la calabaza y
-     sólo asomaba una astilla */
-  const alto = fase === 'cortar' ? ALTO() + R + 0.16 : ALTO() + R_ENTERO * 1.75;
+  const alto = alturaCuchillo();
   cuchillo.position.set(p.x, alto, p.z);
-  /* la punta va adelante y la hoja se ladea hacia la cámara: visto
-     desde arriba un cuchillo de canto es una raya, ladeado se lee */
   cuchillo.rotation.set(0.25, 0, 0.7);
+  if (!trazo.visible) return;
   const dx = p.x - p0.x, dz = p.z - p0.z, L = Math.hypot(dx, dz);
   trazo.position.set((p.x + p0.x) / 2, alto - 0.08, (p.z + p0.z) / 2);
   trazo.rotation.y = Math.atan2(dx, dz);
@@ -134,7 +161,6 @@ function moverCuchillo(p) {
 }
 function esconderCuchillo(exito) {
   if (cuchillo && exito) {
-    /* el golpe: baja y vuelve a esconderse */
     api.tween(cuchillo.position, 'y', cuchillo.position.y - 0.25, 0.08, undefined, () => { if (cuchillo) cuchillo.visible = false; });
   } else if (cuchillo) cuchillo.visible = false;
   if (trazo) trazo.visible = false;
@@ -143,6 +169,17 @@ function esconderCuchillo(exito) {
 function sumar(n) {
   hechos += n;
   api.progreso(hechos, TOTAL);
+  api.composta(Math.min(1, hechos / TOTAL));
+}
+
+/* algo que se va volando: se saca de donde esté y se lanza */
+function volar(obj, destino, dur = 0.5, alto = 0.5) {
+  const w = obj.getWorldPosition(new THREE.Vector3());
+  if (obj.parent) obj.parent.remove(obj);
+  obj.position.copy(w);
+  obj.userData.escalaBase = obj.scale.x;
+  raiz.add(obj);
+  api.volarA(obj, destino, { dur, alto });
 }
 
 /* ============================================================
@@ -156,15 +193,7 @@ function ponerEntero() {
   entero.add(api.sombraBlob(1.5, -R_ENTERO * 0.78 + 0.06));
   grupo.add(entero);
 
-  /* la guía por el lomo: la única línea de esta fase */
-  /* el zapallo entero es más ancho que alto, así que la guía se pide
-     con sus dos radios: escalada por igual se metía dentro de la
-     calabaza por los costados y flotaba por arriba */
-  const g = api.pieza('guia-zapallo', {
-    ry: R_ENTERO * 0.78 + 0.045,
-    rz: R_ENTERO + 0.045,
-    grosor: 1.5,
-  });
+  const g = api.pieza('guia-zapallo', { ry: R_ENTERO * 0.78 + 0.045, rz: R_ENTERO + 0.045, grosor: 1.5 });
   g.position.set(0, ALTO() + 0.02, TABLA_Z);
   g.userData.ignorar = true;
   grupo.add(g);
@@ -176,10 +205,10 @@ function ponerEntero() {
 
 function partir() {
   if (fase !== 'partir') return;
-  fase = 'despepitar';
+  fase = 'abriendo';
 
   const g = guias.find(x => x.b === 'lomo');
-  if (g) { g.grupo.visible = false; }
+  if (g) g.grupo.visible = false;
   grupo.remove(entero);
   entero = null;
 
@@ -188,302 +217,354 @@ function partir() {
   api.sacudir(0.55);
   api.chispas(new THREE.Vector3(0, ALTO() + R_ENTERO, TABLA_Z), '#ffe6ab', 22, 1.3);
 
+  /* las dos mitades se abren y se mecen un instante, con el hueco de
+     las pepas a la vista: es el "¡se abrió!" — después se acuestan
+     boca abajo para tajarlas */
   [-1, 1].forEach(lado => {
     const m = api.pieza('mitad-zapallo');
-    /* La media calabaza se apoya en su cúpula, así que hay que
-       levantarla el alto de esa cúpula. Con el origen puesto en la
-       tabla, la mitad de abajo quedaba ENTERRADA y desde la cámara
-       se veía un disco pálido y plano: parecía una tortilla, no
-       medio zapallo. */
     m.position.set(0, ALTO() + R_ENTERO * 0.78, TABLA_Z);
-    /* Las dos mitades miran al jugador. Antes una se giraba media
-       vuelta para "reflejarla", que en una cúpula no se nota —pero sí
-       se notaba en las tiras de cáscara: las cuatro de esa mitad
-       quedaban en la cara de ATRÁS, fuera del alcance del dedo y casi
-       fuera de vista. Media faena imposible por un giro decorativo. */
     m.rotation.y = lado * 0.12;
     m.userData = { tipo: 'mitad', lado };
     grupo.add(m);
-
-    const rec = { obj: m, lado, pepas: [], tiras: [], pelada: false, limpia: false };
-
-    /* las pepas, dentro del hueco */
-    for (let i = 0; i < PEPAS; i++) {
-      const a = (i / PEPAS) * Math.PI * 2 + lado;
-      const r = R_ENTERO * (0.14 + (i % 2) * 0.14);
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + lado;
       const p = api.pieza('pepa-zapallo');
       p.scale.setScalar(1.5);
-      p.position.set(Math.cos(a) * r, 0.03 + (i % 2) * 0.01, Math.sin(a) * r);
+      p.position.set(Math.cos(a) * R_ENTERO * 0.2, 0.03, Math.sin(a) * R_ENTERO * 0.2);
       p.rotation.y = a;
-      p.userData = { tipo: 'pepa', ignorar: false };
+      p.userData.ignorar = true;
       m.add(p);
-      rec.pepas.push(p);
-
-      /* y su hebra al lado: lo que de verdad cuesta sacar */
-      const f = api.pieza('fibra-zapallo', { variante: i });
-      f.position.set(Math.cos(a + 0.5) * r * 1.2, 0.02, Math.sin(a + 0.5) * r * 1.2);
-      f.rotation.y = a;
-      f.userData.ignorar = true;
-      m.add(f);
-      rec.fibras = rec.fibras || [];
-      rec.fibras.push(f);
     }
-
-    mitades.push(rec);
-    /* se mecen al abrirse, como se abre un zapallo de verdad */
-    api.tween(m.position, 'x', lado * SEP_MITAD, 0.42, undefined);
-    api.tween(m.rotation, 'z', lado * 0.16, 0.3, undefined,
-      () => api.tween(m.rotation, 'z', 0, 0.36));
+    mitades.push({ obj: m, lado });
+    api.tween(m.position, 'x', lado * 0.5, 0.42);
+    api.tween(m.rotation, 'z', lado * 0.16, 0.3, undefined, () => api.tween(m.rotation, 'z', 0, 0.36));
   });
 
   sumar(1);
-  api.rotulo('Sacar las pepas');
-  api.pista('<b>Barre las pepas</b> con el dedo, como limpiando la mesa.', 3600);
   api.toast('¡Se abrió! 🎃');
+  const mi = ++generacion;
+  setTimeout(() => { if (generacion === mi && !terminado) pasarACortar(); }, 780);
 }
 
 /* ============================================================
-   2 · DESPEPITAR
-   ============================================================ */
-
-function despepitarEn(punto) {
-  if (fase !== 'despepitar' || !punto) return;
-  let saco = 0;
-  for (const m of mitades) {
-    if (m.limpia) continue;
-    for (const p of m.pepas) {
-      if (p.userData.ida) continue;
-      const w = p.getWorldPosition(new THREE.Vector3());
-      if (Math.hypot(w.x - punto.x, w.z - punto.z) > RADIO_PEPA) continue;
-      p.userData.ida = true;
-      p.userData.tipo = null;
-      m.obj.remove(p);
-      p.position.copy(w);
-      p.userData.escalaBase = p.scale.x;
-      raiz.add(p);
-      api.volarA(p, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.44, alto: 0.5 });
-      saco++;
-    }
-    if (saco && m.fibras) {
-      const f = m.fibras.find(x => !x.userData.ida);
-      if (f) {
-        f.userData.ida = true;
-        const w = f.getWorldPosition(new THREE.Vector3());
-        m.obj.remove(f);
-        f.position.copy(w);
-        f.userData.escalaBase = f.scale.x;
-        raiz.add(f);
-        api.volarA(f, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.42 });
-      }
-    }
-    if (m.pepas.every(p => p.userData.ida)) m.limpia = true;
-  }
-  if (!saco) return;
-
-  sumar(saco);
-  api.sfx(saco > 1 ? 'pop2' : 'pop');
-  api.buzz(saco > 1 ? 14 : 9);
-  api.chispas(punto.clone().setY(ALTO() + 0.3), '#f3e6bc', 4 + saco * 2, 0.8);
-  api.composta(Math.min(1, hechos / (1 + PEPAS * 2)));
-
-  if (mitades.every(m => m.limpia)) pasarAPelar();
-}
-
-/* ============================================================
-   3 · PELAR
-   ============================================================ */
-
-function pasarAPelar() {
-  fase = 'pelar';
-  api.rotulo('Pelar la cáscara');
-  api.pista('<b>Pasa el dedo por cada tira</b> de cáscara y se despega.', 3600);
-  api.toast('Limpio por dentro ✨');
-
-  mitades.forEach(m => {
-    for (let i = 0; i < TIRAS; i++) {
-      /* Cada tira cuelga de su propio pivote girado: orientar la malla
-         con tres ángulos de Euler a la vez se enreda —el orden importa
-         y las tiras salían atravesadas— mientras que un grupo girado
-         en Y y la tira apenas inclinada dentro se lee bien y se
-         entiende al leerlo. */
-      const piv = new THREE.Group();
-      piv.rotation.y = -Math.PI / 2 + (i + 0.5) / TIRAS * Math.PI;
-      const c = api.pieza('cascara-zapallo', { largo: R_ENTERO * 1.2 });
-      c.position.set(0, -R_ENTERO * 0.26, R_ENTERO * 0.84);
-      c.rotation.x = 0.42;
-      c.userData = { tipo: 'cascara', i };
-      piv.add(c);
-      m.obj.add(piv);
-      m.tiras.push(c);
-    }
-  });
-
-  nacerBichos();
-}
-
-function pelarEn(punto, dz) {
-  if (fase !== 'pelar' || !punto) return;
-  /* cualquier arrastre que pase por la tira la despega: la regla de
-     "solo a lo largo" era realista y frustrante a la vez, y de las
-     dos, la que importa es la segunda */
-  for (const m of mitades) {
-    for (const c of m.tiras) {
-      if (c.userData.ida) continue;
-      const w = c.getWorldPosition(new THREE.Vector3());
-      if (Math.hypot(w.x - punto.x, w.z - punto.z) > RADIO_TIRA) continue;
-      c.userData.ida = true;
-      c.userData.tipo = null;
-      if (c.parent) c.parent.remove(c);
-      c.position.copy(w);
-      c.userData.escalaBase = 1;
-      raiz.add(c);
-      api.volarA(c, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.55 });
-      sumar(1);
-      api.sfx('frotar'); api.buzz(11);
-      api.chispas(w.clone().setY(w.y + 0.2), '#e9b56a', 6, 0.7);
-      api.composta(Math.min(1, hechos / (1 + PEPAS * 2 + TIRAS * 2)));
-      return;                    /* una tira por tirón: se siente mejor */
-    }
-  }
-}
-
-function todoPelado() {
-  return mitades.every(m => m.tiras.every(c => c.userData.ida));
-}
-
-/* ============================================================
-   4 · CORTAR
+   2 · TAJAR — las mitades boca abajo, un trazo por raya
    ============================================================ */
 
 function pasarACortar() {
   fase = 'cortar';
   api.rotulo('Cortar en tajadas');
-  api.pista('<b>Un trazo por línea</b>, de arriba a abajo. La tajada cae al quedar suelta por los dos lados.', 4200);
-  api.toast('¡Pelado! 🔪');
+  api.pista('<b>Un trazo por raya</b>, derecho y encima de la línea: la tajada torcida es un descuido.', 4200);
 
-  mitades.forEach(m => { grupo.remove(m.obj); });
+  mitades.forEach(m => grupo.remove(m.obj));
+  mitades = [];
 
   for (let i = 0; i < TAJADAS; i++) {
     const g = api.pieza('tajada-zapallo');
     g.position.set(xTajada(i), ALTO(), TABLA_Z);
     g.userData = { tipo: 'zapallo', i };
     grupo.add(g);
-    tajadas.push({ mesh: g, i, ida: false });
-    /* entran cayendo, escalonadas: se ve que el zapallo se acomodó */
+    tajadas.push({ mesh: g, i, chueca: false });
     g.scale.setScalar(0.01);
     setTimeout(() => {
       api.tween(g.scale, 'x', 1, 0.26); api.tween(g.scale, 'y', 1, 0.26); api.tween(g.scale, 'z', 1, 0.26);
     }, i * 45);
   }
-
   for (let b = 1; b < TAJADAS; b++) {
     const g = api.pieza('guia-zapallo', { grosor: 1.2 });
     g.position.set(xFrontera(b), ALTO(), TABLA_Z);
     grupo.add(g);
     guias.push({ grupo: g, b });
   }
-
-  /* al reacomodarse el zapallo cada bicho se planta sobre una línea: la
-     amenaza es que estorbe el cuchillo, no que pasee. Se sortea entre
-     las de en medio y se recorta a la última que existe, porque con un
-     zapallo de pocas tajadas el sorteo de siempre apuntaba a una
-     frontera de más allá del borde y el gusano se quedaba en el aire */
-  bichos.forEach(w => {
-    const b = 2 + Math.floor(Math.random() * Math.max(1, TAJADAS - 3));
-    w.x = xFrontera(Math.min(b, TAJADAS - 1));
-  });
 }
 
 function libre(b) { return b <= 0 || b >= TAJADAS || cortes.has(b); }
 
+/* la tajada que quedó suelta por los dos lados da un saltito: se ve
+   que ya es tajada, aunque todavía no se vaya a ningún lado */
 function revisarSueltas() {
-  let cayeron = 0;
   tajadas.forEach(t => {
-    if (t.ida) return;
-    if (!libre(t.i) || !libre(t.i + 1)) return;
-    t.ida = true;
-    t.mesh.userData.tipo = null;
-    cayeron++;
-    api.chispas(t.mesh.position.clone().setY(ALTO() + 0.3), '#ffd28a', 10, 0.9);
-    t.mesh.userData.escalaBase = 1;
-    api.volarA(t.mesh, api.BATEA.clone().setY(api.MESA_Y + 0.24), { dur: 0.5, alto: 0.72 });
+    if (t.suelta || !libre(t.i) || !libre(t.i + 1)) return;
+    t.suelta = true;
+    api.chispas(t.mesh.position.clone().setY(ALTO() + 0.3), '#ffd28a', 6, 0.7);
+    api.tween(t.mesh.position, 'y', ALTO() + 0.07, 0.12, undefined, () => api.tween(t.mesh.position, 'y', ALTO(), 0.16));
   });
-  if (cayeron) {
-    sumar(cayeron);
-    api.sfx(cayeron > 1 ? 'bien' : 'pop');
-    api.buzz(cayeron > 1 ? [14, 20, 14] : 11);
-    if (cayeron > 1) api.toast(`¡${cayeron} tajadas de una! 🎃`);
+  if (cortes.size >= TAJADAS - 1) {
+    const mi = ++generacion;
+    setTimeout(() => { if (generacion === mi && !terminado) pasarALimpiar(); }, 420);
   }
-  revisarFinal();
 }
 
-function cortar(b) {
+function cortar(b, lejos, torcido) {
   if (cortes.has(b)) return false;
-
-  if (bichos.some(w => w.estado === 'suelto' && Math.abs(w.x - xFrontera(b)) < 0.19)) {
-    api.destello('rgba(230,57,70,.55)');
-    api.arruinar({
-      titulo: 'Lo partiste en dos',
-      texto: 'El cuchillo pasó justo por encima del gusano. Medio gusano se quedó en la tajada y ese zapallo ya no va a la olla: hay que empezar de nuevo.',
-    });
-    return true;
-  }
-
   cortes.add(b);
   const g = guias.find(x => x.b === b);
   if (g) api.tween(g.grupo.scale, 'y', 0.01, 0.18, undefined, () => { g.grupo.visible = false; });
   api.sfx('corte'); api.buzz([12, 18]);
   api.chispas(new THREE.Vector3(xFrontera(b), ALTO() + R, TABLA_Z), '#fff3c9', 9, 0.8);
+  sumar(1);
+
+  /* LA TAJADA CHUECA: el corte se hace igual —el cuchillo ya pasó—
+     pero la tajada de la derecha de esa raya queda torcida y cuenta
+     como descuido. Se ve: queda ladeada en la fila y después,
+     tendida, más delgada de un lado. */
+  const chueca = lejos > EX.chueca * GRUESO || torcido > EX.torcido;
+  if (chueca) {
+    const t = tajadas[Math.min(b, TAJADAS - 1)];
+    if (t) { t.chueca = true; t.mesh.rotation.y = (Math.random() < 0.5 ? -1 : 1) * 0.16; }
+    api.sfx('resist'); api.buzz([16, 12, 16]);
+    const msg = torcido > EX.torcido
+      ? 'Esa tajada quedó chueca: el trazo se fue de lado — derecho, de arriba a abajo'
+      : 'Esa tajada quedó chueca: el trazo no iba sobre la raya';
+    if (api.fallo) api.fallo('chueca', msg);
+    else api.aviso(msg, 'peligro');
+  }
   revisarSueltas();
   return true;
+}
+
+/* ============================================================
+   3 · LIMPIAR — cada tajada tendida: raspar el hueco y pelar fino
+   ============================================================ */
+
+function pasarALimpiar() {
+  if (fase === 'limpiar') return;
+  fase = 'limpiar';
+  api.rotulo('Sacar las pepas y pelar');
+  api.pista('Una por una: <b>raspa el hueco</b> para sacar las pepas, y <b>pasa el cuchillo pegado a la cáscara</b>, siguiendo el arco. La pulpa se queda.', 5200);
+  api.toast('¡Tajadas! Ahora una por una 🎃');
+
+  guias.forEach(g => { g.grupo.visible = false; });
+
+  /* dónde está el gusano, si hay: entre las pepas de alguna tajada */
+  conGusano = new Set();
+  const indices = tajadas.map(t => t.i).sort(() => Math.random() - 0.5);
+  for (let i = 0; i < Math.min(CON_GUSANO, indices.length); i++) conGusano.add(indices[i]);
+
+  /* la fila entera se retira al fondo, chiquita: es la cola */
+  cola = tajadas.slice();
+  reacomodarCola();
+  const mi = ++generacion;
+  setTimeout(() => { if (generacion === mi && !terminado) siguienteTajada(); }, 520);
+}
+
+function reacomodarCola() {
+  const n = cola.length;
+  cola.forEach((t, k) => {
+    api.tween(t.mesh.position, 'x', xCola(k, n), 0.4);
+    api.tween(t.mesh.position, 'z', COLA_Z(), 0.4);
+    api.tween(t.mesh.scale, 'x', 0.42, 0.4); api.tween(t.mesh.scale, 'y', 0.42, 0.4); api.tween(t.mesh.scale, 'z', 0.42, 0.4);
+  });
+}
+
+function siguienteTajada() {
+  if (!cola.length || actual || terminado) return;
+  const t = cola.shift();
+  reacomodarCola();
+  /* la de pie se va y aparece tendida, grande, al centro */
+  api.tween(t.mesh.scale, 'x', 0.01, 0.2); api.tween(t.mesh.scale, 'y', 0.01, 0.2);
+  api.tween(t.mesh.scale, 'z', 0.01, 0.2, undefined, () => { if (t.mesh.parent) t.mesh.parent.remove(t.mesh); });
+
+  const obj = api.pieza('tajada-plana');
+  obj.position.copy(centroPlana());
+  obj.userData = { tipo: 'tajada', i: t.i };
+  /* la chueca se nota: ladeada y más delgada */
+  const escY = t.chueca ? 0.72 : 1;
+  if (t.chueca) obj.rotation.y = 0.07;
+  obj.scale.set(0.2, escY, 0.2);
+  grupo.add(obj);
+  api.tween(obj.scale, 'x', 1, 0.3); api.tween(obj.scale, 'z', 1, 0.3);
+
+  /* las pepas y las hebras, dentro del hueco */
+  const pepas = [], fibras = [];
+  const rh = R_PLANA * HUECO;
+  for (let i = 0; i < PEPAS; i++) {
+    const a = Math.PI * (i + 0.5) / PEPAS;
+    const rad = rh * (0.3 + 0.38 * (i % 2));
+    const p = api.pieza('pepa-zapallo');
+    p.scale.setScalar(2.3);
+    p.position.set(Math.cos(a) * rad, GRUESO_PLANA + 0.03, -Math.sin(a) * rad);
+    p.rotation.y = a + 0.4;
+    p.userData = { tipo: 'pepa', ignorar: false };
+    obj.add(p);
+    pepas.push(p);
+  }
+  for (let i = 0; i < FIBRAS; i++) {
+    const a = Math.PI * (i + 0.5) / FIBRAS + 0.2;
+    const f = api.pieza('fibra-zapallo', { variante: i });
+    f.scale.multiplyScalar(1.6);
+    f.position.set(Math.cos(a) * rh * 0.55, GRUESO_PLANA + 0.015, -Math.sin(a) * rh * 0.55);
+    f.rotation.y = a;
+    f.userData.ignorar = true;
+    obj.add(f);
+    fibras.push(f);
+  }
+  const cascaras = [];
+  for (let k = 0; k < SEGMENTOS_CASCARA; k++) cascaras.push(api.parte(obj, 'cascara' + k));
+
+  actual = { obj, i: t.i, pepas, fibras, cascaras, merma: 0, limpia: false, pelada: false, gusano: conGusano.has(t.i), salio: false, chueca: t.chueca };
+  api.sfx('tab'); api.buzz(8);
+}
+
+/* la pulpa que se va: un raspón fuera del hueco o una cáscara gruesa.
+   El pedazo vuela cada vez que pasa (se ve irse), pero la MERMA se
+   cuenta una vez por gesto: una pasada honda por todo el arco es un
+   error, no nueve — nueve descuidos por un solo cuchillazo torpe era
+   arruinar la olla con la primera tajada. */
+function mermar(p, motivo) {
+  if (!actual) return;
+  const tr = api.pieza('trozo-pulpa');
+  tr.position.set(p.x, ALTO_PLANA() + 0.04, p.z);
+  tr.userData.escalaBase = tr.scale.x;
+  raiz.add(tr);
+  api.volarA(tr, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.45 });
+  api.chispas(p.clone().setY(ALTO_PLANA() + 0.1), '#f0a04b', 6, 0.6);
+  if (gesto && gesto.hondo) { api.sfx('resist', 0.9); return; }
+  if (gesto) gesto.hondo = true;
+  actual.merma++; mermaTotal++;
+  api.sfx('resist'); api.buzz([14, 10]);
+  const msg = motivo === 'hueco'
+    ? 'Sólo el hueco: raspa las pepas sin llevarte pulpa'
+    : 'Te llevaste pulpa: el cuchillo pegado a la cáscara, más fino';
+  if (actual.merma >= EX.merma) {
+    actual.merma = 0;
+    if (api.fallo) api.fallo('pulpa', msg);
+    else api.aviso(msg, 'peligro');
+  } else if (!avisado[motivo]) {
+    avisado[motivo] = true;
+    api.pista(msg, 3200);
+  }
+}
+
+function bichoBajoElDedo(p) {
+  const w = bichos.find(x => x.estado === 'suelto' && Math.hypot(x.nodo.position.x - p.x, x.nodo.position.z - p.z) < 0.16);
+  if (w) { aplastarBicho(w); return true; }
+  return false;
+}
+
+function limpiarEn(p) {
+  if (!actual || !p || !gesto) return;
+  if (bichoBajoElDedo(p)) return;
+  const q = polar(p);
+  if (q.dz < -0.1) return;
+  /* fuera del hueco pero todavía sobre la pulpa: raspón hondo — se
+     cobra una vez por gesto, no por cuadro */
+  if (q.d > R_PLANA * HUECO + EX.hueco) {
+    if (!gesto.hondo && q.d < R_PLANA - 0.05) mermar(p, 'hueco');
+    return;
+  }
+  let saco = 0;
+  for (const pe of actual.pepas) {
+    if (pe.userData.ida) continue;
+    const w = pe.getWorldPosition(new THREE.Vector3());
+    if (Math.hypot(w.x - p.x, w.z - p.z) > RADIO_PEPA) continue;
+    pe.userData.ida = true;
+    volar(pe, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), 0.44, 0.5);
+    saco++;
+  }
+  if (!saco) return;
+  const f = actual.fibras.find(x => !x.userData.ida);
+  if (f) { f.userData.ida = true; volar(f, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), 0.5, 0.42); }
+  api.sfx(saco > 1 ? 'pop2' : 'pop'); api.buzz(saco > 1 ? 14 : 9);
+  api.chispas(p.clone().setY(ALTO_PLANA() + 0.2), '#f3e6bc', 4 + saco * 2, 0.8);
+  if (actual.gusano && !actual.salio) nacerBicho();
+  if (actual.pepas.every(x => x.userData.ida)) {
+    actual.limpia = true;
+    actual.fibras.forEach(x => { if (!x.userData.ida) { x.userData.ida = true; volar(x, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), 0.5, 0.4); } });
+    sumar(1);
+    revisarTajada();
+  }
+}
+
+function pelarEn(p) {
+  if (!actual || !p || !gesto) return;
+  if (bichoBajoElDedo(p)) return;
+  const q = polar(p);
+  if (q.dz < -0.05) return;
+  const K = SEGMENTOS_CASCARA;
+  const k = Math.floor(q.ang / (Math.PI / K));
+  if (k < 0 || k >= K) return;
+  const seg = actual.cascaras[k];
+  if (!seg || seg.userData.ida) return;
+  const desde = R_PLANA - CASCARA;                  /* donde empieza la cáscara */
+  if (q.d > R_PLANA + 0.16) return;                 /* por fuera: el cuchillo no agarra */
+  if (q.d < desde - EX.fino - 0.22) return;         /* muy adentro: eso es pasear por la pulpa, no pelar */
+  const fino = q.d >= desde - EX.fino;
+  seg.userData.ida = true;
+  volar(seg, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), 0.5, 0.5);
+  gesto.pelados++;
+  api.sfx('corte', fino ? 1 : 0.8); api.buzz(8);
+  api.chispas(p.clone().setY(ALTO_PLANA() + 0.12), fino ? '#e9b56a' : '#f0a04b', 5, 0.6);
+  if (!fino) mermar(p, 'fino');
+  if (actual.cascaras.every(x => x.userData.ida)) {
+    actual.pelada = true;
+    const pared = api.parte(actual.obj, 'pared');
+    if (pared) pared.visible = false;
+    sumar(1);
+    revisarTajada();
+  }
+}
+
+/* limpia y pelada, la tajada se va a la batea y entra la siguiente */
+function revisarTajada() {
+  if (!actual || !actual.limpia || !actual.pelada) return;
+  if (bichos.some(w => w.estado !== 'ido')) {
+    api.aviso('🪱 Saca el gusano a la composta antes de llevar la tajada');
+    return;
+  }
+  const obj = actual.obj;
+  const hechas = TAJADAS - cola.length;
+  actual = null;
+  obj.userData.tipo = null;
+  api.chispas(obj.position.clone().setY(ALTO_PLANA() + 0.2), '#ffd28a', 12, 0.9);
+  obj.userData.escalaBase = 1;
+  api.volarA(obj, api.BATEA.clone().setY(api.MESA_Y + 0.24), { dur: 0.55, alto: 0.72 });
+  api.sfx('bien'); api.buzz([14, 20, 14]);
+  api.toast(`Tajada ${hechas} de ${TAJADAS} 🎃`);
+  const mi = ++generacion;
+  setTimeout(() => {
+    if (generacion !== mi || terminado) return;
+    if (cola.length) siguienteTajada(); else revisarFinal();
+  }, 380);
 }
 
 function revisarFinal() {
   if (terminado || hechos < TOTAL) return;
   const quedan = bichos.filter(w => w.estado !== 'ido').length;
-  if (quedan) {
-    api.aviso(quedan > 1
-      ? `Faltan ${quedan} gusanos antes de llevar la batea`
-      : 'Falta sacar el gusano antes de llevar la batea');
-    return;
-  }
+  if (quedan) { api.aviso('Falta sacar el gusano antes de llevar la batea'); return; }
   terminado = true;
   api.completar();
 }
 
 /* ============================================================
-   el gusano paseandero
+   el gusano entre las pepas
    ============================================================ */
 
-function nacerBichos() {
-  if (bichos.length || !CON_GUSANO) return;
-  for (let i = 0; i < CON_GUSANO; i++) {
-    const gus = nuevoGusano(THREE, { eje: 'z', escala: 2.2, color: '#c4e076', color2: '#9dc24f', segmentos: 6 });
-    const nodo = new THREE.Group();
-    nodo.userData = { tipo: 'bicho' };
-    nodo.add(gus.obj);
-    const x = (Math.random() - 0.5) * 1.1;
-    nodo.position.set(x, ALTO() + 0.24, TABLA_Z + 0.02);
-    nodo.rotation.y = Math.PI / 2;
-    raiz.add(nodo);
-    /* los pares salen caminando al revés que los impares: con el mismo
-       paso y el mismo rumbo se quedan pegados uno detrás de otro y se
-       leen como un solo bulto, que es justo lo que no queremos —el
-       segundo gusano tiene que verse venir por su lado */
-    bichos.push({ nodo, gus, x, dir: i % 2 ? -1 : 1, estado: 'suelto' });
-  }
-  /* el susto se anuncia una vez, no una por bicho: dos avisos y dos
-     pistas encimadas se tapan entre sí y no se lee ninguno */
+function alturaBicho() { return ALTO_PLANA() + 0.1; }
+
+function bichoEncima(w) {
+  if (!w || w.estado !== 'suelto') return;
+  w.nodo.position.set(w.x, alturaBicho(), w.z);
+}
+
+function nacerBicho() {
+  if (!actual) return;
+  actual.salio = true;
+  const c = centroPlana();
+  const gus = nuevoGusano(THREE, { eje: 'z', escala: 2.2, color: '#c4e076', color2: '#9dc24f', segmentos: 6 });
+  const nodo = new THREE.Group();
+  nodo.userData = { tipo: 'bicho' };
+  nodo.add(gus.obj);
+  const x = c.x + (Math.random() - 0.5) * 0.3;
+  const z = c.z - R_PLANA * HUECO * 0.45;
+  nodo.position.set(x, alturaBicho(), z);
+  nodo.rotation.y = Math.PI / 2;
+  raiz.add(nodo);
+  bichos.push({ nodo, gus, x, z, dir: Math.random() < 0.5 ? -1 : 1, estado: 'suelto', tope: R_PLANA * HUECO - 0.14 });
   api.sfx('crack'); api.buzz([25, 30, 25]);
-  api.aviso(CON_GUSANO > 1
-    ? `🪱 ¡${CON_GUSANO} gusanos en la pulpa! Llévalos a la composta — no los aplastes`
-    : '🪱 ¡Un gusano en la pulpa! Llévalo a la composta — no lo aplastes');
+  api.aviso('🪱 ¡Un gusano entre las pepas! Llévalo a la composta — no lo aplastes');
   api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde (o arrástralo con uno).', 5000);
 }
 
-/* el más cercano a la yema, y solo si está al alcance: con varios
-   paseando, tomar el primero de la lista dejaba que un bicho del otro
-   extremo de la tabla le robara el agarre al que tienes bajo el dedo */
 function bichoCercaDe(cliente, radio) {
   let mejor = null, dMejor = radio;
   for (const w of bichos) {
@@ -495,22 +576,9 @@ function bichoCercaDe(cliente, radio) {
   return mejor;
 }
 
-function alturaBicho() {
-  return fase === 'cortar' ? ALTO() + R + 0.1 : ALTO() + 0.24;
-}
-
-function bichoEncima(w) {
-  if (!w || w.estado !== 'suelto') return;
-  w.nodo.position.set(w.x, alturaBicho(), TABLA_Z + 0.02);
-}
-
-/* el perdón es del cocinero, no del bicho: se gasta una sola vez en toda
-   la faena aunque haya dos gusanos, porque lo que enseña es a no posar
-   la yema, y esa lección no se aprende dos veces */
 let perdonado = false;
 let avisadoRoce = false;
 
-/* posarle la yema encima ES apretarlo: eso mata (con un perdón) */
 function tocarBicho(w) {
   if (!w || w.estado !== 'suelto') return;
   if (w.inmune && api.reloj < w.inmune) return;
@@ -527,14 +595,12 @@ function tocarBicho(w) {
   api.arruinar(ARRUINADO.aplastado('el gusano'));
 }
 
-/* el dedo que pasa cortando o pelando solo lo empuja — salvo en las
-   paradas bravas, donde barrer encima es apretar */
 function aplastarBicho(w) {
   if (!w || w.estado !== 'suelto') return;
   if (dif() >= 4) { tocarBicho(w); return; }
   if (w.inmune && api.reloj < w.inmune) return;
   w.inmune = api.reloj + (dif() >= 3 ? 0.3 : 0.7);
-  w.x += w.dir * -0.18;
+  w.x += w.dir * -0.14;
   api.sfx('resist'); api.buzz(10);
   if (!avisadoRoce) {
     avisadoRoce = true;
@@ -548,39 +614,25 @@ function aplastarBicho(w) {
 
 export default {
   id: 'zapallo',
-  /* de cerca: el zapallo entero es lo más grande de la cocina y
-     tiene que llenar la pantalla para que partirlo se sienta */
   camara: 'tabla',
 
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
 
-    /* Una sola tajada no es cortar: sin ninguna línea entre medio el
-       cuchillo no tendría dónde entrar, la tajada jamás quedaría suelta
-       por los dos lados y la última faena se quedaría esperando para
-       siempre un corte que no existe. Dos es el mínimo que sigue siendo
-       el juego. */
     TAJADAS = Math.max(2, Math.round(cfg.cantidad ?? N));
-    const ex = EXIGENCIA[cfg.resistencia ?? 1] ?? EXIGENCIA[1];
-    LARGO_MIN = ex.trazo; RADIO_PEPA = ex.pepa; RADIO_TIRA = ex.tira;
-    CON_GUSANO = Math.max(0, Math.round(cfg.gusanos ?? 1));
-    /* el marcador suma las cuatro faenas y la última acaba de cambiar de
-       tamaño: hay que rehacer el total antes del primer api.progreso, o
-       la barra arranca midiéndose contra el zapallo de otra parada */
-    TOTAL = 1 + PEPAS * 2 + TIRAS * 2 + TAJADAS;
-    /* la tabla se mide desde la de siempre y solo crece: así la parada
-       de hoy sale clavada y cada tajada de más empuja el borde justo su
-       grueso, en vez de dejar la fila desbordándose por los costados */
+    EX = EXIGENCIA[Math.max(0, Math.min(2, Math.round(cfg.resistencia ?? 1)))];
+    LARGO_MIN = EX.trazo;
+    CON_GUSANO = Math.max(0, Math.round(cfg.gusanos ?? 0));
+    TOTAL = 1 + (TAJADAS - 1) + TAJADAS * 2;
     ANCHO_TABLA = 3.4 + Math.max(0, TAJADAS - N) * GRUESO;
 
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     fase = 'partir';
-    /* el perdón del apretón existe hasta los dos chiles; de tres en
-       adelante se cobra */
-    perdonado = dif() > 2; avisadoRoce = false;
-    mitades = []; tajadas = []; guias = []; cortes = new Set(); hechos = 0;
-    terminado = false; modo = null; cargado = false; pellizcando = false;
-    bichos = []; cargando = null; entero = null; p0 = null;
+    perdonado = dif() > 2; avisadoRoce = false; avisado = {}; mermaTotal = 0;
+    mitades = []; tajadas = []; guias = []; cortes = new Set(); cola = []; actual = null; conGusano = new Set();
+    hechos = 0; terminado = false; modo = null; cargado = false; pellizcando = false;
+    bichos = []; cargando = null; entero = null; p0 = null; gesto = null;
+    generacion++;
 
     const tabla = api.pieza('tabla', { ancho: ANCHO_TABLA, hondo: HONDO_TABLA });
     tabla.position.set(0, api.MESA_Y + 0.05, TABLA_Z);
@@ -592,6 +644,23 @@ export default {
 
     ponerEntero();
     api.progreso(0, TOTAL);
+
+    /* ventanita para las pruebas automáticas */
+    window.__zapallo = {
+      get fase() { return fase; },
+      get hechos() { return hechos; },
+      get total() { return TOTAL; },
+      get actual() { return actual ? { i: actual.i, merma: actual.merma, limpia: actual.limpia, pelada: actual.pelada, pepas: actual.pepas.filter(p => !p.userData.ida).length, cascaras: actual.cascaras.filter(c => !c.userData.ida).length, chueca: actual.chueca, gusano: actual.gusano } : null; },
+      get cola() { return cola.length; },
+      get chuecas() { return tajadas.filter(t => t.chueca).length; },
+      get mermas() { return mermaTotal; },
+      partir() { partir(); },
+      cortar(b) { if (fase === 'cortar') cortar(b, 0, 0); },
+      cortarTodo() { if (fase === 'cortar') for (let b = 1; b < TAJADAS; b++) cortar(b, 0, 0); },
+      limpiar() { if (!actual) return; gesto = { tipo: 'limpiar', hondo: false, pelados: 0 }; actual.pepas.forEach(pe => { if (!pe.userData.ida) { pe.userData.ida = true; volar(pe, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16)); } }); if (actual.gusano && !actual.salio) nacerBicho(); actual.limpia = true; sumar(1); gesto = null; revisarTajada(); },
+      pelar() { if (!actual) return; actual.cascaras.forEach(c => { if (!c.userData.ida) { c.userData.ida = true; volar(c, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16)); } }); actual.pelada = true; sumar(1); revisarTajada(); },
+      sinBichos() { bichos.forEach(w => { if (w.estado !== 'ido') { w.estado = 'ido'; if (w.nodo.parent) w.nodo.parent.remove(w.nodo); } }); api.aviso(null); if (actual) revisarTajada(); else revisarFinal(); },
+    };
   },
 
   objetivos() { return [grupo, ...bichos.map(w => w.nodo)]; },
@@ -599,23 +668,27 @@ export default {
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') {
-      /* el que se aplasta es el que se tocó, no el primero de la lista:
-         perdonar al gusano de la otra punta sería regalar el susto */
       tocarBicho(bichos.find(w => w.nodo === info.raiz));
       return;
     }
     if (fase === 'partir') {
       api.sfx('resist');
       api.pista('No va a golpecitos: <b>un trazo de arriba a abajo</b>, cruzándolo.', 2800);
-    } else if (fase === 'pelar') {
+    } else if (fase === 'cortar') {
       api.sfx('resist');
-      api.pista('<b>Arrastra el dedo</b> por la tira y se despega.', 2600);
+      api.pista('<b>Un trazo por raya</b>, de arriba a abajo, derecho.', 2600);
+    } else if (fase === 'limpiar' && actual) {
+      api.sfx('resist');
+      const p = api.puntoEnPlano(ALTO_PLANA());
+      const q = p ? polar(p) : null;
+      api.pista(q && q.d < R_PLANA * HUECO + 0.1
+        ? 'Raspa: <b>pasa el dedo por el hueco</b>, de lado a lado, y las pepas salen.'
+        : 'Pela: <b>arrastra el cuchillo por la orilla</b>, pegado a la cáscara, siguiendo el arco.', 3000);
     }
   },
 
   alArrastrarInicio(info) {
     if (terminado) return;
-    /* agarre por cercanía en pantalla, como en plaga.js */
     const alAlcance = bichoCercaDe(info.cliente, 62);
     if (alAlcance) {
       cargando = alAlcance;
@@ -626,6 +699,21 @@ export default {
       modo = 'cargar';
       return;
     }
+    if (fase === 'limpiar') {
+      if (!actual) { modo = null; return; }
+      p0 = api.puntoEnPlano(ALTO_PLANA());
+      if (!p0) { modo = null; return; }
+      const q = polar(p0);
+      /* fuera de la tajada no hay gesto; dentro, el hueco raspa y todo
+         lo demás pela — un dedo que arranca en la pulpa de en medio
+         va al cuchillo, que ahí no corta ni castiga */
+      if (q.dz < -0.2 || q.d > R_PLANA + 0.3) { modo = null; return; }
+      modo = 'gesto';
+      gesto = { tipo: q.d <= R_PLANA * HUECO + EX.hueco * 0.6 ? 'limpiar' : 'pelar', hondo: false, pelados: 0, recorrido: 0, prev: p0.clone() };
+      if (gesto.tipo === 'pelar') mostrarCuchillo(p0);
+      else limpiarEn(p0);
+      return;
+    }
     modo = 'gesto';
     p0 = api.puntoEnPlano(ALTO());
     if (conCuchillo() && p0) mostrarCuchillo(p0);
@@ -633,25 +721,27 @@ export default {
 
   alArrastrar() {
     if (terminado) return;
-    const p = api.puntoEnPlano(ALTO());
     if (modo === 'cargar') {
+      const p = api.puntoEnPlano(ALTO());
       if (!p || !cargando) return;
-      /* pegado al dedo en pantalla: mismo truco que plaga.js — el
-         rayo del dedo contra un plano a la altura de carga */
       cargando.suelo = { x: p.x, z: p.z };
       const enMano = api.puntoEnPlano(api.MESA_Y + 0.3) || p;
       cargando.nodo.position.set(enMano.x, api.MESA_Y + 0.3, enMano.z);
       cargando.nodo.rotation.z = Math.sin(api.reloj * 12) * 0.3;
       return;
     }
-    if (modo !== 'gesto' || !p || !p0) return;
-    if (conCuchillo()) moverCuchillo(p);
-
-    const dz = p.z - (this._pz != null ? this._pz : p.z);
-    this._pz = p.z;
-
-    if (fase === 'despepitar') { despepitarEn(p); return; }
-    if (fase === 'pelar') { pelarEn(p, dz); return; }
+    if (modo !== 'gesto' || !p0) return;
+    if (fase === 'limpiar') {
+      const p = api.puntoEnPlano(ALTO_PLANA());
+      if (!p || !gesto) return;
+      gesto.recorrido += Math.hypot(p.x - gesto.prev.x, p.z - gesto.prev.z);
+      gesto.prev = p.clone();
+      if (gesto.tipo === 'pelar') { moverCuchillo(p); pelarEn(p); }
+      else limpiarEn(p);
+      return;
+    }
+    const p = api.puntoEnPlano(ALTO());
+    if (p && conCuchillo()) moverCuchillo(p);
   },
 
   alArrastrarFin() {
@@ -663,12 +753,9 @@ export default {
         api.volarA(w.nodo, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.35, alto: 0.35 });
         api.chispas(api.COMPOSTA.clone().setY(api.MESA_Y + 0.4), '#8ab143', 12, 1);
         api.sfx('bien'); api.buzz([15, 25]);
-        /* el aviso solo se retira cuando ya no queda ninguno: con dos
-           bichos, borrarlo al primero deja al segundo paseando sin que
-           nada en pantalla diga que sigue ahí */
         if (!bichos.some(x => x.estado !== 'ido')) api.aviso(null);
         api.toast('¡Fuera de la olla! 🌿');
-        revisarFinal();
+        if (actual) revisarTajada(); else revisarFinal();
       } else {
         w.estado = 'suelto';
         w.gus.aro.visible = true;
@@ -676,12 +763,21 @@ export default {
         api.sfx('resist');
         api.aviso('🪱 Se te resbaló. Otra vez: hasta la composta');
       }
-      cargando = null; cargado = false; modo = null; this._pz = null;
+      cargando = null; cargado = false; modo = null;
       return;
     }
 
-    /* el trazo largo: partir y cortar se juzgan al soltar, porque lo
-       que importa es la línea entera, no cada cuadro */
+    if (fase === 'limpiar') {
+      if (gesto && gesto.tipo === 'pelar' && !gesto.pelados && gesto.recorrido > 0.25 && !avisado.cascara) {
+        avisado.cascara = true;
+        api.pista('Así no agarra la cáscara: <b>pegado a la orilla</b>, siguiendo el arco.', 3000);
+      }
+      esconderCuchillo(!!(gesto && gesto.pelados));
+      modo = null; p0 = null; gesto = null;
+      return;
+    }
+
+    /* los trazos rectos se juzgan al soltar: importa la línea entera */
     const p1 = api.puntoEnPlano(ALTO());
     let corto = false;
     if (modo === 'gesto' && p0 && p1) {
@@ -689,19 +785,14 @@ export default {
       const torcido = Math.abs(p1.x - p0.x);
       corto = largo >= LARGO_MIN * 0.8;
       if (fase === 'partir') {
-        /* Cualquier trazo largo que pase por encima del zapallo lo
-           parte. La regla anterior rechazaba trazos "torcidos" y
-           pedía el medio exacto — puntería disfrazada de realismo.
-           La gracia es la rapidez: si el gesto fue franco, corta. */
-        if (largo >= LARGO_MIN * 0.8 && Math.abs((p0.x + p1.x) / 2) < R_ENTERO) {
-          partir();
-        } else if (largo >= LARGO_MIN * 0.4) {
+        if (largo >= LARGO_MIN * 0.8 && Math.abs((p0.x + p1.x) / 2) < R_ENTERO) partir();
+        else if (largo >= LARGO_MIN * 0.4) {
           api.sfx('resist'); api.buzz([16, 20]);
           api.pista('Más largo: <b>de arriba a abajo</b>, cruzándolo entero.', 2800);
         }
       } else if (fase === 'cortar' && largo >= LARGO_MIN * 0.8) {
-        /* el corte elige SIEMPRE la línea pendiente más cercana al
-           trazo: ningún gesto decidido se queda sin cortar nada */
+        /* el corte elige la raya pendiente más cercana al trazo, y lo
+           lejos que quedó de ella decide si la tajada salió pareja */
         const x = (p0.x + p1.x) / 2;
         let mejor = -1, dMejor = Infinity;
         for (let b = 1; b < TAJADAS; b++) {
@@ -709,11 +800,11 @@ export default {
           const d = Math.abs(x - xFrontera(b));
           if (d < dMejor) { dMejor = d; mejor = b; }
         }
-        if (mejor > 0 && dMejor < GRUESO * 1.4) cortar(mejor);
+        if (mejor > 0 && dMejor < GRUESO * 1.4) cortar(mejor, dMejor, torcido);
       }
     }
     esconderCuchillo(corto);
-    modo = null; p0 = null; this._pz = null;
+    modo = null; p0 = null;
   },
 
   alPellizcarInicio(info) {
@@ -742,31 +833,25 @@ export default {
   },
 
   actualizar(dt, t) {
-    /* el tope sale de la fila de tajadas que haya, no de las siete de
-       antes: un zapallo más largo se pasea entero y uno más corto no se
-       sale por el borde a caminar sobre la tabla vacía */
-    const tope = fase === 'cortar' ? (TAJADAS / 2) * GRUESO - 0.12 : 1.0;
     for (const w of bichos) {
       if (w.estado !== 'suelto') continue;
       w.gus.animar(t);
-      /* se pasea de un lado a otro sobre el zapallo, sin salirse */
+      /* se pasea por el hueco, sin salirse de él */
       w.x += w.dir * gusanoVel() * dt;
-      if (w.x > tope) { w.x = tope; w.dir = -1; }
-      if (w.x < -tope) { w.x = -tope; w.dir = 1; }
+      if (w.x > w.tope) { w.x = w.tope; w.dir = -1; }
+      if (w.x < -w.tope) { w.x = -w.tope; w.dir = 1; }
       w.nodo.rotation.y = w.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
       bichoEncima(w);
     }
-
-    if (fase === 'pelar' && todoPelado()) pasarACortar();
-
-    /* el zapallo entero respira un poco: nada quieto del todo */
     if (entero) entero.position.y = ALTO() + R_ENTERO * 0.78 + Math.sin(t * 1.6) * 0.006;
   },
 
   destruir() {
-    mitades = []; tajadas = []; guias = []; cortes = new Set();
+    generacion++;
+    mitades = []; tajadas = []; guias = []; cortes = new Set(); cola = []; actual = null;
     grupo = null; entero = null; bichos = []; cargando = null;
-    cuchillo = null; trazo = null;
+    cuchillo = null; trazo = null; gesto = null;
     modo = null; p0 = null; cargado = false; pellizcando = false; terminado = false;
+    delete window.__zapallo;
   },
 };

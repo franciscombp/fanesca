@@ -124,7 +124,7 @@ function arrancar(g) {
   activo = true;
   reloj = APURO.relojInicial;
   raciones = 0; tanda = 1; cadena = 0; mejorCadena = 0;
-  castigos = 0; segundosGanados = 0;
+  castigos = 0; segundosGanados = 0; montajesFallidos = 0;
   tocados = new Set();
   servidos = new Set();
   cuotaBase = {};
@@ -271,11 +271,30 @@ function terminar(porque) {
   ganchos.finDePartida(resumen);
 }
 
+/* EL MESÓN NO ABRIÓ. Si el juego no pudo montar la ración —el módulo
+   no cargó, el ingrediente no existe en esta versión, construir
+   reventó— la partida no puede quedarse esperando a un nivel que
+   nunca va a llegar, con el anterior todavía en pantalla: eso era
+   quedarse trabado en la lenteja sin que nada lo dijera. Se descarta
+   esa ración y entra otra; a la tercera seguida se cierra la partida
+   con motivo, que un modo sin fin que gira en vacío no es un modo. */
+let montajesFallidos = 0;
+function saltar() {
+  if (!activo) return;
+  pendiente = null;
+  racionActual = null;
+  pidiendoSiguiente = false;
+  montajesFallidos++;
+  if (montajesFallidos >= 3) { terminar('error'); return; }
+  siguienteRacion();
+}
+
 function parar() {
   activo = false;
   racionActual = null;
   pendiente = null;
   pidiendoSiguiente = false;
+  montajesFallidos = 0;
 }
 
 export default {
@@ -286,5 +305,5 @@ export default {
   get cadena() { return cadena; },
   get enRojo() { return activo && reloj <= APURO.avisoRojo; },
   get racion() { return racionActual; },
-  arrancar, parar, activar, progreso, completar, arruinar, descontar, tick, terminar,
+  arrancar, parar, activar, progreso, completar, arruinar, descontar, tick, terminar, saltar,
 };

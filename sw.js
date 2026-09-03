@@ -103,7 +103,13 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
+  /* `cache: 'reload'`: cada archivo se pide DE LA RED, saltándose la
+     caché HTTP del navegador y del CDN intermedio. Sin esto, una
+     versión nueva podía precachear un archivo viejo que el navegador
+     tenía fresco de hace diez minutos, y el juego quedaba con main.js
+     de una versión y niveles-config.js de otra: ingredientes que no
+     existen, raciones que no abren, y ningún error que lo diga. */
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE.map(u => new Request(u, { cache: 'reload' })))));
   /* nada de skipWaiting aquí: el jugador decide cuándo actualizar */
 });
 

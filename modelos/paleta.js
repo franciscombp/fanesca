@@ -82,6 +82,10 @@ export const COMIDA = {
   zapallo_guia: '#5b3b1c',
   zapallo_hueco: '#e0983f',
   zapallo_fibra: '#f2cb86',
+  /* la cáscara vista de canto en la tajada tendida: más oscura que la
+     piel, porque pelar fino es seguir una franja y la franja tiene
+     que leerse a un palmo del teléfono */
+  zapallo_cascara: '#9a5a22',
 
   /* melloco: amarillo manchado de rosa fuerte, y la babaza —esa
      baba transparente que es la razón entera del nivel */

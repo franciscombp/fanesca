@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.5.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.5.0',
+    fecha: '2026-09-03',
+    titulo: 'El zapallo, con las manos de una abuela',
+    cambios: [
+      'El zapallo se rehízo entero: se parte, se corta en tajadas por las rayas y cada tajada se tiende en la tabla, grande, para RASPAR el hueco de las pepas y PELARLA FINO con el cuchillo siguiendo el arco. Limpia y pelada, se va sola a la batea y entra la siguiente.',
+      'El reto ya no es el gusano: es la mano. Un trazo que se va de la raya deja la tajada chueca; raspar más allá del hueco o pelar grueso se lleva pulpa a la composta, y la merma de más es un descuido. Cada parada aprieta las franjas: en la presentación son anchas, en la brava un solo raspón hondo ya cuesta.',
+      'El gusano del zapallo sólo aparece en las paradas bravas, y donde está de verdad: entre las pepas, al raspar.',
+      'La lenteja sucia trae dos gorgojos en vez de tres: con tres disfrazados de piedra y sin perdón, escoger dejaba de ser mirar y pasaba a ser adivinar.',
+      'Si un mesón no puede abrirse, el juego lo dice y sigue: en El Apuro pasa a otra ración en vez de quedarse mudo con la anterior en pantalla, y en la semana vuelve a la mesa con el aviso. Los errores que antes sólo iban a la consola ahora salen como aviso, con su texto.',
+    ],
+    internos: [
+      'nivel-zapallo.js reescrito: fases partir | cortar | limpiar; EXIGENCIA[resistencia] {trazo, fino, hueco, chueca, torcido, merma}; tajada tendida (`tajada-plana` en modelos/zapallo.js: cuerpo extruido, pared, cascara0…8, hueco; `trozo-pulpa`); polar() sobre centroPlana(); cortar(b, lejos, torcido) marca chueca y llama api.fallo(\'chueca\'); mermar() cuenta una vez por gesto y api.fallo(\'pulpa\') al llegar a EX.merma; gusano entre las pepas (nacerBicho al primer raspón); window.__zapallo para pruebas.',
+      'niveles-config.js: zapallo 4/5/6 tajadas, resistencia 0/1/2, gusanos 0/1/1; escoger-3 gusanos 2. COMIDA.zapallo_cascara.',
+      'modo-apuro.js: saltar() (descarta la ración pendiente y pide otra; a la tercera seguida termina con motivo error). main.js: montarRacion salta si no hay ficha, si el import falla o si Motor.cargar revienta; jugar() atrapa Motor.cargar y vuelve a la mesa con toast; listeners de error/unhandledrejection → toast.',
+      'sw.js: el precache pide cada archivo con cache: \'reload\' para no mezclar versiones desde la caché HTTP.',
+    ],
+  },
   {
     v: '2.4.0',
     fecha: '2026-09-02',

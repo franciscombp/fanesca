@@ -392,7 +392,10 @@ export const ESCOGER_NIVELES = {
       cantidad: 36,
       piedras_pct: 0.15,
       defectos_pct: 0.12,
-      gusanos: 3,
+      /* dos y no tres: con tres gorgojos disfrazados de piedra y sin
+         perdón (cuatro chiles), escoger dejaba de ser mirar y pasaba
+         a ser adivinar */
+      gusanos: 2,
     }
   },
 };
@@ -482,23 +485,28 @@ export const BACALAO_NIVELES = {
 
 // ZAPALLO — Multigestos
 export const ZAPALLO_NIVELES = {
+  /* `resistencia` es aquí la EXIGENCIA técnica (0 suave, 1 normal, 2
+     apretada): franjas de pelado y de raspado más angostas, corte más
+     pegado a la raya y menos merma antes del descuido. El gusano no va
+     en la presentación: el reto de este mesón es la mano, y el bicho
+     entre las pepas es un susto de más adelante. */
   'zapallo-1-facil': {
     nombre: 'El zapallo · introducción',
     dificultad: 2, bloque: 'MULTIGESTOS',
     tiempoBase: 60,
     config: {
-      cantidad: 5,
+      cantidad: 4,
       resistencia: 0,
-      gusanos: 1,
+      gusanos: 0,
     }
   },
   'zapallo-2-normal': {
-    nombre: 'El zapallo completo',
-    corto: 'Completo',
+    nombre: 'El zapallo · pelar fino',
+    corto: 'Pelar fino',
     dificultad: 3, bloque: 'MULTIGESTOS',
-    tiempoBase: 80,
+    tiempoBase: 85,
     config: {
-      cantidad: 7,
+      cantidad: 5,
       resistencia: 1,
       gusanos: 1,
     }
@@ -507,11 +515,11 @@ export const ZAPALLO_NIVELES = {
     nombre: 'El zapallo a la carrera',
     corto: 'A la carrera',
     dificultad: 4, bloque: 'MULTIGESTOS',
-    tiempoBase: 75,
+    tiempoBase: 90,
     config: {
-      cantidad: 7,
+      cantidad: 6,
       resistencia: 2,
-      gusanos: 2,
+      gusanos: 1,
     }
   },
 };
