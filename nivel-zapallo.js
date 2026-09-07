@@ -243,7 +243,9 @@ function partir() {
   sumar(1);
   api.toast('¡Se abrió! 🎃');
   const mi = ++generacion;
-  setTimeout(() => { if (generacion === mi && !terminado) pasarACortar(); }, 780);
+  /* lo justo para ver las mitades abrirse y mecerse: más que esto es
+     mirar cómo el juego se recompone, que no es jugar */
+  setTimeout(() => { if (generacion === mi && !terminado) pasarACortar(); }, 560);
 }
 
 /* ============================================================
@@ -291,7 +293,7 @@ function revisarSueltas() {
   });
   if (cortes.size >= TAJADAS - 1) {
     const mi = ++generacion;
-    setTimeout(() => { if (generacion === mi && !terminado) pasarALimpiar(); }, 420);
+    setTimeout(() => { if (generacion === mi && !terminado) pasarALimpiar(); }, 300);
   }
 }
 
@@ -346,7 +348,7 @@ function pasarALimpiar() {
   cola = tajadas.slice();
   reacomodarCola();
   const mi = ++generacion;
-  setTimeout(() => { if (generacion === mi && !terminado) siguienteTajada(); }, 520);
+  setTimeout(() => { if (generacion === mi && !terminado) siguienteTajada(); }, 360);
 }
 
 function reacomodarCola() {

@@ -49,6 +49,7 @@ const NOVEDADES = [
       'Costura: terminarNivel 620→240 ms y cucharas 500+330→280+230; precargarParada() dispara el import del siguiente al abrir la hoja y jugar() lo consume; cadenaPendiente/cortinaCorta → CORTINA_MIN 1000→560 y TRAS_LISTO 600→300 al encadenar. Medido en fluidez.mjs: 3846 → ~2400 ms.',
       'Gesto de seguir en #modal-listo .sheet por eventos TOUCH (la hoja tiene overflow-y y el scroll cancelaba los pointer events), con pointer para ratón; sólo con scrollTop <= 2 y fuera de los botones. Enter/Espacio hacen lo mismo.',
       'api.paso llamado en maíz (deshojar/desgranar), zapallo (partir/tajar/limpiar), col, bacalao, queso, huevo y guarnición; pasos nuevos en queso, huevo y guarnición; el zapallo pasa de cuatro pasos a tres.',
+      'Zapallo: las esperas entre faenas se acortan (780→560 al partir, 420→300 al pasar a limpiar, 520→360 entre tajadas). Con la costura de fuera más rápida, esos respiros se sentían como pausas.',
     ],
   },
   {
