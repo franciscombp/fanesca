@@ -253,6 +253,7 @@ function partir() {
 function pasarACortar() {
   fase = 'cortar';
   api.rotulo('Cortar en tajadas');
+  if (api.paso) api.paso(1);
   api.pista('<b>Un trazo por raya</b>, derecho y encima de la línea: la tajada torcida es un descuido.', 4200);
 
   mitades.forEach(m => grupo.remove(m.obj));
@@ -330,6 +331,7 @@ function pasarALimpiar() {
   if (fase === 'limpiar') return;
   fase = 'limpiar';
   api.rotulo('Sacar las pepas y pelar');
+  if (api.paso) api.paso(2);
   api.pista('Una por una: <b>raspa el hueco</b> para sacar las pepas, y <b>pasa el cuchillo pegado a la cáscara</b>, siguiendo el arco. La pulpa se queda.', 5200);
   api.toast('¡Tajadas! Ahora una por una 🎃');
 

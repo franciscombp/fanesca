@@ -264,6 +264,20 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
   CSS, sin motor; un toque la salta y con movimiento reducido no se
   lanza. La fiesta (confeti y fanfarria) espera a que la escena se
   apague.
+- **La costura entre paradas es parte del juego** (2.6): terminar y
+  volver a tener las manos ocupadas cuesta ~2,4 s (eran 3,8). Tres
+  cosas lo sostienen y hay que respetarlas al tocar el flujo: la hoja
+  de listo asoma a los 240 ms, el módulo de la parada siguiente se
+  precarga mientras se lee (`precargarParada`), y la tarjeta de
+  parada pasa corta cuando se viene encadenado (`cadenaPendiente` →
+  `cortinaCorta`) y larga sólo cuando se entra desde el recetario.
+  `fluidez.mjs` mide esos tres tramos: si un cambio los empeora, se
+  ve ahí.
+- **Las faenas se ven** (2.6): un nivel de varias fases las declara en
+  `pasos` (niveles.js, con `ico`, `txt` y `desde`) y las marca con
+  `api.paso(i)` al cambiar de fase. Si no llama a `api.paso`, la fila
+  avanza sola con el progreso. Un nivel de un solo gesto no declara
+  pasos y la fila no sale.
 - **El reto es la mano, no sólo el bicho** (2.5): el zapallo es el
   modelo. Partir, tajar por las rayas y, tajada por tajada tendida en
   la tabla, raspar el hueco y pelar fino. Lo que se mide es técnica:

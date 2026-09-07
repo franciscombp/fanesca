@@ -114,6 +114,7 @@ function desmigar() {
     fase = 'leche';
     bloqueObj.visible = false;
     if (api.rotulo) api.rotulo('La leche · el queso y la leche');
+    if (api.paso) api.paso(1);
     api.pista('Queso listo. Ahora <b>agarra la jarra</b> y vuélcala sobre la batea — de un solo golpe.', 4600);
     api.sfx('bien');
   }

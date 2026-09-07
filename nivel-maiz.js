@@ -683,6 +683,7 @@ function intentarPelos() {
   api.sfx('pop2'); api.buzz([8, 10]);
   fase = 'desgranar';
   if (api.rotulo) api.rotulo(`Desgranar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
+  if (api.paso) api.paso(1);
   presentarMazorca();
 }
 
@@ -854,10 +855,12 @@ function armarChoclo() {
     if (hojasGrupo) { giro.remove(hojasGrupo); hojasGrupo = null; }
     fase = 'desgranar';
     if (api.rotulo) api.rotulo(`Desgranar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
+    if (api.paso) api.paso(1);
     presentarMazorca();
     return;
   }
   if (api.rotulo) api.rotulo(`Deshojar · ${comoSeLlama()} ${choclo + 1} de ${CHOCLOS}`);
+  if (api.paso) api.paso(0);
   api.pista('Pela las hojas: agarra una y <b>jala hacia abajo</b>.', 4200);
 }
 

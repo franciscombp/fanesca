@@ -145,6 +145,7 @@ function hacerRollo(donde) {
   colocarRollo();
   api.sfx('tab'); api.buzz(14);
   api.rotulo('Cortar en tiras');
+  if (api.paso) api.paso(1);
   api.pista('Ahora <b>cruza el rollo</b> con el dedo. Cerca de la punta salen finitas.', 3600);
 
   /* El bicho vive entre las hojas y aparece al armar el rollo, que

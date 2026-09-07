@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.6.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.6.0',
+    fecha: '2026-09-07',
+    titulo: 'De una parada a la siguiente, sin costura',
+    cambios: [
+      'Terminar una parada y estar cocinando la siguiente toma ahora la mitad de tiempo: la hoja de «a la olla» asoma enseguida, las cucharas caen al doble de rápido y el mesón que sigue se va trayendo mientras lees.',
+      'La tarjeta de la parada pasa corta cuando vienes encadenando y se toma su tiempo sólo cuando entras desde el recetario, que es cuando presenta.',
+      '¿Y para seguir? Un empujón hacia arriba en la hoja. El botón sigue ahí, pero ya no hay que buscarlo — con teclado, Enter.',
+      'Los niveles de varias faenas dicen en qué van: una fila arriba a la izquierda con la faena de ahora abierta, las hechas con su visto y las que faltan en punto. El zapallo parte, taja y limpia; la col enrolla y corta; el bacalao frota y remoja.',
+    ],
+    internos: [
+      'main.js: pintarPasos/marcarPaso + api.paso(i) (el nivel manda; si calla, el paso sale del `desde` de niveles.js en api.progreso). #hud-pasos en index.html, .hud-pasos/.hud-paso en fanesca.css.',
+      'Costura: terminarNivel 620→240 ms y cucharas 500+330→280+230; precargarParada() dispara el import del siguiente al abrir la hoja y jugar() lo consume; cadenaPendiente/cortinaCorta → CORTINA_MIN 1000→560 y TRAS_LISTO 600→300 al encadenar. Medido en fluidez.mjs: 3846 → ~2400 ms.',
+      'Gesto de seguir en #modal-listo .sheet por eventos TOUCH (la hoja tiene overflow-y y el scroll cancelaba los pointer events), con pointer para ratón; sólo con scrollTop <= 2 y fuera de los botones. Enter/Espacio hacen lo mismo.',
+      'api.paso llamado en maíz (deshojar/desgranar), zapallo (partir/tajar/limpiar), col, bacalao, queso, huevo y guarnición; pasos nuevos en queso, huevo y guarnición; el zapallo pasa de cuatro pasos a tres.',
+    ],
+  },
   {
     v: '2.5.0',
     fecha: '2026-09-03',

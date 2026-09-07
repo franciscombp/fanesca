@@ -153,6 +153,7 @@ function quitarSal(rec) {
     api.sfx('pop2'); api.buzz([10, 20]);
     if (!avisoLimpia) {
       avisoLimpia = true;
+      if (api.paso) api.paso(1);
       api.pista('Ya está sin la sal de encima: ahora <b>arrástrala hacia arriba</b>, a la tina, a remojar.', 4200);
     }
   }

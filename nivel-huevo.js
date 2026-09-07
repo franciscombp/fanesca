@@ -80,6 +80,7 @@ function golpear() {
   if (golpesDados >= GOLPES) {
     fase = 'pelar';
     if (api.rotulo) api.rotulo(`Pelar · huevo ${huevoActual + 1} de ${HUEVOS}`);
+    if (api.paso) api.paso(1);
     api.sfx('bien');
     api.pista('Cuarteado. Ahora <b>jala cada casco</b> desde la grieta, hacia afuera.', 3800);
   }

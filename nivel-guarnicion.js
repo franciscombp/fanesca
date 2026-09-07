@@ -135,6 +135,7 @@ function sacarAlPlato(rec) {
 function armarFase() {
   fase = 'armar';
   if (api.rotulo) api.rotulo('Armar el plato · la guarnición');
+  if (api.paso) api.paso(1);
   platoObj = api.pieza('plato-fanesca');
   platoObj.position.copy(PLATO());
   platoObj.userData = { tipo: 'plato' };

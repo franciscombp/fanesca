@@ -963,14 +963,41 @@ function apagarEscenaOlla(saltada) {
   ctx.resolver();
 }
 
+/* ---------- adelantar trabajo ----------
+   Mientras se lee la hoja de «a la olla», el juego está de brazos
+   cruzados y la parada que sigue ya se sabe cuál es: se trae su
+   módulo y sus modelos AHORA, para que el toque en «Siguiente
+   parada» no tenga que esperar a la red ni al import. Es media
+   costura menos, y no cuesta nada — si el jugador se va a la mesa,
+   lo peor que pasa es que quedó un módulo cargado de más. */
+let precargado = null;
+/* la próxima parada llega ENCADENADA (desde la hoja de listo) y no
+   desde el recetario: lo pone el botón, lo consume jugar() */
+let cadenaPendiente = false;
+function precargarParada(n) {
+  if (!n || !n.modulo || (precargado && precargado.id === n.id)) return;
+  try {
+    const prom = n.modulo().catch(() => null);
+    precargado = { id: n.id, prom };
+    Motor.modelosListos().catch(() => {});
+  } catch (e) { precargado = null; }
+}
+
 /* ---------- la tarjeta de parada ----------
    Al entrar al mesón la cortina baja un instante y presenta la
    escena: qué día es, qué parada, qué se hace. Tapa la carga del
    módulo y los modelos —que es cuando la pantalla estaba en blanco—
    y no captura el dedo: si el jugador ya está tocando, se va sola. */
 let cortinaId = null, cortinaT0 = 0;
+/* Cuánto se queda la tarjeta. Entrando desde el recetario presenta la
+   parada y merece su respiro; ENCADENANDO —terminaste una y caes en la
+   siguiente— el jugador ya está en faena y lo que quiere es la tabla:
+   ahí la tarjeta pasa como un rótulo de escena, no como una pausa. */
 const CORTINA_MIN = 1000;         /* ms mínimos con la tarjeta a la vista */
 const CORTINA_TRAS_LISTO = 600;   /* y nunca menos de esto con el mesón YA armado detrás */
+const CORTINA_MIN_CADENA = 560;
+const CORTINA_TRAS_LISTO_CADENA = 300;
+let cortinaCorta = false;
 function tarjetaDeParada(n) {
   const c = $('#cortina');
   if (!c || !n) return;
@@ -1014,7 +1041,9 @@ function cerrarCortina() {
   return new Promise(resolve => {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (!c.classList.contains('abre')) { resolve(); return; }
-      const falta = Math.max(CORTINA_TRAS_LISTO, CORTINA_MIN - (performance.now() - cortinaT0));
+      const tras = cortinaCorta ? CORTINA_TRAS_LISTO_CADENA : CORTINA_TRAS_LISTO;
+      const min = cortinaCorta ? CORTINA_MIN_CADENA : CORTINA_MIN;
+      const falta = Math.max(tras, min - (performance.now() - cortinaT0));
       clearTimeout(cortinaId);
       cortinaId = setTimeout(() => { apagarCortina(); resolve(); }, falta);
     }));
@@ -1139,6 +1168,51 @@ let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque */
 let hechosAhora = 0, totalAhora = 1;
 let fallosAhora = 0;         /* los descuidos de esta partida */
+
+/* ---------- las faenas del mesón ----------
+   Un nivel de varias fases —el zapallo parte, taja y limpia; la col
+   enrolla y corta— cambiaba de faena avisando sólo con el rótulo, y
+   desde fuera se sentía como si el juego hubiera cambiado de tema a
+   media partida. Ahora las faenas van en fila bajo el HUD: la de
+   ahora abierta y con su nombre, las hechas con su visto.
+
+   Quién manda el paso: el nivel, si lo dice con `api.paso(i)` —los
+   multifase saben exactamente cuándo cambian—; y si no lo dice, la
+   barra de progreso, porque cada paso trae el `desde` (la fracción
+   del nivel en que empieza) desde niveles.js. Así los doce de
+   siempre lo tienen gratis y los nuevos pueden afinarlo. */
+let pasosNivel = null, pasoAhora = -1, pasoForzado = false;
+
+function pintarPasos(n) {
+  const caja = $('#hud-pasos');
+  if (!caja) return;
+  /* un solo paso no es una fila de pasos: es el nivel entero */
+  pasosNivel = (n && Array.isArray(n.pasos) && n.pasos.length > 1) ? n.pasos : null;
+  pasoAhora = -1; pasoForzado = false;
+  caja.classList.toggle('hidden', !pasosNivel);
+  if (!pasosNivel) { caja.innerHTML = ''; return; }
+  caja.innerHTML = pasosNivel
+    .map((p, i) => `<span class="hud-paso" data-i="${i}"><i>${p.ico || '•'}</i><b>${p.txt}</b></span>`)
+    .join('');
+  marcarPaso(0);
+}
+
+function marcarPaso(i, delNivel) {
+  if (!pasosNivel) return;
+  if (delNivel) pasoForzado = true;
+  i = Math.max(0, Math.min(pasosNivel.length - 1, i));
+  /* nunca hacia atrás: en un nivel que reparte el trabajo por piezas
+     —cada tajada de zapallo se raspa y se pela— la fase va y viene,
+     pero la faena de la fila sólo avanza */
+  if (i <= pasoAhora) return;
+  pasoAhora = i;
+  const fichas = $$('#hud-pasos .hud-paso');
+  fichas.forEach((f, k) => {
+    f.classList.toggle('hud-paso--hecho', k < i);
+    f.classList.toggle('hud-paso--ahora', k === i);
+    if (k === i) { f.classList.remove('entra'); void f.offsetWidth; f.classList.add('entra'); }
+  });
+}
 
 /* ---------- los fallos ----------
    El tiempo solo no califica. Cada nivel avisa sus descuidos con
@@ -1349,6 +1423,13 @@ const api = {
       ? Apuro.raciones + (Apuro.raciones === 1 ? ' ración' : ' raciones')
       : Math.round(k * 100) + '%';
     Motor.llenarRecipiente('batea', k);
+    /* la faena que toca según lo hecho — salvo que el nivel ya la
+       esté diciendo él mismo con api.paso() */
+    if (pasosNivel && !pasoForzado) {
+      let i = 0;
+      pasosNivel.forEach((p, j) => { if (k >= (p.desde || 0)) i = j; });
+      marcarPaso(i);
+    }
     if (subio) {
       racha(cuanto, k);
       puntosFlotantes(cuanto);
@@ -1384,6 +1465,9 @@ const api = {
   voz,
   /* un nivel con fases puede renombrar lo que se está haciendo */
   rotulo(txt) { if (txt) $('#hud-tarea').textContent = txt; },
+  /* …y decir en qué faena de la fila va: el nivel lo sabe mejor que
+     la barra, sobre todo cuando el trabajo se reparte por piezas */
+  paso(i) { marcarPaso(i, true); },
   /* un nivel puede abrir una página del cuaderno desde adentro */
   abrirCapitulo,
   toast,
@@ -1571,11 +1655,16 @@ async function jugar(id) {
   reiniciarRacha();
   pintarReloj();
   alerta(null);
+  pintarPasos(n);
+  cortinaCorta = cadenaPendiente; cadenaPendiente = false;
   mostrar('juego');
   tarjetaDeParada(n);
 
   try {
-    const m = await n.modulo();
+    /* si esta parada ya se venía precargando mientras se leía la hoja
+       de la anterior, el import ya está resuelto y no hay que ir a
+       buscar nada: es el grueso de la costura entre parada y parada */
+    const m = await ((precargado && precargado.id === id) ? precargado.prom : n.modulo());
     modActual = m.default || m;
   } catch (e) {
     console.error(e);
@@ -1691,6 +1780,7 @@ async function montarRacion(base, config) {
     return;
   }
   nivelActual = ficha;
+  pintarPasos(ficha);
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(ficha.icono);
   apuroHUD(ficha.nombre);
   try {
@@ -1907,6 +1997,11 @@ function terminarNivel() {
   }
   guardar();
 
+  /* LA HOJA ASOMA ENSEGUIDA. Esperaba 620 ms mirando un mesón ya
+     terminado, y luego el redoble de cucharas tardaba otro segundo:
+     entre una parada y la siguiente se iban casi cuatro segundos de
+     nada. El respiro sigue —hay que ver caer el último grano— pero
+     medido en un tercio, y el redoble va al doble de rápido. */
   setTimeout(() => {
     Motor.setActive(false);
     /* la parada que presenta un ingrediente se llama como él: "El
@@ -1922,7 +2017,7 @@ function terminarNivel() {
         huecos[i].classList.add('llena', 'cae');
         sfx('bien', 1 + i * 0.18);
         buzz(14);
-      }, 500 + i * 330);
+      }, 280 + i * 230);
     }
     $('#listo-tiempo').textContent = tiempoBonito(tiempoMs);
     /* la ficha de "tu mejor" enseña el mejor DESPUÉS de esta partida:
@@ -1969,7 +2064,12 @@ function terminarNivel() {
     sfx('fiesta');
     /* tres cucharas merecen más papelitos que una */
     celebrar(cuch >= 3 ? 44 : (cuch === 2 ? 28 : 16));
-  }, 620);
+    /* y mientras se lee, se va trayendo la parada que sigue */
+    if (quedanParadas && !cierraDia) {
+      const sig = RUTA.find((x, i) => !estaListo(x.id) && desbloqueado(i));
+      if (sig) precargarParada(sig);
+    }
+  }, 240);
 }
 
 function arruinarNivel(motivo) {
@@ -2154,6 +2254,9 @@ function bindEventos() {
     cerrarModales();
     Motor.descargar();
     nivelActual = null; modActual = null;
+    /* lo que venga ahora es una parada ENCADENADA: su tarjeta pasa
+       corta, porque la mano ya está caliente */
+    cadenaPendiente = true;
     /* SE ACABÓ UN DÍA → a la mesa: la escena del cierre se lee con
        la banda nueva del mapa detrás, y el capítulo respira. Es la
        única escala que el flujo se permite — entre parada y parada
@@ -2180,8 +2283,49 @@ function bindEventos() {
     const id = nivelActual ? nivelActual.id : null;
     cerrarModales();
     Motor.descargar();
+    cadenaPendiente = true;
     if (id) jugar(id);
   });
+
+  /* SEGUIR SIN BUSCAR EL BOTÓN. La hoja de «a la olla» se despacha
+     con un empujón hacia arriba —el gesto de una consola: la hoja
+     sale por donde entró— o con Enter en teclado. El botón sigue
+     ahí para quien lo prefiera; esto es para quien ya lleva diez
+     paradas y no quiere apuntar. */
+  const hojaListo = $('#modal-listo .sheet');
+  if (hojaListo) {
+    let y0 = null, x0 = null, seguido = false;
+    const empieza = (x, y, destino) => {
+      /* sobre un botón no hay gesto (ese es su trabajo), y con la
+         hoja desplazada tampoco: ahí subir es volver al principio de
+         la tarjeta, no salir corriendo */
+      if ((destino && destino.closest && destino.closest('button')) || hojaListo.scrollTop > 2) { y0 = null; return; }
+      y0 = y; x0 = x; seguido = false;
+    };
+    const mueve = (x, y) => {
+      if (y0 === null || seguido) return;
+      /* hacia arriba, decidido y sin irse de lado: cualquier otra
+         cosa es alguien leyendo la tarjeta con el dedo encima */
+      if (y - y0 < -46 && Math.abs(x - x0) < 40) {
+        seguido = true; y0 = null;
+        sfx('tab'); buzz(10);
+        $('#listo-seguir').click();
+      }
+    };
+    const suelta = () => { y0 = null; };
+    /* TOUCH y no sólo pointer: la hoja se desplaza por dentro
+       (overflow-y), así que en cuanto el dedo sube el navegador se
+       queda con el gesto y CANCELA los pointer events — el gesto no
+       llegaba nunca. Los touch sí siguen llegando, en passive. */
+    hojaListo.addEventListener('touchstart', (e) => { const t = e.touches[0]; if (t) empieza(t.clientX, t.clientY, e.target); }, { passive: true });
+    hojaListo.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) mueve(t.clientX, t.clientY); }, { passive: true });
+    hojaListo.addEventListener('touchend', suelta, { passive: true });
+    hojaListo.addEventListener('touchcancel', suelta, { passive: true });
+    /* y con ratón, en escritorio, donde no hay quien cancele nada */
+    hojaListo.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') empieza(e.clientX, e.clientY, e.target); });
+    hojaListo.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') mueve(e.clientX, e.clientY); });
+    hojaListo.addEventListener('pointerup', suelta);
+  }
 
   $('#arruinado-reintentar').addEventListener('click', () => {
     const id = nivelActual ? nivelActual.id : null;
@@ -2199,6 +2343,13 @@ function bindEventos() {
   $('#dia-seguir').addEventListener('click', () => { sfx('tab'); cerrarModales(); });
 
   document.addEventListener('keydown', (e) => {
+    /* con la hoja de listo abierta, Enter sigue: el gesto de teclado
+       equivalente al empujón hacia arriba */
+    if ((e.key === 'Enter' || e.key === ' ') && $('#modal-listo').classList.contains('open')) {
+      e.preventDefault();
+      $('#listo-seguir').click();
+      return;
+    }
     if (e.key === 'Escape') {
       if ($$('.modal.open').length) { cerrarModales(); return; }
       /* también con Escape el Apuro se CIERRA guardando: la salida
