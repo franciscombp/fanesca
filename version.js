@@ -30,10 +30,24 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.9.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.9.0',
+    fecha: '2026-09-08',
+    titulo: 'Los botones responden al dedo, no al puntero',
+    cambios: [
+      'Tocabas un ingrediente o el play de El Apuro, el botón se pintaba pulsado… y no pasaba nada. No era cosa tuya: si el dedo se corre unos pocos píxeles entre que baja y sube —que es lo que hace cualquier dedo—, el navegador decide que fue un arrastre y no avisa de ningún toque. El botón sí lo notaba (por eso el destello), pero el juego no se enteraba.',
+      'Ahora el juego escucha el toque él mismo: vale con que el dedo no se mueva más de treinta píxeles. Pasado eso sigue siendo un arrastre, para poder pasar de día sin abrir mesones sin querer.',
+      'Vale para todo lo que se toca: las fichas del recetario, la olla, El Apuro, las pestañas de los días, las flechas, los botones de las hojas y los de la portada.',
+    ],
+    internos: [
+      'main.js: tocable(el, fn) — pointerdown/pointerup con TAP_TOLERANCIA 30 px y TAP_TIEMPO 900 ms; pointercancel anula (desplazamiento real); el `click` se sigue oyendo para teclado y ratón, descartando el sintético de iOS por ventana de 700 ms desde el último tap. Aplicado a fichas, receta-final, tabs, flechas del carrusel, dock, hojas, portada, escenarios y puntos del cuaderno. actualizador.js lleva su propia copia (no es módulo).',
+      'Medido antes del arreglo en dedo.mjs: con 10 px de deriva llegaba el click; con 14 ya no llegaba ninguno, aunque sí pointerdown/pointerup (de ahí el pulsado sin acción).',
+    ],
+  },
   {
     v: '2.8.0',
     fecha: '2026-09-08',

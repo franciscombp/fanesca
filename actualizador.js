@@ -22,6 +22,30 @@
      github.io este cajón se comparte con las demás apps del sitio */
   const VISTA_KEY = 'fanesca_version_vista';
 
+  /* TOCAR SIN DEPENDER DEL CLICK. Igual que en main.js: si el dedo se
+     corre más de diez píxeles entre bajar y subir, el navegador no
+     dispara `click` aunque el botón se haya pintado pulsado. Aquí
+     vive su propia copia porque este archivo no es un módulo: es lo
+     primero que se carga y no puede importar nada del juego. */
+  function tocar(el, fn) {
+    if (!el) return;
+    let x0 = 0, y0 = 0, t0 = 0, vivo = false, ultimoTap = 0;
+    el.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      x0 = e.clientX; y0 = e.clientY; t0 = Date.now(); vivo = true;
+    });
+    el.addEventListener('pointerup', (e) => {
+      if (!vivo) return;
+      vivo = false;
+      if (e.pointerType === 'mouse') return;
+      if (Math.hypot(e.clientX - x0, e.clientY - y0) > 30 || Date.now() - t0 > 900) return;
+      ultimoTap = Date.now();
+      fn(e);
+    });
+    el.addEventListener('pointercancel', () => { vivo = false; });
+    el.addEventListener('click', (e) => { if (Date.now() - ultimoTap < 700) return; fn(e); });
+  }
+
   /* ---------- la nota de versiones ---------- */
 
   function mostrarNovedades() {
@@ -52,8 +76,8 @@
         <button type="button" class="btn btn--maiz btn--block nota-version-ok">¡A cocinar!</button>
       </div>`;
     const cerrar = () => modal.remove();
-    modal.querySelector('.nota-version-ok').addEventListener('click', cerrar);
-    modal.querySelector('.nota-version-x').addEventListener('click', cerrar);
+    tocar(modal.querySelector('.nota-version-ok'), cerrar);
+    tocar(modal.querySelector('.nota-version-x'), cerrar);
     modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
     /* y con Escape, en teclado */
     document.addEventListener('keydown', function esc(e) {
@@ -114,7 +138,7 @@
     btn.type = 'button';
     btn.className = 'btn btn--maiz aviso-actualizar';
     btn.innerHTML = '✨ Nueva versión — <b>Actualizar</b>';
-    btn.addEventListener('click', () => {
+    tocar(btn, () => {
       btn.disabled = true;
       btn.textContent = 'Actualizando…';
       actualizandoPorBoton = true;

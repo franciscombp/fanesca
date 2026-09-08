@@ -425,7 +425,7 @@ function renderEscenarios() {
       </span>
       ${e.id === actual ? '<span class="escenario-check" aria-hidden="true">✓</span>' : ''}`;
 
-    btn.addEventListener('click', () => {
+    tocable(btn, () => {
       if (estado.escenario === e.id) return;
       estado.escenario = e.id;
       guardar();
@@ -500,8 +500,8 @@ function nuevoCarrusel({ viewport, pista, izq, der, alCambiar }) {
     if (alCambiar) alCambiar(i, total());
   };
   const irA = (n, anim = true) => { i = Math.max(0, Math.min(total() - 1, n)); pintar(anim); };
-  if (izq) izq.addEventListener('click', () => { sfx('tab'); irA(i - 1); });
-  if (der) der.addEventListener('click', () => { sfx('tab'); irA(i + 1); });
+  if (izq) tocable(izq, () => { sfx('tab'); irA(i - 1); });
+  if (der) tocable(der, () => { sfx('tab'); irA(i + 1); });
   viewport.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     x0 = e.clientX; y0 = e.clientY; dx = 0; arrastrando = true; gesto = null;
@@ -562,7 +562,7 @@ function pintarTabs() {
     }
     b.className = 'tab' + (i === actual ? ' tab--activa' : '') + (hecha ? ' tab--hecha' : '') + (cerrada ? ' tab--cerrada' : '');
     b.textContent = txt;
-    b.addEventListener('click', () => { sfx('tab'); if (mesaCarrusel) mesaCarrusel.irA(i); });
+    tocable(b, () => { sfx('tab'); if (mesaCarrusel) mesaCarrusel.irA(i); });
     nav.appendChild(b);
   });
 }
@@ -586,6 +586,58 @@ function pintarDock() {
 }
 
 /* mover el cursor: la ficha elegida se marca y el dock la nombra */
+/* ---------- TOCAR DE VERDAD ----------
+   Un dedo no es un puntero: entre que baja y sube se corre unos
+   píxeles. Pasados unos diez, el navegador decide que aquello fue un
+   arrastre y NO dispara `click` — pero el botón sí recibió el toque,
+   así que se pinta pulsado. Ese es el fallo que se veía en el
+   teléfono: la ficha (o el botón de El Apuro) parpadeaba al tocarla
+   y no pasaba nada, una y otra vez, sobre todo dentro del carrusel
+   del recetario, que es una zona que además se desplaza.
+
+   Medido: con 10 px de deriva llega el click; con 14 ya no llega
+   ninguno.
+
+   Así que estos botones no esperan al `click`: se quedan con el
+   pointerdown, miden lo que se movió el dedo al levantarlo y, si fue
+   un toque (menos de TOLERANCIA y menos de un segundo), actúan. El
+   `click` se sigue escuchando —teclado y ratón lo usan— con un
+   antirrebote para no hacer la cosa dos veces. */
+const TAP_TOLERANCIA = 30;   /* px que puede correrse el dedo y seguir siendo un toque */
+const TAP_TIEMPO = 900;      /* ms: más que esto es una pulsación larga, no un toque */
+
+function tocable(el, fn) {
+  if (!el) return;
+  let x0 = 0, y0 = 0, t0 = 0, vivo = false, ultimoTap = 0;
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    x0 = e.clientX; y0 = e.clientY; t0 = Date.now(); vivo = true;
+  });
+  el.addEventListener('pointerup', (e) => {
+    if (!vivo) return;
+    vivo = false;
+    /* el ratón no tiene este problema: que siga por `click`, así el
+       arrastre de un botón con el ratón no dispara nada raro */
+    if (e.pointerType === 'mouse') return;
+    if (Math.hypot(e.clientX - x0, e.clientY - y0) > TAP_TOLERANCIA) return;
+    if (Date.now() - t0 > TAP_TIEMPO) return;
+    ultimoTap = Date.now();
+    fn(e);
+  });
+  /* si el navegador se queda con el gesto (un desplazamiento de
+     verdad), esto ya no es un toque */
+  el.addEventListener('pointercancel', () => { vivo = false; });
+  el.addEventListener('click', (e) => {
+    /* iOS manda un `click` de cortesía poco después del toque que ya
+       atendimos: ese sobra. El de teclado (Enter en un botón) y el
+       del ratón, no — y por eso no se descartan por tiempo entre
+       toques, que rompería un repique rápido como el que revela el
+       modo dev. */
+    if (Date.now() - ultimoTap < 700) return;
+    fn(e);
+  });
+}
+
 function enfocar(id) {
   focoId = id;
   $$('#mesa-lista .renglon--foco').forEach(el => el.classList.remove('renglon--foco'));
@@ -645,7 +697,7 @@ function paginaDia(dia) {
         ? `<span class="renglon-cucharas">${cucharasHTML(mejor.cucharas)}</span>`
         : (esSiguiente ? '<span class="renglon-lapiz" aria-hidden="true">✎</span>' : '<span class="renglon-candado" aria-hidden="true">🔒</span>')}</span>`;
     b.setAttribute('aria-label', `Paso ${n.num}: ${n.nombre}` + (n.dificultad ? ` (dificultad ${n.dificultad} de 5)` : '') + (abierto ? '' : ' (bloqueado)'));
-    b.addEventListener('click', () => {
+    tocable(b, () => {
       if (mesaCarrusel && mesaCarrusel.recienDeslizado()) return;
       sfx('tab');
       if (!abierto) {
@@ -707,7 +759,7 @@ function paginaOlla(ctx) {
     </span>
     ${ollaAbierta ? '' : '<span class="renglon-candado" aria-hidden="true">🔒</span>'}`;
   receta.setAttribute('aria-label', ollaAbierta ? 'Cocinar la olla' : `La olla, al final de la semana — vas ${pctOlla}%`);
-  receta.addEventListener('click', () => {
+  tocable(receta, () => {
     if (mesaCarrusel && mesaCarrusel.recienDeslizado()) return;
     sfx('tab');
     if (!ollaAbierta) { toast(`La olla se cocina al final de la semana — faltan ${campana.length - campanaHecha} paradas`); return; }
@@ -1081,7 +1133,7 @@ function pintarPuntosCuaderno(i, total) {
     p.type = 'button';
     p.className = 'punto' + (k === i ? ' punto--activo' : '');
     p.setAttribute('aria-label', `Página ${k + 1} de ${total}`);
-    p.addEventListener('click', () => { sfx('tab'); if (cuadernoCarrusel) cuadernoCarrusel.irA(k); });
+    tocable(p, () => { sfx('tab'); if (cuadernoCarrusel) cuadernoCarrusel.irA(k); });
     caja.appendChild(p);
   }
 }
@@ -2135,7 +2187,7 @@ function cerrarModales() { $$('.modal').forEach(m => m.classList.remove('open'))
 
 function bindEventos() {
   /* Botón empezar: va a la mesa de prep */
-  $('#btn-empezar').addEventListener('click', () => {
+  tocable($('#btn-empezar'), () => {
     initAudio(); sfx('tab');
     estado.vistoPortada = true; guardar();
     mostrar('mesa');
@@ -2148,7 +2200,7 @@ function bindEventos() {
   if (btnReset) {
     let armado = false, armadoId = null;
     const textoReset = () => listos() ? 'Empezar de nuevo' : '↻ Empezar desde cero';
-    btnReset.addEventListener('click', () => {
+    tocable(btnReset, () => {
       if (!armado) {
         armado = true;
         btnReset.textContent = '¿Seguro? Toca otra vez';
@@ -2184,7 +2236,7 @@ function bindEventos() {
     btnDev.classList.toggle('hidden', !estado.devMode);
     let toquesVersion = 0, toquesId = null;
     const ver = document.querySelector('[data-version]');
-    if (ver) ver.addEventListener('click', () => {
+    if (ver) tocable(ver, () => {
       clearTimeout(toquesId);
       toquesId = setTimeout(() => { toquesVersion = 0; }, 1600);
       if (++toquesVersion >= 5) {
@@ -2193,7 +2245,7 @@ function bindEventos() {
         toast('Modo dev a la vista 🛠');
       }
     });
-    btnDev.addEventListener('click', () => {
+    tocable(btnDev, () => {
       sfx('tab');
       estado.devMode = !estado.devMode;
       guardar();
@@ -2207,7 +2259,7 @@ function bindEventos() {
      no ha jugado nada en un contrarreloj de ingredientes al azar es
      soltarlo a perder sin saber por qué; con el primer día hecho ya
      conoce seis gestos y el primer bicho. */
-  $('#btn-apuro').addEventListener('click', () => {
+  tocable($('#btn-apuro'), () => {
     sfx('tab');
     if (!diaCompleto(DIAS[0]) && !estado.devMode) {
       toast(`El Apuro se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`);
@@ -2215,37 +2267,37 @@ function bindEventos() {
     }
     arrancarApuro();
   });
-  $('#apuro-otra').addEventListener('click', () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
-  $('#apuro-salir').addEventListener('click', () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
+  tocable($('#apuro-otra'), () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
+  tocable($('#apuro-salir'), () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
 
 
-  $('#voz').addEventListener('click', () => voz(null));
+  tocable($('#voz'), () => voz(null));
 
   /* «Sigue»: lo que renderMesa haya decidido que toca */
-  $('#btn-sigue').addEventListener('click', () => {
+  tocable($('#btn-sigue'), () => {
     sfx('tab');
     if (sigueAccion) sigueAccion();
   });
 
   /* «?»: la última pista, otra vez. No cuesta nada — el reloj corre
      igual, que releer no es trampa. */
-  $('#btn-pista').addEventListener('click', () => {
+  tocable($('#btn-pista'), () => {
     sfx('tab');
     if (ultimaPista) pistaAhora(ultimaPista, duracionDe(ultimaPista));
   });
-  $('#btn-cuaderno').addEventListener('click', () => { sfx('tab'); mostrar('cuaderno'); });
+  tocable($('#btn-cuaderno'), () => { sfx('tab'); mostrar('cuaderno'); });
   /* la hoja de la cocina: dónde se cocina, fuera del recetario */
   const btnCocina = $('#btn-cocina');
-  if (btnCocina) btnCocina.addEventListener('click', () => { sfx('tab'); $('#modal-cocina').classList.add('open'); });
+  if (btnCocina) tocable(btnCocina, () => { sfx('tab'); $('#modal-cocina').classList.add('open'); });
   const cocinaCerrar = $('#cocina-cerrar');
-  if (cocinaCerrar) cocinaCerrar.addEventListener('click', () => { sfx('tab'); cerrarModales(); });
-  $('#cuaderno-volver').addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
+  if (cocinaCerrar) tocable(cocinaCerrar, () => { sfx('tab'); cerrarModales(); });
+  tocable($('#cuaderno-volver'), () => { sfx('tab'); mostrar('mesa'); });
   const volverArriba = $('#cuaderno-volver-arriba');
-  if (volverArriba) volverArriba.addEventListener('click', () => { sfx('tab'); mostrar('mesa'); });
-  $('#final-cuaderno').addEventListener('click', () => { cerrarModales(); mostrar('cuaderno'); });
+  if (volverArriba) tocable(volverArriba, () => { sfx('tab'); mostrar('mesa'); });
+  tocable($('#final-cuaderno'), () => { cerrarModales(); mostrar('cuaderno'); });
 
   let salirArmado = 0;
-  $('#btn-salir').addEventListener('click', () => {
+  tocable($('#btn-salir'), () => {
     sfx('tab');
     /* En El Apuro salir CIERRA la partida en vez de tirarla: llevas
        raciones ganadas y un récord posible, y perderlos por tocar el
@@ -2273,7 +2325,7 @@ function bindEventos() {
     salirDelNivel();
   });
 
-  $('#listo-seguir').addEventListener('click', () => {
+  tocable($('#listo-seguir'), () => {
     const n = nivelActual;
     cerrarModales();
     Motor.descargar();
@@ -2303,7 +2355,7 @@ function bindEventos() {
     }
     jugar(sig.id);
   });
-  $('#listo-repetir').addEventListener('click', () => {
+  tocable($('#listo-repetir'), () => {
     const id = nivelActual ? nivelActual.id : null;
     cerrarModales();
     Motor.descargar();
@@ -2351,20 +2403,20 @@ function bindEventos() {
     hojaListo.addEventListener('pointerup', suelta);
   }
 
-  $('#arruinado-reintentar').addEventListener('click', () => {
+  tocable($('#arruinado-reintentar'), () => {
     const id = nivelActual ? nivelActual.id : null;
     cerrarModales();
     Motor.descargar();
     if (id) jugar(id);
   });
-  $('#arruinado-salir').addEventListener('click', () => { cerrarModales(); salirDelNivel(); });
+  tocable($('#arruinado-salir'), () => { cerrarModales(); salirDelNivel(); });
 
-  $('#final-ok').addEventListener('click', () => { cerrarModales(); mostrar('mesa'); });
+  tocable($('#final-ok'), () => { cerrarModales(); mostrar('mesa'); });
   /* un toque en la escena de la olla la salta: el altar ya está
      abierto debajo */
   const escOlla = $('#olla-escena');
   if (escOlla) escOlla.addEventListener('pointerdown', (e) => { e.preventDefault(); apagarEscenaOlla(true); });
-  $('#dia-seguir').addEventListener('click', () => { sfx('tab'); cerrarModales(); });
+  tocable($('#dia-seguir'), () => { sfx('tab'); cerrarModales(); });
 
   document.addEventListener('keydown', (e) => {
     /* con la hoja de listo abierta, Enter sigue: el gesto de teclado

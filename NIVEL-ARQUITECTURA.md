@@ -264,6 +264,14 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
   CSS, sin motor; un toque la salta y con movimiento reducido no se
   lanza. La fiesta (confeti y fanfarria) espera a que la escena se
   apague.
+- **Nada de la interfaz espera un `click`** (2.9). Un dedo se corre
+  unos píxeles al tocar y a partir de ~11 el navegador no dispara
+  `click`: el botón se pinta pulsado y la acción no ocurre nunca.
+  Todo lo que se toca pasa por `tocable(el, fn)` (main.js), que
+  resuelve el toque en `pointerup` con 30 px de tolerancia y deja el
+  `click` sólo para teclado y ratón. Si añades un botón nuevo, úsalo:
+  con `addEventListener('click')` funcionará en el simulador y fallará
+  en la mano de alguien.
 - **Un gesto que no funciona es peor que uno difícil** (2.7): si un
   nivel acepta sólo una forma de hacer algo, la otra tiene que hacer
   algo — aunque sea explicar. El huevo pelaba sólo arrastrando, con un
