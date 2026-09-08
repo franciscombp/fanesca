@@ -7,12 +7,22 @@
    el mundo conoce y ningún otro nivel usa:
 
      · golpecito seco (toques) → la cáscara se cuartea
-     · ya cuarteado, JALA cada casco desde la grieta → a la composta
-     · pelado del todo, tócalo → a la batea, y viene el siguiente
+     · ya cuarteado, RASCA la cáscara: tocar o pasar el dedo por
+       encima va sacando los pedazos, que caen a la composta
+     · sin cáscara, el huevo se va solo a la batea
 
-   Seguir golpeando un huevo ya cuarteado no pela nada — se dice, y
-   se enseña a jalar. `golpes` es cuántos toques pide la cáscara;
-   `cantidad`, cuántos huevos trae la docena de hoy.
+   POR QUÉ ASÍ. Antes la cáscara sólo salía ARRASTRANDO, y con un
+   umbral de jalón: quien tocaba —que es lo primero que hace
+   cualquiera— no conseguía nada y el nivel parecía roto. Y los ocho
+   cascos eran parches lisos, sin una grieta a la vista, así que
+   tampoco se veía por dónde agarrar. Ahora la cáscara se abre al
+   cuartearse (los pedazos se separan y se ven las grietas), el
+   primero se levanta y late para decir «por aquí», y los dos gestos
+   valen: tocar saca ese pedazo, pasar el dedo saca los que roce.
+   Nadie se queda atascado por elegir mal la mano.
+
+   `golpes` es cuántos toques pide la cáscara; `cantidad`, cuántos
+   huevos trae la docena de hoy.
    ============================================================ */
 
 let THREE, raiz, api;
@@ -33,8 +43,10 @@ let golpesDados = 0;
 let fase = 'cascar';        /* cascar → pelar → entregar */
 let hechos = 0;
 let avisadoPicoteo = false;
-let arrastrando = null;     /* el casco agarrado */
 let terminado = false;
+/* el pedazo que se levanta al cuartearse: la señal de por dónde
+   empezar. Late hasta que alguien lo saca. */
+let primero = null;
 
 const CENTRO = () => new THREE.Vector3(0, api.MESA_Y + 0.33, TABLA_Z);
 const porHuevo = () => GOLPES + 8 + 1;   /* golpes + ocho cascos + la entrega */
@@ -49,13 +61,27 @@ function ponerHuevo() {
   huevoObj.add(api.sombraBlob(0.35, -0.16));
   raiz.add(huevoObj);
   cascos = [];
+  primero = null;
   for (let i = 0; i < 8; i++) {
     const c = api.parte(huevoObj, 'casco' + i);
-    if (c) { c.userData.tipo = 'casco'; cascos.push(c); }
+    if (c) {
+      c.userData.tipo = 'casco';
+      /* hacia dónde mira este pedazo: es media esfera partida en
+         cuatro gajos y dos pisos, así que su centro sale de su propio
+         gajo. Sirve para separarlo al cuartearse y para saber en qué
+         dirección se despega. */
+      const fila = i < 4 ? 1 : -1, gajo = i % 4;
+      const a = (gajo + 0.5) * Math.PI / 2;
+      c.userData.fuera = new THREE.Vector3(Math.sin(a), fila * 0.55, Math.cos(a)).normalize();
+      c.userData.base = c.position.clone();
+      cascos.push(c);
+    }
   }
   grietas = new THREE.Group();
   huevoObj.add(grietas);
   if (api.rotulo) api.rotulo(`Cascar · huevo ${huevoActual + 1} de ${HUEVOS}`);
+  /* cada huevo empieza de cero: la fila vuelve a «cáscalo» */
+  if (api.paso) api.paso(0);
 }
 
 function golpear() {
@@ -77,18 +103,40 @@ function golpear() {
   api.chispas(huevoObj.position.clone().setY(api.MESA_Y + 0.6), '#f0e0c8', 4, 0.5);
   api.progreso(hechos, TOTAL);
 
-  if (golpesDados >= GOLPES) {
-    fase = 'pelar';
-    if (api.rotulo) api.rotulo(`Pelar · huevo ${huevoActual + 1} de ${HUEVOS}`);
-    if (api.paso) api.paso(1);
-    api.sfx('bien');
-    api.pista('Cuarteado. Ahora <b>jala cada casco</b> desde la grieta, hacia afuera.', 3800);
-  }
+  if (golpesDados >= GOLPES) cuartear();
+}
+
+/* LA CÁSCARA SE ABRE. Que el huevo pase de «liso con rayitas» a
+   «cuarteado de verdad» es lo que hace entender que ya toca pelar:
+   cada pedazo se separa un poco y queda su grieta a la vista. Uno se
+   levanta más y late, para decir por dónde empezar. */
+function cuartear() {
+  fase = 'pelar';
+  if (api.rotulo) api.rotulo(`Pelar · huevo ${huevoActual + 1} de ${HUEVOS}`);
+  if (api.paso) api.paso(1);
+  api.sfx('bien'); api.buzz([12, 18, 12]);
+  api.sacudir(0.3);
+  cascos.forEach((c, i) => {
+    if (!c.userData.tipo) return;
+    const d = c.userData.fuera;
+    const sep = 0.012 + Math.random() * 0.008;
+    api.tween(c.position, 'x', c.userData.base.x + d.x * sep, 0.22);
+    api.tween(c.position, 'y', c.userData.base.y + d.y * sep, 0.22);
+    api.tween(c.position, 'z', c.userData.base.z + d.z * sep, 0.22);
+    c.rotation.z = (Math.random() - 0.5) * 0.05;
+    void i;
+  });
+  /* el de arriba del todo se levanta: es el que se ve mejor y el que
+     el dedo alcanza sin tapar el huevo */
+  primero = cascos.find(c => c.userData.tipo) || null;
+  api.chispas(huevoObj.position.clone().setY(api.MESA_Y + 0.62), '#f0e0c8', 10, 0.7);
+  api.pista('Ya está cuarteado: <b>rasca la cáscara</b> — toca los pedazos o pasa el dedo por encima.', 4200);
 }
 
 function jalarCasco(casco) {
   if (fase !== 'pelar' || !casco || !casco.userData.tipo) return;
   casco.userData.tipo = null;
+  if (primero === casco) primero = cascos.find(c => c.userData.tipo) || null;
   hechos++;
   /* el casco se despega: se reparenta al mundo y vuela a la composta */
   const donde = casco.getWorldPosition(new THREE.Vector3());
@@ -103,11 +151,28 @@ function jalarCasco(casco) {
   api.progreso(hechos, TOTAL);
 
   if (!cascos.some(c => c.userData.tipo)) {
+    /* SIN CÁSCARA SE VA SOLO. Pedir un toque más para «entregarlo»
+       era un paso de trámite: el huevo ya está pelado, nadie lo deja
+       ahí. Se va a la batea con su brillo y entra el siguiente. */
     fase = 'entregar';
     grietas.visible = false;
+    primero = null;
     api.sfx('bien');
-    api.pista('Blanquito y entero: <b>tócalo</b> y va a la batea.', 3000);
+    api.toast('¡Blanquito! 🥚');
+    api.chispas(huevoObj.position.clone().setY(api.MESA_Y + 0.5), '#fdfaf0', 12, 0.8);
+    const mi = generacion;
+    setTimeout(() => { if (generacion === mi && !terminado && fase === 'entregar') entregar(); }, 300);
   }
+}
+
+/* rascar: el pedazo que quede bajo el dedo se despega. Vale tocando
+   y vale pasando el dedo, que es como se pela de verdad. */
+function pelarEn(punto) {
+  if (fase !== 'pelar') return false;
+  const c = cascoCerca(punto, 0.34);
+  if (!c) return false;
+  jalarCasco(c);
+  return true;
 }
 
 function entregar() {
@@ -152,7 +217,7 @@ export default {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     generacion++;
-    huevoActual = 0; hechos = 0; avisadoPicoteo = false; arrastrando = null; terminado = false;
+    huevoActual = 0; hechos = 0; avisadoPicoteo = false; primero = null; terminado = false;
 
     HUEVOS = Math.max(1, Math.round(cfg.cantidad ?? 3));
     GOLPES = Math.max(2, Math.round(cfg.golpes ?? 4));
@@ -169,6 +234,17 @@ export default {
     window.__huevo = {
       get fase() { return fase; },
       get hechos() { return hechos; },
+      get cascos() { return cascos.filter(c => c.userData.tipo).length; },
+      /* dónde está en pantalla el pedazo que hay que rascar, para
+         poder probarlo con un dedo de verdad */
+      get puntoPrimero() {
+        const c = primero && primero.userData.tipo ? primero : cascos.find(x => x.userData.tipo);
+        if (!c) return null;
+        const w = c.getWorldPosition(new THREE.Vector3());
+        const q = api.proyectar(w);
+        return { x: Math.round(q.x), y: Math.round(q.y) };
+      },
+      get puntoHuevo() { const q = api.proyectar(CENTRO()); return { x: Math.round(q.x), y: Math.round(q.y) }; },
       golpear() { golpear(); return fase; },
       pelar() { const c = cascos.find(x => x.userData.tipo); if (c) jalarCasco(c); return fase; },
       entregar() { entregar(); return huevoActual; },
@@ -183,43 +259,52 @@ export default {
     if (!p || Math.hypot(p.x - CENTRO().x, p.z - CENTRO().z) > 0.85) return;
     if (fase === 'cascar') { golpear(); return; }
     if (fase === 'entregar') { entregar(); return; }
-    if (fase === 'pelar' && !avisadoPicoteo) {
-      avisadoPicoteo = true;
-      api.sfx('resist');
-      api.pista('Golpear ya no pela: <b>jala el casco</b> hacia afuera, desde la grieta.', 3200);
+    /* TOCAR TAMBIÉN PELA: era lo primero que hacía todo el mundo y
+       era lo único que no funcionaba */
+    if (fase === 'pelar') {
+      if (pelarEn(p)) return;
+      if (!avisadoPicoteo) {
+        avisadoPicoteo = true;
+        api.sfx('resist');
+        api.pista('Ahí ya no queda cáscara: <b>rasca donde todavía haya</b> pedazos.', 3000);
+      }
     }
   },
 
   alArrastrarInicio() {
-    if (terminado) return;
-    if (fase !== 'pelar') return;
-    arrastrando = cascoCerca(api.puntoEnPlano(api.MESA_Y + 0.33));
-    this._d = 0;
+    if (terminado || fase !== 'pelar') return;
+    pelarEn(api.puntoEnPlano(api.MESA_Y + 0.33));
   },
 
-  alArrastrar(info) {
-    if (terminado || !arrastrando) return;
-    /* el jalón se mide en pantalla: pasado el umbral, el casco cede */
-    this._d = (this._d || 0) + (info.delta ? Math.hypot(info.delta.x, info.delta.y) : 5);
-    if (this._d > 34) {
-      const c = arrastrando;
-      arrastrando = null;
-      jalarCasco(c);
-    }
+  /* el dedo va rascando: cada pedazo que roza se despega. Sin umbral
+     de jalón — el umbral era invisible y hacía que arrastrar tampoco
+     pareciera funcionar. */
+  alArrastrar() {
+    if (terminado || fase !== 'pelar') return;
+    pelarEn(api.puntoEnPlano(api.MESA_Y + 0.33));
   },
 
-  alArrastrarFin() { arrastrando = null; },
+  alArrastrarFin() {},
 
   actualizar(dt, t) {
     if (!huevoObj || terminado) return;
     if (fase === 'entregar') huevoObj.rotation.y += dt * 0.6;
     /* respira apenas: la mesa está viva */
     if (fase !== 'ido') huevoObj.position.y = CENTRO().y + Math.sin(t * 2.1) * 0.005;
+    /* el pedazo por el que empezar late: es la única instrucción que
+       no hay que leer */
+    if (primero && primero.userData.tipo) {
+      const k = 1 + Math.abs(Math.sin(t * 3.4)) * 0.03;
+      primero.scale.setScalar(k);
+      const d = primero.userData.fuera, b = primero.userData.base;
+      const s = 0.02 + Math.abs(Math.sin(t * 3.4)) * 0.012;
+      primero.position.set(b.x + d.x * s, b.y + d.y * s, b.z + d.z * s);
+    }
   },
 
   destruir() {
     generacion++;
-    huevoObj = null; cascos = []; grietas = null; arrastrando = null; terminado = false;
+    huevoObj = null; cascos = []; grietas = null; primero = null; terminado = false;
     delete window.__huevo;
   },
 };

@@ -264,6 +264,17 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
   CSS, sin motor; un toque la salta y con movimiento reducido no se
   lanza. La fiesta (confeti y fanfarria) espera a que la escena se
   apague.
+- **Un gesto que no funciona es peor que uno difícil** (2.7): si un
+  nivel acepta sólo una forma de hacer algo, la otra tiene que hacer
+  algo — aunque sea explicar. El huevo pelaba sólo arrastrando, con un
+  umbral invisible, y quien tocaba creía que el juego estaba roto.
+  Regla: el gesto obvio funciona, y si hay dos formas razonables
+  (tocar y rascar), valen las dos.
+- **`jugar()` es asíncrona: hay que contar los montajes** (2.7). Entre
+  el toque y el mesón hay dos esperas. Cualquier cosa que se lance
+  ahí dentro tiene que comprobar que sigue siendo la última (`montaje`)
+  o acabará montando encima de otra pantalla. El síntoma fue una
+  pantalla de juego sin mesón de la que no se salía.
 - **La costura entre paradas es parte del juego** (2.6): terminar y
   volver a tener las manos ocupadas cuesta ~2,4 s (eran 3,8). Tres
   cosas lo sostienen y hay que respetarlas al tocar el flujo: la hoja

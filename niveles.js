@@ -265,9 +265,9 @@ export const NIVELES = [
     tarea: 'Cascar y pelar',
     icono: 'huevo',
     modulo: () => import('./nivel-huevo.js'),
-    gesto: 'Un <b>golpecito seco</b> para cuartearlo, y <b>jala los cascos</b> desde la grieta.',
+    gesto: 'Dale <b>golpecitos</b> hasta que se cuartee y luego <b>rasca la cáscara</b> con el dedo.',
 
-    nota: 'El huevo duro va encima, no adentro: en rodajas, coronando el plato. Se casca de un golpecito seco y la cáscara sale en pedazos, jalando desde la grieta.',
+    nota: 'El huevo duro va encima, no adentro: en rodajas, coronando el plato. Se casca a golpecitos y la cáscara sale rascando con el pulgar, pedazo a pedazo.',
     bicho: 'el gusanito',
     cucharas: [50, 75, 110],
   },

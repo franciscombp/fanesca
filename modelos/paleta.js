@@ -173,10 +173,14 @@ export const COMIDA = {
   leche: '#fdfbf4',
   jarra: '#c9855a',
 
-  /* huevo duro: cáscara, grieta y la clara de adentro */
-  huevo_cascara: '#f0e0c8',
-  huevo_grieta: '#8a7a5e',
-  huevo_clara: '#fbf7ee',
+  /* huevo duro: cáscara, grieta y la clara de adentro. La cáscara es
+     de huevo de campo —beige tostado— y no crema pálido: contra la
+     clara casi blanca se ve QUÉ FALTA POR PELAR, que es lo único que
+     el jugador necesita mirar en esa fase. Con los dos casi iguales,
+     pelar era rascar a ciegas. */
+  huevo_cascara: '#e0c9a2',
+  huevo_grieta: '#7a6a4e',
+  huevo_clara: '#fdfbf4',
 
   /* la guarnición: el maduro por sus tres estados, la empanadita y
      el ají — lo de encima del plato */

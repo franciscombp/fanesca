@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.7.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.7.0',
+    fecha: '2026-09-08',
+    titulo: 'Un toque entra, y el huevo se pela rascando',
+    cambios: [
+      'Volver a una parada ya jugada es un solo toque. Antes hacían falta dos —uno ponía el cursor y otro entraba— y en el teléfono el primero se perdía en cuanto el dedo resbalaba un pelo: la ficha parecía muerta.',
+      'El huevo se entiende: dale golpecitos hasta que se cuartee (ahora la cáscara se abre de verdad y un pedazo se levanta para decirte por dónde empezar) y luego RASCA. Vale tocar los pedazos y vale pasar el dedo por encima — antes sólo servía arrastrar, y con un tirón mínimo que no se veía por ningún lado.',
+      'La cáscara del huevo es beige de huevo de campo y la clara casi blanca: ahora se ve lo que falta por pelar.',
+      'Pelado el huevo, se va solo a la batea: pedía un toque más de trámite.',
+      'Si un mesón no llegara a armarse, el juego ya no te deja en una pantalla muerta: te devuelve al recetario al primer toque.',
+    ],
+    internos: [
+      'main.js: la ficha del recetario entra con un click (enfocar + jugar). El foco se conserva para el dock y el teclado; contra el roce sigue `recienDeslizado`.',
+      'Carrera de montajes: jugar() lleva un número (`montaje`) que se comprueba tras cada await; salirDelNivel lo incrementa. Sin esto, entrar y salir rápido dejaba #screen-juego activa con modActual null — pantalla de juego sin mesón, y desde ahí ninguna ficha respondía. Red de seguridad en el pointerdown de #escena.',
+      'nivel-huevo.js: cuartear() separa los ocho cascos según su normal y levanta el primero (late en actualizar); pelarEn() saca el casco bajo el dedo desde alTocar Y desde alArrastrar (sin umbral de jalón); al quedar sin cáscara entrega solo a los 300 ms; window.__huevo expone cascos/puntoPrimero/puntoHuevo. COMIDA.huevo_cascara/clara con contraste.',
+      'marcarPaso(): la fila de faenas puede retroceder cuando la manda el nivel (api.paso), no cuando la manda la barra — el huevo vuelve a «cáscalo» con cada huevo.',
+    ],
+  },
   {
     v: '2.6.0',
     fecha: '2026-09-07',

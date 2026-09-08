@@ -656,11 +656,15 @@ function paginaDia(dia) {
           : 'Primero ' + RUTA[i - 1].nombre.toLowerCase() + ' 👆');
         return;
       }
-      /* PRIMER TOQUE: el cursor se pone encima y el dock la nombra.
-         SEGUNDO TOQUE (o el dock): se cocina. Como en una consola —
-         y de paso ningún roce del pulgar abre un mesón sin querer. */
-      if (focoId === n.id) { jugar(n.id); return; }
+      /* UN TOQUE ENTRA. Hacían falta dos —uno para poner el cursor y
+         otro para cocinar— y en un teléfono el primero se perdía cada
+         vez que el dedo resbalaba un pelo: la lista se desplazaba, el
+         navegador se comía el click y la ficha parecía muerta. Volver
+         a una parada ya jugada se volvía una pelea. El cursor se pone
+         igual (el dock y el teclado lo usan), pero ya no cobra un
+         toque; contra el roce del pulgar está `recienDeslizado`. */
       enfocar(n.id);
+      jugar(n.id);
     });
     li.appendChild(b);
     ol.appendChild(li);
@@ -1201,10 +1205,12 @@ function marcarPaso(i, delNivel) {
   if (!pasosNivel) return;
   if (delNivel) pasoForzado = true;
   i = Math.max(0, Math.min(pasosNivel.length - 1, i));
-  /* nunca hacia atrás: en un nivel que reparte el trabajo por piezas
-     —cada tajada de zapallo se raspa y se pela— la fase va y viene,
-     pero la faena de la fila sólo avanza */
-  if (i <= pasoAhora) return;
+  if (i === pasoAhora) return;
+  /* LA BARRA no retrocede: en un nivel que reparte el trabajo por
+     piezas la fracción sube y baja, y la fila daría tumbos. EL NIVEL
+     sí puede: el huevo vuelve a «cáscalo» con cada huevo nuevo, y
+     decir «pélalo» mientras toca golpear es mentir. */
+  if (i < pasoAhora && !delNivel) return;
   pasoAhora = i;
   const fichas = $$('#hud-pasos .hud-paso');
   fichas.forEach((f, k) => {
@@ -1624,6 +1630,15 @@ function renderControles(mod) {
     ? '' : 'calc(env(safe-area-inset-bottom) + var(--sp-4))';
 }
 
+/* UN MONTAJE A LA VEZ. `jugar` es asíncrono: entre el toque y el
+   mesón hay dos esperas (el módulo y los modelos). Si en ese hueco se
+   toca otra parada o se sale a la mesa, la carga vieja seguía su
+   camino y terminaba montando lo suyo encima: se veía la pantalla de
+   juego SIN mesón, y desde ahí ninguna ficha respondía porque ya no
+   se estaba en el recetario. Cada montaje lleva su número; el que
+   deja de ser el último, se calla. */
+let montaje = 0;
+
 async function jugar(id) {
   const n = rutaPorId(id);
   if (!n) return;
@@ -1631,6 +1646,7 @@ async function jugar(id) {
      en una pantalla vacía. El aviso largo ya está puesto en la escena
      desde init(); aquí basta con no entrar. */
   if (!motorListo) { toast('Este minijuego necesita WebGL 😔'); return; }
+  const mi = ++montaje;
   nivelActual = n;
   estado.ultimoNivel = id;
   guardar();
@@ -1665,8 +1681,12 @@ async function jugar(id) {
        de la anterior, el import ya está resuelto y no hay que ir a
        buscar nada: es el grueso de la costura entre parada y parada */
     const m = await ((precargado && precargado.id === id) ? precargado.prom : n.modulo());
+    /* mientras llegaba el módulo, el jugador se fue o entró a otra:
+       esta carga ya no manda */
+    if (mi !== montaje) return;
     modActual = m.default || m;
   } catch (e) {
+    if (mi !== montaje) return;
     console.error(e);
     toast('No se pudo abrir ese ingrediente 😔');
     apagarCortina();
@@ -1677,6 +1697,7 @@ async function jugar(id) {
      armar el nivel: si no, la primera partida saldría con los de
      código y la segunda con los de Blender */
   await Motor.modelosListos();
+  if (mi !== montaje) return;
   const nivelConfig = obtenerConfigNivel(id);
   /* la dificultad de la parada viaja en la api: los bichos y las
      moscas la leen para saber cuánto perdonar */
@@ -2096,6 +2117,9 @@ function arruinarNivel(motivo) {
 }
 
 function salirDelNivel() {
+  /* corta cualquier montaje en vuelo: si se sale mientras un mesón
+     estaba cargando, el que llegue tarde ya no tiene a quién servir */
+  montaje++;
   pararReloj();
   apagarCortina();
   Motor.descargar();
@@ -2369,6 +2393,16 @@ function bindEventos() {
 
   /* el primer dedo sobre el mesón arranca el reloj de la campaña */
   $('#escena').addEventListener('pointerdown', () => {
+    /* RED DE SEGURIDAD: pantalla de juego sin mesón montado. No
+       debería pasar nunca (ver `montaje`), pero si pasa el jugador se
+       queda tocando una escena muerta sin entender por qué, y desde
+       ahí ninguna ficha del recetario responde — porque ya no está en
+       el recetario. Al primer toque, se le devuelve a la mesa. */
+    if (!modActual && !Apuro.activo && $('#screen-juego').classList.contains('active')) {
+      toast('Ese mesón no llegó a armarse — te devuelvo al recetario');
+      salirDelNivel();
+      return;
+    }
     if (relojEnEspera) { relojEnEspera = false; arrancarReloj(); }
   }, { capture: true });
 
