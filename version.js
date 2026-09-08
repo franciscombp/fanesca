@@ -30,10 +30,24 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.8.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '2.8.0',
+    fecha: '2026-09-08',
+    titulo: 'La nota de versión ya se puede cerrar',
+    cambios: [
+      'Esta misma nota era la que dejaba el juego mudo: en un teléfono, su botón caía DEBAJO del borde de la pantalla, así que no había forma de cerrarla. Como el fondo es translúcido, se veía el recetario detrás y uno tocaba los ingredientes —o el play de El Apuro— sin que pasara nada, porque había una hoja invisible delante.',
+      'Ahora la nota tiene una × arriba, el botón se queda pegado abajo y lo que se desplaza es la lista de novedades. En cualquier teléfono se cierra de un toque.',
+    ],
+    internos: [
+      'actualizador.js: el modal de la nota lleva clase `nota-version`, una × (.nota-version-x), el botón marcado (.nota-version-ok) y cierre con Escape. design-system.css: .nota-version .sheet con max-height y overflow:hidden, la lista con overflow-y propio y el botón flex:0 0 auto.',
+      'Se reprodujo el caso real (versión vieja instalada con su service worker → se publica la nueva → el jugador vuelve): actualiza.mjs. Medido antes: el botón de la nota caía en 827–875 px con la pantalla acabando en 844 (iPhone 14), 849 en un SE de 667 y 893 en uno de 640.',
+      'humo.mjs comprueba ahora con elementFromPoint que el toque sobre una ficha del recetario llega a la ficha: eso es lo que habría cazado esto, porque las pruebas borraban los avisos antes de empezar.',
+    ],
+  },
   {
     v: '2.7.0',
     fecha: '2026-09-08',

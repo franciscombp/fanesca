@@ -32,21 +32,35 @@
        cambió nada al jugador, no hay nota que mostrar. */
     if (!nota || !nota.cambios || !nota.cambios.length) return;
     const modal = document.createElement('div');
-    modal.className = 'modal open';
+    /* `nota-version` la marca como hoja de lista larga: el botón de
+       cerrar se queda pegado abajo y lo que crece es la lista, no la
+       hoja. Sin eso, cinco novedades empujaban el botón fuera de la
+       pantalla en cualquier teléfono que no fuera enorme y el jugador
+       se quedaba ATRAPADO detrás de la nota: veía el recetario a
+       través del fondo, tocaba los ingredientes y no pasaba nada. */
+    modal.className = 'modal nota-version open';
     modal.setAttribute('role', 'dialog');
     modal.innerHTML = `
       <div class="sheet">
+        <button type="button" class="icono-boton nota-version-x" aria-label="Cerrar">×</button>
         <span class="nota-version-ic" aria-hidden="true">🎉</span>
         <p class="sheet-eyebrow">versión ${nota.v} · ${nota.fecha}</p>
         <h3 class="sheet-title">${nota.titulo}</h3>
         <ul class="nota-version-lista">
           ${nota.cambios.map(c => `<li>${c}</li>`).join('')}
         </ul>
-        <button type="button" class="btn btn--maiz btn--block">¡A cocinar!</button>
+        <button type="button" class="btn btn--maiz btn--block nota-version-ok">¡A cocinar!</button>
       </div>`;
     const cerrar = () => modal.remove();
-    modal.querySelector('button').addEventListener('click', cerrar);
+    modal.querySelector('.nota-version-ok').addEventListener('click', cerrar);
+    modal.querySelector('.nota-version-x').addEventListener('click', cerrar);
     modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+    /* y con Escape, en teclado */
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key !== 'Escape') return;
+      document.removeEventListener('keydown', esc);
+      cerrar();
+    });
     document.body.appendChild(modal);
   }
 

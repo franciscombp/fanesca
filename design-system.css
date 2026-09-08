@@ -487,7 +487,27 @@
 .aviso-actualizar b { font-weight: 800; }
 @keyframes aviso-sube { from { opacity: 0; transform: translateX(-50%) translateY(20px); } }
 
-/* la nota de versiones */
+/* ---------- la nota de versiones ----------
+   UNA HOJA CON LISTA LARGA. La hoja normal crece con su contenido y
+   se desplaza entera; aquí eso mandaba el botón de cerrar fuera de
+   la pantalla (827 px de alto en un teléfono de 844, peor en uno de
+   667) y dejaba al jugador encerrado detrás de la nota: veía el
+   recetario por el fondo translúcido, tocaba, y no pasaba nada. Lo
+   que se desplaza es LA LISTA; el botón y la X no se mueven. */
+.nota-version .sheet {
+  max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+  overflow: hidden;
+}
+.nota-version .nota-version-lista {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+}
+.nota-version .btn { flex: 0 0 auto; }
+.nota-version-x {
+  position: absolute; top: 8px; right: 10px; z-index: 2;
+  width: 38px; height: 38px;
+  font-size: var(--t-lg); line-height: 1;
+  color: var(--text-muted); background: rgba(42,26,18,.06); border: none;
+}
 .nota-version-ic { font-size: var(--t-3xl); line-height: 1; }
 .nota-version-lista {
   width: 100%; text-align: left; align-self: stretch;
