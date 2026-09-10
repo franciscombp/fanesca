@@ -47,11 +47,16 @@ const hud = () => p.evaluate(() => ({
 
 await p.evaluate(() => window.Fanesca.arrancarOlla());
 await p.waitForTimeout(2800);
-for (let i = 0; i < 22; i++) {
+/* Entre un mesón y el siguiente hay una carga asíncrona y ahí
+   `Olla.paso` es null. Con un número fijo de vueltas, cada hueco se
+   comía una y en el renderizador por software nunca se llegaba al
+   caldero: hay que ESPERAR a que haya paso, no gastar la vuelta. */
+for (let vuelta = 0; vuelta < 60; vuelta++) {
   const base = await p.evaluate(() => window.Fanesca.Olla.paso && window.Fanesca.Olla.paso.paso.base);
   if (base === 'caldero') break;
+  if (!base) { await p.waitForTimeout(400); continue; }
   await p.evaluate(() => { window.Fanesca.api.progreso(0, 100); window.Fanesca.api.progreso(100, 100); });
-  await p.waitForTimeout(1200);
+  await p.waitForTimeout(700);
 }
 await p.waitForTimeout(1400);
 ok('C0 se llega al caldero', await p.evaluate(() => window.Fanesca.Olla.paso.paso.base === 'caldero'));
