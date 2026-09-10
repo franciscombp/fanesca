@@ -67,7 +67,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { pieza, parte, cargarGLB, token } from './modelos/index.js';
 import { construirCocina } from './modelos/cocina.js';
-import { sombraBlob as _sombraBlob, ojitos as _ojitos } from './modelos/utileria.js';
+import { sombraBlob as _sombraBlob, ojitos as _ojitos, aroDestino as _aroDestino } from './modelos/utileria.js';
 
 /* ---------- geografía compartida del mesón ---------- */
 export const MESA_Y = 0.96;                              /* cara del mesón */
@@ -216,6 +216,8 @@ function texturaChispa() {
 /* re-exportadas para los niveles, que las piden por `ctx.api` */
 export const sombraBlob = (size, alto) => _sombraBlob(THREE, size, alto);
 export const ojitos = (sep, y, z, r) => _ojitos(THREE, sep, y, z, r);
+/* el aro que dice DÓNDE se suelta lo que llevas en la mano */
+export const aroDestino = (r, color) => _aroDestino(THREE, r, color);
 
 /* ---------- el puesto ---------- */
 
@@ -846,7 +848,7 @@ export const Motor = {
      recargar: `Fanesca.Motor.pintor.toneMappingExposure = 0.9` */
   get pintor() { return renderer; },
   tween, chispas, volarA, sacudir, destello, raycast, puntoEnPlano, puntoAnteCamara,
-  llenarRecipiente, sombraBlob, ojitos,
+  llenarRecipiente, sombraBlob, ojitos, aroDestino,
   /* el catálogo de modelos, para que un nivel pida sus piezas sin
      saber si vienen de código o de un .glb hecho en Blender */
   pieza: (id, opts) => pieza(id, THREE, opts),

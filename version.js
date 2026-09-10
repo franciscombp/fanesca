@@ -30,10 +30,26 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '3.1.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '3.1.0',
+    fecha: '2026-09-10',
+    titulo: 'Se ve dónde hay que soltar',
+    cambios: [
+      '🎯 <b>El destino, marcado.</b> En la feria y en la olla hay un aro que señala dónde soltar lo que llevas en la mano, y se enciende justo cuando lo agarras.',
+      '🫛 <b>Las arvejas, dentro de su vaina.</b> Los granos siguen el arco de la vaina, se afinan en las puntas y van metidos en el vientre — antes formaban una fila plana que se salía por los costados.',
+      '🥄 <b>La olla avisa cuando le basta.</b> Siete mesones se dan por hechos antes de terminar el ingrediente porque la olla pide una parte; ahora lo dice en vez de cambiar de mesón sin más.',
+    ],
+    internos: [
+      'perfilVaina(x) en modelos/arveja.js: el arco, el medio ancho y la hondura de la vaina en un solo sitio. El modelo (los bultos) y el nivel (los granos) la llaman a ella; antes los cuatro números vivían dentro del constructor y lo de dentro se colocaba en recta.',
+      'aroDestino() en modelos/utileria.js, expuesto por el motor y la api. A la altura de la BOCA del recipiente, no sobre la mesa: pintado en el suelo, el propio cuenco lo tapaba.',
+      'modo-olla avisa `parcial` en pasoHecho; main.js lo narra con un aviso verde que sobrevive al cambio de mesón, y la regla de la porción se cuenta una vez por partida.',
+      'Dos pruebas nuevas en la batería: `arveja` (los granos contra perfilVaina) y `porcion` (que los siete cortes avisen).',
+    ],
+  },
   {
     v: '3.0.0',
     fecha: '2026-09-10',

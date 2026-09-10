@@ -137,7 +137,18 @@ function hecho() {
   if (!activo || !pasoActual || pasoActual.servido) return;
   pasoActual.servido = true;
   const paso = pasoActual.paso;
-  ganchos.pasoHecho({ paso, indice: i, total: OLLA_PASOS.length });
+  /* `parcial` es la mitad del relato de este modo. Siete de los veinte
+     mesones se dan por hechos ANTES de terminar el ingrediente —la
+     olla pide una parte, no el zapallo entero— y sin decirlo el juego
+     parecía arrancarte el mesón de las manos a media pelada. Un
+     jugador lo dijo así: «a veces cambia antes de terminar la
+     actividad de pelar». No es un fallo: es la receta. Pero hay que
+     contarlo. */
+  ganchos.pasoHecho({
+    paso, indice: i, total: OLLA_PASOS.length,
+    parcial: (paso.porcion ?? 1) < 1,
+    hechos: pasoActual.hechos, cuota: pasoActual.cuota,
+  });
   /* ¿se cerró el acto? La marca se toma AQUÍ y no al montar el
      siguiente: entre uno y otro hay una carga asíncrona, y meterla
      dentro del parcial haría que el tiempo del acto dependiera de lo

@@ -101,6 +101,7 @@ let grupo = null;
 let llevados = 0;             /* tiernos en el canasto */
 let aperturas = 0;            /* las que quedan */
 let cargado = null;           /* el choclo en la mano */
+let aro = null;               /* el aro que marca el canasto */
 let terminado = false;
 let avisadoSinAperturas = false;
 
@@ -376,9 +377,22 @@ export default {
       puesto.push({ raizChoclo, hojas, granos, sombra, clase: r.clase, senal: r.senal, x, z, abierto: false, apertura: 0, tomado: false });
     });
 
+    /* EL CANASTO, MARCADO. El destino era un cuenco más entre los
+       cuencos de la cocina: el gesto estaba claro —arrastrar— y el
+       blanco no. Preguntado qué faltaba, la respuesta fue justo ésa:
+       «dónde tengo que tocar». */
+    /* A LA ALTURA DE LA BOCA, no sobre la mesa. Pintado en el suelo, el
+       propio cuenco lo tapaba y sólo asomaba una uña de aro por el
+       filo de la pantalla: un letrero escondido detrás de aquello que
+       venía a señalar. Alrededor de la boca del canasto se ve entero
+       y se lee de un vistazo. */
+    aro = api.aroDestino(0.46);
+    aro.obj.position.copy(api.BATEA).setY(api.MESA_Y + 0.30);
+    raiz.add(aro.obj);
+
     rotularAperturas();
     api.progreso(0, PEDIDOS);
-    api.aviso(`Lleva ${PEDIDOS} choclos tiernos`, 'bien');
+    api.aviso(`Lleva ${PEDIDOS} choclos tiernos al canasto 🧺`, 'bien');
     api.pista(`<b>Arrastra al canasto</b> los que sirvan. <b>Tócalo</b> para abrirle la hoja y verle el grano — te dejan abrir <b>${APERTURAS}</b>.`, 5200);
   },
 
@@ -401,6 +415,9 @@ export default {
     if (!cargado) return;
     api.sfx('tab');
     cargado.raizChoclo.position.y = api.MESA_Y + 0.30;
+    /* con el choclo en la mano, el aro se enciende: es el momento en
+       que saber a dónde va importa de verdad */
+    if (aro) aro.apuntar(true);
   },
 
   alArrastrar() {
@@ -410,6 +427,7 @@ export default {
   },
 
   alArrastrarFin() {
+    if (aro) aro.apuntar(false);
     if (!cargado) return;
     const rec = cargado;
     cargado = null;
@@ -424,7 +442,8 @@ export default {
   /* la hoja se abre AQUÍ y no con timers: seis hojas escalonadas a
      golpe de setTimeout siguen corriendo después de salir del mesón,
      y lo que se abre para entonces ya no existe */
-  actualizar(dt) {
+  actualizar(dt, t) {
+    if (aro) aro.latir(t);
     puesto.forEach(rec => {
       if (!rec.abierto || rec.apertura >= 1) return;
       rec.apertura = Math.min(1, rec.apertura + dt / 0.34);
@@ -439,6 +458,6 @@ export default {
 
   destruir() {
     clearTimeout(remateId); remateId = null;
-    puesto = []; grupo = null; cargado = null; terminado = false;
+    puesto = []; grupo = null; cargado = null; aro = null; terminado = false;
   },
 };

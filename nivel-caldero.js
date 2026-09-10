@@ -93,6 +93,7 @@ const AVISA = 0.6;
 /* ---------- estado ---------- */
 
 let grupo = null, ollaGrupo = null, caldo = null, trozos = null, cuchara = null;
+let aro = null;           /* el aro que marca la boca de la olla */
 let cuencos = [];                 /* { obj, ing, i, x, z, dentro } */
 let echados = 0;
 let cargado = null;
@@ -388,6 +389,16 @@ export default {
     grupo.add(ollaGrupo);
     pintarCaldo();
 
+    /* LA BOCA DE LA OLLA, MARCADA. Este mesón pide arrastrar un cuenco
+       A UN SITIO, y ese sitio era una olla oscura al fondo entre
+       dieciséis cuencos: el gesto se entendía y el blanco no.
+       Preguntado qué faltaba, la respuesta fue exactamente ésa:
+       «dónde tengo que tocar». El aro se enciende con el cuenco ya en
+       la mano, que es cuando hace falta. */
+    aro = api.aroDestino(OLLA_R * 1.12);
+    aro.obj.position.set(0, api.MESA_Y + OLLA_ALTO + 0.03, OLLA_Z);
+    grupo.add(aro.obj);
+
     /* LOS DIECISÉIS, BARAJADOS. En el orden de la receta, encontrar
        el que sigue sería recorrer una fila de izquierda a derecha:
        cero decisión. Barajados hay que RECONOCER el ingrediente, que
@@ -438,6 +449,7 @@ export default {
     if (rec) {
       cargado = rec; modo = 'cuenco';
       api.sfx('tab');
+      if (aro) aro.apuntar(true);
       api.rotulo(`A la olla · ${rec.ing.nombre}`);
       return;
     }
@@ -460,6 +472,7 @@ export default {
   },
 
   alArrastrarFin() {
+    if (aro) aro.apuntar(false);
     if (modo === 'cuenco' && cargado) {
       const rec = cargado;
       cargado = null; modo = null;
@@ -472,6 +485,7 @@ export default {
   },
 
   actualizar(dt, t) {
+    if (aro) aro.latir(t);
     if (terminado) return;
     /* SE PEGA MIENTRAS NADIE REVUELVE. Sube sola y sube más conforme
        la olla se llena; revolver la baja y echar algo también. */
@@ -502,7 +516,7 @@ export default {
     clearTimeout(remateId); remateId = null;
     delete window.__caldero;
     cuencos = []; grupo = null; ollaGrupo = null; caldo = null;
-    trozos = null; cuchara = null; cargado = null; modo = null;
+    trozos = null; cuchara = null; cargado = null; modo = null; aro = null;
     alumbrado = null; terminado = false;
   },
 };

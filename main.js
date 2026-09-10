@@ -1683,6 +1683,7 @@ const api = {
   proyectar: (...a) => Motor.proyectar(...a),
   sombraBlob: (...a) => Motor.sombraBlob(...a),
   ojitos: (...a) => Motor.ojitos(...a),
+  aroDestino: (...a) => Motor.aroDestino(...a),
   /* el catálogo de modelos: un nivel pide sus piezas por id, sin
      saber si vienen de código o de un .glb esculpido en Blender */
   pieza: (...a) => Motor.pieza(...a),
@@ -2002,6 +2003,19 @@ function reglaDeLaOlla() {
   return '<b>La Olla:</b> la fanesca entera, de principio a fin. El reloj <b>sube</b>: es tu marca.';
 }
 
+/* LA REGLA DE LA PORCIÓN, una vez por partida. En una cocina nadie
+   pela el zapallo entero: se pela lo que la olla pide y se pasa a lo
+   siguiente. El juego hace lo mismo en siete mesones y no lo decía,
+   así que parecía que se le adelantaba al jugador. Se cuenta la
+   primera vez que toca un mesón cortado, no en todos: repetirlo siete
+   veces por partida sería el ruido que este juego acaba de quitarse. */
+let avisadaPorcion = false;
+function reglaDeLaPorcion(paso) {
+  if (avisadaPorcion || !paso || (paso.porcion ?? 1) >= 1) return null;
+  avisadaPorcion = true;
+  return 'La olla pide <b>una parte</b>, no el ingrediente entero: cuando se llene la barra, ya está.';
+}
+
 /* mm:ss — una partida de nueve minutos no se lee en décimas */
 function relojDePartida(ms) {
   const s = Math.max(0, Math.round(ms / 1000));
@@ -2255,19 +2269,30 @@ function ollaHUD(ficha) {
 }
 
 const GANCHOS_OLLA = {
-  montar: (base, config, dificultad) => montarMeson(base, config, Olla, {
+  montar: (base, config, dificultad, paso) => montarMeson(base, config, Olla, {
     hud: (ficha) => ollaHUD(ficha),
     dificultad,
-    reglas: reglaDeLaOlla(),
+    reglas: reglaDeLaOlla() || reglaDeLaPorcion(paso),
   }),
 
   /* UN PASO HECHO SE CELEBRA CHIQUITO. Son veinte en una partida: una
      fiesta entera por cada uno sería medio minuto de confeti y la
-     partida perdería su ritmo. El aplauso gordo es el del acto. */
-  pasoHecho({ paso, indice, total }) {
+     partida perdería su ritmo. El aplauso gordo es el del acto.
+
+     PERO EL CORTE SE NARRA. Siete mesones se dan por hechos antes de
+     terminar el ingrediente, y sin decir nada eso se siente a que el
+     juego te quita el mesón a media pelada. El aviso verde se queda
+     en pantalla mientras el mesón siguiente se monta, así que la
+     explicación sobrevive al cambio — que es justo lo que hacía
+     falta. */
+  pasoHecho({ paso, indice, total, parcial }) {
     sfx('bien'); buzz([12, 18]);
     const ficha = porId(paso.base);
-    if (ficha) toast(`${ficha.nombre} ✓ · ${indice + 1} de ${total}`);
+    const nombre = ficha ? ficha.nombre : 'Listo';
+    if (parcial) {
+      alerta(`${nombre}: con eso alcanza para la olla`, 'bien');
+      setTimeout(() => alerta(null), 2600);
+    } else toast(`${nombre} ✓ · ${indice + 1} de ${total}`);
   },
 
   /* EL ACTO SÍ ES UN MOMENTO. Es lo que parte nueve minutos en cuatro
@@ -2330,6 +2355,7 @@ function arrancarOlla() {
   alerta(null);
   pista(null);
   mostrar('juego');
+  avisadaPorcion = false;
   Olla.arrancar(GANCHOS_OLLA, estado.olla || null);
   arrancarReloj();
   estado.intentos++;

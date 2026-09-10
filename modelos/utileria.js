@@ -118,6 +118,55 @@ export function sombraBlob(THREE, size = 0.8, alto = 0.012) {
   return m;
 }
 
+/* ---------- el aro del destino ----------
+
+   «Hay cosas que no son claras de jugar», y preguntado qué faltaba, la
+   respuesta fue una sola: **dónde tengo que tocar**. Los dos mesones
+   nuevos piden arrastrar algo A UN SITIO —el choclo al canasto, el
+   cuenco a la olla— y ese sitio no se anunciaba: era un cuenco más
+   entre los cuencos de la cocina. El gesto estaba claro; el blanco no.
+
+   Esto es el blanco: un aro plano en el suelo, del color del maíz,
+   que late despacio. No es decoración — es la única señal que dice
+   «aquí». `latir()` lo anima y `apuntar()` lo enciende cuando el
+   jugador ya lleva algo en la mano, que es cuando de verdad hace
+   falta saber a dónde va.
+
+   No se raycastea (`ignorar`): un aro que intercepta el dedo sería
+   una ayuda que estorba. */
+export function aroDestino(THREE, r = 0.5, color = '#f4b942') {
+  const g = new THREE.Group();
+  g.name = 'aro-destino';
+  const anillo = new THREE.Mesh(
+    new THREE.TorusGeometry(r, r * 0.055, 8, 40),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false })
+  );
+  anillo.rotation.x = -Math.PI / 2;
+  anillo.userData.ignorar = true;
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(r * 0.62, r * 0.95, 40),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.12, depthWrite: false })
+  );
+  halo.rotation.x = -Math.PI / 2;
+  halo.position.y = -0.004;
+  halo.userData.ignorar = true;
+  g.add(anillo, halo);
+  g.userData.ignorar = true;
+  let fuerza = 0;   /* 0 en reposo, 1 con algo en la mano */
+  return {
+    obj: g,
+    /* encendido mientras se lleva algo: el aro crece y se aclara */
+    apuntar(si) { fuerza = si ? 1 : 0; },
+    latir(t) {
+      const base = 1 + Math.sin(t * 2.4) * 0.035;
+      const k = base + fuerza * 0.10;
+      g.scale.set(k, 1, k);
+      anillo.material.opacity = 0.5 + fuerza * 0.42 + Math.sin(t * 2.4) * 0.08;
+      halo.material.opacity = 0.12 + fuerza * 0.20;
+    },
+  };
+}
+
 /* ---------- los ojitos ----------
    Dos bolitas con pupila. Los llevan todos los bichos: es lo que
    los vuelve personajes en vez de obstáculos, y lo que hace que

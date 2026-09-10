@@ -44,6 +44,8 @@ Dicen ✓ o ✗ y terminan con `TODO VERDE` o `HAY FALLOS`.
 | `olla` | la partida completa del modo La Olla: los veinte pasos encadenados, los cuatro actos, el resumen y el récord. |
 | `feria` | el puesto del choclo: cuántos hay, que quepan en pantalla, abrir la hoja, gastar las aperturas y llenar el canasto. |
 | `caldero` | echar los dieciséis en orden, que equivocarse rebote y explique, y que la olla armada pase al plato. |
+| `porcion` | que el modo AVISE cuando da un mesón por hecho antes de terminarlo. Siete de los veinte se cortan —la olla pide una parte— y sin decirlo parecía que te quitaba el mesón a media pelada. |
+| `arveja` | que los granos sigan el arco y el afilado de la vaina, y estén metidos en el vientre. Un error que no se ve de frente y salta en cuanto la vaina está girada. |
 | `didactica` | que lo que se enseña no interrumpa: la hoja de listo sin ensayo, el cuaderno con el texto entero, la pantalla de error contando algo. |
 | `dedo` | el toque con deriva. Mide con cuántos píxeles de desvío deja de llegar el `click` y comprueba que el juego responde igual. |
 | `ficha-hecha` | volver a una parada ya jugada, y entrar y salir a lo bruto sin dejar la pantalla de juego sin mesón. |

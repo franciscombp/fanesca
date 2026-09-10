@@ -4,3 +4,6 @@
 node_modules
 *.png
 *.log
+
+# las capturas que una prueba deja en la raíz del repo cuando se
+# corre a mano desde ahí

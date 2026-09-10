@@ -27,7 +27,7 @@
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
-import { POR_VAINA, PASO_ARVEJA } from './modelos/arveja.js';
+import { POR_VAINA, PASO_ARVEJA, ARVEJA_R, perfilVaina } from './modelos/arveja.js';
 
 let THREE, raiz, api;
 
@@ -86,10 +86,31 @@ function nuevaVaina(x, z, conGusano) {
   const granos = [];
   for (let i = 0; i < POR_VAINA; i++) {
     const a = api.pieza('arveja', { variante: i });
-    /* en fila a lo largo de la vaina, que es su eje X — el mismo
-       contra el que ejeDe() mide el tirón del hilo */
-    a.position.set((i - (POR_VAINA - 1) / 2) * PASO_ARVEJA, -0.006, 0);
+    /* EN FILA, PERO SIGUIENDO LA VAINA. A lo largo de su eje X —el
+       mismo contra el que ejeDe() mide el tirón del hilo— pero
+       acostados en el vientre y no sobre una recta plana:
+
+       · el ARCO. La vaina se curva; una fila recta dentro de un
+         cuerpo curvo se ve torcida en cuanto la vaina está girada,
+         que es siempre.
+       · el AFILADO. En las puntas la vaina mide dos tercios de lo que
+         mide al medio, y un grano del tamaño del centro se salía por
+         los costados. Se encoge con ella — que además es verdad: los
+         granos de las puntas son más chicos.
+       · la HONDURA. Estaban a la altura del filo, así que se veían
+         POSADOS ENCIMA de la vaina en vez de metidos dentro. Ahora el
+         fondo del grano toca el fondo del vientre. */
+    const x = (i - (POR_VAINA - 1) / 2) * PASO_ARVEJA;
+    const perfil = perfilVaina(x);
+    /* 0.88 y no 1: un pelo de holgura, que los granos no van
+       reventando la cáscara desde dentro */
+    const cabe = Math.min(1, (perfil.ancho * 0.88) / ARVEJA_R.z);
+    a.position.set(x, -perfil.hondo + ARVEJA_R.y * cabe, perfil.z);
+    a.scale.setScalar(cabe);
     a.userData = { tipo: 'arveja', i };
+    /* su tamaño de reposo, para que la animación de abrir y el vuelo a
+       la batea no lo devuelvan a 1 y le deshagan el afilado */
+    a.userData.escalaBase = cabe;
     a.visible = false;
     granos.push(a);
     v.add(a);
@@ -150,8 +171,11 @@ function abrirVaina(rec) {
   rec.granos.forEach((a, i) => {
     a.visible = true;
     a.scale.setScalar(0.01);
+    /* vuelve a SU tamaño, no a 1: los de las puntas son más chicos
+       porque ahí la vaina es más angosta */
+    const suyo = a.userData.escalaBase || 1;
     setTimeout(() => {
-      api.tween(a.scale, 'x', 1, 0.2); api.tween(a.scale, 'y', 1, 0.2); api.tween(a.scale, 'z', 1, 0.2);
+      api.tween(a.scale, 'x', suyo, 0.2); api.tween(a.scale, 'y', suyo, 0.2); api.tween(a.scale, 'z', suyo, 0.2);
     }, i * 30);
   });
   if (rec.conGusano) {
@@ -167,7 +191,6 @@ function sacarArveja(a) {
   hechos++;
   cadena++;
   api.chispas(a.position.clone(), '#cfe58f', 4, 0.7);
-  a.userData.escalaBase = 1;
   api.volarA(a, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.4 + Math.random() * 0.1, alto: 0.58 });
   /* el sonido sube con la cadena: correr el pulgar de punta a punta
      suena a escalita, y esa escalita ES la recompensa del gesto */
