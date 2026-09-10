@@ -44,7 +44,6 @@
 
 import { nuevoGusano } from './modelos/bichos.js';
 import { ARRUINADO } from './arruinado.js';
-import { AMAGUANA_MAZORCA } from './historia.js';
 import {
   A, P, R, PASO, LARGO, perfil, uDe, posicionDe,
   MADUREZ, HOJAS, LARGO_HOJA, BASE_HOJA, NUDOS,
@@ -1310,12 +1309,17 @@ export default {
       if (w.estado === 'fuera' || w.estado === 'cargado') w.bicho.animar(t);
     }
 
-    /* La cita espera a que la cremallera termine y el dedo se levante:
-       dicha en mitad del gesto nadie la lee, y el gesto es justamente
-       la prueba de lo que dice. */
+    /* LA CITA YA NO SE DICE SOBRE EL MESÓN. Eran nueve segundos de
+       texto —con el reloj detenido— encima de alguien que está
+       desgranando: probándolo con gente quedó claro que nadie se para
+       a leer en mitad de una faena. Lo que sí hace falta aquí es el
+       TRUCO, en cuatro palabras y sin parar nada; la frase de
+       Amaguaña, entera y con su contexto, se abre en el cuaderno
+       —donde se lee porque se quiere— y sale también en la tarjeta
+       del ingrediente. */
     if (citaPendiente && !cascadas.length && !modo) {
       citaPendiente = false;
-      api.voz(AMAGUANA_MAZORCA, 9500, { corta: true });
+      api.pista('Empieza por una <b>orilla</b>: en cuanto sale uno, se va la fila entera.', 3400);
       api.abrirCapitulo('unidad');
       api.sfx('bien');
     }

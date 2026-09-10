@@ -58,6 +58,7 @@ const PRECACHE = [
   './niveles.js',
   './niveles-config.js',
   './modo-apuro.js',
+  './modo-olla.js',
   /* los modelos: la forma de cada ingrediente. Sin esto el juego
      abre sin conexión pero no puede armar un solo nivel. */
   './modelos/index.js',
@@ -100,6 +101,8 @@ const PRECACHE = [
   './nivel-queso.js',
   './nivel-huevo.js',
   './nivel-guarnicion.js',
+  './nivel-feria.js',
+  './nivel-caldero.js',
 ];
 
 self.addEventListener('install', (e) => {

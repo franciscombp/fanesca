@@ -65,6 +65,7 @@ let CAPACIDAD_AGUA = TOTAL_REF * POR_AGUA;
 
 let CON_GORGOJO = 2;
 
+let generacion = 0;      /* mata los setTimeout de una partida vieja */
 let bateaObj = null, aguaMalla = null, espumaGrupo = null, granosGrupo = null;
 let plaga = null;
 let quitado = 0;                 /* radianes de saponina ya sacados */
@@ -191,7 +192,12 @@ function botarAgua(opts = {}) {
   api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#e8f2f4', 10, 0.9);
   api.sfx('frotar'); api.buzz([12, 18, 12]);
   api.composta(Math.min(1, (aguas - 1) / LAVADAS));
-  setTimeout(() => { if (!terminado) { pintar(); api.aviso(`Agua ${aguas} — sigue removiendo`); } }, 280);
+  /* `!terminado` no basta: destruir() lo devuelve a false, así que un
+     aviso pendiente pasaba el filtro y salía sobre el mesón siguiente
+     —y pintar() tocaba mallas ya puestas a null. Con el contador de
+     generación, el aviso muere con su mesón. */
+  const mi = generacion;
+  setTimeout(() => { if (mi === generacion && !terminado) { pintar(); api.aviso(`Agua ${aguas} — sigue removiendo`); } }, 280);
 }
 
 /* ---------- terminar ---------- */
@@ -381,6 +387,7 @@ export default {
   },
 
   destruir() {
+    generacion++;
     if (plaga) plaga.destruir();
     bateaObj = null; aguaMalla = null; espumaGrupo = null; granosGrupo = null;
     plaga = null; modo = null; anguloPrevio = null;

@@ -65,6 +65,15 @@ const VARA_DEL_CORTE = {
 const SOBRA = 0.1;               /* el cabito que ya no se puede cortar */
 let CON_GUSANO = 2;
 
+/* MATA LOS setTimeout DE UNA PARTIDA VIEJA. El respiro entre una hoja
+   y la siguiente estaba guardado por `!terminado && !hoja && !rollo`,
+   y destruir() deja esas tres condiciones EXACTAMENTE así — de modo
+   que al salir del mesón el temporizador pasaba el filtro y ponía una
+   hoja de col dentro del mesón siguiente. Con la campaña casi no se
+   veía (hay cortina de por medio); encadenando mesones sin cortina,
+   como hace el modo La Olla, se ve. El mismo contador que ya usan el
+   zapallo, el huevo y el mote. */
+let generacion = 0;
 let colGrupo = null;
 let plaga = null;
 let hoja = null;                 /* {obj, lamina, enrollado} mientras se enrolla */
@@ -262,7 +271,8 @@ function cortarEn(z) {
     viejo.userData.escalaBase = 1;
     api.volarA(viejo, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.42 });
     api.composta(Math.min(1, hojasUsadas / 4));
-    setTimeout(() => { if (!terminado && !hoja && !rollo) ponerHoja(); }, 340);
+    const mi = generacion;
+    setTimeout(() => { if (mi === generacion && !terminado && !hoja && !rollo) ponerHoja(); }, 340);
   }
 }
 
@@ -449,6 +459,7 @@ export default {
   },
 
   destruir() {
+    generacion++;
     if (plaga) plaga.destruir();
     hoja = null; rollo = null; plaga = null; colGrupo = null;
     parcial = null; cuchillo = null; finasSeguidas = 0;

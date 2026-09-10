@@ -481,6 +481,100 @@ ingrediente viejo y la cuota saldría calculada sobre otra cosa. Por
 eso la ración se activa con `Apuro.activar()`, que el juego llama
 justo antes de `Motor.cargar`.
 
+## La Olla — la partida completa
+
+`modo-olla.js`, y por el mismo camino que El Apuro: **no sabe jugar a
+nada**. Se engancha a `api.progreso`, `api.completar` y `api.arruinar`
+y encadena veinte mesones. Añadirlo no tocó ni un nivel.
+
+Lo que cambia respecto al Apuro no es cómo se monta cada mesón —eso lo
+comparten, ver abajo— sino qué mide el reloj:
+
+| | El Apuro | La Olla |
+|---|---|---|
+| el reloj | baja; llegar a cero acaba | sube; es el marcador |
+| el orden | baraja sin reposición | fijo, el de la receta |
+| un desastre | cuesta segundos de vida | suma segundos y baja calidad |
+| se puede perder | sí | **no** |
+| dura | lo que aguantes | 8–10 minutos |
+
+**No se puede perder, y es deliberado.** Se corre contra tu propio
+récord: un modo que te echa a la mitad no te hace competir contigo,
+te hace competir con la suerte. Y echar a alguien en el minuto ocho de
+una partida de nueve es la forma más rápida de que no la vuelva a
+empezar.
+
+**Dos monedas: tiempo y calidad.** El tiempo es el récord; la calidad
+sale en cucharas (descuidos + desastres×3). Si el tiempo fuera lo
+único, la partida óptima sería barrer con todo a la batea y pagar las
+penalizaciones. Con dos, la primera partida se cocina y la segunda se
+decide dónde correr y dónde no.
+
+**Cuatro actos, con marca parcial.** Nueve minutos seguidos de mesones
+encadenados se sienten a lista de tareas; cuatro carreras de dos
+minutos contra tu propia sombra, no. Cada acto entra con su cartel y
+cierra con su tiempo comparado con el de tu récord (`estado.olla.actos`).
+
+**Dos mesones propios**, que no son ingredientes de la campaña y por
+eso viven en `MESONES_MODO` (niveles.js) y no en `NIVELES`:
+
+- `nivel-feria.js` — escoger el choclo. Decisión, no destreza: dos
+  señales por fuera (hoja y pelos) que casi siempre dicen la verdad,
+  y tres aperturas para los que dudas. El seco nunca se disfraza: un
+  puesto donde ni mirando bien puedes acertar no es difícil, es una
+  tómbola.
+- `nivel-caldero.js` — echar los dieciséis en orden y revolver. El
+  error no castiga: el cuenco rebota y la olla dice *por qué* ése no
+  va todavía (`porque`, en `ORDEN_OLLA`). La segunda partida se hace
+  de memoria, y ésa es toda la gracia de un modo que se repite.
+
+### Un solo camino de montaje para los dos modos
+
+`montarMeson(base, config, modo, opts)` en main.js. El modo entra como
+parámetro —basta con que tenga `activo`, `activar()` y `saltar()`— y
+lo único que cambia entre uno y otro es qué escribe el HUD y con qué
+dificultad se arman los bichos. Escribirlo dos veces era garantizar
+que el segundo se quedara sin los arreglos del primero: los tres
+caminos de error (sin ficha, sin módulo, construir revienta) costaron
+tres versiones de aprender y no se van a mantener por duplicado.
+
+Y `modoVivo()` contesta en un solo sitio "¿hay un modo corriendo, y
+cuál?". Antes había quince `if (Apuro.activo)` repartidos por el
+archivo, y el tercer modo habría obligado a repasarlos uno a uno.
+
+### El ancho seguro no vale en todas las filas
+
+`ANCHO_SEGURO` es el medio ancho de mundo que la cámara garantiza **en
+el punto que mira**. Las filas de adelante están más cerca del ojo, y
+ahí ese mismo ancho ya no cabe: con las tres filas de cuencos al mismo
+ancho, seis de los dieciséis se quedaban fuera de la pantalla — y este
+mesón se gana encontrando el que toca. Un nivel que reparta cosas en
+profundidad tiene que estrechar hacia el jugador, en la proporción
+`distancia a la fila / distancia al punto mirado`.
+
+## Lo que se enseña no interrumpe
+
+Probado con jugadores: **nadie se para a leer entre dos mesones**.
+Había un párrafo de historia y una cita después de CADA parada, y una
+cita de nueve segundos sobre el mesón del choclo —con el reloj
+detenido— justo cuando el jugador está desgranando.
+
+La regla que salió de ahí, y que vale para todo lo que se escriba:
+
+- **Jugando** sólo cabe lo que se necesita para el gesto siguiente:
+  una línea, imperativa. La regla de un modo se cuenta una vez en la
+  vida; el aviso de un bicho, una vez por bicho (no por parada).
+- **En las pantallas de error** sí cabe contar algo: el jugador está
+  detenido a la fuerza y el modal no le pide nada. Ahí van el motivo,
+  y una frase de cocina del ingrediente que se arruinó.
+- **En los extras** —el cuaderno— va todo lo demás, entero y con su
+  fuente: una página por ingrediente y el orden de la olla explicado
+  de arriba abajo.
+
+No se perdió una sola línea de texto. Cambió de sitio, a uno donde se
+lee porque se quiere. La hoja de listo sólo avisa, en un renglón, que
+hay página nueva — y lleva a leerla de un toque.
+
 ## La dificultad manda sobre los bichos
 
 Los bichos eran iguales en la primera parada y en la última, y así el

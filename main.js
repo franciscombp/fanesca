@@ -14,8 +14,21 @@ import { ARRUINADO } from './arruinado.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO, DIAS_RELATO, VIERNES } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
-import { variantesDe, nivelPor as configPor, APURO, DIAS } from './niveles-config.js';
+import { variantesDe, nivelPor as configPor, APURO, DIAS, OLLA_MODO, OLLA_PASOS } from './niveles-config.js';
 import Apuro from './modo-apuro.js';
+import Olla from './modo-olla.js';
+
+/* LOS DOS MODOS SE MIRAN POR AQUÍ. El juego tiene tres formas de
+   jugarse —la campaña, El Apuro y La Olla— y las dos últimas son
+   módulos con el mismo contrato: se sientan encima de `api.progreso`,
+   `api.completar` y `api.arruinar` y no saben nada del DOM.
+
+   Casi todo lo que el juego necesita preguntarles es "¿hay un modo
+   corriendo, y cuál?". Con un solo sitio donde se contesta, añadir el
+   tercero no obligó a repasar quince `if (Apuro.activo)` repartidos
+   por el archivo — que era exactamente lo que estaba pasando. */
+const modoVivo = () => (Apuro.activo ? Apuro : (Olla.activo ? Olla : null));
+const enModo = () => !!modoVivo();
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -42,6 +55,13 @@ function nuevoEstado() {
     ultimoNivel: null,
     /* qué cierres de día ya se celebraron: cada escena se lee una vez */
     diasVistos: [],
+    /* LA OLLA — el modo de partida completa. `olla` es la mejor
+       partida TERMINADA (ms, cucharas y las marcas por acto), que es
+       contra lo que se corre en las siguientes. */
+    olla: null, logrosOlla: [], ollaModoJugado: false,
+    /* qué bichos ya se presentaron: su regla se cuenta una vez por
+       bicho, no una vez por parada */
+    bichosVistos: [],
     /* la generación del guardado: 'semana' desde v1.18. Un guardado
        sin esta marca viene del mapa de actos y pasa por las
        inferencias de migración una sola vez. */
@@ -96,6 +116,11 @@ function migrar(s) {
     if (!m || typeof m !== 'object' || typeof m.ms !== 'number') delete s.mejores[k];
   }
   if (!Array.isArray(s.leidos)) s.leidos = [];
+  if (!Array.isArray(s.logrosOlla)) s.logrosOlla = [];
+  if (!Array.isArray(s.bichosVistos)) s.bichosVistos = [];
+  /* un récord de La Olla sin tiempo no es un récord: sin esto, un
+     guardado tocado a mano dejaba el resumen comparando contra NaN */
+  if (s.olla && (typeof s.olla !== 'object' || typeof s.olla.ms !== 'number')) s.olla = null;
   if (!Array.isArray(s.diasVistos)) s.diasVistos = [];
   if (!s.dias || typeof s.dias !== 'object') s.dias = { ultima: null, seguidos: 0 };
   /* el ingrediente entero pasó a ser una temporada: su récord es el
@@ -320,7 +345,7 @@ function mostrar(pantalla) {
   /* salirse del mesón con El Apuro corriendo tiene que APAGARLO: si
      no, el reloj sigue bajando desde la mesa y la partida se pierde
      sola mientras nadie mira */
-  if (pantalla !== 'juego' && Apuro.activo) { Apuro.parar(); pararReloj(); }
+  if (pantalla !== 'juego' && enModo()) { Apuro.parar(); Olla.parar(); pararReloj(); }
   const id = 'screen-' + pantalla;
   /* LA QUE SE VA se hunde y se apaga mientras la nueva sube: dos
      capas que se cruzan, como en cualquier consola. Un instante
@@ -573,6 +598,23 @@ function pintarDock() {
   if (!b) return;
   if (focoId === 'olla') {
     b.classList.remove('hidden');
+    /* EL ESTRENO MANDA. Ver por primera vez la olla llena es el final
+       del camino de la semana y no se le puede pasar por delante otra
+       cosa. Ya vista, la pantalla de la olla es la casa del modo de
+       partida completa, y el dock ofrece eso. */
+    const campanaLista = RUTA.filter(n => !n.sirve).every(n => estaListo(n.id));
+    if (campanaLista && !estado.ollaVista) {
+      b.innerHTML = '<b>🍲 ¡A la olla!</b><small>toda la semana, en una sola olla</small>';
+      sigueAccion = () => mostrarFinal();
+      return;
+    }
+    const abierto = diaCompleto(DIAS[0]) || estado.devMode;
+    if (abierto) {
+      const rec = estado.olla;
+      b.innerHTML = `<b>⏱ Cocinar la fanesca</b><small>${rec ? 'tu récord: ' + relojDePartida(rec.ms) : 'de la feria al plato, contra el reloj'}</small>`;
+      sigueAccion = () => arrancarOlla();
+      return;
+    }
     b.innerHTML = '<b>🍲 ¡A la olla!</b><small>toda la semana, en una sola olla</small>';
     sigueAccion = () => mostrarFinal();
     return;
@@ -766,6 +808,34 @@ function paginaOlla(ctx) {
     mostrarFinal();
   });
   pag.appendChild(receta);
+
+  /* LA PARTIDA COMPLETA VIVE AQUÍ, en la pantalla de la olla, porque
+     es literalmente lo que hace: la fanesca entera de una sentada. La
+     campaña enseña un gesto por día; esto es cocinarla, y volver a
+     cocinarla más rápido. Se abre al terminar el lunes — con los ocho
+     primeros mesones ya se conocen los gestos, y soltar a alguien en
+     una partida de nueve minutos antes de eso es soltarlo a nada. */
+  const abierto = diaCompleto(DIAS[0]) || estado.devMode;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn-modo' + (abierto ? '' : ' btn-modo--cerrado');
+  const rec = estado.olla;
+  btn.innerHTML = `
+    <span class="btn-modo-ico" aria-hidden="true">⏱</span>
+    <span class="btn-modo-txt">
+      <strong>Cocinar la fanesca</strong>
+      <small>${!abierto
+        ? `Se abre terminando el lunes — llevas ${DIAS[0].paradas.filter(estaListo).length} de 8`
+        : (rec ? `Tu récord: ${relojDePartida(rec.ms)} · ${cucharasHTML(rec.cucharas || 1)}` : 'De la feria al plato, contra el reloj')}</small>
+    </span>
+    <span class="btn-modo-ir" aria-hidden="true">▶</span>`;
+  tocable(btn, () => {
+    if (mesaCarrusel && mesaCarrusel.recienDeslizado()) return;
+    sfx('tab');
+    if (!abierto) { toast('Termina el lunes y se abre la partida completa'); return; }
+    arrancarOlla();
+  });
+  pag.appendChild(btn);
   return pag;
 }
 
@@ -916,12 +986,10 @@ function celebrar(cuantos = 28) {
    Devuelve una promesa que se cumple cuando la escena se apagó —o se
    saltó—: la fiesta del altar espera a eso, para que el confeti caiga
    sobre la olla lista y no debajo de una cortina negra. */
-const OLLA_TROZOS = {
-  zapallo: '#f0a04b', sambo: '#dfe6b0', mote: '#f3e9c8', garbanzo: '#e8c98a',
-  habas: '#8fae7e', frejol: '#b98aae', maiz: '#f4d35e', arveja: '#7fb069',
-  escoger: '#c98a4b', chochos: '#fbf3e0', melloco: '#f0c352', quinua: '#efe6d2',
-  mani: '#d9b48a', col: '#bcd39a', bacalao: '#fbf3e0', queso: '#fdfaf0',
-};
+/* el color del trozo que cada uno deja en el caldo vive con el ORDEN
+   (niveles.js): dos listas de dieciséis con las mismas claves
+   terminan un día sin coincidir */
+const OLLA_TROZOS = Object.fromEntries(ORDEN_OLLA.map(o => [o.id, o.color]));
 const OLLA_AGUA = [0x8f, 0xbf, 0xd0], OLLA_FANESCA = [0xe0, 0xb4, 0x5c];
 const ollaColor = (c) => `rgb(${c.map(Math.round).join(',')})`;
 let ollaEscena = null;   /* la escena en curso: { timers, resolver } */
@@ -1190,6 +1258,45 @@ function renderCuaderno() {
     pagina('pagina capitulo', cabeza + `<div class="capitulo-cuerpo">${html}</div>`);
   });
 
+  /* ---------- LOS INGREDIENTES ----------
+     Esto salía antes en la hoja de listo, después de cada parada: un
+     párrafo de historia y una cita, justo cuando el jugador tiene el
+     pulgar encima de «siguiente». Nadie lo leía. Aquí sí se lee,
+     porque a esta página se entra queriendo. Y no se pierde nada: es
+     el mismo texto, entero, con su cita. */
+  const ganadas = Object.entries(TARJETAS).filter(([k]) => (estado.leidos || []).includes(k));
+  if (ganadas.length) {
+    pagina('pagina capitulo', `
+      <div class="capitulo-head">
+        <span class="plate">${icono('granos_mixtos')}</span>
+        <h3 class="capitulo-titulo">Los ingredientes</h3>
+      </div>
+      <div class="capitulo-cuerpo">
+        <p class="capitulo-cerrojo">Uno por cada cosa que ya cocinaste. Los que faltan se abren solos.</p>
+        ${ganadas.map(([, t]) => `
+          <h4 class="tarjeta-titulo">${t.titulo}</h4>
+          <p>${t.texto}</p>
+          ${t.cita ? `<blockquote class="cita"><p>«${t.cita.texto}»</p>
+            <footer>${t.cita.quien}<span>${t.cita.datos || ''}</span></footer></blockquote>` : ''}`).join('')}
+      </div>`);
+  }
+
+  /* ---------- EL ORDEN DE LA OLLA ----------
+     Las dieciséis razones que el caldero suelta de a una cuando te
+     equivocas. Juntas son la receta, y juntas sólo caben aquí: en
+     pleno mesón nadie lee dieciséis renglones seguidos. */
+  pagina('pagina capitulo', `
+    <div class="capitulo-head">
+      <span class="plate">${icono(OLLA.icono)}</span>
+      <h3 class="capitulo-titulo">El orden de la olla</h3>
+    </div>
+    <div class="capitulo-cuerpo">
+      <p>${OLLA.gesto}</p>
+      <ol class="orden-olla">
+        ${ORDEN_OLLA.map((o, i) => `<li><b>${i + 1}. ${o.nombre}</b><span>${o.porque}</span></li>`).join('')}
+      </ol>
+    </div>`);
+
   pagina('pagina capitulo-fuentes', `
     <p class="label">de dónde salió esto</p>
     <ul id="cuaderno-fuentes-lista" class="cuaderno-fuentes-lista">${HISTORIA.fuentes
@@ -1287,14 +1394,15 @@ const topeFallos = () => TOPE_FALLOS[Math.min(5, api.dificultad || 1)] ?? Infini
 function pintarFallos() {
   const el = $('#hud-fallos');
   if (!el) return;
-  /* en El Apuro no hay tope: cada descuido cuesta segundos y ya */
-  const tope = Apuro.activo ? Infinity : topeFallos();
+  /* en los modos no hay tope: un descuido cuesta segundos (El Apuro)
+     o penalización y calidad (La Olla), pero nunca corta la partida */
+  const tope = enModo() ? Infinity : topeFallos();
   el.classList.toggle('visible', fallosAhora > 0);
   el.textContent = Number.isFinite(tope) ? `✗ ${fallosAhora} / ${tope}` : `✗ ${fallosAhora}`;
   el.classList.toggle('hud-fallos--rojo', Number.isFinite(tope) && fallosAhora >= tope - 1);
 }
 function registrarFallo(tipo, msg) {
-  if (!Apuro.activo && !corriendo && !relojEnEspera) return;
+  if (!enModo() && !corriendo && !relojEnEspera) return;
   fallosAhora++;
   sfx('mal', 1.5); buzz([18, 12, 18]);
   Motor.destello('rgba(230,57,70,.16)');
@@ -1305,6 +1413,16 @@ function registrarFallo(tipo, msg) {
     const coste = APURO.fallo || 2;
     Apuro.descontar(coste);
     flotarTiempo('−' + coste + 's', 'pierde');
+    if (msg) alerta(msg, 'peligro');
+    return;
+  }
+  /* en La Olla el descuido SUMA al marcador: el reloj sube, así que
+     la penalización se enseña con el signo al revés */
+  if (Olla.activo) {
+    const coste = OLLA_MODO.fallo || 4;
+    Olla.descontar(coste);
+    flotarTiempo('+' + coste + 's', 'pierde');
+    if (msg) alerta(msg, 'peligro');
     return;
   }
   const tope = topeFallos();
@@ -1330,6 +1448,14 @@ function pintarReloj() {
     el.classList.toggle('hud-tiempo--rojo', Apuro.enRojo);
     return;
   }
+  /* En La Olla el reloj es de partida entera: minutos y segundos, sin
+     décimas. Una centésima parpadeando durante nueve minutos es un
+     tic nervioso, y aquí lo que se compara son medios minutos. */
+  if (Olla.activo) {
+    el.classList.remove('hud-tiempo--rojo');
+    n.textContent = relojDePartida(Olla.ms);
+    return;
+  }
   el.classList.remove('hud-tiempo--rojo');
   n.textContent = tiempoBonito(tiempoMs);
 }
@@ -1344,7 +1470,8 @@ function arrancarReloj() {
     const ahora = performance.now();
     const dt = (ahora - ultimo) / 1000;
     ultimo = ahora;
-    if (Apuro.activo) Apuro.tick(dt);
+    const m = modoVivo();
+    if (m) m.tick(dt);
     else tiempoMs = ahora - t0;
     pintarReloj();
   }, 83);
@@ -1411,17 +1538,23 @@ let capturaPista = null;
 
 let vozId = null;
 let vozPauso = false;   /* la voz detuvo el reloj */
-/* Una cita no es un toast: se queda el tiempo suficiente para leerla
-   y no interrumpe el juego, porque llega justo cuando el jugador
-   acaba de HACER lo que la cita dice. */
+/* LAS CITAS YA NO SALEN JUGANDO. Eran nueve segundos de texto sobre
+   el mesón —con el reloj detenido— y probándolo con gente pasó lo
+   que pasa siempre: nadie se para a leer en mitad de una faena,
+   quieren seguir. Lo que se contaba aquí no se perdió: vive en el
+   cuaderno, con su contexto y su fuente, y en la pantalla de «se
+   arruinó la olla», que es el único momento del juego donde el
+   jugador está detenido a la fuerza.
+
+   La maquinaria se queda puesta —detiene el reloj, se cierra sola, se
+   puede tocar para saltarla— porque es la forma correcta de decir
+   algo largo si algún día hace falta. Hoy no la llama nadie. */
 function voz(cita, ms = 9000, opts = {}) {
   const v = $('#voz');
   if (!cita) { v.classList.remove('visible'); if (vozPauso) { vozPauso = false; if (nivelActual) arrancarReloj(); } return; }
-  /* EN EL APURO NO HAY CITAS. Una cita de nueve segundos en pleno
-     contrarreloj no se lee: se sufre — tapa el mesón mientras el
-     reloj come. La campaña es donde las citas tienen su silencio, y
-     todas se releen en el cuaderno. */
-  if (Apuro.activo) return;
+  /* y en un modo, menos todavía: nueve segundos de texto en pleno
+     contrarreloj no se leen, se sufren */
+  if (enModo()) return;
   /* leer una cita no puede costar cucharas: el reloj se detiene
      mientras está en pantalla y sigue cuando se va */
   if (corriendo) { pararReloj(); vozPauso = true; }
@@ -1472,14 +1605,20 @@ const api = {
        marcar el 12% de un choclo del que sólo hay que hacer el 30%
        le miente al jugador sobre cuánto le falta para el siguiente
        bono, que es la única cifra que le importa mientras corre. */
-    const meta = (Apuro.activo && Apuro.racion && Apuro.racion.cuota) || totalAhora;
+    const enCurso = modoVivo();
+    const racion = enCurso && (enCurso === Apuro ? Apuro.racion : Olla.paso);
+    const meta = (racion && racion.cuota) || totalAhora;
     const k = Math.max(0, Math.min(1, hechos / meta));
     const barra = $('#hud-barra');
     barra.style.width = (k * 100) + '%';
     const pct = $('#hud-pct');
     if (pct) pct.textContent = Apuro.activo
       ? Apuro.raciones + (Apuro.raciones === 1 ? ' ración' : ' raciones')
-      : Math.round(k * 100) + '%';
+      /* en La Olla, DÓNDE VAS DE LA PARTIDA entera. El avance dentro
+         del acto no dice nada en los actos de un solo mesón («1/1») y
+         lo que se quiere saber en una partida de nueve minutos es
+         cuánto falta para el plato. */
+      : (Olla.activo ? `${Math.min(Olla.indice + 1, Olla.total)}/${Olla.total}` : Math.round(k * 100) + '%');
     Motor.llenarRecipiente('batea', k);
     /* la faena que toca según lo hecho — salvo que el nivel ya la
        esté diciendo él mismo con api.paso() */
@@ -1495,20 +1634,23 @@ const api = {
     /* El Apuro escucha el mismo latido que la barra. No necesita que
        el nivel sepa nada de él: con saber cuánto lleva hecho de su
        propio total ya puede decidir si la ración está servida. */
-    if (Apuro.activo) Apuro.progreso(hechos, total || 1);
+    if (enCurso) enCurso.progreso(hechos, total || 1);
   },
   composta(k) { Motor.llenarRecipiente('composta', Math.max(0, Math.min(1, k))); },
   completar() {
-    if (Apuro.activo) { Apuro.completar(); return; }
+    const m = modoVivo();
+    if (m) { m.completar(); return; }
     /* "en espera" también es una partida viva: el reloj arranca con
        el primer toque, y un nivel terminado de un toque no puede
        quedarse sin celebrar por un tecnicismo del cronómetro */
     if (corriendo || relojEnEspera) { relojEnEspera = false; terminarNivel(); }
   },
   arruinar(motivo) {
-    /* en El Apuro un desastre cuesta segundos, no la partida: si el
-       modo se lo queda, aquí no se abre nada */
-    if (Apuro.activo && Apuro.arruinar(motivo)) return;
+    /* en un modo un desastre no tira la partida —cuesta segundos en
+       El Apuro, penalización y calidad en La Olla— así que si el modo
+       se lo queda, aquí no se abre nada */
+    const m = modoVivo();
+    if (m && m.arruinar(motivo)) return;
     if (corriendo || relojEnEspera) { relojEnEspera = false; arruinarNivel(motivo); }
   },
   aviso: alerta,
@@ -1792,7 +1934,15 @@ async function jugar(id) {
   const fila = [];
   if (!yaJugada && !capturadas.length) fila.push({ msg: n.gesto });
   fila.push(...capturadas);
-  if (!yaJugada && traeBichos) {
+  /* EL AVISO DEL BICHO, UNA VEZ POR BICHO Y NO POR PARADA. Salía en
+     cada parada nueva con bichos —unas veinticinco veces a lo largo de
+     la campaña— repitiendo la misma regla a alguien que ya la sabe, y
+     una instrucción repetida enseña a saltarse las instrucciones. El
+     gusanito, la mosca y el gorgojo se avisan la primera vez que
+     aparecen y nunca más: son tres reglas, no veinticinco. */
+  if (traeBichos && n.bicho && !(estado.bichosVistos || []).includes(n.bicho)) {
+    estado.bichosVistos = [...(estado.bichosVistos || []), n.bicho];
+    guardar();
     fila.push({ msg: n.avisoBicho || `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>` });
   }
   /* el «?» arranca con el gesto del ingrediente: en una parada ya
@@ -1837,52 +1987,82 @@ function apuroHUD(nombre) {
   if (barra) barra.style.width = '0%';
 }
 
-/* Montar el ingrediente que toca. Es `jugar()` sin la campaña: sin
-   récords, sin brief, sin modal de listo — y sobre todo sin volver a
-   la mesa entre uno y otro, que es exactamente lo que le quitaba
-   fluidez al juego. La mesa cambia y ya estás en el siguiente. */
-async function montarRacion(base, config) {
+/* La regla del modo se cuenta UNA VEZ EN LA VIDA y en una línea. Es
+   lo único que hace falta leer para jugarlo; el resto —de dónde sale
+   el orden, qué es la uchucuta, por qué el bacalao— vive en el
+   cuaderno, que es donde alguien lo lee porque quiere. */
+function reglaDelApuro() {
+  if (estado.apuroJugado) return null;
+  estado.apuroJugado = true; guardar();
+  return '<b>El Apuro:</b> haz una parte de cada ingrediente y el reloj te <b>devuelve segundos</b>.';
+}
+function reglaDeLaOlla() {
+  if (estado.ollaModoJugado) return null;
+  estado.ollaModoJugado = true; guardar();
+  return '<b>La Olla:</b> la fanesca entera, de principio a fin. El reloj <b>sube</b>: es tu marca.';
+}
+
+/* mm:ss — una partida de nueve minutos no se lee en décimas */
+function relojDePartida(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/* ============================================================
+   MONTAR UN MESÓN PARA UN MODO
+
+   Es `jugar()` sin la campaña: sin récords, sin tarjeta de parada,
+   sin modal de listo — y sobre todo sin volver a la mesa entre uno y
+   otro, que es lo que le quitaba fluidez al juego. La mesa cambia y
+   ya estás en el siguiente.
+
+   Sirve a LOS DOS MODOS. Lo único que cambia entre ellos es qué
+   escribe el HUD y con qué dificultad se arman los bichos, así que
+   eso entra por parámetro y el resto —la ficha, el módulo, los
+   modelos, los tres caminos de error— es el mismo código. Escribirlo
+   dos veces era garantizar que el segundo se quedara sin los
+   arreglos del primero.
+   ============================================================ */
+async function montarMeson(base, config, modo, opts = {}) {
   const ficha = porId(base);
-  /* SIN FICHA O SIN MÓDULO NO SE ESPERA: se avisa y el modo pide otra
-     ración. Antes esto hacía `return` a secas y la partida se quedaba
-     con el mesón anterior en pantalla, muda, para siempre. */
+  /* SIN FICHA O SIN MÓDULO NO SE ESPERA: se avisa y el modo pide el
+     siguiente. Antes esto hacía `return` a secas y la partida se
+     quedaba con el mesón anterior en pantalla, muda, para siempre. */
   if (!ficha) {
-    console.error('El Apuro pidió un ingrediente que no existe:', base);
+    console.error('El modo pidió un mesón que no existe:', base);
     toast(`No encontré «${base}» en esta versión: sigo con otro 😔`, 3200);
-    Apuro.saltar();
+    modo.saltar();
     return;
   }
   nivelActual = ficha;
   pintarPasos(ficha);
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(ficha.icono);
-  apuroHUD(ficha.nombre);
+  if (opts.hud) opts.hud(ficha);
   try {
     const m = await ficha.modulo();
     modActual = m.default || m;
   } catch (e) {
     console.error(e);
     toast(`No se pudo abrir ${ficha.nombre.toLowerCase()}: sigo con otro 😔`, 3200);
-    Apuro.saltar();
+    modo.saltar();
     return;
   }
   await Motor.modelosListos();
   /* LA PARTIDA PUDO ACABARSE MIENTRAS SE MONTABA: montar es
-     asíncrono, y si el reloj llegó a cero en ese hueco el resumen ya
-     está en pantalla — construir el nivel ahora lo pondría a vivir
-     detrás del modal, encolando pistas para nadie */
-  if (!Apuro.activo) return;
+     asíncrono, y si terminó en ese hueco el resumen ya está en
+     pantalla — construir el nivel ahora lo pondría a vivir detrás del
+     modal, encolando pistas para nadie */
+  if (!modo.activo) return;
   hechosAhora = 0; totalAhora = 1; fallosAhora = 0;
   pintarFallos();
   /* justo antes de construir: a partir de aquí el progreso que llegue
-     es de ESTE ingrediente y no del que se estaba jugando */
-  Apuro.activar();
-  /* en El Apuro la dificultad de los bichos sube con la tanda: la
-     primera enseña, de la cuarta en adelante ya no perdonan */
-  api.dificultad = Math.min(5, Apuro.tanda || 1);
+     es de ESTE mesón y no del que se estaba jugando */
+  modo.activar();
+  api.dificultad = opts.dificultad || 1;
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
-  /* si construir revienta, la ración se salta en vez de dejar medio
-     mesón montado y el modo esperando un progreso que no llega */
+  /* si construir revienta, se salta en vez de dejar medio mesón
+     montado y el modo esperando un progreso que no llega */
   try {
     Motor.cargar(modActual, api, config);
   } catch (e) {
@@ -1890,29 +2070,31 @@ async function montarRacion(base, config) {
     capturaPista = null;
     toast(`Se cayó el mesón de ${ficha.nombre.toLowerCase()}: sigo con otro 😔`, 3200);
     try { Motor.descargar(); } catch (e2) {}
-    Apuro.saltar();
+    modo.saltar();
     return;
   }
   capturaPista = null;
   renderControles(modActual);
   Editor.nivel(ficha.id);
-  /* EL APURO TAMBIÉN ENSEÑA. Seis de los doce llegaban mudos: sin la
-     regla del modo (que la tapaba la pista del nivel) y sin el gesto
-     del ingrediente. La regla va primero y sólo la primera partida de
-     la vida; el gesto, siempre — un modo rápido no es excusa para
-     soltar a alguien en las habas sin decirle qué se hace. */
+  /* EL GESTO, Y NADA MÁS. Un modo rápido no es excusa para soltar a
+     alguien en las habas sin decirle qué se hace — pero tampoco es
+     sitio para un párrafo: la regla del modo se cuenta una vez en la
+     vida y el resto vive en el cuaderno. */
   const fila = [];
-  if (!estado.apuroJugado) {
-    estado.apuroJugado = true; guardar();
-    fila.push({ msg: '<b>El Apuro:</b> haz una parte de cada ingrediente y el reloj te <b>devuelve segundos</b>. Los bichos te los quitan.' });
-  }
+  if (opts.reglas) fila.push({ msg: opts.reglas });
   fila.push({ msg: ficha.gesto }, ...capturadas);
   ultimaPista = ficha.gesto;
   pistasEnFila(fila);
 }
 
 const GANCHOS_APURO = {
-  montar: (base, config) => montarRacion(base, config),
+  montar: (base, config) => montarMeson(base, config, Apuro, {
+    hud: (ficha) => apuroHUD(ficha.nombre),
+    /* en El Apuro la dificultad de los bichos sube con la tanda: la
+       primera enseña, de la cuarta en adelante ya no perdonan */
+    dificultad: Math.min(5, Apuro.tanda || 1),
+    reglas: reglaDelApuro(),
+  }),
 
   racionServida({ base, bono, raciones, cadena }) {
     const ficha = porId(base);
@@ -2045,6 +2227,205 @@ function cerrarApuro(resumen) {
   }, 700);
 }
 
+/* ============================================================
+   LA OLLA — la fanesca entera, contra tu récord
+
+   `modo-olla.js` lleva las reglas; esto es lo que el modo le pide al
+   juego: montar el paso que toca, cantar un acto, cobrar un desastre
+   y cerrar la partida.
+   ============================================================ */
+
+function ollaHUD(ficha) {
+  const acto = Olla.acto;
+  const t = $('#hud-tarea');
+  /* EL RÓTULO DICE DÓNDE ESTÁS, no qué hacer. En una partida de nueve
+     minutos lo que se pierde es el sitio —¿voy por la mitad?— y eso no
+     lo contesta el nombre del ingrediente solo. Salvo en los actos de
+     un solo mesón, donde el acto y el mesón se llaman igual: «La olla
+     · la olla» no dice nada y gasta el único renglón que hay. */
+  const donde = acto ? acto.nombre : 'La olla';
+  const que = ficha ? ficha.nombre : '';
+  if (t) t.textContent = (!que || que.toLowerCase() === donde.toLowerCase())
+    ? donde
+    : `${donde} · ${que.toLowerCase()}`;
+  const pct = $('#hud-pct');
+  if (pct) pct.textContent = `${Math.min(Olla.indice + 1, Olla.total)}/${Olla.total}`;
+  const barra = $('#hud-barra');
+  if (barra) barra.style.width = '0%';
+}
+
+const GANCHOS_OLLA = {
+  montar: (base, config, dificultad) => montarMeson(base, config, Olla, {
+    hud: (ficha) => ollaHUD(ficha),
+    dificultad,
+    reglas: reglaDeLaOlla(),
+  }),
+
+  /* UN PASO HECHO SE CELEBRA CHIQUITO. Son veinte en una partida: una
+     fiesta entera por cada uno sería medio minuto de confeti y la
+     partida perdería su ritmo. El aplauso gordo es el del acto. */
+  pasoHecho({ paso, indice, total }) {
+    sfx('bien'); buzz([12, 18]);
+    const ficha = porId(paso.base);
+    if (ficha) toast(`${ficha.nombre} ✓ · ${indice + 1} de ${total}`);
+  },
+
+  /* EL ACTO SÍ ES UN MOMENTO. Es lo que parte nueve minutos en cuatro
+     carreras: entra un cartel con su nombre, y al cerrarse se canta la
+     marca contra tu récord. */
+  acto(acto, i, de) {
+    sfx('tab'); buzz([14, 22, 14]);
+    cartelDeActo(acto, i, de);
+  },
+
+  actoCerrado({ acto, ms, delta }) {
+    sfx('fiesta'); buzz([15, 25, 15]);
+    Motor.destello('rgba(232,129,58,.2)');
+    /* la marca parcial, con el signo que importa: contra tu propia
+       sombra. Sin récord no hay nada que comparar y decir "+0:00"
+       sobre una primera partida es inventarse un dato. */
+    const marca = relojDePartida(ms);
+    if (delta == null) toast(`${acto.nombre}: ${marca}`, 2600);
+    else {
+      const mejor = delta < 0;
+      flotarTiempo((mejor ? '−' : '+') + relojDePartida(Math.abs(delta)), mejor ? 'gana' : 'pierde');
+      toast(`${acto.nombre}: ${marca} · ${mejor ? '¡mejor que tu récord!' : 'tu récord iba más rápido'}`, 3000);
+    }
+  },
+
+  castigo({ coste, motivo }) {
+    sfx('mal'); buzz([50, 40, 60]);
+    Motor.destello('rgba(230,57,70,.4)');
+    Motor.sacudir(0.7);
+    flotarTiempo('+' + coste + 's', 'pierde');
+    alerta(`${motivo && motivo.titulo ? motivo.titulo : 'Se dañó'} · +${coste}s`, 'peligro');
+    setTimeout(() => alerta(null), 2800);
+  },
+
+  finDePartida(resumen) { cerrarOlla(resumen); },
+};
+
+/* el cartel que abre cada acto: dos segundos, sin nada que leer más
+   allá del nombre y de dónde va la partida */
+let cartelId = null;
+function cartelDeActo(acto, i, de) {
+  const el = $('#acto-cartel');
+  if (!el) return;
+  $('#acto-cartel-ico').textContent = acto.ico || '🍲';
+  $('#acto-cartel-eyebrow').textContent = `acto ${i + 1} de ${de} · ${acto.eyebrow}`;
+  $('#acto-cartel-nombre').textContent = acto.nombre;
+  $('#acto-cartel-lema').textContent = acto.lema;
+  el.hidden = false;
+  el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra');
+  clearTimeout(cartelId);
+  cartelId = setTimeout(() => { el.classList.remove('entra'); el.hidden = true; }, 2100);
+}
+
+function arrancarOlla() {
+  if (!motorListo) { toast('Este minijuego necesita WebGL 😔'); return; }
+  initAudio();
+  pararReloj();
+  tiempoMs = 0;
+  reiniciarRacha();
+  alerta(null);
+  pista(null);
+  mostrar('juego');
+  Olla.arrancar(GANCHOS_OLLA, estado.olla || null);
+  arrancarReloj();
+  estado.intentos++;
+  guardar();
+}
+
+function cerrarOlla(resumen) {
+  pararReloj();
+  Olla.parar();
+  const cartel = $('#acto-cartel'); if (cartel) { clearTimeout(cartelId); cartel.hidden = true; }
+  if (resumen.completa) { sfx('fiesta'); buzz([20, 40, 20, 60]); }
+  else sfx('tab');
+
+  /* EL RÉCORD ES DE PARTIDAS TERMINADAS. Media fanesca en cuatro
+     minutos no es un récord de cuatro minutos: es media fanesca. */
+  const mejor = estado.olla || null;
+  const esRecord = resumen.completa && (!mejor || resumen.ms < mejor.ms);
+  if (esRecord) {
+    estado.olla = {
+      ms: Math.round(resumen.ms), cucharas: resumen.cucharas,
+      desastres: resumen.desastres, descuidos: resumen.descuidos,
+      actos: resumen.actos, fecha: fechaLocal(),
+    };
+  } else if (mejor && resumen.completa) {
+    mejor.cucharas = Math.max(mejor.cucharas || 1, resumen.cucharas);
+  }
+  guardar();
+
+  setTimeout(() => {
+    Motor.setActive(false);
+    const cabecera = document.querySelector('#modal-olla .sheet-eyebrow');
+    if (cabecera) cabecera.textContent = resumen.completa
+      ? 'la fanesca está servida'
+      : (resumen.porque === 'salida' ? 'lo dejaste ahí' : 'se cortó la partida');
+    $('#olla-tiempo').textContent = relojDePartida(resumen.ms);
+    $('#olla-tiempo-pie').textContent = resumen.completa
+      ? (resumen.penalizacion ? `${relojDePartida(resumen.msLimpio)} de manos + ${Math.round(resumen.penalizacion / 1000)}s de penalización` : 'sin una sola penalización')
+      : `llegaste hasta ${resumen.pasos} de ${resumen.de}`;
+
+    /* las cucharas son de CALIDAD: cómo salió, no cuánto tardaste */
+    $('#olla-cucharas').innerHTML = cucharasHTML(0);
+    const huecos = $('#olla-cucharas').querySelectorAll('.cuchara');
+    const cuch = resumen.completa ? resumen.cucharas : 0;
+    for (let i = 0; i < cuch; i++) {
+      setTimeout(() => { huecos[i].classList.add('llena', 'cae'); sfx('bien', 1 + i * 0.18); buzz(14); }, 280 + i * 230);
+    }
+    $('#olla-detalle').textContent = resumen.completa
+      ? (resumen.desastres || resumen.descuidos
+        ? `${resumen.desastres} desastre${resumen.desastres === 1 ? '' : 's'} · ${resumen.descuidos} descuido${resumen.descuidos === 1 ? '' : 's'}`
+        : 'Ni un desastre ni un descuido')
+      : 'La fanesca se quedó a medias.';
+    $('#olla-mejor').textContent = esRecord
+      ? (mejor ? `¡Nuevo récord! antes: ${relojDePartida(mejor.ms)}` : 'Tu primera fanesca completa')
+      : (mejor ? `Tu récord sigue siendo ${relojDePartida(mejor.ms)}` : 'Termínala entera y tendrás récord');
+
+    /* LAS MARCAS POR ACTO, que es donde se ve dónde se pierde el
+       tiempo. Es la tabla que hace que alguien juegue la tercera
+       partida: no basta con saber que tardaste, hay que saber dónde. */
+    const tabla = $('#olla-actos');
+    if (tabla) {
+      const refs = (mejor && mejor.actos) || {};
+      tabla.innerHTML = OLLA_MODO.actos.map(a => {
+        const t = resumen.actos[a.id];
+        if (!Number.isFinite(t)) return `<li class="olla-acto olla-acto--sin"><b>${a.ico} ${a.nombre}</b><span>—</span></li>`;
+        const r = refs[a.id];
+        const d = Number.isFinite(r) ? t - r : null;
+        const marca = d == null ? '' : `<i class="${d <= 0 ? 'mejor' : 'peor'}">${d <= 0 ? '−' : '+'}${relojDePartida(Math.abs(d))}</i>`;
+        return `<li class="olla-acto"><b>${a.ico} ${a.nombre}</b><span>${relojDePartida(t)} ${marca}</span></li>`;
+      }).join('');
+    }
+
+    /* la escalera de logros, igual que en El Apuro: los conseguidos en
+       color, los pendientes en gris con su meta. Sin la escalera a la
+       vista no hay siguiente peldaño que perseguir. */
+    const ya = estado.logrosOlla || (estado.logrosOlla = []);
+    const nuevos = (resumen.logros || []).filter(l => !ya.includes(l.id));
+    nuevos.forEach(l => ya.push(l.id));
+    if (nuevos.length) guardar();
+    const cajaL = $('#olla-logros');
+    if (cajaL) {
+      cajaL.innerHTML = OLLA_MODO.logros.map(l => {
+        const esNuevo = nuevos.some(x => x.id === l.id);
+        const hecho = ya.includes(l.id);
+        return `<li class="logro${esNuevo ? ' logro--nuevo' : (hecho ? '' : ' logro--pendiente')}">
+          <strong>${hecho ? l.titulo : '· ' + l.titulo}</strong>
+          <span>${hecho ? l.texto : (l.meta || '')}</span></li>`;
+      }).join('');
+      nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
+    }
+
+    $('#olla-otra').textContent = resumen.completa ? 'Otra vez, más rápido' : 'Volver a empezar';
+    $('#modal-olla').classList.add('open');
+    if (resumen.completa) celebrar(esRecord ? 54 : 30);
+  }, 700);
+}
+
 function terminarNivel() {
   pararReloj();
   sfx('bien'); buzz([20, 40, 60]);
@@ -2109,19 +2490,18 @@ function terminarNivel() {
        el id dejaba las doce tarjetas mudas y —peor— el cuaderno
        cerrado para siempre, porque tarjeta.abre es el único
        desbloqueo de capítulos que tiene la campaña. */
-    const tarjeta = TARJETAS[n.base || n.id];
-    const caja = $('#listo-tarjeta');
+    const clave = n.base || n.id;
+    const tarjeta = TARJETAS[clave];
+    const caja = $('#listo-nota');
     if (tarjeta) {
-      caja.classList.remove('hidden');
-      $('#tarjeta-titulo').textContent = tarjeta.titulo;
-      $('#tarjeta-texto').textContent = tarjeta.texto;
-      const cita = $('#tarjeta-cita');
-      if (tarjeta.cita) {
-        cita.classList.remove('hidden');
-        $('#tarjeta-cita-texto').textContent = '«' + tarjeta.cita.texto + '»';
-        $('#tarjeta-cita-quien').textContent = tarjeta.cita.quien;
-      } else cita.classList.add('hidden');
+      /* la página se GANA aquí y se LEE en el cuaderno: lo que sale en
+         la hoja de listo es un renglón diciendo que hay algo nuevo */
+      const esNueva = !(estado.leidos || []).includes(clave);
+      if (esNueva) { estado.leidos.push(clave); estado.cuadernoVisto = false; }
       [].concat(tarjeta.abre || []).forEach(abrirCapitulo);
+      if (esNueva) guardar();
+      caja.classList.toggle('hidden', !esNueva);
+      if (esNueva) $('#listo-nota-titulo').textContent = tarjeta.titulo;
     } else caja.classList.add('hidden');
 
     /* el botón verde dice A DÓNDE va: a la parada que sigue, al
@@ -2164,6 +2544,14 @@ function arruinarNivel(motivo) {
       texto += ` Ibas ${hechosAhora} de ${totalAhora}… ¡ya casi era!`;
     }
     $('#arruinado-motivo').textContent = texto;
+    /* y la frase de cocina del ingrediente, si la tiene: aquí no le
+       quita el sitio a nada — el jugador está detenido a la fuerza */
+    const notaEl = $('#arruinado-nota');
+    if (notaEl) {
+      const nota = nivelActual && nivelActual.nota;
+      notaEl.textContent = nota || '';
+      notaEl.classList.toggle('hidden', !nota);
+    }
     $('#modal-arruinado').classList.add('open');
   }, 900);
 }
@@ -2269,6 +2657,8 @@ function bindEventos() {
   });
   tocable($('#apuro-otra'), () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
   tocable($('#apuro-salir'), () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
+  tocable($('#olla-otra'), () => { sfx('tab'); cerrarModales(); arrancarOlla(); });
+  tocable($('#olla-salir'), () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
 
 
   tocable($('#voz'), () => voz(null));
@@ -2286,6 +2676,16 @@ function bindEventos() {
     if (ultimaPista) pistaAhora(ultimaPista, duracionDe(ultimaPista));
   });
   tocable($('#btn-cuaderno'), () => { sfx('tab'); mostrar('cuaderno'); });
+  /* el renglón de «se abrió una página» lleva DIRECTO a leerla: si
+     obligara a cerrar la hoja, volver a la mesa y buscar el cuaderno,
+     no la abriría nadie */
+  tocable($('#listo-nota'), () => {
+    sfx('tab');
+    cerrarModales();
+    Motor.descargar(); Motor.setActive(false);
+    nivelActual = null; modActual = null;
+    mostrar('cuaderno');
+  });
   /* la hoja de la cocina: dónde se cocina, fuera del recetario */
   const btnCocina = $('#btn-cocina');
   if (btnCocina) tocable(btnCocina, () => { sfx('tab'); $('#modal-cocina').classList.add('open'); });
@@ -2313,6 +2713,17 @@ function bindEventos() {
         return;
       }
       Apuro.terminar('salida');
+      return;
+    }
+    /* y en La Olla con más razón: es una partida de nueve minutos y
+       lo que se pierde al salir no es una ración, es la fanesca */
+    if (Olla.activo) {
+      if (Date.now() - salirArmado > 2600) {
+        salirArmado = Date.now();
+        toast('¿Dejar la fanesca a medias? Toca otra vez');
+        return;
+      }
+      Olla.terminar('salida');
       return;
     }
     /* con faena empezada, un toque solo no bota el trabajo: el botón
@@ -2432,6 +2843,7 @@ function bindEventos() {
          directa era la única ruta del juego que tiraba a la basura
          raciones ganadas, sin resumen ni récord */
       if (Apuro.activo) { Apuro.terminar('salida'); return; }
+      if (Olla.activo) { Olla.terminar('salida'); return; }
       if ($('#screen-juego').classList.contains('active')) salirDelNivel();
       else if ($('#screen-cuaderno').classList.contains('active')) mostrar('mesa');
     }
@@ -2450,7 +2862,7 @@ function bindEventos() {
        queda tocando una escena muerta sin entender por qué, y desde
        ahí ninguna ficha del recetario responde — porque ya no está en
        el recetario. Al primer toque, se le devuelve a la mesa. */
-    if (!modActual && !Apuro.activo && $('#screen-juego').classList.contains('active')) {
+    if (!modActual && !enModo() && $('#screen-juego').classList.contains('active')) {
       toast('Ese mesón no llegó a armarse — te devuelvo al recetario');
       salirDelNivel();
       return;
@@ -2574,7 +2986,8 @@ window.Fanesca = {
   jugar,
   get ruta() { return RUTA.map(n => ({ id: n.id, dia: n.dia, num: n.num, dif: n.dificultad, base: n.base, intro: !!n.intro })); },
   api,
-  Apuro,
+  Apuro, Olla, ORDEN_OLLA,
+  arrancarOlla,
   sondear: (x, y) => Motor.sondear(x, y),
   puntos: () => ({ batea: Motor.proyectar(BATEA), composta: Motor.proyectar(COMPOSTA) }),
 };

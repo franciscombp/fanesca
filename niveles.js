@@ -328,27 +328,101 @@ export const OLLA = {
    leche y entra desmenuzado con esa misma leche; y el queso fresco
    se desmiga al final, casi con el fuego apagado. El nombre corto
    es lo que se lee mientras cae.
+
+   CADA ENTRADA CARGA TRES COSAS MÁS desde que el orden dejó de ser
+   sólo una escena y pasó a ser un minijuego (nivel-caldero):
+
+     · `color` — el trozo que deja en el caldo. Estaba escrito aparte
+       en main.js y ahora sale de aquí, que es donde vive el orden:
+       dos listas de dieciséis con las mismas claves terminan un día
+       sin coincidir.
+     · `pieza` — qué modelo se ve en su cuenco sobre el mesón.
+     · `porque` — POR QUÉ va en ese puesto. Es lo que el caldero dice
+       cuando alguien lo echa fuera de turno, y es el motivo entero de
+       que el orden sea un juego: aprenderse la receta es aprenderse
+       estas dieciséis razones, no dieciséis posiciones.
    ============================================================ */
 export const ORDEN_OLLA = [
-  { id: 'zapallo',  nombre: 'el zapallo' },
-  { id: 'sambo',    nombre: 'el sambo' },
-  { id: 'mote',     nombre: 'el mote' },
-  { id: 'garbanzo', nombre: 'el garbanzo' },
-  { id: 'habas',    nombre: 'las habas' },
-  { id: 'frejol',   nombre: 'el fréjol' },
-  { id: 'maiz',     nombre: 'el choclo' },
-  { id: 'arveja',   nombre: 'la arveja' },
-  { id: 'escoger',  nombre: 'la lenteja' },
-  { id: 'chochos',  nombre: 'los chochos' },
-  { id: 'melloco',  nombre: 'el melloco' },
-  { id: 'quinua',   nombre: 'la quinua' },
-  { id: 'mani',     nombre: 'el maní con leche' },
-  { id: 'col',      nombre: 'la col' },
-  { id: 'bacalao',  nombre: 'el bacalao con su leche' },
-  { id: 'queso',    nombre: 'el queso, al final' },
+  { id: 'zapallo',  nombre: 'el zapallo',  color: '#f0a04b', pieza: 'trozo-pulpa',
+    porque: 'El zapallo va primero: se deshace en el caldo y es el que le da cuerpo y color.' },
+  { id: 'sambo',    nombre: 'el sambo',    color: '#dfe6b0', pieza: 'hebra-sambo',
+    porque: 'El sambo va con el zapallo, al principio: los dos se hacen puré y son la base.' },
+  { id: 'mote',     nombre: 'el mote',     color: '#f3e9c8', pieza: 'grano-choclo', opts: { madurez: 'seco' },
+    porque: 'El mote entra temprano: es grano grande y aguanta el hervor largo.' },
+  { id: 'garbanzo', nombre: 'el garbanzo', color: '#e8c98a', pieza: 'garbanzo',
+    porque: 'El garbanzo es de los duros: cuanto antes entre, mejor.' },
+  { id: 'habas',    nombre: 'las habas',   color: '#8fae7e', pieza: 'haba',
+    porque: 'Las habas van con los granos gruesos, antes que los tiernos.' },
+  { id: 'frejol',   nombre: 'el fréjol',   color: '#b98aae', pieza: 'grano-frejol',
+    porque: 'El fréjol pide su rato: entra con los granos duros, no al final.' },
+  { id: 'maiz',     nombre: 'el choclo',   color: '#f4d35e', pieza: 'grano-choclo',
+    porque: 'El choclo va después de los duros: es tierno y se deshace si hierve de más.' },
+  { id: 'arveja',   nombre: 'la arveja',   color: '#7fb069', pieza: 'arveja',
+    porque: 'La arveja es tierna: va con el choclo, en la segunda mitad.' },
+  { id: 'escoger',  nombre: 'la lenteja',  color: '#c98a4b', pieza: 'lenteja',
+    porque: 'La lenteja se cuece rapidísimo: si entra temprano se hace papilla.' },
+  { id: 'chochos',  nombre: 'los chochos', color: '#fbf3e0', pieza: 'chocho',
+    porque: 'Los chochos ya vienen cocidos y desamargados: entran casi al final, sólo a calentarse.' },
+  { id: 'melloco',  nombre: 'el melloco',  color: '#f0c352', pieza: 'melloco',
+    porque: 'El melloco suelta baba: va tarde, para que no espese toda la olla.' },
+  { id: 'quinua',   nombre: 'la quinua',   color: '#efe6d2', pieza: 'grano-quinua',
+    porque: 'La quinua se abre en nada: al final, o desaparece.' },
+  { id: 'mani',     nombre: 'el maní con leche', color: '#d9b48a', pieza: 'mani-pasta',
+    porque: 'El maní molido con leche va al final: es lo que amarra el caldo, y hervido de más se corta.' },
+  { id: 'col',      nombre: 'la col',      color: '#bcd39a', pieza: 'col-tira',
+    porque: 'La col entra picadita y casi al último: dos hervores y ya está.' },
+  { id: 'bacalao',  nombre: 'el bacalao con su leche', color: '#fbf3e0', pieza: 'presa-bacalao',
+    porque: 'El bacalao entra desmenuzado con la leche en que se coció, casi al apagar.' },
+  { id: 'queso',    nombre: 'el queso, al final', color: '#fdfaf0', pieza: 'miga-queso',
+    porque: 'El queso es lo último, con el fuego ya bajo: si hierve, se hace chicle.' },
 ];
 
-export const porId = (id) => NIVELES.find(n => n.id === id);
+/* ============================================================
+   LOS MESONES QUE NO SON UN INGREDIENTE
+
+   La feria y el caldero no se preparan: se escogen y se cocinan. No
+   viven en NIVELES —no son parte de los dieciséis ni de la campaña,
+   y meterlos ahí descuadraría todo lo que cuenta ingredientes— pero
+   sí son mesones de pleno derecho, con su módulo y su gesto, y el
+   modo La Olla los monta por el mismo camino que a los demás.
+   ============================================================ */
+export const MESONES_MODO = [
+  {
+    id: 'feria',
+    emoji: '🧺',
+    cuenta: 'choclos',
+    nombre: 'La feria',
+    tarea: 'Escoger el choclo',
+    icono: 'maiz',
+    modulo: () => import('./nivel-feria.js'),
+    gesto: '<b>Arrastra al canasto</b> los choclos tiernos. <b>Tócalo</b> para abrirle la hoja.',
+    nota: 'El choclo es lo único que se escoge en el puesto, uno por uno: se le abre la hoja con el pulgar y se le mira el grano. Lo demás se compra por libras.',
+    cucharas: [45, 70, 100],
+  },
+  {
+    id: 'caldero',
+    emoji: '🍲',
+    cuenta: 'ingredientes',
+    /* dos faenas de verdad, no dos gestos: los doce granos entran en
+       fila y los cuatro del final —el maní con leche, la col, el
+       bacalao y el queso— van con el fuego ya bajo. Revolver no es una
+       faena, es lo que se hace todo el rato. */
+    pasos: [{ ico: '🥄', txt: 'Los granos, en orden', desde: 0 }, { ico: '🥛', txt: 'Lo del final', desde: 0.74 }],
+    nombre: 'La olla',
+    tarea: 'Armar la fanesca',
+    icono: 'fanesca',
+    modulo: () => import('./nivel-caldero.js'),
+    gesto: 'Arrastra cada cuenco a la olla <b>en su turno</b>. Y <b>revuelve</b> dando vueltas: si se pega, se quema.',
+    nota: 'El orden no es capricho: lo que más demora entra primero y lo tierno al final. Por eso la fanesca se cocina toda la tarde y se revuelve sin parar.',
+    cucharas: [70, 105, 150],
+  },
+];
+
+/* Los dos catálogos, en una sola búsqueda. Que `porId` mire también
+   los mesones del modo es lo que deja al juego montarlos por el
+   mismo camino que a un ingrediente cualquiera, sin un `if` por
+   delante en cada sitio donde se pide una ficha. */
+export const porId = (id) => NIVELES.find(n => n.id === id) || MESONES_MODO.find(n => n.id === id) || undefined;
 
 /* cuántas cucharas merece un tiempo */
 export function cucharasDe(nivel, ms) {

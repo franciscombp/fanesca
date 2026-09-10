@@ -233,6 +233,38 @@
     </div>
   </div>
 
+  <!-- ================= Modal: fin de La Olla ================= -->
+  <!-- El marcador es el TIEMPO y las cucharas son la calidad: dos
+       cifras distintas porque miden dos cosas distintas. Y debajo,
+       las marcas por acto: es la tabla que dice DÓNDE se perdió el
+       tiempo, que es lo que hace que alguien juegue la tercera vez. -->
+  <div id="modal-olla" class="modal" role="dialog" aria-modal="true" aria-labelledby="olla-eyebrow">
+    <div class="sheet">
+      <p id="olla-eyebrow" class="sheet-eyebrow">la fanesca está servida</p>
+      <p class="apuro-cifra"><span id="olla-tiempo">0:00</span></p>
+      <p id="olla-tiempo-pie" class="apuro-cifra-pie">de principio a fin</p>
+      <div id="olla-cucharas" class="cucharas" aria-hidden="true"></div>
+      <!-- aquí las cucharas NO son de tiempo (el tiempo ya es la cifra
+           de arriba): son de cómo salió la fanesca -->
+      <p class="cucharas-pie">cómo salió — sin desastres son tres</p>
+      <p id="olla-detalle" class="listo-tiempo"></p>
+      <p id="olla-mejor" class="listo-mejor"></p>
+      <ul id="olla-actos" class="olla-actos"></ul>
+      <ul id="olla-logros" class="logros"></ul>
+      <button type="button" id="olla-otra" class="btn btn--nopal btn--lg btn--block">Otra vez, más rápido</button>
+      <button type="button" id="olla-salir" class="btn btn--fantasma btn--sm btn--block">Volver al recetario</button>
+    </div>
+  </div>
+
+  <!-- El cartel que abre cada acto de La Olla: dos segundos, un
+       nombre y nada que leer. Parte nueve minutos en cuatro carreras. -->
+  <div id="acto-cartel" class="acto-cartel" aria-hidden="true" hidden>
+    <span id="acto-cartel-ico" class="acto-cartel-ico">🍲</span>
+    <p id="acto-cartel-eyebrow" class="acto-cartel-eyebrow"></p>
+    <h2 id="acto-cartel-nombre" class="acto-cartel-nombre"></h2>
+    <p id="acto-cartel-lema" class="acto-cartel-lema"></p>
+  </div>
+
   <!-- ================= Modal: listo ================= -->
   <div id="modal-listo" class="modal" role="dialog" aria-modal="true" aria-labelledby="listo-nombre">
     <div class="sheet">
@@ -247,15 +279,21 @@
         <div class="stat"><span id="listo-fallos" class="stat-n">0</span><span class="stat-l">descuidos</span></div>
       </div>
       <p id="listo-mejor" class="listo-mejor"></p>
-      <section id="listo-tarjeta" class="tarjeta">
-        <p class="label">lo que llevas a la olla</p>
-        <h4 id="tarjeta-titulo" class="tarjeta-titulo"></h4>
-        <p id="tarjeta-texto" class="tarjeta-texto"></p>
-        <blockquote id="tarjeta-cita" class="tarjeta-cita hidden">
-          <p id="tarjeta-cita-texto"></p>
-          <footer id="tarjeta-cita-quien"></footer>
-        </blockquote>
-      </section>
+      <!-- LO QUE SE APRENDE NO INTERRUMPE. Aquí había un párrafo de
+           historia y una cita después de CADA parada, y probándolo con
+           gente se vio lo que pasa: nadie se para a leer entre dos
+           mesones, quieren el siguiente. El texto no se perdió — vive
+           entero en el cuaderno, que es donde alguien lee porque
+           quiere — y aquí queda solo el aviso de que se abrió, en un
+           renglón y con un toque para ir a leerlo. -->
+      <button type="button" id="listo-nota" class="listo-nota hidden">
+        <span class="listo-nota-ic" aria-hidden="true">📖</span>
+        <span class="listo-nota-txt">
+          <small>nueva página en el cuaderno</small>
+          <strong id="listo-nota-titulo"></strong>
+        </span>
+        <span class="listo-nota-ir" aria-hidden="true">›</span>
+      </button>
       <button type="button" id="listo-seguir" class="btn btn--nopal btn--lg btn--block">Siguiente parada</button>
       <button type="button" id="listo-repetir" class="btn btn--fantasma btn--sm btn--block">Repetirlo más rápido</button>
     </div>
@@ -268,6 +306,12 @@
       <p class="sheet-eyebrow">se arruinó la olla</p>
       <h3 id="arruinado-titulo" class="sheet-title">Un gusanito en la fanesca</h3>
       <p id="arruinado-motivo" class="sheet-body"></p>
+      <!-- LA PANTALLA DE ERROR ES EL BUEN SITIO PARA CONTAR ALGO. Aquí
+           el jugador está parado a la fuerza, mirando un modal que no
+           le pide nada: es el único momento del juego donde una frase
+           de cocina no compite con el pulgar. Una sola, del
+           ingrediente que se acaba de arruinar. -->
+      <p id="arruinado-nota" class="arruinado-nota hidden"></p>
       <button type="button" id="arruinado-reintentar" class="btn btn--chile btn--lg btn--block">Empezar de nuevo</button>
       <button type="button" id="arruinado-salir" class="btn btn--fantasma btn--sm btn--block">Dejarlo por hoy</button>
     </div>

@@ -30,10 +30,32 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '2.9.0';
+const APP_VERSION = '3.0.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '3.0.0',
+    fecha: '2026-09-10',
+    titulo: 'La fanesca entera, de una sentada',
+    cambios: [
+      '🍲 <b>Modo nuevo: La Olla.</b> Cocina la fanesca completa de principio a fin —la feria, los dieciséis, la olla y el plato— y vuelve a jugarla para bajarte tu propio tiempo.',
+      '🧺 <b>La feria.</b> Escoge el choclo en el puesto: hoja verde y pelo claro es tierno, pero algunos mienten. Te dejan abrir dos para verles el grano.',
+      '🥄 <b>La olla es un mesón de verdad.</b> Echa los dieciséis en el orden en que se cocinan y revuelve para que no se pegue. Si te equivocas, la olla te dice por qué.',
+      '⏱ <b>Marcas por acto.</b> Cada tramo de la partida cierra con su tiempo y te lo compara con tu récord.',
+      '📖 <b>Menos leer, más cocinar.</b> Lo que se contaba entre parada y parada se mudó al cuaderno, con una página nueva por ingrediente y el orden de la olla explicado entero.',
+    ],
+    internos: [
+      'modo-olla.js: partida de veinte pasos en cuatro actos, reloj que sube, penalización en segundos y cucharas por calidad. Mismo contrato que modo-apuro: se sienta sobre api.progreso/completar/arruinar y no reimplementa ni un nivel.',
+      'montarRacion() se generalizó a montarMeson(base, config, modo, opts): los dos modos comparten el mismo camino de montaje, con sus tres salidas de error.',
+      'ORDEN_OLLA lleva ahora color, pieza y `porque` de cada ingrediente: el color del trozo dejó de estar escrito por segunda vez en main.js.',
+      'MESONES_MODO en niveles.js para la feria y el caldero, que no son ingredientes de la campaña; porId() mira los dos catálogos.',
+      'Las filas de cuencos y de choclos se estrechan hacia el jugador: ANCHO_SEGURO se garantiza en el punto que mira la cámara, no en las filas de adelante.',
+      'Las citas de nueve segundos sobre el mesón se retiraron; la maquinaria de voz() queda puesta pero sin llamadas. El aviso del bicho pasó de una vez por parada a una vez por bicho.',
+      'Temporizadores que sobrevivían al mesón: el remate del caldero y de la feria se cancelan en destruir(), y la col y la quinua pasaron a usar el contador de generación. Encadenando mesones sin cortina, un setTimeout huérfano completaba el mesón SIGUIENTE o le metía una hoja de col dentro.',
+      'aEscala() del caldero envuelve la pieza en un grupo en vez de escribirle la escala: media docena de piezas del catálogo son mallas ya escaladas por su constructor y salían diez veces más grandes.',
+    ],
+  },
   {
     v: '2.9.0',
     fecha: '2026-09-08',

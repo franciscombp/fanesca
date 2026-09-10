@@ -604,6 +604,107 @@ svg[width="0"] { width: 0; height: 0; }
 }
 .btn-apuro--cerrado .btn-apuro-ico { background: rgba(255,255,255,.1); }
 
+/* ---- el botón de La Olla, en la pantalla de la olla ----
+   Misma anatomía que el de El Apuro —son dos modos hermanos y tienen
+   que leerse como tales— pero en verde nopal: el rojo brasa es «se
+   quema el tiempo» y este modo no quema nada, mide. */
+.btn-modo {
+  position: relative; overflow: hidden; flex: 0 0 auto;
+  display: flex; align-items: center; gap: .8rem;
+  width: calc(100% - var(--sp-3) * 2); min-height: 64px;
+  margin: 0 var(--sp-3) var(--sp-3);
+  padding: .6rem 1rem;
+  border-radius: var(--r-md);
+  color: #fff;
+  background:
+    radial-gradient(70% 120% at 100% 0%, rgba(220,255,200,.26), transparent 60%),
+    linear-gradient(135deg, var(--nopal-500, #4e8c3f), #3d7333 60%, var(--nopal-600, #2f5c28));
+  box-shadow: var(--e-3), inset 0 1px 0 rgba(255,255,255,.22);
+  text-align: left; font-family: inherit;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.btn-modo:active { transform: scale(.98); }
+.btn-modo-ico {
+  flex: 0 0 auto; width: 2.4rem; height: 2.4rem;
+  display: grid; place-items: center;
+  font-size: 1.4rem; line-height: 1;
+  background: rgba(255,255,255,.18);
+  border: 1.5px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+}
+.btn-modo-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.btn-modo-txt strong { font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; line-height: 1.1; }
+.btn-modo-txt small {
+  display: flex; align-items: center; gap: .25rem;
+  font-size: var(--t-2xs); opacity: .92;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* las cucharitas del récord, a tamaño de renglón */
+.btn-modo-txt small .cucharas { gap: .1rem; }
+.btn-modo-txt small .cuchara { width: .78rem; height: .78rem; }
+.btn-modo-ir { font-size: 1rem; opacity: .85; }
+.btn-modo--cerrado {
+  background: linear-gradient(135deg, #8a7a68, #6e6053);
+  box-shadow: var(--e-1);
+  color: rgba(255,246,232,.85);
+}
+.btn-modo--cerrado .btn-modo-ico { background: rgba(255,255,255,.1); }
+
+/* ---- el cartel que abre cada acto de La Olla ----
+   Dos segundos sobre el mesón, sin fondo opaco: la partida sigue
+   detrás y taparla entera cortaría el ritmo que el cartel viene
+   justamente a marcar. */
+.acto-cartel {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .2rem; padding: var(--sp-4);
+  text-align: center; pointer-events: none;
+  background: radial-gradient(60% 40% at 50% 50%, rgba(24,16,10,.72), rgba(24,16,10,.18) 70%, transparent);
+  opacity: 0;
+}
+.acto-cartel.entra { animation: acto-entra 2.1s var(--ease-out) both; }
+.acto-cartel-ico { font-size: 2.6rem; line-height: 1; }
+.acto-cartel-eyebrow {
+  margin: .3rem 0 0; font-size: var(--t-2xs); letter-spacing: .08em;
+  text-transform: uppercase; color: rgba(255,246,232,.7);
+}
+.acto-cartel-nombre {
+  margin: 0; font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(1.8rem, 9vw, 2.6rem); color: #fff6e8;
+  text-shadow: 0 2px 18px rgba(0,0,0,.6);
+}
+.acto-cartel-lema { margin: 0; font-size: var(--t-sm); color: rgba(255,246,232,.9); }
+@keyframes acto-entra {
+  0%   { opacity: 0; transform: scale(1.08); }
+  12%  { opacity: 1; transform: scale(1); }
+  78%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(.97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acto-cartel.entra { animation: acto-entra-suave 2.1s linear both; }
+  @keyframes acto-entra-suave { 0%,100% { opacity: 0; } 10%,80% { opacity: 1; } }
+}
+
+/* ---- las marcas por acto, en el resumen de La Olla ---- */
+.olla-actos {
+  list-style: none; margin: var(--sp-2) 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+  width: 100%;
+}
+.olla-acto {
+  display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
+  padding: .32rem .55rem;
+  border-radius: var(--r-sm);
+  background: rgba(0,0,0,.04);
+  font-size: var(--t-xs);
+}
+.olla-acto b { font-weight: 700; }
+.olla-acto span { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.olla-acto i { font-style: normal; font-weight: 700; margin-left: .3rem; }
+.olla-acto i.mejor { color: var(--nopal-600, #2f5c28); }
+.olla-acto i.peor  { color: var(--brasa-600, #a5301a); }
+.olla-acto--sin { opacity: .45; }
+
 /* ---- dónde se cocina: dentro de su hoja, tres fichas en columna ---- */
 .escenarios { width: 100%; }
 .escenarios-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -1461,4 +1562,56 @@ body.con-editor #stage { margin-right: 340px; }
   /* la escena de la olla es puro movimiento: main.js no la lanza, y
      por si acaso tampoco se pinta */
   .olla-escena { display: none; }
+}
+
+/* ---- el renglón de «se abrió una página» en la hoja de listo ----
+   Lo que había aquí era un párrafo de historia con su cita, después
+   de cada parada. Probándolo con gente quedó claro que entre dos
+   mesones nadie se para a leer: querían el siguiente. Ahora es un
+   renglón que avisa y lleva al cuaderno de un toque; el texto vive
+   allá, entero. */
+.listo-nota {
+  display: flex; align-items: center; gap: .7rem;
+  width: 100%; min-height: 52px;
+  margin: var(--sp-2) 0 0; padding: .5rem .7rem;
+  text-align: left; font-family: inherit; color: var(--text);
+  background: var(--papel-200, rgba(0,0,0,.045));
+  border: 1.5px dashed var(--madera-300, #d07c3f);
+  border-radius: var(--r-sm);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.listo-nota:active { transform: scale(.985); }
+.listo-nota-ic { flex: 0 0 auto; font-size: 1.4rem; line-height: 1; }
+.listo-nota-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.listo-nota-txt small {
+  font-size: var(--t-2xs); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.listo-nota-txt strong {
+  font-family: var(--font-display); font-size: var(--t-sm); font-weight: 700;
+  line-height: 1.2;
+}
+.listo-nota-ir { flex: 0 0 auto; font-size: 1.2rem; color: var(--text-muted); }
+
+/* ---- el orden de la olla, en el cuaderno ---- */
+.orden-olla { list-style: none; margin: var(--sp-2) 0 0; padding: 0; }
+.orden-olla li {
+  display: flex; flex-direction: column; gap: .1rem;
+  padding: .45rem 0;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+.orden-olla li:first-child { border-top: 0; }
+.orden-olla b { font-family: var(--font-display); font-size: var(--t-sm); }
+.orden-olla span { font-size: var(--t-xs); line-height: 1.4; color: var(--text-muted); }
+
+/* la frase de cocina en la pantalla de «se arruinó»: dicha en bajo,
+   que es un consuelo y no una lección */
+.arruinado-nota {
+  margin: var(--sp-2) 0 0; padding: .5rem .7rem;
+  font-size: var(--t-xs); line-height: 1.45; font-style: italic;
+  color: var(--text-muted);
+  border-left: 3px solid var(--madera-300, #d07c3f);
+  background: rgba(0,0,0,.04);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  text-align: left;
 }

@@ -944,3 +944,165 @@ export function configApuro(base, tanda) {
   }
   return cfg;
 }
+
+/* ============================================================
+   LA OLLA — cocinar la fanesca entera de una sentada.
+
+   El Apuro es un modo SIN FIN: raciones que se suceden mientras el
+   reloj aguante. La campaña es lo contrario: una semana, con calma,
+   una parada por día. Faltaba lo que la gente pide de verdad cuando
+   se sienta a jugar por segunda vez — **hacer el plato completo**, de
+   principio a fin, y volver a hacerlo para bajarse el tiempo.
+
+   ------------------------------------------------------------
+   LAS TRES DIFERENCIAS CON EL APURO
+
+   1. EL RELOJ SUBE Y NO MATA. Aquí el tiempo no es la vida: es el
+      MARCADOR. La partida no se pierde nunca —la fanesca se cocina
+      igual— y lo que está en juego es cuánto tardas. Un modo que se
+      corre contra tu propio récord no puede echarte a la mitad: si te
+      echa, no compites contra ti, compites contra la suerte.
+
+   2. LOS DESASTRES CUESTAN SEGUNDOS DE PENALIZACIÓN. Aplastar un
+      gusanito no arruina la olla ni acaba la partida: suma segundos
+      al marcador y la fanesca sale peor (menos cucharas). Dos monedas
+      distintas —tiempo y calidad— para que correr no sea gratis.
+
+   3. EL ORDEN ES FIJO Y ES EL DE VERDAD. En El Apuro la baraja
+      reparte al azar; aquí se cocina en el orden en que se cocina la
+      fanesca, y esa es la mitad de lo que el modo enseña. Repetir la
+      partida es aprenderse la receta con los dedos.
+
+   ------------------------------------------------------------
+   LOS CUATRO ACTOS, Y POR QUÉ CUATRO
+
+   Ocho o nueve minutos seguidos de mesones encadenados se sienten
+   como una lista de tareas. Los actos parten la partida en tramos
+   con nombre y con marca parcial: cada uno cierra con su tiempo y su
+   comparación contra tu récord, que es lo que convierte una partida
+   larga en cuatro carreras cortas.
+
+     · LA FERIA — escoger el choclo. Decisión, no destreza: el único
+       mesón donde ir rápido y acertar se pelean.
+     · LA PREP — los dieciséis, en el orden en que se cocinan. El
+       desgrane abre, porque abre de verdad: es la faena que junta a
+       la familia y la que más demora.
+     · LA OLLA — echar en orden y revolver para que no se pegue.
+     · EL PLATO — lo de encima: el huevo y el maduro.
+
+   ------------------------------------------------------------
+   LAS PORCIONES ESTÁN MEDIDAS, NO ESCRITAS A OJO
+
+   `porcion` es qué parte del mesón cuenta como hecha, igual que en
+   El Apuro — pero calibrada a otra vara. Allí una ración cuesta unos
+   diez segundos de manos; aquí, unos veinte, porque la partida los
+   puede pagar y porque un ingrediente que pasa en cinco segundos no
+   se siente cocinado. De ahí salen los números: la porción de El
+   Apuro por dos y pico, topada en 1 cuando el mesón entero ya cabe
+   en ese presupuesto. Suman unos ocho minutos y medio de manos.
+   ============================================================ */
+
+/* Lo que cuesta cada cosa, en segundos que SE SUMAN al marcador. Son
+   caros a propósito: sin fin de partida, la penalización es lo único
+   que separa cocinar bien de barrer con todo. */
+export const OLLA_MODO = {
+  castigo: { aplastado: 25, enLaBatea: 25, granoPodrido: 20, otro: 20 },
+  fallo: 4,                   /* un descuido chico */
+  /* LAS CUCHARAS SON DE CALIDAD, NO DE TIEMPO. El tiempo ya es el
+     marcador y ponerle además un corte de cucharas sería puntuar dos
+     veces lo mismo — y peor: castigaría al que juega bien y despacio
+     por partida doble. Aquí las cucharas miden CÓMO salió la fanesca:
+     un desastre pesa como tres descuidos, y de ahí los cortes. */
+  pesoDesastre: 3,
+  cortesCalidad: [0, 4],      /* ≤0 → 3 cucharas · ≤4 → 2 · más → 1 */
+
+  actos: [
+    {
+      id: 'feria', nombre: 'La feria', ico: '🧺',
+      eyebrow: 'seis de la mañana', lema: 'Escoge el choclo',
+      /* la feria es un mesón que no existe en la campaña: sólo se
+         juega aquí, y por eso su config vive con el modo */
+      pasos: [{ base: 'feria', porcion: 1, config: { choclos: 6, pedidos: 3, dudosos: 2, aperturas: 2 } }],
+    },
+    {
+      id: 'prep', nombre: 'La prep', ico: '🔪',
+      eyebrow: 'toda la mañana', lema: 'Los dieciséis, en orden',
+      /* EL ORDEN. Del segundo en adelante es ORDEN_OLLA —lo que más
+         demora en cocerse va primero— y el choclo se adelanta al
+         puesto uno porque el desgrane es lo que abre la jornada: es
+         la faena larga, la que se hace entre todos y la que hay que
+         tener lista antes de prender el fogón. */
+      pasos: [
+        /* Un choclo, duro y picado: la feria acaba de enseñar a
+           escoger y el mesón cobra lo escogido. Dos mazorcas aquí
+           serían minuto y medio de desgrane al abrir la partida. */
+        { base: 'maiz', variante: 'maiz-7-primer-danado', porcion: 0.55,
+          ajustes: { choclos: 1, madurez: ['duro'], hojas: 6, podridos: 3, gusanos: 1 } },
+        { base: 'zapallo',  variante: 'zapallo-2-normal',    porcion: 0.60 },
+        { base: 'sambo',    variante: 'sambo-1-tierno',      porcion: 1 },
+        { base: 'mote',     variante: 'mote-1-tres-aguas',   porcion: 0.70 },
+        { base: 'garbanzo', variante: 'garbanzo-1-remojado', porcion: 1 },
+        { base: 'habas',    variante: 'habas-2-normal',      porcion: 1 },
+        { base: 'frejol',   variante: 'frejol-2-normal',     porcion: 1 },
+        { base: 'arveja',   variante: 'arveja-2-normal',     porcion: 1 },
+        { base: 'escoger',  variante: 'escoger-2-normal',    porcion: 1 },
+        { base: 'chochos',  variante: 'chochos-2-normal',    porcion: 1 },
+        { base: 'melloco',  variante: 'melloco-2-normal',    porcion: 1 },
+        { base: 'quinua',   variante: 'quinua-2-normal',     porcion: 1 },
+        { base: 'mani',     variante: 'mani-2-rapido',       porcion: 0.70 },
+        { base: 'col',      variante: 'col-2-fino',          porcion: 0.60 },
+        { base: 'bacalao',  variante: 'bacalao-2-normal',    porcion: 0.60 },
+        { base: 'queso',    variante: 'queso-1-fresco',      porcion: 1 },
+      ],
+    },
+    {
+      id: 'olla', nombre: 'La olla', ico: '🍲',
+      eyebrow: 'jueves, a media tarde', lema: 'Echa en orden y revuelve',
+      pasos: [{ base: 'caldero', porcion: 1, config: { pega: 1 } }],
+    },
+    {
+      id: 'plato', nombre: 'El plato', ico: '🍽',
+      eyebrow: 'viernes santo, al mediodía', lema: 'Lo de encima',
+      pasos: [
+        { base: 'huevo',      variante: 'huevo-1-duro',          porcion: 0.70 },
+        { base: 'guarnicion', variante: 'guarnicion-1-completa', porcion: 1, ajustes: { presas: 2 } },
+      ],
+    },
+  ],
+
+  /* LOS LOGROS de este modo no miran el número gordo —el tiempo ya es
+     el marcador— sino las formas de hacerlo bien que el modo quiere
+     enseñar: la feria sin equivocarse, la olla en orden a la primera,
+     la fanesca sin un solo desastre. */
+  logros: [
+    { id: 'primera',  pide: r => true,                          titulo: 'La primera olla',   meta: 'Cocina la fanesca entera',            texto: 'Cocinaste la fanesca de principio a fin.' },
+    { id: 'limpia',   pide: r => r.desastres === 0,             titulo: 'Sin un desastre',   meta: 'Termina sin arruinar nada',           texto: 'Ni un bicho, ni una quemada, ni una piedra.' },
+    { id: 'abuela',   pide: r => r.cucharas >= 3,               titulo: 'Mano de abuela',    meta: 'Tres cucharas de calidad',            texto: 'Así sale la de la casa.' },
+    { id: 'feriante', pide: r => r.feriaLimpia,                 titulo: 'Ojo de feriante',   meta: 'La feria sin escoger un solo maduro', texto: 'Ni un choclo de tostado se te coló.' },
+    { id: 'receta',   pide: r => r.ollaLimpia,                  titulo: 'La receta de memoria', meta: 'Echa los dieciséis en orden, sin fallar uno', texto: 'Te sabes el orden de la olla sin mirar.' },
+    { id: 'diez',     pide: r => r.ms <= 10 * 60000,            titulo: 'Antes del mediodía', meta: 'La fanesca entera en menos de 10 min', texto: 'La olla lista antes de que llegue la familia.' },
+    { id: 'ocho',     pide: r => r.ms <= 8 * 60000,             titulo: 'Cocina de guerra',  meta: 'La fanesca entera en menos de 8 min', texto: 'Eso ya es cocinar con las dos manos.' },
+  ],
+};
+
+/* la lista plana de pasos, con su acto pegado: es lo que recorre el
+   modo, y así el acto no hay que ir a buscarlo en cada paso */
+export const OLLA_PASOS = OLLA_MODO.actos.flatMap((a, ai) =>
+  a.pasos.map((p, pi) => ({ ...p, acto: a.id, actoIndex: ai, ultimoDelActo: pi === a.pasos.length - 1 })));
+
+/* La config de un paso: la de su variante de campaña con los ajustes
+   del modo encima. Un paso puede traer `config` propia (los mesones
+   que sólo existen en este modo, que no tienen variante que mirar). */
+export function configOlla(paso) {
+  if (!paso) return {};
+  const v = paso.variante ? POR_ID[paso.variante] : null;
+  return { ...((v && v.config) || {}), ...(paso.config || {}), ...(paso.ajustes || {}) };
+}
+
+/* la dificultad que ve la api (bichos y moscas la leen para saber
+   cuánto perdonar): la de la variante, o media tabla para los
+   mesones propios del modo */
+export function dificultadOlla(paso) {
+  const v = paso && paso.variante ? POR_ID[paso.variante] : null;
+  return (v && v.dificultad) || 3;
+}
