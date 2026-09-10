@@ -1,0 +1,11 @@
+{
+  "name": "fanesca-pruebas",
+  "private": true,
+  "description": "Las pruebas de dedo del juego. Viven aparte para que el juego siga sin build ni dependencias: la raíz del repo no tiene package.json y no lo va a tener.",
+  "scripts": {
+    "test": "./correr.sh"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

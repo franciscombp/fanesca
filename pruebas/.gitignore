@@ -1,0 +1,6 @@
+# Sin barra final a propósito: en esta máquina `node_modules` es un
+# ENLACE a la instalación global, y un patrón con barra solo casa
+# directorios de verdad — el enlace se colaba al repo.
+node_modules
+*.png
+*.log

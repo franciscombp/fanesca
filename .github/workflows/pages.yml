@@ -50,7 +50,11 @@ jobs:
       - name: Armar el sitio
         run: |
           mkdir -p _site
-          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' ./ _site/
+          # `pruebas` no se publica: son las de Playwright, sirven en
+          # la máquina de quien desarrolla y en el sitio solo serían
+          # peso muerto que el service worker ni mira.
+          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' \
+                   --exclude 'pruebas' --exclude 'node_modules' ./ _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
