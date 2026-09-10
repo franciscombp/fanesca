@@ -1,5 +1,8 @@
-# capturas que dejan las pruebas cuando se corren desde la raíz
-feria.png
-caldero.png
-destino-*.png
-arveja-*.png
+# Las capturas que dejan las pruebas cuando se corren desde la raíz.
+# Un patrón por prueba envejecía mal —cada prueba nueva se colaba al
+# repo hasta que alguien se acordaba de añadirla— así que se ignoran
+# todas las de la raíz. Las que se quieran guardar van a un sitio con
+# nombre, no sueltas aquí.
+/*.png
+!icon*.png
+node_modules

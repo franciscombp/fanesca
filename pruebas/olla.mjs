@@ -28,7 +28,10 @@ await p.evaluate(async (s) => {
   const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister()));
   const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k)));
   localStorage.clear(); localStorage.setItem('fanesca_v1', JSON.stringify(s));
-}, { vistoPortada: true, mapa: 'bolsas', mejores: Object.fromEntries(BASICOS.map(id => [id, rec])) });
+  /* `despensaVista` ya puesto: con los dieciocho sabidos el altar del
+     final salta al abrir la despensa, y su escena ocupa la pantalla
+     entera. Aquí se prueba la olla, no el altar. */
+}, { vistoPortada: true, mapa: 'bolsas', despensaVista: true, mejores: Object.fromEntries(BASICOS.map(id => [id, rec])) });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500);
 await p.evaluate(() => { document.querySelectorAll('.modal.open, .aviso-actualizar').forEach(x => x.remove()); });
 await p.click('#btn-empezar'); await p.waitForTimeout(900);

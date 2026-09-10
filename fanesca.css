@@ -769,7 +769,13 @@ svg[width="0"] { width: 0; height: 0; }
 .capitulo-titulo { font-family: var(--font-display); font-size: var(--t-lg); font-weight: 800; line-height: 1.1; color: var(--text); }
 /* un capítulo largo se lee dentro de su página: la única lectura
    que baja en todo el juego, y baja sólo el texto */
-.capitulo-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: .2rem; }
+/* `pan-y` REPARTE EL GESTO: lo vertical es del texto (los capítulos
+   son largos y hay que poder bajarlos), lo horizontal es del
+   carrusel. Sin decirlo, el navegador daba por suyo cualquier
+   arrastre en cuanto el dedo se movía y mandaba `pointercancel`
+   antes de que el deslizamiento llegara a contar: el cuaderno pasaba
+   de página UNA vez y después se quedaba clavado. */
+.capitulo-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding-right: .2rem; }
 .capitulo-cuerpo::-webkit-scrollbar { width: 0; }
 .capitulo p { font-size: var(--t-sm); line-height: var(--lead); color: var(--text); }
 .capitulo p + p { margin-top: var(--sp-3); }
@@ -803,7 +809,7 @@ svg[width="0"] { width: 0; height: 0; }
 .cita footer span { display: block; font-family: var(--font-text); font-weight: 400; color: var(--text-muted); font-style: normal; }
 
 .capitulo-fuentes { padding: var(--sp-4); gap: var(--sp-2); }
-.cuaderno-fuentes-lista { list-style: none; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.cuaderno-fuentes-lista { list-style: none; flex: 1 1 auto; min-height: 0; overflow-y: auto; touch-action: pan-y; }
 .cuaderno-fuentes-lista li { font-size: var(--t-sm); line-height: 1.45; margin-bottom: .45rem; }
 .cuaderno-fuentes-lista a { color: var(--accent-ink); }
 #cuaderno-volver { color: var(--text-invert); box-shadow: inset 0 0 0 1.5px var(--vidrio-borde); background: var(--vidrio); }

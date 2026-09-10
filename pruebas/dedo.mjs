@@ -75,12 +75,19 @@ for (const d of [0, 3, 6, 10, 14, 20, 26]) {
   const ev = await eventos();
   const entro = await enBolsa();
   console.log(`  deriva ${String(d).padStart(2)} px → ${entro ? 'ENTRA' : 'no pasa nada'} | eventos: ${ev}`);
-  /* pasados 30 px de recorrido real ya no es un toque sino un
-     arrastre, y entonces NO debe abrir: si abriera, bajar la
-     despensa con el pulgar entraría en bolsas sin querer. Con la
-     deriva en diagonal de esta prueba, 26 px de avance son 30.3 px de
-     recorrido: justo al otro lado de la raya. */
-  if (d >= 26) ok(`D${d} con ${d} px ya es un arrastre y NO abre nada`, !entro, ev);
+  /* LA RAYA LA PONE AHORA EL NAVEGADOR, NO NOSOTROS, y es más
+     temprana: la despensa SE DESPLAZA —dieciocho bolsas no caben en
+     una pantalla— y en cuanto el dedo baja lo suficiente para que
+     empiece el desplazamiento, el navegador se queda con el gesto y
+     manda `pointercancel`. A partir de ahí ya no es un toque.
+
+     Medido aquí: hasta 10 px de deriva sigue abriendo; con 14 ya se
+     lo lleva el desplazamiento. Es lo mismo que hace cualquier lista
+     de cualquier app, y pelearse con ello sería tener una despensa
+     que se abre sola mientras la bajas. Lo que SÍ hay que garantizar
+     —y es lo que esta prueba protege— es que un arrastre de verdad
+     no abra nada. */
+  if (d >= 14) ok(`D${d} con ${d} px el desplazamiento manda y NO abre nada`, !entro, ev);
   else ok(`D${d} un tap con ${d} px de deriva abre la bolsa`, entro, ev);
   await volver();
 }
@@ -97,7 +104,10 @@ for (const d of [0, 6, 14, 22]) {
   const ev = await eventos();
   const arranco = await p.evaluate(() => window.Fanesca.Apuro.activo);
   console.log(`  deriva ${String(d).padStart(2)} px → ${arranco ? 'ARRANCA' : 'no pasa nada'} | eventos: ${ev}`);
-  ok(`A${d} un tap con ${d} px de deriva arranca El Apuro`, arranco, ev);
+  /* el botón vive al pie de la despensa, dentro de lo que se
+     desplaza, así que le rige la misma raya que a las bolsas */
+  if (d >= 14) ok(`A${d} con ${d} px el desplazamiento manda y NO arranca`, !arranco, ev);
+  else ok(`A${d} un tap con ${d} px de deriva arranca El Apuro`, arranco, ev);
   if (arranco) { await p.evaluate(() => window.Fanesca.Apuro.terminar('salida')); await p.waitForTimeout(900); await p.evaluate(() => document.querySelector('#apuro-salir').click()); await p.waitForTimeout(700); await p.evaluate(() => { const s = document.querySelector('.scroll--despensa'); if (s) s.scrollTop = s.scrollHeight; }); await p.waitForTimeout(600); }
 }
 

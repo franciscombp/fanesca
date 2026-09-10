@@ -685,9 +685,22 @@ let bolsaAccion = null;
 const TAP_TOLERANCIA = 30;   /* px que puede correrse el dedo y seguir siendo un toque */
 const TAP_TIEMPO = 900;      /* ms: más que esto es una pulsación larga, no un toque */
 
+/* EL ÚLTIMO TOQUE ATENDIDO, DE CUALQUIER BOTÓN. Tiene que ser global
+   y no de cada botón, y esto costó un bug feo: al tocar una bolsa de
+   la despensa, el toque abre su pantalla AL INSTANTE, y el `click` de
+   cortesía que el navegador manda después cae sobre lo que ahora está
+   debajo del dedo —un renglón de nivel— cuyo propio contador de
+   toques está a cero. Resultado: un toque en la bolsa del choclo
+   entraba directo a un mesón que nadie pidió.
+
+   Con la marca compartida, cualquier `click` que llegue a menos de
+   700 ms de un toque atendido es el fantasma de ese toque y se
+   descarta, esté donde esté. */
+let ultimoTapGlobal = 0;
+
 function tocable(el, fn) {
   if (!el) return;
-  let x0 = 0, y0 = 0, t0 = 0, vivo = false, ultimoTap = 0;
+  let x0 = 0, y0 = 0, t0 = 0, vivo = false;
   el.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     x0 = e.clientX; y0 = e.clientY; t0 = Date.now(); vivo = true;
@@ -700,7 +713,7 @@ function tocable(el, fn) {
     if (e.pointerType === 'mouse') return;
     if (Math.hypot(e.clientX - x0, e.clientY - y0) > TAP_TOLERANCIA) return;
     if (Date.now() - t0 > TAP_TIEMPO) return;
-    ultimoTap = Date.now();
+    ultimoTapGlobal = Date.now();
     fn(e);
   });
   /* si el navegador se queda con el gesto (un desplazamiento de
@@ -711,8 +724,13 @@ function tocable(el, fn) {
        atendimos: ese sobra. El de teclado (Enter en un botón) y el
        del ratón, no — y por eso no se descartan por tiempo entre
        toques, que rompería un repique rápido como el que revela el
-       modo dev. */
-    if (Date.now() - ultimoTap < 700) return;
+       modo dev.
+
+       `detail > 0` es lo que separa un click de PUNTERO de uno
+       sintético o de teclado, que llegan con detail 0. Sin esa
+       condición, la mordaza de 700 ms se comía también los clicks de
+       teclado que cayeran justo después de un toque. */
+    if (e.detail > 0 && Date.now() - ultimoTapGlobal < 700) return;
     fn(e);
   });
 }
@@ -848,8 +866,14 @@ function renderMesa() {
 
   /* LA DESPENSA COMPLETA SE CELEBRA AQUÍ, al volver a la mesa, y una
      sola vez. Es el final del juego: no queda ingrediente que
-     aprender y la olla ya cocina la fanesca entera. */
-  if (!proximo && !estado.despensaVista) setTimeout(mostrarFinal, 450);
+     aprender y la olla ya cocina la fanesca entera.
+
+     EN MODO DEV NO. Allí se saben los dieciocho por decreto, no por
+     haberlos cocinado, así que el altar salía en la primera pantalla
+     —y su escena, que ocupa la pantalla entera, se tragaba todos los
+     toques de después. Celebrar un final que nadie ganó no es sólo
+     falso: deja el juego sin responder. */
+  if (!proximo && !estado.despensaVista && !estado.devMode) setTimeout(mostrarFinal, 450);
 }
 
 /* el nombre de un ingrediente para meterlo en una frase */
