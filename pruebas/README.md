@@ -16,7 +16,7 @@ eso y lo mide con la deriva creciente.
 
 ```sh
 ./pruebas/correr.sh              # la batería entera
-./pruebas/correr.sh humo olla    # solo esas
+./pruebas/correr.sh humo despensa   # solo esas
 ```
 
 Hace falta `node`, `python3` (para servir los archivos) y Playwright,
@@ -40,16 +40,17 @@ Dicen ✓ o ✗ y terminan con `TODO VERDE` o `HAY FALLOS`.
 
 | | qué protege |
 |---|---|
-| `humo` | el camino principal entero: portada → recetario → parada → hoja de listo → siguiente → cuaderno → El Apuro. Si esta pasa, el juego se puede publicar. |
-| `olla` | la partida completa del modo La Olla: los veinte pasos encadenados, los cuatro actos, el resumen y el récord. |
+| `humo` | el camino principal entero: portada → despensa → bolsa → nivel → hoja de listo → siguiente → cuaderno → El Apuro. Si esta pasa, el juego se puede publicar. |
+| `despensa` | el menú nuevo: que sean las dieciocho bolsas, que se abran de a poco empezando por la más sencilla, que dentro de una estén sus niveles, y que la olla arme sus pasos con lo que el jugador sabe hacer —dos con una bolsa, veinte con las dieciocho. |
+| `olla` | la partida completa del modo La Olla, con la despensa llena: los veinte pasos encadenados, los cuatro actos, el resumen y el récord del plato. |
 | `feria` | el puesto del choclo: cuántos hay, que quepan en pantalla, abrir la hoja, gastar las aperturas y llenar el canasto. |
 | `caldero` | echar los dieciséis en orden, que equivocarse rebote y explique, y que la olla armada pase al plato. |
 | `porcion` | que el modo AVISE cuando da un mesón por hecho antes de terminarlo. Siete de los veinte se cortan —la olla pide una parte— y sin decirlo parecía que te quitaba el mesón a media pelada. |
 | `arveja` | que los granos sigan el arco y el afilado de la vaina, y estén metidos en el vientre. Un error que no se ve de frente y salta en cuanto la vaina está girada. |
 | `didactica` | que lo que se enseña no interrumpa: la hoja de listo sin ensayo, el cuaderno con el texto entero, la pantalla de error contando algo. |
 | `dedo` | el toque con deriva. Mide con cuántos píxeles de desvío deja de llegar el `click` y comprueba que el juego responde igual. |
-| `ficha-hecha` | volver a una parada ya jugada, y entrar y salir a lo bruto sin dejar la pantalla de juego sin mesón. |
-| `carrusel` | deslizar entre días con el dedo, sin abrir mesones sin querer. |
+| `ficha-hecha` | volver a un nivel ya jugado por los dos caminos (la bolsa desde la despensa, el renglón dentro de la bolsa), y entrar y salir a lo bruto sin dejar la pantalla de juego sin mesón. |
+| `carrusel` | recorrer con el dedo las dos pantallas que se recorren: bajar la despensa sin abrir bolsas sin querer, y pasar página en el cuaderno. |
 | `huevo` | cascar y pelar: el mesón que más se quejaba de que no se entendía. |
 | `devmode` | el ritual de los cinco toques en el número de versión. |
 | `nota` | que la nota de versión se pueda cerrar en cuatro tamaños de teléfono. El botón se salía de la pantalla. |
@@ -64,7 +65,7 @@ No afirman nada: imprimen números para mirar. Se corren a mano.
 | `ritmo` | mallas, triángulos y cuadros por segundo de un mesón, **al lado de uno viejo y probado**. Un número solo no dice nada: 4 fps asusta hasta que ves que el choclo de siempre también da 4 en un Chromium sin GPU. |
 | `piezas` | de qué tamaño nace cada pieza del catálogo y qué escala pide para caber en un cuenco. |
 | `caldero-mide` | los objetos de la escena ordenados por tamaño real. Encontró piezas que salían diez veces más grandes porque se les escribía la escala encima de la suya. |
-| `mesa-geo` | dónde cae cada ficha del recetario en pantalla, para entender por qué un toque no llega. |
+| `mesa-geo` | dónde cae cada ficha del menú en pantalla, para entender por qué un toque no llega. |
 
 ## Escribir una nueva
 

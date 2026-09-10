@@ -1615,3 +1615,179 @@ body.con-editor #stage { margin-right: 340px; }
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
   text-align: left;
 }
+
+/* ============================================================
+   LA DESPENSA — el menú nuevo: una bolsa por ingrediente.
+
+   Aquí SÍ se desplaza, y a propósito. La consola de la semana no
+   desplazaba nada porque cada día eran ocho paradas y cabían; los
+   dieciocho ingredientes no caben en una pantalla de teléfono sin
+   volverse ilegibles, y pasar de página para encontrar una bolsa es
+   peor que bajar el pulgar. Lo que no se desplaza es la cabecera —el
+   plato que hoy sale— ni el dock, que es donde se cocina.
+   ============================================================ */
+.scroll--despensa {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: .2rem var(--sp-4) var(--sp-2);
+  /* el borde de arriba se difumina: se ve que hay más arriba */
+  mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 6px), transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 6px), transparent 100%);
+}
+/* los nombres de plato son largos («Sopa de zapallo y doce granos»)
+   y a tamaño de titular se comían media pantalla: aquí manda caber */
+#mesa-titulo { font-size: clamp(1.15rem, 5.4vw, 1.6rem); line-height: 1.08; }
+/* la frase de qué falta es la razón para abrir otra bolsa: cabe en
+   dos renglones antes que cortarse con puntos suspensivos */
+#screen-mesa .sign-sub { white-space: normal; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* la tarea y la cuenta caben en un renglón bajando el cuerpo: en dos
+   renglones empujaban el nombre del ingrediente fuera de la cabecera */
+#screen-bolsa .sign-sub { font-size: clamp(.72rem, 3.4vw, .9rem); line-height: 1.2; }
+.mesa-plato-nota {
+  flex: 0 0 auto;
+  margin: 0; padding: 0 var(--sp-4) var(--sp-2);
+  font-size: var(--t-2xs); line-height: 1.35; color: rgba(255,244,226,.6);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mesa-bolsas {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: .45rem;
+}
+.mesa-extras { padding: var(--sp-3) 0 var(--sp-2); }
+.mesa-niveles {
+  margin: 0 0 var(--sp-2);
+  text-align: center;
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* LA FICHA DE UNA BOLSA. Cuatro estados que se leen sin leer:
+   cerrada (apagada, con candado), nueva (oro, «empieza aquí»),
+   en curso (barra), sabida (anillo verde y su ✓). */
+.bolsa {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: .18rem;
+  min-height: 96px;
+  padding: .45rem .3rem .5rem;
+  border-radius: var(--r-md);
+  /* CADA BOLSA ES UN PAPELITO CON LUZ. En la semana las fichas iban
+     dentro de una hoja crema y podían ser transparentes; aquí flotan
+     sobre la cocina de noche, así que la cara clara y la tinta oscura
+     tienen que traerlas ellas o no se lee ni un nombre. */
+  background: linear-gradient(180deg, var(--crema-50), var(--crema-100));
+  border: 1.5px solid var(--hairline);
+  box-shadow: var(--e-1);
+  font-family: inherit; text-align: center; color: var(--text);
+  cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.bolsa:active { transform: scale(.95); }
+.bolsa-ico {
+  flex: 0 0 auto;
+  width: 46px; height: 46px; padding: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #fff 0%, var(--crema-50) 55%, var(--crema-200) 92%);
+  box-shadow: inset 0 -3px 6px rgba(42,26,18,.08), var(--e-1);
+}
+.bolsa-ico svg, .bolsa-ico .plate { width: 100%; height: 100%; }
+.bolsa-nombre {
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700; line-height: 1.1;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.bolsa-pie { font-family: var(--font-display); font-size: .62rem; font-weight: 700; color: var(--text-muted); line-height: 1; }
+.bolsa-nuevo { color: var(--maiz-800); }
+.bolsa-barra {
+  position: absolute; left: .5rem; right: .5rem; bottom: .3rem;
+  height: 3px; border-radius: 99px; background: rgba(42,26,18,.12); overflow: hidden;
+}
+.bolsa-barra i { display: block; height: 100%; background: var(--hoja-500); border-radius: 99px; }
+.bolsa-sello {
+  position: absolute; top: .25rem; right: .35rem;
+  font-size: .75rem; color: var(--hoja-500); font-weight: 800;
+}
+.bolsa-candado { font-size: .8rem; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+
+.bolsa--cerrada { opacity: .5; background: rgba(255,244,226,.14); border-color: rgba(255,244,226,.12); box-shadow: none; color: var(--crema-200); }
+.bolsa--cerrada .bolsa-ico { filter: grayscale(.9); opacity: .5; background: rgba(255,244,226,.1); box-shadow: none; }
+.bolsa--cerrada .bolsa-nombre { color: var(--crema-200); }
+.bolsa--sabida .bolsa-ico { box-shadow: inset 0 0 0 2.5px var(--hoja-500), var(--e-1); }
+/* OJO CON LOS TINTES TRANSLÚCIDOS: encima de la cocina de noche un
+   verde al 12% no aclara la ficha, la apaga — y el nombre en tinta
+   oscura desaparecía justo en las bolsas terminadas. Los estados
+   pintan SOBRE la cara clara, no en lugar de ella. */
+.bolsa--completa {
+  background: linear-gradient(180deg, #f2fbef, #e2f3dd);
+  border-color: rgba(93,181,90,.55);
+}
+.bolsa--completa .bolsa-ico { box-shadow: inset 0 0 0 3px var(--hoja-500), var(--e-1); }
+/* la recién abierta llama: es la única noticia de esta pantalla */
+.bolsa--nueva {
+  background: linear-gradient(180deg, #fff3d6, #ffe6ab);
+  border-color: rgba(224,161,44,.65);
+}
+.bolsa--nueva .bolsa-nuevo { color: var(--maiz-800); }
+.bolsa--nueva .bolsa-ico {
+  box-shadow: inset 0 0 0 2.5px var(--oro-400), 0 0 0 4px rgba(244,185,66,.22), var(--e-2);
+  animation: late-suave 1.8s var(--ease-in-out) infinite;
+}
+
+/* ============================================================
+   DENTRO DE UNA BOLSA — los niveles en fila.
+
+   Aquí las fichas SON renglones y no tarjetas: dentro de un
+   ingrediente lo que se compara es el peldaño (qué número, cuántas
+   cucharas), y una fila lo enseña de un vistazo. El icono no se
+   repite en cada uno — es el mismo dieciocho veces y ya está arriba,
+   en la cabecera.
+   ============================================================ */
+/* EL GESTO VA SOBRE LA COCINA DE NOCHE, no dentro de una hoja: sus
+   colores tienen que ser los del fondo oscuro. Con los de la hoja
+   —tinta casi negra en el <b>— las dos palabras que MÁS importan de
+   la frase («jala hacia abajo») eran las únicas invisibles. */
+.bolsa-gesto {
+  flex: 0 0 auto;
+  margin: 0; padding: 0 var(--sp-4) var(--sp-3);
+  font-size: var(--t-2xs); line-height: 1.4; color: rgba(255,244,226,.68);
+}
+.bolsa-gesto b { color: var(--oro-300); font-weight: 800; }
+.scroll--bolsa {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: .2rem var(--sp-4) var(--sp-2);
+  mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 6px), transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 6px), transparent 100%);
+}
+.bolsa-niveles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
+.bolsa-niveles li { display: flex; }
+.bolsa-niveles .renglon {
+  flex: 1 1 auto;
+  /* misma razón que las bolsas: el renglón flota sobre la cocina de
+     noche y se trae su propia cara clara */
+  background: linear-gradient(180deg, var(--crema-50), var(--crema-100));
+  box-shadow: var(--e-1);
+  color: var(--text);
+  flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: .6rem;
+  min-height: 52px;
+  padding: .45rem .7rem .45rem .5rem;
+  text-align: left;
+}
+.bolsa-niveles .renglon-num {
+  position: static;
+  flex: 0 0 auto; width: 1.6rem; text-align: center;
+  font-size: 1.15rem;
+}
+.bolsa-niveles .renglon-txt { flex: 1 1 auto; flex-direction: row; align-items: center; gap: .4rem; }
+.bolsa-niveles .renglon-nombre { -webkit-line-clamp: 1; font-size: var(--t-xs); }
+.bolsa-niveles .renglon-estado { position: static; flex: 0 0 auto; }
+.bolsa-niveles .renglon--bloqueado {
+  background: rgba(255,244,226,.14); border-color: rgba(255,244,226,.12);
+  box-shadow: none; color: var(--crema-200); opacity: .6;
+}
+.bolsa-niveles .renglon--bloqueado .renglon-num { color: var(--crema-200); }
+.bolsa-niveles .renglon--foco { transform: none; animation: none; box-shadow: 0 0 0 2px var(--oro-400), var(--e-2); }
+.bolsa-niveles .renglon--foco:active { transform: scale(.98); }

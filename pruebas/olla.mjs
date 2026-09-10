@@ -14,7 +14,13 @@ p.on('console', m => { if (m.type() === 'error') errs.push('CONSOLE: ' + m.text(
 const V = [];
 const ok = (n, c, x = '') => { const l = `${c ? '✓' : '✗ FALLO'} ${n}${x ? ' — ' + x : ''}`; V.push(l); console.log(l); };
 const rec = { ms: 30000, cucharas: 3 };
-const LUNES = ['maiz-1-introduccion', 'habas-1-facil', 'maiz-2-cascada', 'chochos-1-facil', 'frejol-1-facil', 'maiz-3-gusanito', 'arveja-1-facil', 'melloco-1-facil'];
+/* LA DESPENSA COMPLETA: la olla cocina lo que se sabe hacer, así que
+   para probar la partida entera —los veinte pasos, los cuatro actos—
+   hay que llegar con los dieciocho básicos hechos. */
+const BASICOS = ['habas-1-facil', 'chochos-1-facil', 'frejol-1-facil', 'arveja-1-facil', 'feria-1-escoger',
+  'mote-1-tres-aguas', 'melloco-1-facil', 'escoger-1-facil', 'garbanzo-1-remojado', 'col-1-facil',
+  'quinua-1-facil', 'sambo-1-tierno', 'zapallo-1-facil', 'mani-1-facil', 'bacalao-1-facil',
+  'queso-1-fresco', 'huevo-1-duro', 'guarnicion-1-completa'];
 
 await p.goto(`${SITIO}/index.html`, { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(800);
@@ -22,26 +28,20 @@ await p.evaluate(async (s) => {
   const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister()));
   const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k)));
   localStorage.clear(); localStorage.setItem('fanesca_v1', JSON.stringify(s));
-}, { vistoPortada: true, mapa: 'semana', diasVistos: ['lunes'], mejores: Object.fromEntries(LUNES.map(id => [id, rec])) });
+}, { vistoPortada: true, mapa: 'bolsas', mejores: Object.fromEntries(BASICOS.map(id => [id, rec])) });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500);
 await p.evaluate(() => { document.querySelectorAll('.modal.open, .aviso-actualizar').forEach(x => x.remove()); });
 await p.click('#btn-empezar'); await p.waitForTimeout(900);
 
-/* ---- O1: el botón del modo está en la pantalla de la olla ---- */
-const idxOlla = await p.evaluate(() => {
-  const tabs = [...document.querySelectorAll('#dias-tabs .tab')];
-  return tabs.findIndex(t => t.textContent.includes('🍲'));
-});
-await p.evaluate((i) => document.querySelectorAll('#dias-tabs .tab')[i].click(), idxOlla);
-await p.waitForTimeout(900);
+/* ---- O1: el botón de cocinar vive al pie de la despensa ---- */
 const btn = await p.evaluate(() => {
-  const b = document.querySelector('.pagina--olla .btn-modo');
-  if (!b) return null;
+  const b = document.querySelector('#btn-sigue');
+  if (!b || b.classList.contains('hidden')) return null;
   const r = b.getBoundingClientRect();
-  return { txt: b.textContent.replace(/\s+/g, ' ').trim(), cerrado: b.classList.contains('btn-modo--cerrado'), dentro: r.top > 0 && r.bottom < innerHeight, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+  return { txt: b.textContent.replace(/\s+/g, ' ').trim(), dentro: r.top > 0 && r.bottom <= innerHeight, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
 });
-ok('O1 el botón de La Olla está en la pantalla de la olla', !!btn, btn ? btn.txt : 'no existe');
-ok('O2 con el lunes hecho, está abierto', btn && !btn.cerrado);
+ok('O1 el botón de cocinar está al pie de la despensa', !!btn, btn ? btn.txt : 'no existe');
+ok('O2 con los dieciocho sabidos, ofrece la fanesca servida', btn && /cocinar/i.test(btn.txt) && /fanesca servida/i.test(btn.txt), btn && btn.txt);
 ok('O3 y cabe entero en la pantalla', btn && btn.dentro, btn ? JSON.stringify({ dentro: btn.dentro }) : '');
 
 /* ---- entrar al modo con un toque de dedo ---- */
@@ -122,21 +122,23 @@ const fin = await p.evaluate(() => {
     actos: [...document.querySelectorAll('#olla-actos .olla-acto')].map(l => l.textContent.replace(/\s+/g, ' ').trim()),
     logros: document.querySelectorAll('#olla-logros .logro').length,
     cucharas: document.querySelectorAll('#olla-cucharas .cuchara.llena').length,
-    guardado: JSON.parse(localStorage.getItem('fanesca_v1') || '{}').olla,
+    /* el récord es POR PLATO desde que la olla cocina lo que hay: con
+       los dieciocho sabidos, el plato es 'servida' */
+    guardado: (JSON.parse(localStorage.getItem('fanesca_v1') || '{}').ollas || {}).servida,
   };
 });
 ok('O11 se abre el resumen de la partida', fin.abierto);
 ok('O12 con el tiempo total en mm:ss', /^\d+:\d\d$/.test(fin.tiempo || ''), fin.tiempo);
 ok('O13 con las cuatro marcas por acto', fin.actos.length === 4, JSON.stringify(fin.actos));
-ok('O14 y guarda el récord', !!(fin.guardado && fin.guardado.ms > 0), JSON.stringify(fin.guardado && { ms: fin.guardado.ms, cucharas: fin.guardado.cucharas, actos: fin.guardado.actos }));
-ok('O15 la escalera de logros está entera', fin.logros === 7, fin.logros + ' logros');
+ok('O14 y guarda el récord del plato', !!(fin.guardado && fin.guardado.ms > 0), JSON.stringify(fin.guardado && { ms: fin.guardado.ms, cucharas: fin.guardado.cucharas }));
+ok('O15 la escalera de logros está entera', fin.logros === 8, fin.logros + ' logros');
 console.log('  mejor:', fin.mejor, '| pie:', fin.pie);
 
 /* ---- segunda partida: las marcas se comparan contra el récord ---- */
 await p.evaluate(() => document.querySelector('#olla-salir').click());
 await p.waitForTimeout(900);
 const conRecord = await p.evaluate(() => {
-  const b = document.querySelector('.pagina--olla .btn-modo');
+  const b = document.querySelector('#btn-sigue');
   return b ? b.textContent.replace(/\s+/g, ' ').trim() : null;
 });
 ok('O16 el botón enseña el récord al volver', /récord/i.test(conRecord || ''), conRecord);
@@ -145,3 +147,4 @@ console.log('---');
 console.log(V.some(v => v.startsWith('✗')) ? 'HAY FALLOS' : 'TODO VERDE');
 console.log('errores JS:', errs.length); errs.slice(0, 8).forEach(e => console.log('  !', e));
 await b.close();
+process.exit(V.some(v => v.startsWith('✗')) ? 1 : 0);

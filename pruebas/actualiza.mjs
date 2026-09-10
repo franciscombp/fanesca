@@ -18,7 +18,8 @@ const V = [];
 const ok = (n, c, x = '') => { const l = `${c ? '✓' : '✗ FALLO'} ${n}${x ? ' — ' + x : ''}`; V.push(l); console.log(l); };
 const U = `http://localhost:${PUERTO}/index.html`;
 const rec = { ms: 30000, cucharas: 3 };
-const LUNES = ['maiz-1-introduccion', 'habas-1-facil', 'maiz-2-cascada', 'chochos-1-facil', 'frejol-1-facil', 'maiz-3-gusanito', 'arveja-1-facil', 'melloco-1-facil'];
+/* cinco bolsas sabidas: hay despensa y El Apuro pasa su corte de tres */
+const HECHOS = ['habas-1-facil', 'chochos-1-facil', 'frejol-1-facil', 'arveja-1-facil', 'feria-1-escoger'];
 
 const cdp = await p.context().newCDPSession(p);
 const pt = (x, y) => ({ x, y, id: 1 });
@@ -41,7 +42,7 @@ const quienRecibe = (x, y) => p.evaluate(([x, y]) => {
 await p.goto(U, { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(1200);
 await p.evaluate((s) => localStorage.setItem('fanesca_v1', JSON.stringify(s)),
-  { vistoPortada: true, mapa: 'semana', apuroJugado: true, diasVistos: ['lunes'], mejores: Object.fromEntries(LUNES.map(id => [id, rec])) });
+  { vistoPortada: true, mapa: 'bolsas', apuroJugado: true, mejores: Object.fromEntries(HECHOS.map(id => [id, rec])) });
 /* que el service worker termine de guardarse todo */
 await p.evaluate(() => navigator.serviceWorker.ready);
 await p.waitForTimeout(2500);
@@ -89,28 +90,28 @@ if (nota && nota.ok && nota.ok.dentro) {
 const emp = await p.evaluate(() => { const e = document.querySelector('#btn-empezar'); if (!e) return null; const r = e.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; });
 if (emp) { await tap(emp.x, emp.y, 1200); }
 r = await p.evaluate(() => (document.querySelector('.screen.active') || {}).id);
-ok('U1 desde la portada se llega al recetario', r === 'screen-mesa', r + ' | ' + JSON.stringify(await quienRecibe(emp.x, emp.y)));
+ok('U1 desde la portada se llega a la despensa', r === 'screen-mesa', r + ' | ' + JSON.stringify(await quienRecibe(emp.x, emp.y)));
 
-/* ---- 3 · tocar un ingrediente del recetario ---- */
+/* ---- 3 · tocar una bolsa de la despensa ---- */
 const ficha = await p.evaluate(() => {
-  const f = [...document.querySelectorAll('#mesa-lista .renglon')].find(x => { const r = x.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top > 100 && r.bottom < innerHeight - 60; });
+  const f = [...document.querySelectorAll('#mesa-lista .bolsa:not(.bolsa--cerrada)')].find(x => { const r = x.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top > 100 && r.bottom < innerHeight - 60; });
   if (!f) return null;
   const r = f.getBoundingClientRect();
-  return { id: f.dataset.id, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+  return { id: f.dataset.bolsa, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
 });
-console.log('ficha a tocar:', JSON.stringify(ficha), '| recibe:', JSON.stringify(ficha && await quienRecibe(ficha.x, ficha.y)));
+console.log('bolsa a tocar:', JSON.stringify(ficha), '| recibe:', JSON.stringify(ficha && await quienRecibe(ficha.x, ficha.y)));
 if (ficha) {
-  await tap(ficha.x, ficha.y, 3000);
-  r = await p.evaluate(() => ({ pantalla: (document.querySelector('.screen.active') || {}).id, mod: window.Fanesca && window.Fanesca.modulo && window.Fanesca.modulo.id }));
-  ok('U2 tocar un ingrediente abre su mesón', r.pantalla === 'screen-juego', JSON.stringify(r) + ' | recibe: ' + JSON.stringify(await quienRecibe(ficha.x, ficha.y)));
-  if (r.pantalla === 'screen-juego') { await p.evaluate(() => document.querySelector('#btn-salir').click()); await p.waitForTimeout(900); }
-} else ok('U2 hay una ficha que tocar', false, 'ninguna a la vista');
+  await tap(ficha.x, ficha.y, 1200);
+  r = await p.evaluate(() => (document.querySelector('.screen.active') || {}).id);
+  ok('U2 tocar una bolsa abre sus niveles', r === 'screen-bolsa', r + ' | recibe: ' + JSON.stringify(await quienRecibe(ficha.x, ficha.y)));
+  if (r === 'screen-bolsa') { await p.evaluate(() => document.querySelector('#bolsa-volver').click()); await p.waitForTimeout(900); }
+} else ok('U2 hay una bolsa que tocar', false, 'ninguna a la vista');
 
 /* ---- 4 · el play de El Apuro ----
-   vive en la página del viernes del carrusel: primero hay que llegar
-   allí, como llega el jugador (por la pestaña del último día) */
-await p.evaluate(() => { const tabs = [...document.querySelectorAll('#dias-tabs .tab')]; const t = tabs[tabs.length - 1]; if (t) t.click(); });
-await p.waitForTimeout(900);
+   vive al pie de la despensa: hay que bajar hasta él, como baja el
+   jugador */
+await p.evaluate(() => { const s = document.querySelector('.scroll--despensa'); if (s) s.scrollTop = s.scrollHeight; });
+await p.waitForTimeout(700);
 const apuro = await p.evaluate(() => {
   const e = document.querySelector('#btn-apuro');
   if (!e) return null;

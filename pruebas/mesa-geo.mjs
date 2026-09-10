@@ -15,7 +15,7 @@ await p.evaluate(async (s) => {
   const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister()));
   const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k)));
   localStorage.clear(); localStorage.setItem('fanesca_v1', JSON.stringify(s));
-}, { vistoPortada: true, mapa: 'semana', diasVistos: ['lunes'], mejores: Object.fromEntries([...LUNES, ...MARTES].map(id => [id, rec])) });
+}, { vistoPortada: true, mapa: 'bolsas', diasVistos: ['lunes'], mejores: Object.fromEntries([...LUNES, ...MARTES].map(id => [id, rec])) });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200);
 await p.evaluate(() => document.querySelectorAll('[class*=actualiz]').forEach(x => x.remove()));
 await p.click('#btn-empezar'); await p.waitForTimeout(1000);

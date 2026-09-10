@@ -23,7 +23,7 @@ await p.evaluate(async () => {
   const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister()));
   const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k)));
   localStorage.clear();
-  localStorage.setItem('fanesca_v1', JSON.stringify({ vistoPortada: true, mapa: 'semana', devMode: true, mejores: {} }));
+  localStorage.setItem('fanesca_v1', JSON.stringify({ vistoPortada: true, mapa: 'bolsas', devMode: true, mejores: {} }));
 });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200);
 await p.evaluate(() => document.querySelectorAll('[class*=actualiz]').forEach(x => x.remove()));

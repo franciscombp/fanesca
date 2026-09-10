@@ -73,6 +73,29 @@ const FILAS = [
   { n: 5, z: 1.02, ancho: 1.68 },
   { n: 5, z: 1.34, ancho: 1.50 },
 ];
+
+/* CUÁNTOS CUENCOS Y DÓNDE. La olla ya no arma siempre los dieciséis:
+   cocina lo que el jugador sabe preparar, y eso son dos cuencos en la
+   primera partida y dieciséis en la última. Con las filas fijas, dos
+   cuencos salían pegados a una esquina de una mesa vacía.
+
+   Se llena de ATRÁS hacia adelante —la fila del fondo primero— por
+   dos razones: la de atrás es la más ancha (cabe más) y deja libre la
+   franja de delante, que es por donde pasa la mano al arrastrar. */
+function repartir(n) {
+  const filas = [];
+  let queda = n;
+  for (const f of FILAS) {
+    if (queda <= 0) break;
+    /* lo que falta se reparte parejo entre las filas que quedan: con
+       siete no van seis y uno, van cuatro y tres */
+    const restantes = FILAS.length - FILAS.indexOf(f);
+    const cabe = Math.min(f.n, Math.max(1, Math.ceil(queda / restantes)));
+    filas.push({ ...f, n: cabe });
+    queda -= cabe;
+  }
+  return filas;
+}
 const RADIO_TOQUE = 66;           /* px de agarre en pantalla */
 const CERCA_OLLA = 0.72;          /* soltar dentro de esto es echar */
 
@@ -106,7 +129,11 @@ let terminado = false;
 let giroCaldo = 0;
 let pistaPega = 0;
 
-const siguiente = () => ORDEN_OLLA[echados] || null;
+/* LA RECETA DE ESTA PARTIDA. `cfg.ingredientes` trae los ids que la
+   olla lleva hoy; sin ella, los dieciséis de siempre — que es lo que
+   hace falta para jugar este mesón suelto. */
+let RECETA = ORDEN_OLLA;
+const siguiente = () => RECETA[echados] || null;
 
 /* ---------- la olla ---------- */
 
@@ -256,14 +283,14 @@ function echar(rec) {
   /* echar también revuelve un poco: el chorro mueve el caldo */
   pega = Math.max(0, pega - 0.12);
   pintarCaldo();
-  api.progreso(echados, ORDEN_OLLA.length);
+  api.progreso(echados, RECETA.length);
   const falta = siguiente();
   if (!falta) { rematar(); return; }
   api.aviso(`${rec.ing.nombre} ✓`, 'bien');
   /* la olla se pone más brava conforme se llena: más cosas dentro,
      más se pega el fondo. Es la curva del nivel y no hace falta
      escribirla en ningún sitio más. */
-  ritmo = 1 + echados / ORDEN_OLLA.length;
+  ritmo = 1 + echados / RECETA.length;
 }
 
 const ing2color = (ing) => ing.color || '#e8d9b8';
@@ -338,7 +365,7 @@ function revolverEn() {
 }
 
 function pintarCaldo() {
-  const k = echados / ORDEN_OLLA.length;
+  const k = echados / RECETA.length;
   const base = mezcla(AGUA, FANESCA, k);
   /* la pega se ve ANTES de cobrarse: el caldo se va oscureciendo
      desde el aviso. Un medidor que solo avisa cuando ya perdiste no
@@ -403,13 +430,18 @@ export default {
        el que sigue sería recorrer una fila de izquierda a derecha:
        cero decisión. Barajados hay que RECONOCER el ingrediente, que
        es lo que el juego lleva dieciséis mesones enseñando. */
-    const baraja = ORDEN_OLLA.map((ing, i) => ({ ing, i }));
+    const pedidos = Array.isArray(cfg.ingredientes) && cfg.ingredientes.length
+      ? cfg.ingredientes
+      : ORDEN_OLLA.map(o => o.id);
+    RECETA = ORDEN_OLLA.filter(o => pedidos.includes(o.id));
+    if (!RECETA.length) RECETA = ORDEN_OLLA;
+    const baraja = RECETA.map((ing, i) => ({ ing, i }));
     for (let i = baraja.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
     }
     let k = 0;
-    FILAS.forEach(fila => {
+    repartir(baraja.length).forEach(fila => {
       const ancho = Math.min(fila.ancho, ANCHO_SEGURO * 2 - 0.24);
       for (let n = 0; n < fila.n && k < baraja.length; n++, k++) {
         const { ing } = baraja[k];
@@ -425,7 +457,7 @@ export default {
        mote: desde fuera se puede leer por dónde va la olla sin
        deducirlo de la barra del HUD */
     window.__caldero = { get echados() { return echados; }, get pega() { return pega; }, get siguiente() { const s = siguiente(); return s && s.id; } };
-    api.progreso(0, ORDEN_OLLA.length);
+    api.progreso(0, RECETA.length);
     /* sin aviso de arranque: el aviso vive donde vive la fila de
        faenas y se le montaba encima. La pista ya lo dice, y con más
        sitio para decirlo. */

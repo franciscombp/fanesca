@@ -608,8 +608,47 @@ export const GUARNICION_NIVELES = {
   },
 };
 
+/* ESCOGER EN LA FERIA — y vive en la bolsa del choclo.
+
+   Es el único nivel del juego cuyo `base` (el módulo que se carga) y
+   su BOLSA (dónde se lista) no coinciden, y es a propósito: el módulo
+   es `nivel-feria.js`, pero para el jugador esto no es «la feria», es
+   lo primero que hay que saber del choclo. Antes de deshojar nada hay
+   que saber cuál sirve: el maduro da un tostado buenísimo y una
+   fanesca mala. `bolsa` es lo que dice dónde se lista; sin ella, el
+   menú lo pondría en una bolsa «feria» de un solo nivel que no le
+   importa a nadie.
+
+   Los tres peldaños aprietan por donde duele: primero sobran
+   aperturas y se puede abrir casi todo; al final hay que fiarse de la
+   hoja, que es de lo que se trata. */
+export const FERIA_NIVELES = {
+  'feria-1-escoger': {
+    nombre: 'El choclo · escoger en la feria',
+    corto: 'Escoger',
+    dificultad: 1, bloque: 'ESCOGER_CHOCLO', bolsa: 'maiz',
+    tiempoBase: 55,
+    config: { choclos: 5, pedidos: 3, dudosos: 1, aperturas: 3 },
+  },
+  'feria-2-por-la-hoja': {
+    nombre: 'El choclo · por la hoja',
+    corto: 'Por la hoja',
+    dificultad: 2, bloque: 'ESCOGER_CHOCLO', bolsa: 'maiz',
+    tiempoBase: 50,
+    config: { choclos: 6, pedidos: 3, dudosos: 2, aperturas: 2 },
+  },
+  'feria-3-sin-abrir': {
+    nombre: 'El choclo · sin abrir ninguno',
+    corto: 'Sin abrir',
+    dificultad: 4, bloque: 'ESCOGER_CHOCLO', bolsa: 'maiz',
+    tiempoBase: 45,
+    config: { choclos: 7, pedidos: 4, dudosos: 3, aperturas: 0 },
+  },
+};
+
 // COMPILAR TODO
 export const TODOS_NIVELES = {
+  ESCOGER_CHOCLO: FERIA_NIVELES,
   DESGRANAR: MAIZ,
   DESVAINAR: VAINAS,
   RASPAR: MELLOCO_NIVELES,
@@ -638,7 +677,12 @@ export const TODOS_NIVELES = {
    deja de coincidir con la primera. */
 export const NIVELES_ORDENADO = Object.entries(TODOS_NIVELES)
   .flatMap(([_, niveles]) => Object.entries(niveles))
-  .map(([id, n]) => ({ ...n, id, base: id.split('-')[0] }))
+  /* `base` es QUÉ MÓDULO se carga; `bolsa`, EN QUÉ LISTA aparece. Casi
+     siempre son lo mismo y por eso una cae por defecto en la otra. La
+     excepción es escoger en la feria, que juega `nivel-feria.js` pero
+     pertenece al choclo — para el jugador no es otro ingrediente, es
+     lo primero que hay que saber de éste. */
+  .map(([id, n]) => { const base = id.split('-')[0]; return { ...n, id, base, bolsa: n.bolsa || base }; })
   /* El orden ES el orden en que están escritos. Antes cada nivel
      llevaba un `orden: N` a mano y había treinta números que mantener
      sincronizados: meter un nivel en medio obligaba a renumerar todo
@@ -659,6 +703,14 @@ export function nivelPor(id) {
 /* las variantes de un ingrediente, en orden de dificultad */
 export function variantesDe(base) {
   return NIVELES_ORDENADO.filter(n => n.base === base);
+}
+
+/* LOS NIVELES DE UNA BOLSA, que es lo que pinta el menú: los de ese
+   ingrediente MÁS los prestados de otro módulo que le pertenecen (la
+   feria, en el choclo). El orden es el de escritura, y por eso la
+   feria va escrita antes que el desgrane: escoger va primero. */
+export function nivelesDeBolsa(bolsa) {
+  return NIVELES_ORDENADO.filter(n => n.bolsa === bolsa);
 }
 
 export function proximoNivel(ordenActual) {
@@ -1074,14 +1126,21 @@ export const OLLA_MODO = {
      el marcador— sino las formas de hacerlo bien que el modo quiere
      enseñar: la feria sin equivocarse, la olla en orden a la primera,
      la fanesca sin un solo desastre. */
+  /* `r.de` son los pasos que ESTA partida tenía: la olla cocina lo que
+     hay, así que las medallas que hablan de «la fanesca entera» tienen
+     que comprobar que la partida lo fuera. Sin eso, una sopa de dos
+     ingredientes en minuto y medio ganaba «la fanesca en menos de
+     ocho minutos», que es una medalla mentirosa. */
+  entera: 20,
   logros: [
-    { id: 'primera',  pide: r => true,                          titulo: 'La primera olla',   meta: 'Cocina la fanesca entera',            texto: 'Cocinaste la fanesca de principio a fin.' },
+    { id: 'primera',  pide: r => true,                          titulo: 'La primera olla',   meta: 'Cocina algo de principio a fin',      texto: 'Cocinaste una olla entera con tus manos.' },
     { id: 'limpia',   pide: r => r.desastres === 0,             titulo: 'Sin un desastre',   meta: 'Termina sin arruinar nada',           texto: 'Ni un bicho, ni una quemada, ni una piedra.' },
     { id: 'abuela',   pide: r => r.cucharas >= 3,               titulo: 'Mano de abuela',    meta: 'Tres cucharas de calidad',            texto: 'Así sale la de la casa.' },
-    { id: 'feriante', pide: r => r.feriaLimpia,                 titulo: 'Ojo de feriante',   meta: 'La feria sin escoger un solo maduro', texto: 'Ni un choclo de tostado se te coló.' },
-    { id: 'receta',   pide: r => r.ollaLimpia,                  titulo: 'La receta de memoria', meta: 'Echa los dieciséis en orden, sin fallar uno', texto: 'Te sabes el orden de la olla sin mirar.' },
-    { id: 'diez',     pide: r => r.ms <= 10 * 60000,            titulo: 'Antes del mediodía', meta: 'La fanesca entera en menos de 10 min', texto: 'La olla lista antes de que llegue la familia.' },
-    { id: 'ocho',     pide: r => r.ms <= 8 * 60000,             titulo: 'Cocina de guerra',  meta: 'La fanesca entera en menos de 8 min', texto: 'Eso ya es cocinar con las dos manos.' },
+    { id: 'feriante', pide: r => r.feriaLimpia && r.conFeria,   titulo: 'Ojo de feriante',   meta: 'La feria sin escoger un solo maduro', texto: 'Ni un choclo de tostado se te coló.' },
+    { id: 'receta',   pide: r => r.ollaLimpia,                  titulo: 'La receta de memoria', meta: 'Echa todo en orden, sin fallar uno', texto: 'Te sabes el orden de la olla sin mirar.' },
+    { id: 'fanesca',  pide: r => r.de >= 20,                    titulo: 'La fanesca entera', meta: 'Cocina los dieciocho, de la feria al plato', texto: 'La despensa completa en una sola olla.' },
+    { id: 'diez',     pide: r => r.de >= 20 && r.ms <= 10 * 60000, titulo: 'Antes del mediodía', meta: 'La fanesca entera en menos de 10 min', texto: 'La olla lista antes de que llegue la familia.' },
+    { id: 'ocho',     pide: r => r.de >= 20 && r.ms <= 8 * 60000,  titulo: 'Cocina de guerra',  meta: 'La fanesca entera en menos de 8 min', texto: 'Eso ya es cocinar con las dos manos.' },
   ],
 };
 
@@ -1089,6 +1148,55 @@ export const OLLA_MODO = {
    modo, y así el acto no hay que ir a buscarlo en cada paso */
 export const OLLA_PASOS = OLLA_MODO.actos.flatMap((a, ai) =>
   a.pasos.map((p, pi) => ({ ...p, acto: a.id, actoIndex: ai, ultimoDelActo: pi === a.pasos.length - 1 })));
+
+/* ============================================================
+   LOS PASOS DE **ESTA** PARTIDA.
+
+   La olla dejó de ser el examen final de los dieciocho y pasó a ser
+   lo que se cocina con lo que hay: con la primera bolsa salen habas
+   cocinadas, con quince, fanesca. Así que la lista de pasos ya no es
+   fija — se arma con los ingredientes que el jugador sabe preparar,
+   en el mismo orden de siempre.
+
+   Tres detalles que hay que rehacer y no heredar:
+     · los actos que se quedan sin pasos DESAPARECEN (sin choclo no
+       hay feria, y anunciar un acto vacío es peor que no tenerlo),
+     · `actoIndex` se renumera sobre los actos que quedan, porque el
+       modo lo usa para buscar el acto y el cartel,
+     · `ultimoDelActo` se recalcula, que es lo que cierra las marcas
+       parciales — heredarlo dejaría actos que nunca cierran.
+
+   Al caldero se le pasa la receta de esta partida en su config: es
+   el único paso que necesita saber quiénes son los demás. */
+export function pasosOlla(sabe) {
+  const tiene = (id) => (sabe && (sabe.has ? sabe.has(id) : sabe.includes(id)));
+  /* el choclo trae la feria: escoger es suyo, no de un ingrediente
+     aparte, y sin choclo en la despensa no hay puesto que visitar */
+  const dentro = (p) => (p.base === 'feria' ? tiene('maiz') : (p.base === 'caldero' ? true : tiene(p.base)));
+  const ingredientes = OLLA_MODO.actos
+    .flatMap(a => a.pasos)
+    .filter(p => p.base !== 'feria' && p.base !== 'caldero' && tiene(p.base))
+    .map(p => p.base);
+  if (!ingredientes.length) return [];
+  const actos = OLLA_MODO.actos
+    .map(a => ({ acto: a, pasos: a.pasos.filter(dentro) }))
+    .filter(x => x.pasos.length);
+  return actos.flatMap(({ acto, pasos }, ai) =>
+    pasos.map((p, pi) => ({
+      ...p,
+      acto: acto.id, actoIndex: ai, ultimoDelActo: pi === pasos.length - 1,
+      /* la receta viaja con el caldero: el mesón la lee de su config */
+      config: p.base === 'caldero' ? { ...(p.config || {}), ingredientes } : p.config,
+    })));
+}
+
+/* los actos de esta partida, ya sin los que se quedaron vacíos: el
+   modo los indexa con el `actoIndex` que pasosOlla renumeró */
+export function actosOlla(pasos) {
+  const vistos = [];
+  pasos.forEach(p => { if (!vistos.includes(p.acto)) vistos.push(p.acto); });
+  return vistos.map(id => OLLA_MODO.actos.find(a => a.id === id));
+}
 
 /* La config de un paso: la de su variante de campaña con los ajustes
    del modo encima. Un paso puede traer `config` propia (los mesones

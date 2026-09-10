@@ -42,14 +42,21 @@
    cuatro carreras de dos minutos contra tu propia sombra, no.
    ============================================================ */
 
-import { OLLA_MODO, OLLA_PASOS, configOlla, dificultadOlla } from './niveles-config.js';
+import { OLLA_MODO, configOlla, dificultadOlla } from './niveles-config.js';
 
 /* ---------- estado de la partida ---------- */
 
 let activo = false;
 let ms = 0;                  /* lo que lleva corriendo el reloj */
 let penalizacionMs = 0;      /* lo que suman los desastres y descuidos */
-let i = -1;                  /* el paso en curso, dentro de OLLA_PASOS */
+let i = -1;                  /* el paso en curso, dentro de `pasos` */
+/* LOS PASOS SON DE LA PARTIDA, no del modo. La olla cocina lo que el
+   jugador sabe preparar —habas cocinadas con una bolsa, fanesca con
+   quince— así que la lista se recibe en `arrancar` en vez de estar
+   escrita aquí. `actos` son los que quedaron con pasos: sin choclo no
+   hay feria, y el `actoIndex` de cada paso indexa ESTA lista. */
+let pasos = [];
+let actos = [];
 let actoDesde = 0;           /* ms en que arrancó el acto de ahora */
 let parciales = [];          /* { acto, ms, total } al cerrar cada acto */
 let desastres = 0, descuidos = 0;
@@ -61,14 +68,17 @@ let pidiendo = false;
 let montajesFallidos = 0;
 let mejor = null;            /* la mejor partida guardada, para las marcas */
 
-const pasoDe = (k) => OLLA_PASOS[k] || null;
-const actoDe = (k) => { const p = pasoDe(k); return p ? OLLA_MODO.actos[p.actoIndex] : null; };
+const pasoDe = (k) => pasos[k] || null;
+const actoDe = (k) => { const p = pasoDe(k); return p ? actos[p.actoIndex] : null; };
 
 /* ---------- la partida ---------- */
 
-function arrancar(g, mejorGuardado) {
+function arrancar(g, mejorGuardado, pasosDeLaPartida, actosDeLaPartida) {
   ganchos = g;
   mejor = mejorGuardado || null;
+  pasos = pasosDeLaPartida || [];
+  actos = actosDeLaPartida || [];
+  if (!pasos.length) return false;
   activo = true;
   ms = 0; penalizacionMs = 0;
   i = -1; actoDesde = 0; parciales = [];
@@ -77,6 +87,7 @@ function arrancar(g, mejorGuardado) {
   pasoActual = null; pendiente = null;
   pidiendo = false; montajesFallidos = 0;
   siguientePaso();
+  return true;
 }
 
 function siguientePaso() {
@@ -89,10 +100,10 @@ function siguientePaso() {
   /* EL ACTO SE ANUNCIA AL ENTRAR, no al salir. El cartel del acto es
      lo que le da forma a la partida larga: sin él, pasar de la feria
      al desgrane es un mesón más y nueve minutos son una fila. */
-  const acto = OLLA_MODO.actos[paso.actoIndex];
+  const acto = actos[paso.actoIndex];
   if (!antes || antes.actoIndex !== paso.actoIndex) {
     actoDesde = ms;
-    if (ganchos.acto) ganchos.acto(acto, paso.actoIndex, OLLA_MODO.actos.length);
+    if (ganchos.acto) ganchos.acto(acto, paso.actoIndex, actos.length);
   }
   /* como en El Apuro: el paso NO se activa aquí sino cuando su mesón
      va a construirse de verdad. Montar es asíncrono y en ese hueco el
@@ -145,7 +156,7 @@ function hecho() {
      actividad de pelar». No es un fallo: es la receta. Pero hay que
      contarlo. */
   ganchos.pasoHecho({
-    paso, indice: i, total: OLLA_PASOS.length,
+    paso, indice: i, total: pasos.length,
     parcial: (paso.porcion ?? 1) < 1,
     hechos: pasoActual.hechos, cuota: pasoActual.cuota,
   });
@@ -158,7 +169,7 @@ function hecho() {
 }
 
 function cerrarActo() {
-  const acto = OLLA_MODO.actos[pasoDe(i).actoIndex];
+  const acto = actos[pasoDe(i).actoIndex];
   const duro = ms - actoDesde;
   const previo = mejor && mejor.actos && mejor.actos[acto.id];
   parciales.push({ acto: acto.id, ms: duro, total: ms + penalizacionMs });
@@ -240,8 +251,11 @@ function terminar(porque) {
     desastres, descuidos,
     cucharas: cucharasDeCalidad(),
     feriaLimpia, ollaLimpia,
+    /* si esta partida pasó por la feria: sin choclo en la despensa no
+       hay puesto, y la medalla del ojo de feriante no se gana sola */
+    conFeria: pasos.some(p => p.base === 'feria'),
     /* hasta dónde llegó, para el resumen de quien se salió a medias */
-    pasos: Math.max(0, i), de: OLLA_PASOS.length,
+    pasos: Math.max(0, i), de: pasos.length,
     completa: porque === 'lista',
     actos: Object.fromEntries(parciales.map(p => [p.acto, p.ms])),
     parciales: parciales.slice(),
@@ -288,16 +302,16 @@ export default {
   get penalizacion() { return penalizacionMs; },
   get paso() { return pasoActual; },
   get indice() { return i; },
-  get total() { return OLLA_PASOS.length; },
+  get total() { return pasos.length; },
   get acto() { return actoDe(i); },
   get actoIndex() { return pasoDe(i) ? pasoDe(i).actoIndex : 0; },
   /* cuántos pasos van hechos DENTRO del acto de ahora, para el HUD */
   get enActo() {
     const p = pasoDe(i);
     if (!p) return { hechos: 0, de: 1 };
-    const acto = OLLA_MODO.actos[p.actoIndex];
-    const desde = OLLA_PASOS.findIndex(x => x.actoIndex === p.actoIndex);
-    return { hechos: i - desde, de: acto.pasos.length };
+    const desde = pasos.findIndex(x => x.actoIndex === p.actoIndex);
+    const cuantos = pasos.filter(x => x.actoIndex === p.actoIndex).length;
+    return { hechos: i - desde, de: cuantos };
   },
   arrancar, parar, activar, progreso, completar, arruinar, descontar, tick, terminar, saltar,
 };

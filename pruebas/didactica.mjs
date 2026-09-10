@@ -19,7 +19,7 @@ await p.evaluate(async () => {
   const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister()));
   const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k)));
   localStorage.clear();
-  localStorage.setItem('fanesca_v1', JSON.stringify({ vistoPortada: true, mapa: 'semana' }));
+  localStorage.setItem('fanesca_v1', JSON.stringify({ vistoPortada: true, mapa: 'bolsas' }));
 });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2300);
 await p.evaluate(() => { document.querySelectorAll('.modal.open, .aviso-actualizar').forEach(x => x.remove()); });

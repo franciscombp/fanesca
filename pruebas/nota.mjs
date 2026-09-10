@@ -14,7 +14,7 @@ for (const [w, h, nombre] of [[390, 844, 'iPhone 14'], [375, 667, 'iPhone SE'], 
   await p.goto(`${SITIO}/index.html`, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(800);
   /* como alguien que venía de una versión anterior */
-  await p.evaluate(() => { localStorage.setItem('fanesca_version_vista', '2.0.0'); localStorage.setItem('fanesca_v1', JSON.stringify({ vistoPortada: true, mapa: 'semana', mejores: {} })); });
+  await p.evaluate(() => { localStorage.setItem('fanesca_version_vista', '2.0.0'); localStorage.setItem('fanesca_v1', JSON.stringify({ vistoPortada: true, mapa: 'bolsas', mejores: {} })); });
   await p.reload({ waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(2500);
   const r = await p.evaluate(() => {

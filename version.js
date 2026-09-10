@@ -30,10 +30,29 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '4.0.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.0.0',
+    fecha: '2026-09-10',
+    titulo: 'La despensa: dieciocho bolsas y una olla que mejora',
+    cambios: [
+      '🧺 <b>El menú son los ingredientes.</b> Se acabó la semana de lunes a viernes: ahora la pantalla es una despensa con una bolsa por ingrediente. Entras a la que quieras y dentro están sus niveles, del gesto a la gran faena.',
+      '🌽 <b>Quédate donde te guste.</b> El choclo tiene dieciocho niveles: si te gustó desgranar, puedes bajar hasta la tonga sin tocar nada más. Terminar el primero de una bolsa abre la siguiente, y ninguna se cierra nunca.',
+      '🍲 <b>La olla se cocina desde el primer día.</b> Ya no espera al final: con las habas salen habas cocinadas, con tres granos una sopa de granos tiernos, con quince, fanesca. Cada bolsa nueva sube el plato de nombre.',
+      '🌽 <b>Escoger el choclo, de primero.</b> Antes de deshojar hay que saber cuál sirve: la feria es ahora el nivel uno de la bolsa del choclo, con tres peldaños hasta escoger sin abrir ninguno.',
+      '🏅 <b>Un récord por plato.</b> Una sopa de granos no compite con una fanesca: cada peldaño de la escalera lleva su propia marca.',
+    ],
+    internos: [
+      'bolsas.js: ORDEN_BOLSAS (las dieciocho, de la más sencilla a la más brava) y PLATOS (la escalera de diez, con lo que pide cada peldaño). Sustituye a DIAS como espina del juego.',
+      'RUTA se construye por bolsa en vez de por día; `desbloqueado` mira dos candados (la fila dentro de la bolsa, la bolsa entre bolsas) y ninguno vuelve a cerrar lo abierto.',
+      'pasosOlla(sabe)/actosOlla(pasos): el modo La Olla recibe sus pasos en `arrancar` en vez de leer una lista fija, con los actos vacíos fuera y actoIndex renumerado. nivel-caldero arma la receta desde cfg.ingredientes y reparte los cuencos en las filas que hagan falta.',
+      'Migración de la semana: `sabidos` marca los ingredientes con progreso real cuyo primer nivel no está jugado, en vez de inventarles un récord. `estado.olla` pasa a `estado.ollas[plato]`.',
+      'Fuera: el carrusel de días, las pestañas, paginaDia/paginaOlla, el modal de fin de día y el altar del final de la semana.',
+    ],
+  },
   {
     v: '3.1.0',
     fecha: '2026-09-10',
