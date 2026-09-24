@@ -144,6 +144,40 @@ export function achatar(geo, opts = {}) {
   return geo;
 }
 
+/* ---------- entubar ----------
+   Una esfera escalada a lo largo NO es una vaina: es un limón. Se
+   afila desde el mismo centro hacia las dos puntas, así que su
+   sección mengua en todo el recorrido y lo que va dentro —los granos
+   de una arveja, por ejemplo— tiene que ir menguando con ella y
+   trepando por una curva. Una vaina de verdad es un TUBO: la misma
+   sección casi de punta a punta, y el afilado sólo en los extremos.
+
+   `entubar` rehace las secciones de una esfera unitaria: para cada
+   vértice mira su x, calcula qué radio DEBERÍA tener esa sección
+   según `perfil(u)` y estira los otros dos ejes en esa proporción. La
+   esfera de partida tiene radio √(1−u²) a esa altura, y de ahí sale
+   el factor.
+
+   Deja la pieza midiendo 1 en su punto más gordo, así que nada de lo
+   que el juego calcule con su radio se entera del cambio. */
+export function entubar(geo, opts = {}) {
+  const perfil = opts.perfil || ((u) => Math.pow(Math.max(0, 1 - Math.pow(Math.abs(u), 8)), 0.35));
+  const eje = opts.eje || 'x';
+  const otros = { x: ['y', 'z'], y: ['x', 'z'], z: ['x', 'y'] }[eje];
+  const pos = geo.attributes.position;
+  const leer = { x: pos.getX.bind(pos), y: pos.getY.bind(pos), z: pos.getZ.bind(pos) };
+  const poner = { x: pos.setX.bind(pos), y: pos.setY.bind(pos), z: pos.setZ.bind(pos) };
+  for (let i = 0; i < pos.count; i++) {
+    const u = Math.max(-1, Math.min(1, leer[eje](i)));
+    const rEsfera = Math.sqrt(Math.max(1e-6, 1 - u * u));
+    const k = perfil(u) / rEsfera;
+    otros.forEach(ej => poner[ej](i, leer[ej](i) * k));
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+}
+
 /* ---------- el almacén de formas ----------
    Deformar cuesta, y hay piezas que salen por decenas: 126 granos en
    un choclo, 58 lentejas en la mesa. Se precalculan unas pocas

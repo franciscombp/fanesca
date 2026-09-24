@@ -59,7 +59,11 @@ export const COMIDA = {
   /* arveja: la vaina más tiesa y brillante que la del haba, y el
      hilo que la cose — que aquí es una pieza, no una raya pintada */
   vaina_arveja: '#7cbb4a',
-  vaina_arveja_dentro: '#eaf4d2',
+  /* el forro de dentro es PÁLIDO PERO VERDE. En crudo casi blanco
+     (#eaf4d2) la tapa abierta se leía como una bandeja de plástico:
+     ocupaba media pantalla en cuanto la vaina se abría y se comía a
+     los granos, que son lo que hay que mirar. */
+  vaina_arveja_dentro: '#cfe3a8',
   hilo_arveja: '#4e8a33',
   arveja: '#a6cc55',
   arveja_cicatriz: '#dfeab4',

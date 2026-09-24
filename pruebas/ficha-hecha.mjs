@@ -51,6 +51,17 @@ const centro = (sel) => p.evaluate((s) => {
 const hechosVisibles = () => p.evaluate(() => [...document.querySelectorAll('#bolsa-niveles .renglon--hecho')]
   .map(f => { const r = f.getBoundingClientRect(); return { id: f.dataset.id, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), dentro: r.top >= 100 && r.bottom <= innerHeight - 70 }; })
   .filter(f => f.dentro));
+/* esperar a que el mesón ESTÉ MONTADO, que es lo que la prueba mira:
+   con una espera fija, una máquina ocupada daba `mod: null` y parecía
+   un fallo del juego */
+const esperarMeson = async (ms = 9000) => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    if (await p.evaluate(() => !!(window.Fanesca.modulo))) return true;
+    await p.waitForTimeout(150);
+  }
+  return false;
+};
 const est = () => p.evaluate(() => ({
   pantalla: document.querySelector('.screen.active').id,
   mod: window.Fanesca.modulo && window.Fanesca.modulo.id,
@@ -81,7 +92,8 @@ if (bolsa) {
 let vis = await hechosVisibles();
 console.log('niveles hechos a la vista:', JSON.stringify(vis.map(v => v.id)));
 if (vis.length) {
-  await tap(vis[0].x, vis[0].y, 3000);
+  await tap(vis[0].x, vis[0].y, 600);
+  await esperarMeson();
   r = await est();
   ok('B1 un solo toque en un nivel ya jugado entra al mesón', r.pantalla === 'screen-juego' && !!r.mod, vis[0].id + ' → ' + JSON.stringify(r));
   ok('B2 y salir devuelve a un menú', await salir(), JSON.stringify(await est()));

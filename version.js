@@ -30,10 +30,32 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.1.0';
+const APP_VERSION = '4.2.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.2.0',
+    fecha: '2026-09-24',
+    titulo: 'La vaina de arveja, por fin una vaina',
+    cambios: [
+      '🫛 <b>La vaina ya no es un limón.</b> Era media esfera estirada: se afilaba desde el centro y acababa en pico por los dos lados. Ahora mantiene su grueso casi de punta a punta y se cierra sólo en el último tramo, como una vaina de verdad.',
+      '🟢 <b>Los cinco granos van del mismo tamaño y en fila.</b> Antes los de las puntas salían al 83% y trepaban por una curva, porque seguían el afilado del limón.',
+      '🥣 <b>Y van dentro del lecho que se ve.</b> El forro de dentro no llevaba el arco de la vaina: los granos seguían el arco de la cáscara y hacia las puntas se salían del lecho. Ahora el forro es la misma pieza, un pelo más chica.',
+      '📏 <b>Más delgada, y la arveja más chica.</b> Era cuatro veces más larga que gruesa; una vaina de verdad es siete. Los granos se encogieron con ella.',
+      '👀 <b>Se pueden contar los granos desde fuera.</b> Los cinco bultos estaban hundidos dentro de la tapa y sólo asomaba uno.',
+      '🧵 <b>El hilo se ve y se queda quieto.</b> Era más largo que la vaina y asomaba por las dos puntas; y al empezar a jalarlo pegaba un salto de media vaina antes de moverse.',
+    ],
+    internos: [
+      'entubar() en modelos/organico.js: rehace las secciones de una esfera según un perfil a lo largo. La vaina usa (1−u⁵)^0.32 — probado mirando: con u⁸ salía recta como un sofá y con u² volvía a ser el limón.',
+      'El forro es LA MISMA malla escalada a 0.95 en vez de una esfera aparte sin entubar ni arquear. Dos formas que deben coincidir no pueden ser dos objetos distintos.',
+      'perfilVaina() describe ahora el LECHO (el forro) y no la cáscara; perfilCascara() queda para lo que se posa encima (los bultos).',
+      'VAINA pasa a 0.47×0.081×0.088 y ARVEJA_R a 0.063×0.058×0.060 — dos tercios del ancho de su vaina, que es lo que mide una arveja. El gesto no se entera: los granos se recogen por cercanía al dedo, no por su tamaño.',
+      'HILO vive en el modelo y el nivel lo lee para animar el tirón: el largo tiene que salir de un solo sitio.',
+      'La prueba `arveja` cambia A3 (los cinco iguales, que es la prueba de que el cuerpo es un tubo) y estrena A5: que el lecho visible lleve el mismo arco que los granos. Y deja de medir contra tamaños copiados a mano.',
+      '`olla` y `ficha-hecha` esperan a que el mesón esté montado en vez de a un reloj fijo: en una máquina ocupada daban fallos que no eran del juego.',
+    ],
+  },
   {
     v: '4.1.0',
     fecha: '2026-09-24',

@@ -100,14 +100,30 @@ const jugarUno = async () => p.evaluate(() => new Promise(res => {
   }, 120);
 }));
 
+/* ESPERAR AL MESÓN, NO AL RELOJ. Entre un paso y el siguiente hay una
+   carga asíncrona; con una espera fija de 1500 ms, en una máquina
+   ocupada el mesón no había montado todavía y el empujón de progreso
+   se perdía — la partida se cortaba a los tres pasos sin que nada
+   estuviera roto. */
+const esperarMeson = async (ms = 12000) => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    const listo = await p.evaluate(() => !!(window.Fanesca.Olla.activo && window.Fanesca.Olla.paso));
+    if (listo) return true;
+    if (!(await p.evaluate(() => window.Fanesca.Olla.activo))) return false;
+    await p.waitForTimeout(150);
+  }
+  return false;
+};
+
 const recorrido = [];
 for (let i = 0; i < 24; i++) {
+  if (!(await esperarMeson())) break;
   const r = await jugarUno();
   if (r.fin) break;
   recorrido.push(r);
   if (r.trabado) { console.log('  TRABADO en', r.trabado); break; }
   if (!r.activo) break;
-  await p.waitForTimeout(1500);   /* deja montar el siguiente mesón */
 }
 console.log('  recorrido:', recorrido.map(r => r.de || ('TRABADO:' + r.trabado)).join(' → '));
 ok('O9 la partida recorre los veinte pasos sin trabarse', !recorrido.some(r => r.trabado), recorrido.length + ' pasos');

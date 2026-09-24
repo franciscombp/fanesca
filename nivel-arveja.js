@@ -27,7 +27,7 @@
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
-import { POR_VAINA, PASO_ARVEJA, ARVEJA_R, perfilVaina } from './modelos/arveja.js';
+import { POR_VAINA, PASO_ARVEJA, ARVEJA_R, HILO, VAINA, perfilVaina } from './modelos/arveja.js';
 
 let THREE, raiz, api;
 
@@ -74,7 +74,10 @@ let terminado = false;
 
 function nuevaVaina(x, z, conGusano) {
   const v = api.pieza('vaina-arveja');
-  v.position.set(x, api.MESA_Y + 0.21, z);
+  /* apoyada en la tabla, no flotando: la altura sale del GRUESO de la
+     vaina, así que adelgazarla no la deja en el aire. 0.082 es la cara
+     de la tabla sobre la mesa. */
+  v.position.set(x, api.MESA_Y + 0.082 + VAINA.alto, z);
   /* casi alineadas con el eje X, pero no del todo: si estuvieran
      perfectas se leería una cuadrícula y no una mesa de cocina */
   v.rotation.y = (Math.random() - 0.5) * 0.42;
@@ -101,10 +104,12 @@ function nuevaVaina(x, z, conGusano) {
          POSADOS ENCIMA de la vaina en vez de metidos dentro. Ahora el
          fondo del grano toca el fondo del vientre. */
     const x = (i - (POR_VAINA - 1) / 2) * PASO_ARVEJA;
+    /* el LECHO, no la cáscara: `perfilVaina` mide el forro, que es la
+       superficie que se ve al abrir y donde los granos se apoyan */
     const perfil = perfilVaina(x);
-    /* 0.88 y no 1: un pelo de holgura, que los granos no van
+    /* 0.9 y no 1: un pelo de holgura, que los granos no van
        reventando la cáscara desde dentro */
-    const cabe = Math.min(1, (perfil.ancho * 0.88) / ARVEJA_R.z);
+    const cabe = Math.min(1, (perfil.ancho * 0.9) / ARVEJA_R.z);
     a.position.set(x, -perfil.hondo + ARVEJA_R.y * cabe, perfil.z);
     a.scale.setScalar(cabe);
     a.userData = { tipo: 'arveja', i };
@@ -135,11 +140,19 @@ function deshilar(rec, avance) {
   if (rec.deshilada) return;
   rec.jalado = Math.min(LARGO_HILO, rec.jalado + avance);
   const k = rec.jalado / LARGO_HILO;
-  /* el hilo se despega desde el rabito: se acorta y se corre hacia
-     la punta contraria, que es lo que se ve al deshilar de verdad */
+  /* EL HILO SE DESPEGA DESDE EL RABITO: se acorta por la izquierda y
+     lo que queda se corre hacia la punta contraria, que es lo que se
+     ve al deshilar de verdad. Un cilindro se encoge por su CENTRO, así
+     que para dejar quieta la punta libre hay que correr el centro
+     media merma: k·largo/2.
+
+     La cuenta estaba escrita con números sueltos y empezaba en −0.42:
+     al primer roce el hilo pegaba un salto de media vaina antes de
+     moverse. Ahora sale del largo del propio hilo y en k=0 no se
+     mueve nada. */
   rec.hilo.scale.y = Math.max(0.02, 1 - k);
-  rec.hilo.position.x = -0.42 * (1 - k) + 0.42 * k * 0.0;
-  rec.hilo.position.y = 0.012 + k * 0.05;
+  rec.hilo.position.x = k * HILO.largo / 2;
+  rec.hilo.position.y = HILO.y + k * 0.05;
   /* y la vaina ya empieza a entreabrirse, para que se note que va */
   rec.bisagra.rotation.x = -0.5 * k;
   if (k < 1) return;
