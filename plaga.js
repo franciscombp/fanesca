@@ -251,6 +251,9 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
         api.sfx('bien'); api.buzz([15, 25]);
         api.aviso(null);
         api.toast('¡Fuera de la olla! 🌿');
+        /* el juego lleva la cuenta: es lo que mide el reto de
+           cazagusanos de cada bolsa */
+        if (api.bichoSalvado) api.bichoSalvado();
         return 'composta';
       }
       rec.estado = 'suelto';

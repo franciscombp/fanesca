@@ -135,6 +135,10 @@
       <p id="bolsa-gesto" class="bolsa-gesto"></p>
       <div class="scroll scroll--bolsa">
         <ol id="bolsa-niveles" class="bolsa-niveles"></ol>
+        <!-- LOS RETOS VAN DEBAJO DE LOS NIVELES, no encima: primero
+             se juega, y cuando ya no queda peldaño nuevo es cuando
+             hacen falta. Quien baja hasta aquí es quien los busca. -->
+        <section id="bolsa-retos" class="bolsa-retos"></section>
       </div>
       <footer class="dock">
         <button type="button" id="bolsa-volver" class="icono-boton dock-lado" aria-label="Volver a la despensa">🧺</button>
@@ -313,6 +317,16 @@
            entero en el cuaderno, que es donde alguien lee porque
            quiere — y aquí queda solo el aviso de que se abrió, en un
            renglón y con un toque para ir a leerlo. -->
+      <!-- EL RETO GANADO: la noticia más rara de esta pantalla, así
+           que va por delante de la página del cuaderno -->
+      <div id="listo-reto" class="listo-reto hidden">
+        <span class="listo-reto-ico" id="listo-reto-ico" aria-hidden="true">⏱</span>
+        <span class="listo-reto-txt">
+          <small>reto conseguido</small>
+          <strong id="listo-reto-titulo"></strong>
+          <em id="listo-reto-txt"></em>
+        </span>
+      </div>
       <button type="button" id="listo-nota" class="listo-nota hidden">
         <span class="listo-nota-ic" aria-hidden="true">📖</span>
         <span class="listo-nota-txt">

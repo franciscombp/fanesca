@@ -16,7 +16,7 @@ eso y lo mide con la deriva creciente.
 
 ```sh
 ./pruebas/correr.sh              # la batería entera
-./pruebas/correr.sh humo despensa   # solo esas
+./pruebas/correr.sh humo retos      # solo esas
 ```
 
 Hace falta `node`, `python3` (para servir los archivos) y Playwright,
@@ -42,6 +42,7 @@ Dicen ✓ o ✗ y terminan con `TODO VERDE` o `HAY FALLOS`.
 |---|---|
 | `humo` | el camino principal entero: portada → despensa → bolsa → nivel → hoja de listo → siguiente → cuaderno → El Apuro. Si esta pasa, el juego se puede publicar. |
 | `despensa` | el menú nuevo: que sean las dieciocho bolsas, que se abran de a poco empezando por la más sencilla, que dentro de una estén sus niveles, y que la olla arme sus pasos con lo que el jugador sabe hacer —dos con una bolsa, veinte con las dieciocho. |
+| `retos` | los retos de cada bolsa: que se ofrezcan sólo donde pueden ganarse (ni cazagusanos en el queso ni «bolsa entera» en una bolsa de un nivel), que la cuenta diga la verdad, y que repetir un nivel peor no borre un reto ya ganado. |
 | `olla` | la partida completa del modo La Olla, con la despensa llena: los veinte pasos encadenados, los cuatro actos, el resumen y el récord del plato. |
 | `feria` | el puesto del choclo: cuántos hay, que quepan en pantalla, abrir la hoja, gastar las aperturas y llenar el canasto. |
 | `caldero` | echar los dieciséis en orden, que equivocarse rebote y explique, y que la olla armada pase al plato. |

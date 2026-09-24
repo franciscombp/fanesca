@@ -30,10 +30,28 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.1.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.1.0',
+    fecha: '2026-09-24',
+    titulo: 'Cada bolsa tiene sus retos',
+    cambios: [
+      '🏅 <b>Cuatro retos por ingrediente.</b> Mano rápida (tres cucharas), Sin un descuido, Cazagusanos y La bolsa entera. Están al pie de cada bolsa, con la cuenta de cuánto llevas.',
+      '🪱 <b>Los bichos que sacas vivos ahora cuentan.</b> Cada uno que llega a la composta suma para el reto de cazagusanos de esa bolsa.',
+      '⏱ <b>Rápida y limpia se pelean a propósito.</b> El choclo tierno revienta si pasas el dedo fuerte: ir rápido cuesta descuidos, y por eso son dos formas distintas de jugar el mismo mesón.',
+      '🧺 <b>La despensa enseña tus medallas.</b> Cada bolsa dice cuántos retos lleva ganados, que es lo que queda por hacer ahí dentro cuando ya bajaste todos sus niveles.',
+    ],
+    internos: [
+      'retos.js: el catálogo y las metas, DERIVADAS del tamaño de la bolsa (media bolsa para las de destreza, los niveles con bichos para el cazagusanos) en vez de setenta y dos números escritos a mano. Un reto se ofrece sólo donde puede ganarse: ni cazagusanos en el queso ni «bolsa entera» en una bolsa de un nivel.',
+      '`estado.mejores[id]` guarda ahora `limpio` y `bichos` además del tiempo, y los dos se ACUMULAN: un reto que se cayera al repetir un nivel peor sería un castigo por volver.',
+      'api.bichoSalvado(), que canta plaga.js al llegar un bicho a la composta. El nivel no sabe que hay un reto detrás, igual que no sabe de los descuidos.',
+      'Un récord de 0.0 s ya no se escribe: un nivel cerrado sin que el reloj llegara a arrancar dejaba una marca imbatible para siempre.',
+      'La concordancia de los plurales sale del artículo del propio nombre: «se abrieron los chochos», no «se abrió los chochos».',
+    ],
+  },
   {
     v: '4.0.0',
     fecha: '2026-09-10',

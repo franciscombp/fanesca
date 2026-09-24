@@ -58,6 +58,7 @@ const PRECACHE = [
   './niveles.js',
   './niveles-config.js',
   './bolsas.js',
+  './retos.js',
   './modo-apuro.js',
   './modo-olla.js',
   /* los modelos: la forma de cada ingrediente. Sin esto el juego

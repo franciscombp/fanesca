@@ -74,7 +74,7 @@ const trasListo = await p.evaluate(() => ({
   abierto: document.querySelector('#modal-listo') && document.querySelector('#modal-listo').classList.contains('open'),
 }));
 ok('B11 al terminar el básico, el botón anuncia la bolsa nueva',
-  trasListo.abierto && /se abrió/i.test(trasListo.seguir || ''), `${trasListo.abierto ? '' : '(no abrió) '}${trasListo.seguir}`);
+  trasListo.abierto && /se abri(ó|eron)/i.test(trasListo.seguir || ''), `${trasListo.abierto ? '' : '(no abrió) '}${trasListo.seguir}`);
 
 await p.evaluate(() => { document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); window.Fanesca.mostrar('mesa'); });
 await p.waitForTimeout(700);

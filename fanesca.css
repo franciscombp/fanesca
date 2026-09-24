@@ -1797,3 +1797,73 @@ body.con-editor #stage { margin-right: 340px; }
 .bolsa-niveles .renglon--bloqueado .renglon-num { color: var(--crema-200); }
 .bolsa-niveles .renglon--foco { transform: none; animation: none; box-shadow: 0 0 0 2px var(--oro-400), var(--e-2); }
 .bolsa-niveles .renglon--foco:active { transform: scale(.98); }
+
+/* ============================================================
+   LOS RETOS — por qué volver a una bolsa terminada.
+
+   Viven al pie de la pantalla de la bolsa, después de los niveles:
+   quien baja hasta ahí es quien ya no tiene peldaño nuevo y anda
+   buscando qué más hay.
+   ============================================================ */
+.bolsa-retos { margin-top: var(--sp-4); padding-bottom: var(--sp-2); }
+.bolsa-retos-titulo {
+  margin: 0 0 .5rem; padding-left: .2rem;
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,244,226,.5);
+}
+.reto {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem .7rem;
+  margin-bottom: .35rem;
+  border-radius: var(--r-md);
+  background: rgba(255,244,226,.09);
+  border: 1.5px solid rgba(255,244,226,.12);
+  color: rgba(255,244,226,.78);
+}
+.reto-ico { flex: 0 0 auto; font-size: 1.2rem; line-height: 1; filter: grayscale(.55) opacity(.75); }
+.reto-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .05rem; }
+.reto-txt strong { font-family: var(--font-display); font-size: var(--t-xs); font-weight: 700; }
+.reto-txt small { font-size: .68rem; line-height: 1.25; opacity: .72; }
+/* LA CUENTA ES LA INVITACIÓN: «3 / 9» pide otra partida, un candado
+   pelado no pide nada. Por eso el que falta enseña su marcador y
+   sólo el ganado lo cambia por el ✓. */
+.reto-marca {
+  flex: 0 0 auto;
+  font-family: var(--font-display); font-size: var(--t-2xs); font-weight: 800;
+  color: rgba(255,244,226,.55);
+}
+.reto--hecho {
+  background: linear-gradient(180deg, #f2fbef, #e2f3dd);
+  border-color: rgba(93,181,90,.55);
+  color: var(--text);
+}
+.reto--hecho .reto-ico { filter: none; }
+.reto--hecho .reto-marca { color: var(--hoja-500); font-size: var(--t-md); }
+
+/* la medalla en la ficha de la despensa: sustituye al ✓, que ya no
+   era noticia en una bolsa terminada */
+.bolsa-medallas {
+  position: absolute; top: .25rem; right: .3rem;
+  font-family: var(--font-display); font-size: .62rem; font-weight: 800;
+  color: var(--maiz-800);
+}
+.bolsa--cerrada .bolsa-medallas { display: none; }
+
+/* EL RETO GANADO en la hoja de listo */
+.listo-reto {
+  display: flex; align-items: center; gap: .7rem;
+  width: 100%; margin-bottom: var(--sp-2);
+  padding: .6rem .8rem;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #fff3d6, #ffe6ab);
+  border: 1.5px solid rgba(224,161,44,.6);
+  text-align: left;
+  animation: reto-entra .5s var(--ease-spring) both .85s;
+}
+@keyframes reto-entra { from { opacity: 0; transform: scale(.9) translateY(8px); } }
+.listo-reto-ico { flex: 0 0 auto; font-size: 1.6rem; line-height: 1; }
+.listo-reto-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .05rem; color: var(--maiz-800); }
+.listo-reto-txt small { font-size: .6rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+.listo-reto-txt strong { font-family: var(--font-display); font-size: var(--t-md); font-weight: 800; }
+.listo-reto-txt em { font-size: .7rem; font-style: normal; line-height: 1.3; opacity: .8; }

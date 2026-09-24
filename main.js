@@ -16,6 +16,7 @@ import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
 import { variantesDe, nivelesDeBolsa, nivelPor as configPor, APURO, OLLA_MODO, pasosOlla, actosOlla } from './niveles-config.js';
 import { ORDEN_BOLSAS, PUESTO, PLATOS, platoDe, proximoPlato } from './bolsas.js';
+import { RETOS, retosDe, metasDe } from './retos.js';
 import Apuro from './modo-apuro.js';
 import Olla from './modo-olla.js';
 
@@ -281,6 +282,43 @@ function desbloqueado(i) {
 function siguienteEnBolsa(bolsa) {
   return nivelesBolsa(bolsa).find(n => !estaListo(n.id) && desbloqueado(RUTA.indexOf(n))) || null;
 }
+/* ============================================================
+   EL RESUMEN DE UNA BOLSA — lo que miran sus retos.
+
+   Todo sale de `estado.mejores`, que desde ahora guarda tres cosas
+   por nivel y no una: el mejor tiempo, si alguna vez se terminó
+   LIMPIO (sin un descuido) y cuántos bichos se han sacado vivos ahí.
+   Son acumulados de toda la vida del jugador, no de la última
+   partida: un reto que se pierde al repetir un nivel peor no sería
+   un reto, sería un castigo por volver — que es justo lo que estos
+   retos vienen a evitar.
+   ============================================================ */
+const traeBichosNivel = (n) => {
+  const g = (n.config || {}).gusanos;
+  return Array.isArray(g) ? g.some(x => x > 0) : (g || 0) > 0;
+};
+
+function resumenBolsa(bolsa) {
+  const ns = nivelesBolsa(bolsa);
+  const r = metasDe(ns.length, ns.filter(traeBichosNivel).length);
+  r.hechos = 0; r.tresCucharas = 0; r.limpios = 0; r.bichos = 0;
+  ns.forEach(n => {
+    const m = estado.mejores[n.id];
+    if (!m) return;
+    r.hechos++;
+    if ((m.cucharas || 0) >= 3) r.tresCucharas++;
+    if (m.limpio) r.limpios++;
+    r.bichos += m.bichos || 0;
+  });
+  return r;
+}
+
+/* los retos GANADOS de una bolsa, por id */
+function retosGanados(bolsa) {
+  const r = resumenBolsa(bolsa);
+  return retosDe(r).filter(x => x.pide(r)).map(x => x.id);
+}
+
 /* LA BOLSA QUE ESTE NIVEL ACABA DE ABRIR, si abrió alguna. Sólo el
    básico de una bolsa abre la siguiente, y sólo es noticia si esa
    siguiente sigue sin tocar — repetir el básico para bajarse el
@@ -757,6 +795,10 @@ function fichaBolsa(bolsa) {
   const completa = hechos >= niveles.length && niveles.length > 0;
   const nueva = abierta && hechos === 0;
   const pct = niveles.length ? Math.round(hechos / niveles.length * 100) : 0;
+  /* LAS MEDALLAS MANDAN SOBRE EL SELLO. Una bolsa con todos sus
+     niveles hechos ya no tiene noticia que dar con un ✓; los retos
+     sí, y son lo que queda por hacer ahí dentro. */
+  const medallas = abierta ? retosGanados(bolsa).length : 0;
 
   const b = document.createElement('button');
   b.type = 'button';
@@ -774,15 +816,15 @@ function fichaBolsa(bolsa) {
         ? '<span class="bolsa-nuevo">empieza aquí</span>'
         : `<span class="bolsa-cuenta">${hechos} / ${niveles.length}</span>`)}</span>
     ${abierta && hechos > 0 ? `<span class="bolsa-barra" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ''}
-    ${completa ? '<span class="bolsa-sello" aria-hidden="true">✓</span>' : ''}`;
+    ${medallas ? `<span class="bolsa-medallas" aria-hidden="true">🏅${medallas}</span>` : (completa ? '<span class="bolsa-sello" aria-hidden="true">✓</span>' : '')}`;
   b.setAttribute('aria-label', `${ing ? ing.nombre : bolsa}${abierta
-    ? ` · ${hechos} de ${niveles.length} niveles`
+    ? ` · ${hechos} de ${niveles.length} niveles${medallas ? ` · ${medallas} retos` : ''}`
     : ' (cerrada)'}`);
   tocable(b, () => {
     sfx('tab');
     if (!abierta) {
-      const antes = porId(ORDEN_BOLSAS[PUESTO[bolsa] - 1]);
-      toast(antes ? `Primero ${antes.nombre.toLowerCase()} 👆` : 'Todavía no');
+      const antesId = ORDEN_BOLSAS[PUESTO[bolsa] - 1];
+      toast(antesId ? `Primero ${nombreDeBolsa(antesId)} 👆` : 'Todavía no');
       return;
     }
     abrirBolsa(bolsa);
@@ -826,7 +868,7 @@ function renderMesa() {
     sub.textContent = !plato
       ? 'dieciocho bolsas y una olla vacía'
       : (proximo
-        ? `${proximo.faltan.length === 1 ? 'te falta' : 'te faltan'} ${listaDeBolsas(proximo.faltan)} para ${proximo.plato.enFrase}${racha}`
+        ? `${proximo.faltan.length === 1 && !bolsaPlural(proximo.faltan[0]) ? 'te falta' : 'te faltan'} ${listaDeBolsas(proximo.faltan)} para ${proximo.plato.enFrase}${racha}`
         : `los dieciocho, y la mesa puesta${racha}`);
   }
   /* el anillo mira los INGREDIENTES, no los niveles: es el camino a
@@ -881,6 +923,13 @@ function nombreDeBolsa(id) {
   const ing = porId(id);
   return ing ? ing.nombre.toLowerCase() : id;
 }
+
+/* SEIS INGREDIENTES SON PLURALES —las habas, los chochos, los
+   mellocos— y el verbo tiene que acompañarlos: «se abrió los
+   chochos» y «te falta los chochos» se leen mal a la primera. El
+   artículo del propio nombre lo dice, así que no hace falta una
+   tabla aparte que un día deje de coincidir. */
+const bolsaPlural = (id) => /^(los|las)\s/.test(nombreDeBolsa(id));
 
 /* «el mote», «el mote y la col», «el mote, la col y 3 más»: la lista
    de lo que falta, que es la razón concreta para abrir otra bolsa.
@@ -986,7 +1035,38 @@ function renderBolsa() {
     ol.appendChild(li);
   });
 
+  pintarRetos(bolsa);
   pintarDockBolsa();
+}
+
+/* ============================================================
+   LOS RETOS DE LA BOLSA, en su pantalla.
+
+   Cada uno dice qué pide y cuánto llevas. Lo segundo es la mitad del
+   asunto: «3 / 9 con tres cucharas» invita a otra partida, y un
+   candado sin número no invita a nada — es la diferencia entre un
+   reto y un adorno.
+   ============================================================ */
+function pintarRetos(bolsa) {
+  const caja = $('#bolsa-retos');
+  if (!caja) return;
+  const r = resumenBolsa(bolsa);
+  const lista = retosDe(r);
+  caja.innerHTML = `<h3 class="bolsa-retos-titulo">Retos de esta bolsa</h3>`;
+  lista.forEach(reto => {
+    const hecho = reto.pide(r);
+    const el = document.createElement('div');
+    el.className = 'reto' + (hecho ? ' reto--hecho' : '');
+    el.innerHTML = `
+      <span class="reto-ico" aria-hidden="true">${reto.ico}</span>
+      <span class="reto-txt">
+        <strong>${reto.titulo}</strong>
+        <small>${reto.meta(r)}</small>
+      </span>
+      <span class="reto-marca">${hecho ? '✓' : reto.llevas(r)}</span>`;
+    el.setAttribute('aria-label', `${reto.titulo}: ${reto.meta(r)}${hecho ? ' (conseguido)' : ' — llevas ' + reto.llevas(r)}`);
+    caja.appendChild(el);
+  });
 }
 
 /* ---------- el confeti ----------
@@ -1371,6 +1451,7 @@ let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque */
 let hechosAhora = 0, totalAhora = 1;
 let fallosAhora = 0;         /* los descuidos de esta partida */
+let bichosAhora = 0;         /* los bichos que salvaste en esta partida */
 
 /* ---------- las faenas del mesón ----------
    Un nivel de varias fases —el zapallo parte, taja y limpia; la col
@@ -1677,6 +1758,10 @@ const api = {
     if (enCurso) enCurso.progreso(hechos, total || 1);
   },
   composta(k) { Motor.llenarRecipiente('composta', Math.max(0, Math.min(1, k))); },
+  /* UN BICHO QUE LLEGÓ VIVO A LA COMPOSTA. Lo canta la plaga y lo
+     cuenta el juego, igual que los descuidos: el nivel no sabe —ni
+     tiene por qué saber— que hay un reto de cazagusanos detrás. */
+  bichoSalvado() { bichosAhora++; },
   completar() {
     const m = modoVivo();
     if (m) { m.completar(); return; }
@@ -1902,7 +1987,7 @@ async function jugar(id) {
   $('#hud-barra').style.width = '0%';
   const pct0 = $('#hud-pct'); if (pct0) pct0.textContent = '0%';
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(n.icono);
-  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0;
+  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0; bichosAhora = 0;
   reiniciarRacha();
   pintarReloj();
   alerta(null);
@@ -2107,7 +2192,7 @@ async function montarMeson(base, config, modo, opts = {}) {
      pantalla — construir el nivel ahora lo pondría a vivir detrás del
      modal, encolando pistas para nadie */
   if (!modo.activo) return;
-  hechosAhora = 0; totalAhora = 1; fallosAhora = 0;
+  hechosAhora = 0; totalAhora = 1; fallosAhora = 0; bichosAhora = 0;
   pintarFallos();
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE mesón y no del que se estaba jugando */
@@ -2525,9 +2610,32 @@ function terminarNivel() {
   /* el tiempo pone las cucharas y los descuidos las quitan */
   const cuch = cucharasConFallos(cucharasDe(n, tiempoMs), fallosAhora, n.dificultad || 1);
   const previo = estado.mejores[n.id];
-  const esRecord = !previo || tiempoMs < previo.ms;
-  if (esRecord) estado.mejores[n.id] = { ms: Math.round(tiempoMs), cucharas: cuch };
-  else estado.mejores[n.id].cucharas = Math.max(estado.mejores[n.id].cucharas, cuch);
+  /* UN RÉCORD DE CERO ES UN RÉCORD FALSO, y además imbatible. Pasa
+     cuando el nivel se da por terminado sin que el reloj llegara a
+     arrancar —se completa con el primer toque, o un modo lo cierra
+     desde fuera— y deja escrito un «0.0 s» que ninguna partida de
+     verdad vuelve a bajar. El tiempo sólo cuenta si hubo tiempo, y un
+     cero guardado lo pisa la primera partida cronometrada (`!m.ms`).
+
+     LA FICHA SE ESCRIBE SIEMPRE, con récord o sin él: terminar un
+     nivel es terminarlo, y la primera vez no hay ficha previa que
+     actualizar. Separarlo en un `if/else` que sólo creaba la ficha al
+     batir el récord dejaba el caso «primera vez y sin reloj» leyendo
+     cucharas de undefined. */
+  const esRecord = tiempoMs > 0 && (!previo || !previo.ms || tiempoMs < previo.ms);
+  /* los retos se miran ANTES de guardar: lo que se gana en esta
+     partida es la diferencia entre el antes y el después */
+  const retosAntes = retosGanados(n.bolsa);
+  const m = estado.mejores[n.id] = { ...(previo || {}) };
+  if (esRecord || !m.ms) m.ms = Math.round(tiempoMs);
+  m.cucharas = Math.max(m.cucharas || 0, cuch);
+  /* LO LIMPIO Y LOS BICHOS SE ACUMULAN, no se sobrescriben. Con
+     `limpio = (fallos === 0)` una segunda partida sucia le quitaba al
+     jugador un reto que ya se había ganado; y los bichos son la suma
+     de todos los que ha sacado vivos en ese mesón, no los del último
+     intento. */
+  if (fallosAhora === 0) m.limpio = true;
+  if (bichosAhora) m.bichos = (m.bichos || 0) + bichosAhora;
 
   /* la racha de días se alimenta terminando CUALQUIER nivel hoy:
      no pide ganar más, pide volver — que es lo único que un juego
@@ -2573,9 +2681,16 @@ function terminarNivel() {
       fallosN.textContent = fallosAhora;
       fallosN.closest('.stat').classList.toggle('stat--mal', fallosAhora > 0);
     }
-    $('#listo-mejor').textContent = esRecord
-      ? (previo ? '¡Nuevo récord! antes: ' + tiempoBonito(previo.ms) : 'Primera vez que lo preparas')
-      : 'Tu mejor sigue siendo ' + tiempoBonito(previo.ms);
+    /* SIN FICHA PREVIA NO HAY NADA QUE COMPARAR, haya récord o no.
+       La condición miraba primero el récord y el «si no» leía el
+       tiempo de una ficha que no existe: la primera vez que un nivel
+       se cierra sin batir marca —porque el reloj no llegó a correr—
+       reventaba aquí, con el mesón ya terminado. */
+    $('#listo-mejor').textContent = !previo
+      ? 'Primera vez que lo preparas'
+      : (esRecord
+        ? '¡Nuevo récord! antes: ' + tiempoBonito(previo.ms)
+        : 'Tu mejor sigue siendo ' + tiempoBonito(previo.ms));
     /* por el INGREDIENTE, no por la variante: TARJETAS está indexado
        por base ('maiz'), y n.id es 'maiz-1-introduccion'. Buscar por
        el id dejaba las doce tarjetas mudas y —peor— el cuaderno
@@ -2599,10 +2714,26 @@ function terminarNivel() {
        misma bolsa, o —cuando la bolsa se acabó— a la despensa, que es
        donde está la noticia (una bolsa nueva abierta, un plato que
        subió de nombre) */
+    /* EL RETO GANADO MANDA EN LA HOJA. Es la noticia más rara y la
+       más difícil de conseguir: si en esta partida cayó uno, eso es
+       lo que hay que contar, por delante del nivel siguiente. */
+    const ganados = retosGanados(n.bolsa).filter(id => !retosAntes.includes(id));
+    const cajaReto = $('#listo-reto');
+    if (cajaReto) {
+      const reto = ganados.length ? RETOS.find(r => r.id === ganados[0]) : null;
+      cajaReto.classList.toggle('hidden', !reto);
+      if (reto) {
+        $('#listo-reto-ico').textContent = reto.ico;
+        $('#listo-reto-titulo').textContent = reto.titulo;
+        $('#listo-reto-txt').textContent = reto.texto;
+        setTimeout(() => { sfx('fiesta'); buzz([18, 30, 18]); celebrar(26); }, 900);
+      }
+    }
+
     const sig = siguienteEnBolsa(n.bolsa);
     const nueva = bolsaQueAbre(n);
     $('#listo-seguir').textContent = nueva
-      ? `¡Se abrió ${nombreDeBolsa(nueva)}!`
+      ? `¡Se ${bolsaPlural(nueva) ? 'abrieron' : 'abrió'} ${nombreDeBolsa(nueva)}!`
       : (sig ? 'Siguiente nivel' : 'A la despensa');
     $('#modal-listo').classList.add('open');
     sfx('fiesta');
