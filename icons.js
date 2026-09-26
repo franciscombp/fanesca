@@ -217,6 +217,58 @@ ICONS.maduro = _svg(`
   <path d="M22 24 Q26 36 38 43" stroke="#e0ac35" stroke-width="2.2" fill="none" stroke-linecap="round"/>
   ${face(38, 33, .6)}`);
 
+/* ============ Los cuatro granos que quedaban ============
+   Las habas, los chochos, el fréjol y la lenteja siguieron con el
+   costalito después de que los otros seis salieran de él. Son las
+   TRES PRIMERAS bolsas de la despensa: la primera fila que ve un
+   jugador nuevo eran tres dibujos idénticos. */
+
+/* la haba: de pie sobre su vaina abierta, con la uña oscura arriba,
+   que es por donde se la reconoce en el mercado */
+ICONS.habas = _svg(`
+  <path d="M6 44 Q10 30 30 28 Q50 27 58 38 Q52 50 32 52 Q12 54 6 44 Z" fill="#6f9a58"/>
+  <path d="M11 43 Q16 34 31 33 Q48 32 53 39 Q47 47 32 48 Q16 49 11 43 Z" fill="#eef3df"/>
+  <path d="M20 30 Q18 13 33 12 Q48 12 47 28 Q46 43 33 44 Q21 44 20 30 Z" fill="#a9c98a"/>
+  <path d="M27 13.6 Q33 11 39 13.6" stroke="#4a5e36" stroke-width="3" fill="none" stroke-linecap="round"/>
+  ${face(33, 29, .7)}`);
+
+/* los chochos: redondos, crema y brillantes de salmuera */
+ICONS.chochos = _svg(`
+  <ellipse cx="32" cy="52" rx="21" ry="3" fill="#3a2c18" opacity=".15"/>
+  <g fill="#f1e2b4" stroke="#d6bd80" stroke-width="1.2">
+    <ellipse cx="17" cy="42" rx="8.4" ry="7.4"/><ellipse cx="47" cy="42" rx="8.4" ry="7.4"/>
+  </g>
+  <path d="M14 38.5 Q17 37 20 38.5 M44 38.5 Q47 37 50 38.5" stroke="#c4a764" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="32" cy="33" rx="14" ry="13" fill="#f8edc8" stroke="#d6bd80" stroke-width="1.2"/>
+  <path d="M25 24 Q29 21.5 34 22" stroke="#fffdf2" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".85"/>
+  ${face(32, 34, .72)}`);
+
+/* el fréjol: el riñón moteado */
+ICONS.frejol = _svg(`
+  <path d="M9 36 Q9 21 22 20 Q29 20 32 25 Q35 20 42 20 Q55 21 55 36 Q53 51 32 51 Q11 51 9 36 Z" fill="#c795b7"/>
+  <g fill="#94598a" opacity=".75">
+    <ellipse cx="18" cy="31" rx="2.6" ry="1.6" transform="rotate(-20 18 31)"/>
+    <ellipse cx="46" cy="30" rx="2.4" ry="1.5" transform="rotate(18 46 30)"/>
+    <ellipse cx="20" cy="44" rx="2" ry="1.3"/><ellipse cx="45" cy="44" rx="2.2" ry="1.4"/>
+    <ellipse cx="32" cy="47.5" rx="1.8" ry="1.1"/>
+  </g>
+  <path d="M29 26.5 Q32 29 35 26.5" stroke="#f3e7ee" stroke-width="2" fill="none" stroke-linecap="round"/>
+  ${face(32, 37, .74)}`);
+
+/* la lenteja: el plato donde se escoge, con la piedrita que no va */
+ICONS.lenteja = _svg(`
+  <ellipse cx="32" cy="42" rx="26" ry="11" fill="#e8d9b8"/>
+  <ellipse cx="32" cy="40" rx="22" ry="8.6" fill="#f4ead2"/>
+  <g fill="#c98a4b">
+    <ellipse cx="16" cy="40" rx="3" ry="1.9"/><ellipse cx="22" cy="44" rx="3" ry="1.9"/>
+    <ellipse cx="43" cy="44.5" rx="3" ry="1.9"/><ellipse cx="18" cy="36" rx="2.8" ry="1.8"/>
+  </g>
+  <ellipse cx="46" cy="37" rx="4.6" ry="3.4" fill="#8f8a82"/>
+  <ellipse cx="45" cy="36" rx="1.8" ry="1" fill="#b3aea5"/>
+  <ellipse cx="31" cy="36" rx="11" ry="8" fill="#b97a3f"/>
+  <ellipse cx="31" cy="35" rx="11" ry="7" fill="#c98a4b"/>
+  ${face(31, 34, .5)}`);
+
 /* el comodín: lo que sale cuando se pide un id que no existe */
 ICONS.mezcla_rara = _svg(`
   <path d="M14 38 Q10 26 20 22 Q22 14 32 16 Q42 12 46 22 Q56 26 50 38 Q54 48 42 50 Q36 54 28 50 Q16 52 14 38 Z" fill="#9aa88f"/>

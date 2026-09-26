@@ -699,7 +699,13 @@ function pintarDockBolsa() {
   if (!n) { b.classList.add('hidden'); bolsaAccion = null; return; }
   const hecho = estaListo(n.id);
   b.classList.remove('hidden');
-  b.innerHTML = `<b>${hecho ? '↻ Otra vez' : '▶ Cocinar'}</b><small>${n.num} · ${n.corto || n.nombre}</small>`;
+  /* EL BOTÓN DICE EL GESTO, no «Cocinar». Cocinar es lo de la olla,
+     y su botón vive en la despensa con esa misma palabra: dentro de
+     la bolsa de las habas lo que se hace es desvainar. Del `tarea` de
+     la ficha sale el primer verbo —«Deshojar y desgranar» no cabe en
+     el dock y «Deshojar» sí dice por dónde se empieza. */
+  const verbo = (n.tarea || 'Jugar').split(/,\s*|\s+y\s+/)[0];
+  b.innerHTML = `<b>${hecho ? '↻ Otra vez' : '▶ ' + verbo}</b><small>${n.num} · ${n.corto || n.nombre}</small>`;
   bolsaAccion = () => jugar(n.id);
 }
 let bolsaAccion = null;

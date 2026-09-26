@@ -38,7 +38,7 @@ export const NIVELES = [
     pasos: [{ ico: '🫛', txt: 'Abre las vainas', desde: 0 }, { ico: '🟢', txt: 'Saca las habas', desde: 0.15 }],
     nombre: 'Las habas',
     tarea: 'Desvainar',
-    icono: 'granos_mixtos',
+    icono: 'habas',
     modulo: () => import('./nivel-habas.js'),
     gesto: 'Pasa el dedo por la <b>costura</b> y toca cada haba para echarla a la batea.',
 
@@ -68,7 +68,7 @@ export const NIVELES = [
     pasos: [{ ico: '🤏', txt: 'Aprieta cada chocho', desde: 0 }],
     nombre: 'Los chochos',
     tarea: 'Pelar',
-    icono: 'granos_mixtos',
+    icono: 'chochos',
     modulo: () => import('./nivel-chochos.js'),
     gesto: '<b>Aprieta</b> cada chocho y la pepa salta sola de su piel.',
 
@@ -83,7 +83,7 @@ export const NIVELES = [
     pasos: [{ ico: '✊', txt: 'Aprieta hasta que truene', desde: 0 }, { ico: '🫘', txt: 'Barre los granos', desde: 0.2 }],
     nombre: 'El fréjol',
     tarea: 'Reventar',
-    icono: 'granos_mixtos',
+    icono: 'frejol',
     modulo: () => import('./nivel-frejol.js'),
     gesto: '<b>Mantén el dedo</b> sobre la vaina hasta que truene; luego barre los granos.',
 
@@ -143,7 +143,7 @@ export const NIVELES = [
     pasos: [{ ico: '🪨', txt: 'Saca las piedritas', desde: 0 }, { ico: '👌', txt: 'Recoge lo bueno', desde: 0.45 }],
     nombre: 'La lenteja',
     tarea: 'Escoger el grano',
-    icono: 'granos_mixtos',
+    icono: 'lenteja',
     modulo: () => import('./nivel-escoger.js'),
     gesto: 'Bota <b>piedritas y picados</b>; con la mesa limpia, barre lo bueno.',
 
