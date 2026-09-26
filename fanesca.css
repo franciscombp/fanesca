@@ -1349,6 +1349,13 @@ svg[width="0"] { width: 0; height: 0; }
   color: var(--hoja-400, #7ecb7a); font-size: .9rem; font-weight: 800;
 }
 @media (max-height: 740px) { .hud-pasos { top: calc(var(--prep-hud-h) + .3rem); } }
+/* CON LA FILA DE FAENAS PUESTA, EL AVISO BAJA UN RENGLÓN. Los dos
+   vivían a la misma altura y la fila (z 6) tapaba al aviso (z 4): en
+   la olla, «el mote ✓» salía medio escondido detrás de «Los granos,
+   en orden», y lo mismo en cualquier mesón de varias faenas. El combo
+   de la izquierda se montaba igual sobre la ficha abierta. */
+.hud-pasos:not(.hidden) ~ .hud-alerta { top: calc(var(--prep-hud-h) + .45rem + 30px + var(--sp-2)); }
+.hud-pasos:not(.hidden) ~ .hud-combo  { top: calc(var(--prep-hud-h) + .45rem + 30px + var(--sp-3)); }
 
 /* ============================================================
    LA OLLA SE LLENA — la escena final

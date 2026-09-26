@@ -2466,9 +2466,13 @@ const GANCHOS_OLLA = {
     cartelDeActo(acto, i, de);
   },
 
-  actoCerrado({ acto, ms, delta }) {
+  actoCerrado({ acto, ms, delta, ultimo }) {
     sfx('fiesta'); buzz([15, 25, 15]);
     Motor.destello('rgba(232,129,58,.2)');
+    /* EL ÚLTIMO ACTO NO SE CANTA: el resumen sale a los 700 ms con la
+       tabla de todos los actos, y el cartel de 2.6 s se quedaba
+       encima de la cifra grande del resumen, tapándola */
+    if (ultimo) return;
     /* la marca parcial, con el signo que importa: contra tu propia
        sombra. Sin récord no hay nada que comparar y decir "+0:00"
        sobre una primera partida es inventarse un dato. */

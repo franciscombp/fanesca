@@ -58,7 +58,9 @@ r = await p.evaluate(() => ({
   niveles: document.querySelectorAll('#bolsa-niveles .renglon').length,
   dock: document.querySelector('#bolsa-sigue').textContent,
 }));
-ok('S2 la bolsa abre con sus niveles y su botón', r.pantalla === 'screen-bolsa' && r.niveles === 18 && /cocinar/i.test(r.dock), JSON.stringify(r));
+/* el botón de la bolsa dice el GESTO del nivel —«Cocinar» es de la
+   olla— y el del choclo empieza en la feria: «▶ Escoger el choclo» */
+ok('S2 la bolsa abre con sus niveles y su botón', r.pantalla === 'screen-bolsa' && r.niveles === 18 && /▶ Escoger/.test(r.dock) && !/cocinar/i.test(r.dock), JSON.stringify(r));
 
 /* 3 · el dock de la bolsa entra al nivel que toca */
 await p.evaluate(() => document.querySelector('#bolsa-sigue').click());

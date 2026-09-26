@@ -96,6 +96,17 @@ let h = await hud();
 ok('C4 echar fuera de turno rebota y explica por qué',
   parseFloat(h.barra) === 0 && (h.alerta || '').length > 24, JSON.stringify({ barra: h.barra, alerta: h.alerta }));
 ok('C5 y lo cobra como descuido', /✗ [1-9]/.test(h.fallos || ''), h.fallos);
+/* el aviso y la fila de faenas vivían a la misma altura, y la fila
+   tapaba al aviso: el porqué del rebote salía medio escondido */
+const choque = await p.evaluate(() => {
+  const a = document.querySelector('#hud-alerta').getBoundingClientRect();
+  const f = document.querySelector('#hud-pasos');
+  if (f.classList.contains('hidden')) return { sinFila: true };
+  const r = f.getBoundingClientRect();
+  const pisa = !(a.bottom <= r.top || a.top >= r.bottom || a.right <= r.left || a.left >= r.right);
+  return { pisa, aviso: [Math.round(a.top), Math.round(a.bottom)], fila: [Math.round(r.top), Math.round(r.bottom)] };
+});
+ok('C5b el aviso no queda debajo de la fila de faenas', !choque.sinFila && !choque.pisa, JSON.stringify(choque));
 
 /* ahora los dieciséis en su orden, buscando el cuenco cada vez
    (rebotan de vuelta a su sitio, así que las posiciones valen) */
