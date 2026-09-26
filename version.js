@@ -30,10 +30,26 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.4.0';
+const APP_VERSION = '4.5.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.5.0',
+    fecha: '2026-09-26',
+    titulo: 'Cada bolsa con su cara',
+    cambios: [
+      '🫘 <b>Las habas, los chochos, el fréjol y la lenteja tienen su dibujo.</b> Seguían con el mismo costalito: la primera fila de la despensa eran tres dibujos iguales.',
+      '▶ <b>Dentro de una bolsa, el botón dice lo que vas a hacer:</b> «Desvainar», «Deshojar», «Pelar»… «Cocinar» es lo de la olla.',
+      '🔇 <b>El sonido se puede apagar</b> en la portada, y se recuerda.',
+      '💬 <b>Los avisos ya no se esconden</b> detrás de la fila de faenas del nivel, y el último acto de la olla no tapa la cifra del resumen.',
+      '📱 <b>La bienvenida cabe en los teléfonos chicos</b>, y la nota del plato en la despensa ya no asoma media línea de más.',
+    ],
+    internos: [
+      'caldero C5b mide que el aviso no pise la fila de faenas; humo S0–S0b cuenta los osciladores para probar que el silencio calla y que el sonido sí sonaba.',
+      'Singulares: «1 nivel», «1 reto», «1 ración».',
+    ],
+  },
   {
     v: '4.4.0',
     fecha: '2026-09-26',
