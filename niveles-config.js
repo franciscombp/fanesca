@@ -242,8 +242,11 @@ export const VAINAS = {
     }
   },
   'habas-2-normal': {
-    nombre: 'Las habas apretadas',
-    corto: 'Apretadas',
+    /* la primera vaina que resiste (resistencia 1); «apretadas» es el
+       peldaño de después, y con los dos llamados igual la escalera de
+       la bolsa enseñaba dos renglones idénticos */
+    nombre: 'Las habas de vaina firme',
+    corto: 'Vaina firme',
     dificultad: 3, bloque: 'DESVAINAR',
     tiempoBase: 50,
     config: {
@@ -334,8 +337,11 @@ export const QUINUA_NIVELES = {
     }
   },
   'quinua-2-normal': {
-    nombre: 'La quinua espumosa',
-    corto: 'Espumosa',
+    /* la saponina hace jabón antes de hacer espuma de verdad: la
+       espumosa es el cuarto peldaño, y dos renglones iguales en la
+       bolsa parecían el mismo nivel repetido */
+    nombre: 'La quinua jabonosa',
+    corto: 'Jabonosa',
     dificultad: 3, bloque: 'LAVAR',
     tiempoBase: 50,
     config: {

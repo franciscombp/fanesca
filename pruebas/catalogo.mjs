@@ -124,6 +124,23 @@ ok('T3 dentro de un gesto la dificultad no baja', desordenados.length === 0,
 ok('T4 ninguna pieza del mesón queda fuera de la pantalla', flacos.length === 0,
   flacos.length ? flacos.slice(0, 8).join(' | ') : 'ninguna');
 
+/* T5: dentro de una bolsa no hay dos peldaños con el mismo nombre. La
+   escalera de la bolsa los enseña en fila, y dos renglones iguales se
+   leen como el mismo nivel repetido — pasó con las habas «apretadas»
+   y la quinua «espumosa» al crecer las escaleras. */
+const nombres = await p.evaluate(() => window.Fanesca.ruta.map(n => ({ bolsa: n.bolsa, nombre: n.nombre, corto: n.corto || '' })));
+const repetidos = [];
+const vistos = {};
+nombres.forEach(n => {
+  [n.nombre, n.corto].filter(Boolean).forEach(x => {
+    const k = n.bolsa + '|' + x;
+    if (vistos[k]) repetidos.push(`${n.bolsa}: «${x}»`);
+    vistos[k] = true;
+  });
+});
+ok('T5 dentro de una bolsa ningún peldaño repite nombre', repetidos.length === 0,
+  repetidos.length ? repetidos.join(' | ') : 'ninguno');
+
 console.log('---');
 console.log(V.some(v => v.startsWith('✗')) ? 'HAY FALLOS' : 'TODO VERDE');
 console.log('errores JS:', errs.length); errs.slice(0, 8).forEach(e => console.log('  !', e));
