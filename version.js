@@ -30,10 +30,26 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.3.0';
+const APP_VERSION = '4.4.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.4.0',
+    fecha: '2026-09-26',
+    titulo: 'La primera olla',
+    cambios: [
+      '👋 <b>Una bienvenida.</b> La primera vez, una hoja cuenta qué es la fanesca y cómo se llega a ella —de unas habas a la olla entera— y te pone a desvainar la primera haba.',
+      '🍲 <b>Tu primer plato se anuncia.</b> Terminar las habas ya te deja cocinar unas habas cocinadas, y ahora la hoja de listo te lo dice y te lleva a la olla con un toque. Cada vez que la olla sube de plato, lo mismo.',
+      '🫘 <b>La olla chica habla como olla chica.</b> Con un solo cuenco ya no te pide echarlos «en su turno», no celebra «la fanesca» cuando salieron unas habas, y el caldo toma el color de lo que lleva: dorado sólo cuando entra el zapallo.',
+      '➡️ <b>Al servir, qué sigue.</b> El resumen de la olla nombra el plato que salió y te dice qué bolsas te faltan para el siguiente.',
+    ],
+    internos: [
+      'Un mesón puede exportar faenas(cfg) y gesto(cfg): el juego se los pregunta al montarlo y corrigen a la ficha de niveles.js. El caldero los usa porque cocina lo que el jugador sabe; los demás no tienen que enterarse.',
+      'La config del caldero lleva el plato del día (id y enFrase) desde arrancarOlla. El resumen del modo trae `enLaOlla` y la medalla de la receta de memoria pide al menos dos cuencos.',
+      'pruebas/primera-olla.mjs: arranca de cero, termina el primer nivel, toca el plato de la hoja y cocina la olla de un cuenco arrastrándolo con el dedo (CDP) hasta el resumen.',
+    ],
+  },
   {
     v: '4.3.0',
     fecha: '2026-09-24',
