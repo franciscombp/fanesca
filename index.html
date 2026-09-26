@@ -172,6 +172,31 @@
     </div>
   </main>
 
+  <!-- ================= Modal: la bienvenida ================= -->
+  <!-- UNA HOJA, UNA VEZ, Y AL MESÓN. Probado con jugadores: nadie se
+       para a leer entre dos mesones, así que lo que se cuenta antes
+       de jugar tiene que caber en una mirada. Qué es la fanesca, por
+       dónde se empieza y por qué seguir — y un botón que lleva
+       DIRECTO a tocar la primera vaina. La historia entera está en el
+       cuaderno para quien la quiera. -->
+  <div id="modal-hola" class="modal" role="dialog" aria-modal="true" aria-labelledby="hola-titulo">
+    <div class="sheet">
+      <div class="sheet-hero sheet-hero--olla" aria-hidden="true"><span class="plate" data-icon="fanesca"></span></div>
+      <p class="sheet-eyebrow">la fanesca</p>
+      <h3 id="hola-titulo" class="sheet-title">Una olla con dieciocho cosas dentro</h3>
+      <p class="sheet-body">Se come un solo día al año, en Semana Santa: doce granos, zapallo, maní, bacalao y queso. Todo pasa por tus manos antes de llegar a la olla.</p>
+      <ol class="hola-escalera" aria-label="Lo que sale de tu olla">
+        <li><b>habas</b></li>
+        <li>sopa de granos</li>
+        <li>sopa de Cuaresma</li>
+        <li><b>fanesca</b></li>
+      </ol>
+      <p class="hola-pie">Cada ingrediente que aprendes cambia lo que sale de tu olla.</p>
+      <button type="button" id="hola-empezar" class="btn btn--maiz btn--lg btn--block">▶ Empezar por las habas</button>
+      <button type="button" id="hola-despensa" class="btn btn--fantasma btn--sm btn--block">Ver la despensa primero</button>
+    </div>
+  </div>
+
   <!-- ================= Modal: dónde se cocina ================= -->
   <div id="modal-cocina" class="modal" role="dialog" aria-modal="true" aria-labelledby="cocina-titulo">
     <div class="sheet">

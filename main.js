@@ -57,6 +57,8 @@ function nuevoEstado() {
     ultimoNivel: null,
     /* el altar de la despensa completa se abre una sola vez */
     despensaVista: false,
+    /* la hoja de bienvenida, también una sola vez */
+    holaVisto: false,
     /* LA OLLA — el modo de partida completa. `olla` es la mejor
        partida TERMINADA (ms, cucharas y las marcas por acto), que es
        contra lo que se corre en las siguientes. */
@@ -2798,7 +2800,26 @@ function bindEventos() {
     initAudio(); sfx('tab');
     estado.vistoPortada = true; guardar();
     mostrar('mesa');
+    /* LA BIENVENIDA, UNA VEZ. Sólo a quien no ha cocinado nada: el
+       guardado de alguien que ya jugó —aunque venga de la semana— no
+       necesita que le cuenten qué es la fanesca. */
+    if (!estado.holaVisto && listos() === 0 && !Object.keys(estado.mejores || {}).length) {
+      setTimeout(() => $('#modal-hola').classList.add('open'), 280);
+    }
   });
+
+  /* el botón grande de la bienvenida va DIRECTO al primer mesón: la
+     bolsa se abre por debajo para que al salir del nivel se vuelva a
+     ella y no a una despensa que el jugador aún no ha visto */
+  const cerrarHola = () => { estado.holaVisto = true; guardar(); cerrarModales(); };
+  tocable($('#hola-empezar'), () => {
+    sfx('tab'); cerrarHola();
+    const primera = ORDEN_BOLSAS[0];
+    bolsaAbiertaId = primera;
+    const basico = basicoDe(primera);
+    if (basico) jugar(basico); else abrirBolsa(primera);
+  });
+  tocable($('#hola-despensa'), () => { sfx('tab'); cerrarHola(); });
 
   /* Empezar de nuevo: dos toques. Borrar doce ingredientes ganados
      por un dedo mal puesto sería imperdonable, y un confirm() del

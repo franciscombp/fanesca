@@ -24,7 +24,24 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2300);
 await p.evaluate(() => { document.querySelectorAll('.modal.open, .aviso-actualizar').forEach(x => x.remove()); });
 ok('B0 no reventó al cargar', errs.length === 0, errs.slice(0, 3).join(' | '));
 
-await p.click('#btn-empezar'); await p.waitForTimeout(700);
+await p.click('#btn-empezar'); await p.waitForTimeout(900);
+
+/* LA BIENVENIDA: la primera vez, antes de la despensa, una hoja que
+   dice qué es la fanesca y por dónde se empieza. Era parte de lo que
+   se pidió al cambiar el menú —«entro al juego y me explica qué es la
+   fanesca y que vamos a comenzar con…»— y es corta a propósito: nadie
+   se para a leer. */
+const hola = await p.evaluate(() => ({
+  abierta: document.querySelector('#modal-hola').classList.contains('open'),
+  titulo: (document.querySelector('#hola-titulo') || {}).textContent,
+  boton: (document.querySelector('#hola-empezar') || {}).textContent,
+  alto: Math.round(document.querySelector('#modal-hola .sheet').getBoundingClientRect().height),
+}));
+ok('B00 en partida nueva sale la bienvenida', hola.abierta, hola.titulo);
+ok('B01 y su botón dice por dónde se empieza', /habas/i.test(hola.boton || ''), hola.boton);
+ok('B02 y cabe en una pantalla', hola.alto <= 844, hola.alto + ' px');
+await p.evaluate(() => document.querySelector('#hola-despensa').click());
+await p.waitForTimeout(500);
 
 const mesa = await p.evaluate(() => ({
   pantalla: (document.querySelector('.screen.active') || {}).id,
@@ -68,6 +85,12 @@ ok('B9 el choclo empieza por escoger en la feria', choclo[0] === 'feria-1-escoge
 ok('B10 y es la bolsa honda: dieciocho niveles', choclo.length === 18, choclo.length + ' niveles');
 
 /* jugar el básico de las habas y ver que abre la siguiente bolsa */
+/* y no vuelve a salir: una vez vista, ni al volver a la despensa */
+await p.evaluate(() => { window.Fanesca.mostrar('portada'); document.querySelector('#btn-empezar').click(); });
+await p.waitForTimeout(800);
+ok('B03 la bienvenida sale una sola vez',
+  !(await p.evaluate(() => document.querySelector('#modal-hola').classList.contains('open'))));
+
 await p.evaluate(() => window.Fanesca.jugar('habas-1-facil'));
 await p.waitForTimeout(2600);
 await p.evaluate(() => window.Fanesca.api.completar());
