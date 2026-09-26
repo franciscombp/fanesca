@@ -252,6 +252,27 @@ export const VAINAS = {
       gusanos: 2,
     }
   },
+  'habas-3-apretadas': {
+    nombre: 'Las habas apretadas',
+    corto: 'Apretadas',
+    dificultad: 3, bloque: 'DESVAINAR',
+    tiempoBase: 50,
+    config: {cantidad: 6, resistencia: 2, gusanos: 2},
+  },
+  'habas-4-canasto': {
+    nombre: 'El canasto de habas',
+    corto: 'El canasto',
+    dificultad: 4, bloque: 'DESVAINAR',
+    tiempoBase: 60,
+    config: {cantidad: 8, resistencia: 2, gusanos: 3},
+  },
+  'habas-5-la-tanda': {
+    nombre: 'La tanda de habas',
+    corto: 'La tanda',
+    dificultad: 5, bloque: 'DESVAINAR',
+    tiempoBase: 67,
+    config: {cantidad: 9, resistencia: 3, gusanos: 3},
+  },
 };
 
 // REFREGAR — Melloco (el bloque se sigue llamando RASPAR por dentro)
@@ -277,6 +298,27 @@ export const MELLOCO_NIVELES = {
       gusanos: 2,
     }
   },
+  'melloco-3-baboso': {
+    nombre: 'El melloco baboso',
+    corto: 'Baboso',
+    dificultad: 3, bloque: 'RASPAR',
+    tiempoBase: 57,
+    config: {cantidad: 8, resistencia: 2, gusanos: 2},
+  },
+  'melloco-4-con-tierra': {
+    nombre: 'El melloco con tierra',
+    corto: 'Con tierra',
+    dificultad: 4, bloque: 'RASPAR',
+    tiempoBase: 64,
+    config: {cantidad: 9, resistencia: 3, gusanos: 3},
+  },
+  'melloco-5-el-costal': {
+    nombre: 'El costal de mellocos',
+    corto: 'El costal',
+    dificultad: 5, bloque: 'RASPAR',
+    tiempoBase: 64,
+    config: {cantidad: 10, resistencia: 3, gusanos: 3},
+  },
 };
 
 // LAVAR — Quinua
@@ -301,6 +343,27 @@ export const QUINUA_NIVELES = {
       lavadas_requeridas: 3,
       gusanos: 1,
     }
+  },
+  'quinua-3-amarga': {
+    nombre: 'La quinua amarga',
+    corto: 'Amarga',
+    dificultad: 4, bloque: 'LAVAR',
+    tiempoBase: 62,
+    config: {saponina_nivel: 0.85, lavadas_requeridas: 4, gusanos: 1},
+  },
+  'quinua-4-espumosa': {
+    nombre: 'La quinua espumosa',
+    corto: 'Espumosa',
+    dificultad: 4, bloque: 'LAVAR',
+    tiempoBase: 56,
+    config: {saponina_nivel: 0.95, lavadas_requeridas: 4, gusanos: 2},
+  },
+  'quinua-5-hasta-sin-espuma': {
+    nombre: 'Hasta que no haga espuma',
+    corto: 'Sin espuma',
+    dificultad: 5, bloque: 'LAVAR',
+    tiempoBase: 63,
+    config: {saponina_nivel: 1, lavadas_requeridas: 5, gusanos: 2},
   },
 };
 
@@ -329,6 +392,27 @@ export const COL_NIVELES = {
       gusanos: 2,
     }
   },
+  'col-3-apretada': {
+    nombre: 'La col apretada',
+    corto: 'Apretada',
+    dificultad: 4, bloque: 'ENROLLAR',
+    tiempoBase: 72,
+    config: {cantidad: 1, resistencia: 2, espesor_corte: 'fino', gusanos: 2},
+  },
+  'col-4-dos-coles': {
+    nombre: 'Dos coles',
+    corto: 'Dos coles',
+    dificultad: 4, bloque: 'ENROLLAR',
+    tiempoBase: 101,
+    config: {cantidad: 2, resistencia: 1, espesor_corte: 'grueso', gusanos: 3},
+  },
+  'col-5-pelo-de-angel': {
+    nombre: 'La col en pelo de ángel',
+    corto: 'Pelo de ángel',
+    dificultad: 5, bloque: 'ENROLLAR',
+    tiempoBase: 117,
+    config: {cantidad: 2, resistencia: 2, espesor_corte: 'fino', gusanos: 3},
+  },
 };
 
 // MAJAR — Maní
@@ -355,6 +439,27 @@ export const MANI_NIVELES = {
       resistencia: 1,
       gusanos: 2,
     }
+  },
+  'mani-3-tostado': {
+    nombre: 'El maní bien tostado',
+    corto: 'Tostado',
+    dificultad: 4, bloque: 'MAJAR',
+    tiempoBase: 70,
+    config: {cantidad: 16, velocidad_minima: 0.55, resistencia: 2, gusanos: 2},
+  },
+  'mani-4-en-piedra': {
+    nombre: 'El maní en la piedra',
+    corto: 'En la piedra',
+    dificultad: 4, bloque: 'MAJAR',
+    tiempoBase: 71,
+    config: {cantidad: 18, velocidad_minima: 0.65, resistencia: 2, gusanos: 3},
+  },
+  'mani-5-hasta-pasta': {
+    nombre: 'Hasta que se haga pasta',
+    corto: 'Hasta pasta',
+    dificultad: 5, bloque: 'MAJAR',
+    tiempoBase: 71,
+    config: {cantidad: 18, velocidad_minima: 0.75, resistencia: 3, gusanos: 3},
   },
 };
 
@@ -425,6 +530,27 @@ export const CHOCHOS_NIVELES = {
       gusanos: 2,
     }
   },
+  'chochos-3-saltones': {
+    nombre: 'Los chochos saltones',
+    corto: 'Saltones',
+    dificultad: 3, bloque: 'PELAR',
+    tiempoBase: 38,
+    config: {cantidad: 13, resistencia: 1, velocidad_salto: 0.85, gusanos: 2},
+  },
+  'chochos-4-resbalosos': {
+    nombre: 'Los chochos resbalosos',
+    corto: 'Resbalosos',
+    dificultad: 4, bloque: 'PELAR',
+    tiempoBase: 40,
+    config: {cantidad: 14, resistencia: 2, velocidad_salto: 1, gusanos: 3},
+  },
+  'chochos-5-el-balde': {
+    nombre: 'El balde de chochos',
+    corto: 'El balde',
+    dificultad: 5, bloque: 'PELAR',
+    tiempoBase: 42,
+    config: {cantidad: 16, resistencia: 2, velocidad_salto: 1.15, gusanos: 3},
+  },
 };
 
 // FRÉJOL — Reventar
@@ -451,6 +577,27 @@ export const FREJOL_NIVELES = {
       presion_requerida: 0.6,
       gusanos: 2,
     }
+  },
+  'frejol-3-duro': {
+    nombre: 'El fréjol duro',
+    corto: 'El duro',
+    dificultad: 3, bloque: 'REVENTAR',
+    tiempoBase: 48,
+    config: {cantidad: 5, resistencia: 2, presion_requerida: 0.75, gusanos: 2},
+  },
+  'frejol-4-tieso': {
+    nombre: 'El fréjol tieso',
+    corto: 'El tieso',
+    dificultad: 4, bloque: 'REVENTAR',
+    tiempoBase: 57,
+    config: {cantidad: 6, resistencia: 3, presion_requerida: 0.85, gusanos: 3},
+  },
+  'frejol-5-la-tonga': {
+    nombre: 'La tonga de fréjol',
+    corto: 'La tonga',
+    dificultad: 5, bloque: 'REVENTAR',
+    tiempoBase: 60,
+    config: {cantidad: 7, resistencia: 3, presion_requerida: 0.95, gusanos: 3},
   },
 };
 
@@ -480,6 +627,27 @@ export const BACALAO_NIVELES = {
       moscas_frecuencia: 0.5,
       gusanos: 0,
     }
+  },
+  'bacalao-3-salado': {
+    nombre: 'El bacalao muy salado',
+    corto: 'Muy salado',
+    dificultad: 4, bloque: 'DESALAR',
+    tiempoBase: 48,
+    config: {cantidad: 5, sal_nivel: 0.9, moscas_velocidad: 'normal', moscas_frecuencia: 0.7, gusanos: 0},
+  },
+  'bacalao-4-con-moscas': {
+    nombre: 'El bacalao con moscas',
+    corto: 'Con moscas',
+    dificultad: 4, bloque: 'DESALAR',
+    tiempoBase: 52,
+    config: {cantidad: 6, sal_nivel: 0.95, moscas_velocidad: 'rapida', moscas_frecuencia: 0.85, gusanos: 0},
+  },
+  'bacalao-5-la-pieza': {
+    nombre: 'La pieza entera',
+    corto: 'La pieza',
+    dificultad: 5, bloque: 'DESALAR',
+    tiempoBase: 55,
+    config: {cantidad: 7, sal_nivel: 1, moscas_velocidad: 'rapida', moscas_frecuencia: 1, gusanos: 0},
   },
 };
 
@@ -536,6 +704,34 @@ export const GARBANZO_NIVELES = {
       gusanos: 1,
     }
   },
+  'garbanzo-2-pellejudo': {
+    nombre: 'El garbanzo pellejudo',
+    corto: 'Pellejudo',
+    dificultad: 3, bloque: 'FROTAR',
+    tiempoBase: 51,
+    config: {cantidad: 12, resistencia: 2, gusanos: 2},
+  },
+  'garbanzo-3-seco': {
+    nombre: 'El garbanzo poco remojado',
+    corto: 'Poco remojado',
+    dificultad: 4, bloque: 'FROTAR',
+    tiempoBase: 55,
+    config: {cantidad: 13, resistencia: 3, gusanos: 2},
+  },
+  'garbanzo-4-el-puñado': {
+    nombre: 'El puñado de garbanzo',
+    corto: 'El puñado',
+    dificultad: 4, bloque: 'FROTAR',
+    tiempoBase: 57,
+    config: {cantidad: 15, resistencia: 3, gusanos: 3},
+  },
+  'garbanzo-5-la-libra': {
+    nombre: 'La libra de garbanzo',
+    corto: 'La libra',
+    dificultad: 5, bloque: 'FROTAR',
+    tiempoBase: 60,
+    config: {cantidad: 16, resistencia: 4, gusanos: 3},
+  },
 };
 
 // RALLAR — Sambo
@@ -549,6 +745,34 @@ export const SAMBO_NIVELES = {
       resistencia: 1,      // pasadas que pide cada media
       gusanos: 1,
     }
+  },
+  'sambo-2-maduro': {
+    nombre: 'El sambo maduro',
+    corto: 'Maduro',
+    dificultad: 3, bloque: 'RALLAR',
+    tiempoBase: 52,
+    config: {cantidad: 2, resistencia: 2, gusanos: 1},
+  },
+  'sambo-3-duro': {
+    nombre: 'El sambo duro',
+    corto: 'El duro',
+    dificultad: 4, bloque: 'RALLAR',
+    tiempoBase: 71,
+    config: {cantidad: 3, resistencia: 2, gusanos: 2},
+  },
+  'sambo-4-de-guardar': {
+    nombre: 'El sambo de guardar',
+    corto: 'De guardar',
+    dificultad: 4, bloque: 'RALLAR',
+    tiempoBase: 70,
+    config: {cantidad: 3, resistencia: 3, gusanos: 2},
+  },
+  'sambo-5-el-grande': {
+    nombre: 'El sambo grande',
+    corto: 'El grande',
+    dificultad: 5, bloque: 'RALLAR',
+    tiempoBase: 84,
+    config: {cantidad: 4, resistencia: 3, gusanos: 3},
   },
 };
 
@@ -564,6 +788,34 @@ export const MOTE_NIVELES = {
       gusanos: 1,
     }
   },
+  'mote-2-cuatro-aguas': {
+    nombre: 'El mote · cuatro aguas',
+    corto: 'Cuatro aguas',
+    dificultad: 3, bloque: 'AGITAR',
+    tiempoBase: 51,
+    config: {lavadas_requeridas: 4, agitadas_por_agua: 10, gusanos: 1},
+  },
+  'mote-3-turbia': {
+    nombre: 'El mote · el agua turbia',
+    corto: 'Agua turbia',
+    dificultad: 3, bloque: 'AGITAR',
+    tiempoBase: 56,
+    config: {lavadas_requeridas: 4, agitadas_por_agua: 12, gusanos: 2},
+  },
+  'mote-4-cinco-aguas': {
+    nombre: 'El mote · cinco aguas',
+    corto: 'Cinco aguas',
+    dificultad: 4, bloque: 'AGITAR',
+    tiempoBase: 63,
+    config: {lavadas_requeridas: 5, agitadas_por_agua: 12, gusanos: 2},
+  },
+  'mote-5-hasta-clara': {
+    nombre: 'El mote hasta el agua clara',
+    corto: 'Hasta clara',
+    dificultad: 5, bloque: 'AGITAR',
+    tiempoBase: 68,
+    config: {lavadas_requeridas: 6, agitadas_por_agua: 12, gusanos: 3},
+  },
 };
 
 // DESMENUZAR — Queso y leche
@@ -577,6 +829,34 @@ export const QUESO_NIVELES = {
       moscas_frecuencia: 0.35,
       gusanos: 0,
     }
+  },
+  'queso-2-con-moscas': {
+    nombre: 'El queso con moscas',
+    corto: 'Con moscas',
+    dificultad: 3, bloque: 'DESMENUZAR',
+    tiempoBase: 40,
+    config: {pedazos: 14, moscas_frecuencia: 0.55, gusanos: 0},
+  },
+  'queso-3-desmenuzado': {
+    nombre: 'El queso bien desmenuzado',
+    corto: 'Desmenuzado',
+    dificultad: 4, bloque: 'DESMENUZAR',
+    tiempoBase: 41,
+    config: {pedazos: 16, moscas_frecuencia: 0.7, gusanos: 0},
+  },
+  'queso-4-la-bola': {
+    nombre: 'La bola de queso',
+    corto: 'La bola',
+    dificultad: 4, bloque: 'DESMENUZAR',
+    tiempoBase: 42,
+    config: {pedazos: 18, moscas_frecuencia: 0.85, gusanos: 0},
+  },
+  'queso-5-el-enjambre': {
+    nombre: 'El queso y el enjambre',
+    corto: 'El enjambre',
+    dificultad: 5, bloque: 'DESMENUZAR',
+    tiempoBase: 42,
+    config: {pedazos: 20, moscas_frecuencia: 1, gusanos: 0},
   },
 };
 
@@ -592,6 +872,34 @@ export const HUEVO_NIVELES = {
       gusanos: 0,
     }
   },
+  'huevo-2-media-docena': {
+    nombre: 'Media docena de huevos',
+    corto: 'Media docena',
+    dificultad: 3, bloque: 'CASCAR',
+    tiempoBase: 57,
+    config: {cantidad: 4, golpes: 4, gusanos: 0},
+  },
+  'huevo-3-duros': {
+    nombre: 'Los huevos bien duros',
+    corto: 'Bien duros',
+    dificultad: 3, bloque: 'CASCAR',
+    tiempoBase: 64,
+    config: {cantidad: 4, golpes: 5, gusanos: 0},
+  },
+  'huevo-4-cascara-pegada': {
+    nombre: 'La cáscara pegada',
+    corto: 'Cáscara pegada',
+    dificultad: 4, bloque: 'CASCAR',
+    tiempoBase: 73,
+    config: {cantidad: 5, golpes: 5, gusanos: 0},
+  },
+  'huevo-5-la-docena': {
+    nombre: 'La docena',
+    corto: 'La docena',
+    dificultad: 5, bloque: 'CASCAR',
+    tiempoBase: 79,
+    config: {cantidad: 6, golpes: 5, gusanos: 0},
+  },
 };
 
 // ARMAR — La guarnición
@@ -605,6 +913,34 @@ export const GUARNICION_NIVELES = {
       resistencia: 0,      // aprieta la ventana del volteo
       gusanos: 0,
     }
+  },
+  'guarnicion-2-dos-platos': {
+    nombre: 'Dos platos servidos',
+    corto: 'Dos platos',
+    dificultad: 3, bloque: 'ARMAR',
+    tiempoBase: 95,
+    config: {presas: 4, resistencia: 1, gusanos: 0},
+  },
+  'guarnicion-3-el-maduro': {
+    nombre: 'El maduro en su punto',
+    corto: 'El maduro',
+    dificultad: 4, bloque: 'ARMAR',
+    tiempoBase: 96,
+    config: {presas: 4, resistencia: 2, gusanos: 0},
+  },
+  'guarnicion-4-la-mesa': {
+    nombre: 'La mesa entera',
+    corto: 'La mesa',
+    dificultad: 4, bloque: 'ARMAR',
+    tiempoBase: 108,
+    config: {presas: 5, resistencia: 2, gusanos: 0},
+  },
+  'guarnicion-5-la-casa-llena': {
+    nombre: 'La casa llena',
+    corto: 'La casa llena',
+    dificultad: 5, bloque: 'ARMAR',
+    tiempoBase: 128,
+    config: {presas: 6, resistencia: 3, gusanos: 0},
   },
 };
 

@@ -18,6 +18,7 @@
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
+import { rejillaEnTabla } from './motor3d.js';
 
 let THREE, raiz, api;
 
@@ -143,25 +144,19 @@ export default {
         ? api.MESA_Y + 0.10 : api.MESA_Y,
     });
 
-    /* la rejilla de los chochos, que es la que cabe en la tabla */
-    const COLS = Math.max(1, Math.round(Math.sqrt(TOTAL * FORMA_REJILLA)));
-    const FILAS = Math.ceil(TOTAL / COLS);
-    const MARGEN = 0.35;
-    /* 0.56 y no 0.62: con cuatro columnas y el corrimiento de las
-       hileras impares, el garbanzo de la orilla derecha llegaba a
-       1.21 y la cámara cercana lo cortaba por el filo (ancho seguro
-       ±1.18). Así queda en 1.1 con margen. */
-    const pasoX = COLS > 1 ? Math.min(0.56, (ANCHO_TABLA - MARGEN * 2) / (COLS - 1)) : 0.56;
-    const pasoZ = FILAS > 1 ? Math.min(0.46, (HONDO_TABLA - MARGEN * 2) / (FILAS - 1)) : 0.46;
-    for (let i = 0; i < TOTAL; i++) {
-      const f = Math.floor(i / COLS), c = i - f * COLS;
-      const enFila = Math.min(COLS, TOTAL - f * COLS);
-      const x = (c - (enFila - 1) / 2) * pasoX + (f % 2 ? pasoX * 0.22 : 0);
-      const z = TABLA_Z + (f - (FILAS - 1) / 2) * pasoZ;
-      const rec = nuevoGarbanzo(x, z, i);
+    /* El reparto lo hace el motor: el 0.56 de aquí era un número
+       puesto a mano para que la fila de delante no se saliera, y al
+       subir la cantidad dejó de alcanzar. El motor pregunta a la
+       cámara cuánto abarca a cada profundidad. */
+    const sitios = rejillaEnTabla({
+      total: TOTAL, forma: FORMA_REJILLA, pasoX: 0.62, pasoZ: 0.46,
+      z: TABLA_Z, hondo: HONDO_TABLA, margen: 0.35,
+    });
+    sitios.forEach((s, i) => {
+      const rec = nuevoGarbanzo(s.x, s.z, i);
       grupo.add(rec.obj);
       granos.push(rec);
-    }
+    });
 
     this._sueltos = 0;
     api.progreso(0, TOTAL);

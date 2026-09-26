@@ -53,7 +53,10 @@ const bolsa = await p.evaluate(() => ({
   dock: (document.querySelector('#bolsa-sigue') || {}).textContent,
 }));
 ok('B6 la bolsa abre su propia pantalla', bolsa.pantalla === 'screen-bolsa' && /haba/i.test(bolsa.titulo || ''), `${bolsa.pantalla} · ${bolsa.titulo}`);
-ok('B7 con los niveles de ESE ingrediente', bolsa.niveles.length === 2 && bolsa.niveles.every(id => id.startsWith('habas')), bolsa.niveles.join(', '));
+/* cuántos son lo dice el catálogo, no esta prueba: la bolsa creció de
+   dos a cinco y una cuenta escrita aquí se habría quedado atrás */
+const cuantas = await p.evaluate(() => window.Fanesca.ruta.filter(n => n.bolsa === 'habas').length);
+ok('B7 con los niveles de ESE ingrediente', bolsa.niveles.length === cuantas && cuantas >= 3 && bolsa.niveles.every(id => id.startsWith('habas')), bolsa.niveles.join(', '));
 ok('B8 y sólo el primero abierto', bolsa.abiertos === 1, bolsa.abiertos + ' abierto(s)');
 
 /* el choclo: la feria de primero, y dieciocho peldaños */

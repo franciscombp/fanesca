@@ -117,6 +117,79 @@ const UMBRAL_ARRASTRE = 8;                               /* px antes de consider
    sale de quien manda: la cámara. */
 export const ANCHO_SEGURO = 1.18;
 
+/* ...PERO ESO ES EN EL PUNTO QUE LA CÁMARA MIRA. Más cerca del ojo la
+   pantalla abarca MENOS mundo, así que una fila puesta delante del
+   punto mirado se sale por los lados aunque respete el número de
+   arriba. Ya pasó dos veces: seis de los dieciséis cuencos del
+   caldero quedaron fuera, y luego tres chochos de una rejilla que se
+   acotaba al ancho de la tabla.
+
+   `anchoSeguroEn(z)` contesta lo mismo que ANCHO_SEGURO pero a la
+   profundidad que se le pida. Sale de la proporción de distancias:
+   lo que se ve crece con lo lejos que está. */
+export function anchoSeguroEn(z) {
+  if (!camera) return ANCHO_SEGURO;
+  const aqui = camera.position.distanceTo(new THREE.Vector3(0, MESA_Y, z));
+  const alla = camera.position.distanceTo(camMira) || aqui;
+  return ANCHO_SEGURO * (aqui / alla);
+}
+
+/* ============================================================
+   LA REJILLA DE UNA TABLA, en un solo sitio.
+
+   Los chochos y el garbanzo tenían ESTE MISMO CÓDIGO copiado, con la
+   misma constante puesta a mano y el mismo comentario explicando por
+   qué era 0.56. Copiado quiere decir que el día que uno se arregle el
+   otro no se entera — y eso es justo lo que pasó: al subirles la
+   cantidad, a los dos se les salieron tres piezas por el mismo lado.
+
+   El paso se aprieta hasta que la FILA MÁS APRETADA quepa. La más
+   apretada es la de delante —la cámara abarca menos mundo cuanto más
+   cerca del ojo— y, si lleva desfase, la impar. Un solo paso para
+   toda la rejilla: uno por fila la dejaría ragged, y una mesa de
+   cocina no está ragged.
+
+   Apretar nunca estira: con pocas piezas la separación sigue siendo
+   la de siempre.
+   ============================================================ */
+export function rejillaEnTabla(opts) {
+  const total = Math.max(1, Math.round(opts.total));
+  const forma = opts.forma != null ? opts.forma : 1.333;
+  const cols = Math.max(1, Math.round(Math.sqrt(total * forma)));
+  const filas = Math.ceil(total / cols);
+  const margen = opts.margen != null ? opts.margen : 0.35;
+  const desfase = opts.desfase != null ? opts.desfase : 0.22;
+  const zCentro = opts.z || 0;
+  const pasoZ = filas > 1
+    ? Math.min(opts.pasoZ, (opts.hondo - margen * 2) / (filas - 1))
+    : opts.pasoZ;
+
+  /* de todas las filas, cuál deja menos sitio a cada lado */
+  let pasoX = opts.pasoX;
+  for (let f = 0; f < filas; f++) {
+    const z = zCentro + (f - (filas - 1) / 2) * pasoZ;
+    const enFila = Math.min(cols, total - f * cols);
+    if (enFila < 2) continue;
+    const cabe = anchoSeguroEn(z) - margen;
+    /* medio ancho de la fila = (enFila−1)/2 pasos, más el desfase si
+       es impar; se despeja el paso que hace que eso quepa */
+    const unidades = (enFila - 1) / 2 + (f % 2 ? desfase : 0);
+    pasoX = Math.min(pasoX, cabe / unidades);
+  }
+
+  const sitios = [];
+  for (let i = 0; i < total; i++) {
+    const f = Math.floor(i / cols), c = i - f * cols;
+    const enFila = Math.min(cols, total - f * cols);
+    sitios.push({
+      x: (c - (enFila - 1) / 2) * pasoX + (f % 2 ? pasoX * desfase : 0),
+      z: zCentro + (f - (filas - 1) / 2) * pasoZ,
+      fila: f, col: c,
+    });
+  }
+  return sitios;
+}
+
 let renderer, scene, camera, clock, raf = null, activo = false;
 let raiz = null;                 /* donde el nivel arma lo suyo */
 let nivel = null;                /* módulo de nivel en curso */

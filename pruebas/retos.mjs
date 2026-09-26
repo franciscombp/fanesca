@@ -50,8 +50,21 @@ const retosDe = async (bolsa) => {
 let r = await retosDe('queso');
 ok('R1 el queso no ofrece cazagusanos (no trae un bicho)',
   !r.some(x => /cazagusanos/i.test(x.titulo)), r.map(x => x.titulo).join(', '));
-ok('R2 ni «la bolsa entera» con un solo nivel',
-  !r.some(x => /bolsa entera/i.test(x.titulo)), r.map(x => x.titulo).join(', '));
+/* R2: «la bolsa entera» no se ofrece en una bolsa de UN nivel —ahí
+   saldría gratis con el primero—. Desde que cada bolsa tiene su
+   escalera ya no queda ninguna así en el catálogo, así que la regla
+   se prueba directamente contra retos.js con un resumen de juguete:
+   que no haya a quién aplicársela hoy no quiere decir que pueda
+   romperse sin que nadie se entere. */
+const regla = await p.evaluate(async () => {
+  const { retosDe, metasDe } = await import('./retos.js');
+  const uno = { ...metasDe(1, 1), hechos: 0, tresCucharas: 0, limpios: 0, bichos: 0 };
+  const cinco = { ...metasDe(5, 5), hechos: 0, tresCucharas: 0, limpios: 0, bichos: 0 };
+  return { uno: retosDe(uno).map(r => r.id), cinco: retosDe(cinco).map(r => r.id) };
+});
+ok('R2 «la bolsa entera» no se ofrece en una bolsa de un solo nivel',
+  !regla.uno.includes('entera') && regla.cinco.includes('entera'),
+  `un nivel: ${regla.uno.join(',')} · cinco: ${regla.cinco.join(',')}`);
 
 /* ---- R3: el choclo ofrece los cuatro, con metas de su tamaño ---- */
 r = await retosDe('maiz');
@@ -67,19 +80,31 @@ const caza = r.find(x => /cazagusanos/i.test(x.titulo));
 ok('R6 sin bichos salvados, el cazagusanos va en cero', /^0 \//.test(caza.marca), caza.marca);
 
 /* ---- R7: un reto cumplido se ve ganado ----
-   La bolsa de las habas con sus dos niveles a tres cucharas cumple
-   «mano rápida» (pide 1 de 2) y «la bolsa entera». */
-await cargar({ vistoPortada: true, mapa: 'bolsas', despensaVista: true, mejores: {
-  'habas-1-facil': { ms: 30000, cucharas: 3, limpio: true, bichos: 2 },
-  'habas-2-normal': { ms: 40000, cucharas: 3, limpio: true, bichos: 2 },
-} });
+   Los niveles de la bolsa se leen DEL JUEGO y no se escriben aquí:
+   la prueba vieja daba por hecho que las habas tenían dos, y el día
+   que la bolsa creció a cinco se quedó midiendo una bolsa que ya no
+   existía. */
+const habas = await p.evaluate(() => window.Fanesca.ruta.filter(n => n.bolsa === 'habas').map(n => n.id));
+await cargar({ vistoPortada: true, mapa: 'bolsas', despensaVista: true,
+  mejores: Object.fromEntries(habas.map((id, i) => [id, { ms: 30000 + i * 1000, cucharas: 3, limpio: true, bichos: 2 }])) });
 r = await retosDe('habas');
 const ganados = r.filter(x => x.hecho).map(x => x.titulo);
-ok('R7 con los dos niveles a tres cucharas, limpios y cuatro bichos, caen los cuatro',
+ok(`R7 con los ${habas.length} niveles a tres cucharas, limpios y con bichos, caen los cuatro`,
   ganados.length === 4, ganados.join(', '));
 const caza2 = r.find(x => /cazagusanos/i.test(x.titulo));
-ok('R8 el cazagusanos de una bolsa chica pide tres, y cuatro los pasa',
+ok('R8 y el cazagusanos cuenta la suma de todos sus niveles',
   caza2 && caza2.hecho, caza2 && caza2.marca);
+
+/* ---- R8b: a medio camino, la cuenta es honesta ---- */
+await cargar({ vistoPortada: true, mapa: 'bolsas', despensaVista: true,
+  mejores: { [habas[0]]: { ms: 30000, cucharas: 3, limpio: true, bichos: 1 } } });
+r = await retosDe('habas');
+const rap = r.find(x => /rápida/i.test(x.titulo));
+ok('R8b con un nivel de cinco, «mano rápida» dice cuánto falta', rap && !rap.hecho && /^1 \/ 3$/.test(rap.marca), rap && rap.marca);
+
+/* R9 vuelve a la bolsa completa */
+await cargar({ vistoPortada: true, mapa: 'bolsas', despensaVista: true,
+  mejores: Object.fromEntries(habas.map((id, i) => [id, { ms: 30000 + i * 1000, cucharas: 3, limpio: true, bichos: 2 }])) });
 
 /* ---- R9: la despensa enseña la medalla ---- */
 await p.evaluate(() => window.Fanesca.mostrar('mesa'));

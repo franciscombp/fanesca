@@ -30,10 +30,27 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.3.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.3.0',
+    fecha: '2026-09-24',
+    titulo: 'Cada bolsa tiene su escalera',
+    cambios: [
+      '🪜 <b>De 49 niveles a 97.</b> Catorce bolsas tenían dos peldaños o menos —seis tenían uno— y la promesa del menú nuevo era poder quedarse en un ingrediente. Ahora ninguna baja de tres y catorce tienen cinco.',
+      '🫘 <b>Y cada escalera enseña algo.</b> El chocho que salta más, el fréjol que no cede, la col en pelo de ángel, la quinua que no deja de hacer espuma, el bacalao con moscas, la casa llena de platos que servir.',
+      '⏱ <b>Los tiempos no están puestos a ojo.</b> Salen del trabajo real de cada nivel y de cuánto más rápido se espera que vayan tus manos en cada peldaño. Un marcador que siempre da tres cucharas no mide nada.',
+      '📺 <b>Ninguna pieza queda fuera de la pantalla.</b> Subir las cantidades dejaba chochos y garbanzos donde el dedo no llega.',
+    ],
+    internos: [
+      'pruebas/tiempos.mjs reconstruye la derivación que se había perdido: t = k · carga / presión, con k anclado en el primer nivel de cada ingrediente (el probado con los dedos) y la presión como única decisión de diseño. El informe enseña la presión IMPLÍCITA de cada peldaño, que es lo que deja ver la forma de una escalera.',
+      'pruebas/catalogo.mjs: monta LOS 97 niveles uno por uno y comprueba que armen su mesón, que ninguna bolsa baje de tres, que la dificultad no baje dentro de un gesto y que ninguna pieza caiga fuera de la pantalla. Es la red que faltaba: un nivel roto no se notaba hasta que alguien llegaba a él jugando.',
+      'rejillaEnTabla() y anchoSeguroEn(z) en motor3d: el reparto en rejilla estaba COPIADO en los chochos y el garbanzo, acotado al ancho de la tabla, y la tabla es más ancha que lo que la cámara enseña en las filas de delante. Ahora se pregunta a la cámara cuánto abarca a cada profundidad.',
+      '`dedo` afirma sólo los dos extremos de la deriva en el botón de El Apuro: la raya exacta la pone la tolerancia del navegador y afirmarla convertía la prueba en una moneda al aire.',
+    ],
+  },
   {
     v: '4.2.0',
     fecha: '2026-09-24',

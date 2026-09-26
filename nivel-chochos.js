@@ -20,6 +20,7 @@
    ============================================================ */
 
 import { nuevaPlaga } from './plaga.js';
+import { rejillaEnTabla } from './motor3d.js';
 
 let THREE, raiz, api;
 
@@ -163,21 +164,21 @@ export default {
        chochos la separación sigue siendo la de siempre—, que además
        mantiene a todos sobre la tabla, que es donde el gorgojo camina
        a la altura correcta. */
-    const MARGEN = 0.35;   /* medio chocho: que ninguno cuelgue del filo */
-    const pasoX = COLS > 1 ? Math.min(PASO_X, (ANCHO_TABLA - MARGEN * 2) / (COLS - 1)) : PASO_X;
-    const pasoZ = FILAS > 1 ? Math.min(PASO_Z, (HONDO_TABLA - MARGEN * 2) / (FILAS - 1)) : PASO_Z;
-
-    for (let i = 0; i < TOTAL; i++) {
-      const f = Math.floor(i / COLS), c = i - f * COLS;
-      /* la última fila puede ir corta, y va centrada por su propia
-         cuenta: colgada a la izquierda se leería como un error */
-      const enFila = Math.min(COLS, TOTAL - f * COLS);
-      const x = (c - (enFila - 1) / 2) * pasoX + (f % 2 ? pasoX * 0.22 : 0);
-      const z = TABLA_Z + (f - (FILAS - 1) / 2) * pasoZ;
-      const rec = nuevoChocho(x, z, i);
+    /* El reparto lo hace el motor, que es quien sabe cuánto mundo
+       abarca la pantalla a cada profundidad. Aquí estaba copiado —el
+       mismo bloque que en el garbanzo— acotado al ancho de la TABLA,
+       y la tabla es más ancha que lo que la cámara enseña en las
+       filas de delante: pasada la docena se salían tres por el filo
+       derecho. */
+    const sitios = rejillaEnTabla({
+      total: TOTAL, forma: FORMA_REJILLA, pasoX: PASO_X, pasoZ: PASO_Z,
+      z: TABLA_Z, hondo: HONDO_TABLA, margen: 0.35,
+    });
+    sitios.forEach((s, i) => {
+      const rec = nuevoChocho(s.x, s.z, i);
       chochosGrupo.add(rec.obj);
       chochos.push(rec);
-    }
+    });
 
     /* los gorgojos salen a mitad de faena, cuando ya agarraste ritmo:
        es cuando de verdad duele tener que frenar y mirar */
