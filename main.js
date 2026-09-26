@@ -510,7 +510,7 @@ function pintarPortada() {
   const niveles = RUTA.filter(n => estaListo(n.id)).length;
   const plato = platoDe(loQueSabe());
   if (avance) {
-    avance.textContent = hechos ? `${hechos} de ${ORDEN_BOLSAS.length} ingredientes · ${niveles} niveles` : '';
+    avance.textContent = hechos ? `${hechos} de ${ORDEN_BOLSAS.length} ingredientes · ${niveles} ${niveles === 1 ? 'nivel' : 'niveles'}` : '';
     avance.classList.toggle('hidden', !hechos);
   }
   /* LA TARJETA DE AVANCE, sólo con partida: el anillo de la despensa
@@ -837,7 +837,7 @@ function fichaBolsa(bolsa) {
     ${abierta && hechos > 0 ? `<span class="bolsa-barra" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ''}
     ${medallas ? `<span class="bolsa-medallas" aria-hidden="true">🏅${medallas}</span>` : (completa ? '<span class="bolsa-sello" aria-hidden="true">✓</span>' : '')}`;
   b.setAttribute('aria-label', `${ing ? ing.nombre : bolsa}${abierta
-    ? ` · ${hechos} de ${niveles.length} niveles${medallas ? ` · ${medallas} retos` : ''}`
+    ? ` · ${hechos} de ${niveles.length} niveles${medallas ? ` · ${medallas} ${medallas === 1 ? 'reto' : 'retos'}` : ''}`
     : ' (cerrada)'}`);
   tocable(b, () => {
     sfx('tab');
@@ -918,7 +918,7 @@ function renderMesa() {
     btnApuroEl.classList.toggle('hidden', !hayApuro);
     const pie = btnApuroEl.querySelector('#btn-apuro-pie');
     if (pie) pie.textContent = estado.apuro
-      ? `Tu récord: ${estado.apuro.raciones} raciones`
+      ? `Tu récord: ${estado.apuro.raciones} ${estado.apuro.raciones === 1 ? 'ración' : 'raciones'}`
       : 'Raciones sin fin, contra el reloj';
     if (hayApuro) $('#mesa-extras').appendChild(btnApuroEl);
   }
