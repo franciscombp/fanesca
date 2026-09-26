@@ -565,7 +565,9 @@ svg[width="0"] { width: 0; height: 0; }
 .pagina--viernes .pagina-pasos { flex: 1 1 auto; grid-template-rows: repeat(2, minmax(0, 1fr)); }
 .viernes-promesa {
   flex: 0 0 auto;
-  margin: 0; padding: 0 var(--sp-4) .4rem;
+  /* el aire en el margen, como en .mesa-plato-nota: con padding asoma
+     la tercera línea bajo el recorte */
+  margin: 0 0 .4rem; padding: 0 var(--sp-4);
   font-size: var(--t-xs); line-height: 1.35; color: var(--text-muted);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
@@ -1684,7 +1686,10 @@ body.con-editor #stage { margin-right: 340px; }
 #screen-bolsa .sign-sub { font-size: clamp(.72rem, 3.4vw, .9rem); line-height: 1.2; }
 .mesa-plato-nota {
   flex: 0 0 auto;
-  margin: 0; padding: 0 var(--sp-4) var(--sp-2);
+  /* el aire de abajo va en el MARGEN: el recorte de las dos líneas
+     corta en el borde del padding, y con el aire como padding asomaba
+     media tercera línea bajo los puntos suspensivos */
+  margin: 0 0 var(--sp-2); padding: 0 var(--sp-4);
   font-size: var(--t-2xs); line-height: 1.35; color: rgba(255,244,226,.6);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
