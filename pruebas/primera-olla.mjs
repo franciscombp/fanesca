@@ -1,5 +1,10 @@
 /* LA PRIMERA OLLA — la de alguien que acaba de desvainar sus habas.
 
+   Arranca DE CERO, como un jugador nuevo: termina el primer nivel de
+   las habas y la hoja de listo tiene que contarle que ya tiene un
+   plato —es la promesa del juego: cada bolsa mejora la olla— y
+   llevarlo a cocinarlo con un toque.
+
    Es lo que cocina un jugador nuevo en sus dos primeros minutos: un
    mesón de habas y un caldero con UN cuenco. La olla de dieciséis ya
    tiene su prueba (olla.mjs, caldero.mjs); ésta mira que la chica no
@@ -31,13 +36,32 @@ await p.evaluate(async () => {
   localStorage.clear();
   localStorage.setItem('fanesca_v1', JSON.stringify({
     vistoPortada: true, mapa: 'bolsas', holaVisto: true,
-    mejores: { 'habas-1-facil': { ms: 30000, cucharas: 3 } },
   }));
 });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2400);
 await p.evaluate(() => document.querySelectorAll('.aviso-actualizar, .modal.open').forEach(x => x.remove()));
 await p.click('#btn-empezar'); await p.waitForTimeout(800);
 
+/* ---- P0: el primer nivel de las habas trae el primer plato ---- */
+const sinPlato = await p.evaluate(() => window.Fanesca.plato);
+await p.evaluate(() => window.Fanesca.jugar('habas-1-facil'));
+for (let t = 0; t < 60; t++) { if (await p.evaluate(() => !!window.Fanesca.modulo)) break; await p.waitForTimeout(150); }
+await p.waitForTimeout(600);
+await p.evaluate(() => { window.Fanesca.api.progreso(0, 999); window.Fanesca.api.progreso(999, 999); window.Fanesca.api.completar(); });
+let hoja = null;
+for (let t = 0; t < 40; t++) {
+  hoja = await p.evaluate(() => ({
+    abierta: !!document.querySelector('#modal-listo.open'),
+    plato: !!document.querySelector('#listo-plato:not(.hidden)'),
+    titulo: (document.querySelector('#listo-plato-titulo') || {}).textContent,
+    eyebrow: (document.querySelector('#listo-plato-eyebrow') || {}).textContent,
+  }));
+  if (hoja.abierta) break;
+  await p.waitForTimeout(150);
+}
+ok('P0 sin bolsas no hay plato, y el primer nivel lo estrena en la hoja',
+  !sinPlato && hoja.abierta && hoja.plato && hoja.titulo === 'Habas cocinadas' && /primer plato/.test(hoja.eyebrow),
+  `${hoja.eyebrow} · ${hoja.titulo}`);
 /* ---- P1/P2: la receta de hoy son las habas, y nada más ---- */
 const plan = await p.evaluate(() => {
   const F = window.Fanesca;
@@ -48,7 +72,11 @@ const plan = await p.evaluate(() => {
 ok('P1 la primera olla son dos pasos: las habas y el caldero', plan.bases.join(',') === 'habas,caldero', plan.bases.join(' → '));
 ok('P2 y el caldero lleva un solo cuenco', JSON.stringify(plan.receta) === '["habas"]', JSON.stringify(plan.receta));
 
-await p.evaluate(() => document.querySelector('#btn-sigue').click());
+/* el renglón del plato lleva directo a la olla */
+await p.tap('#listo-plato');
+let enOlla = false;
+for (let t = 0; t < 40 && !enOlla; t++) { enOlla = await p.evaluate(() => window.Fanesca.Olla.activo); if (!enOlla) await p.waitForTimeout(150); }
+ok('P2b tocar el plato de la hoja pone la olla al fuego', enOlla);
 
 /* el mesón de las habas se da por hecho empujando su cuota entera:
    aquí se prueba la olla, no el desvaine (ése tiene su prueba) */
@@ -136,6 +164,19 @@ ok('P10 el resumen se titula con el plato', fin.abierto && fin.titulo === '¡Hab
 ok('P11 el récord es de las habas, no de «tu primera fanesca»', /habas cocinadas/.test(fin.mejor) && !/fanesca/.test(fin.mejor) && !!fin.record, fin.mejor);
 ok('P12 y dice qué plato sigue', fin.sigueVisible && /chochos/.test(fin.sigue) && /sopa de granos tiernos/.test(fin.sigue), fin.sigue);
 ok('P13 la receta de memoria no se regala con un solo cuenco', fin.logros.includes('primera') && !fin.logros.includes('receta'), fin.logros.join(','));
+
+/* ---- P0b: repetir el nivel no vuelve a anunciar el plato ---- */
+await p.evaluate(() => { document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); window.Fanesca.jugar('habas-1-facil'); });
+for (let t = 0; t < 60; t++) { if (await p.evaluate(() => (window.Fanesca.modulo || {}).id === 'habas' && !window.Fanesca.Olla.activo)) break; await p.waitForTimeout(150); }
+await p.waitForTimeout(600);
+await p.evaluate(() => { window.Fanesca.api.progreso(0, 999); window.Fanesca.api.progreso(999, 999); window.Fanesca.api.completar(); });
+let otra = null;
+for (let t = 0; t < 40; t++) {
+  otra = await p.evaluate(() => ({ abierta: !!document.querySelector('#modal-listo.open'), plato: !!document.querySelector('#listo-plato:not(.hidden)') }));
+  if (otra.abierta) break;
+  await p.waitForTimeout(150);
+}
+ok('P0b la segunda vez el plato ya no es noticia', otra.abierta && !otra.plato);
 
 console.log('---');
 console.log(V.some(v => v.startsWith('✗')) ? 'HAY FALLOS' : 'TODO VERDE');

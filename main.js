@@ -2672,6 +2672,8 @@ function terminarNivel() {
   /* los retos se miran ANTES de guardar: lo que se gana en esta
      partida es la diferencia entre el antes y el después */
   const retosAntes = retosGanados(n.bolsa);
+  /* y el plato, por lo mismo: si esta partida lo sube, es noticia */
+  const platoAntes = platoDe(loQueSabe());
   const m = estado.mejores[n.id] = { ...(previo || {}) };
   if (esRecord || !m.ms) m.ms = Math.round(tiempoMs);
   m.cucharas = Math.max(m.cucharas || 0, cuch);
@@ -2773,6 +2775,17 @@ function terminarNivel() {
         $('#listo-reto-titulo').textContent = reto.titulo;
         $('#listo-reto-txt').textContent = reto.texto;
         setTimeout(() => { sfx('fiesta'); buzz([18, 30, 18]); celebrar(26); }, 900);
+      }
+    }
+
+    const platoAhora = platoDe(loQueSabe());
+    const cajaPlato = $('#listo-plato');
+    if (cajaPlato) {
+      const subio = platoAhora && (!platoAntes || platoAhora.id !== platoAntes.id);
+      cajaPlato.classList.toggle('hidden', !subio);
+      if (subio) {
+        $('#listo-plato-eyebrow').textContent = platoAntes ? 'la olla sube de plato' : 'tu primer plato';
+        $('#listo-plato-titulo').textContent = platoAhora.nombre;
       }
     }
 
@@ -2970,6 +2983,14 @@ function bindEventos() {
     Motor.descargar(); Motor.setActive(false);
     nivelActual = null; modActual = null;
     mostrar('cuaderno');
+  });
+  /* el plato que subió lleva DIRECTO a la olla, por la misma razón */
+  tocable($('#listo-plato'), () => {
+    sfx('tab');
+    cerrarModales();
+    Motor.descargar(); Motor.setActive(false);
+    nivelActual = null; modActual = null;
+    arrancarOlla();
   });
   /* la hoja de la cocina: dónde se cocina, fuera del recetario */
   const btnCocina = $('#btn-cocina');

@@ -1608,6 +1608,15 @@ body.con-editor #stage { margin-right: 340px; }
   line-height: 1.2;
 }
 .listo-nota-ir { flex: 0 0 auto; font-size: 1.2rem; color: var(--text-muted); }
+/* el plato nuevo: la misma fila, pero en oro y con borde lleno — es
+   una noticia, no una nota al margen */
+.listo-plato {
+  background: linear-gradient(180deg, #fff3d6, #ffe6ab);
+  border: 1.5px solid rgba(224,161,44,.65);
+  animation: reto-entra .5s var(--ease-spring) both .6s;
+}
+.listo-plato .listo-nota-txt small { color: var(--maiz-800); opacity: .75; }
+.listo-plato .listo-nota-txt strong { color: var(--maiz-800); }
 
 /* ---- el orden de la olla, en el cuaderno ---- */
 .orden-olla { list-style: none; margin: var(--sp-2) 0 0; padding: 0; }
