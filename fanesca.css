@@ -836,6 +836,12 @@ svg[width="0"] { width: 0; height: 0; }
   .mesa-frase { font-size: 1.15rem; }
   .consola-head { padding-block: .3rem; }
   .capitulo-portada-ic { width: 72px; height: 72px; }
+  /* la bienvenida en un teléfono chico (360 × 640): con el plato de
+     120 px, «Ver la despensa primero» quedaba bajo el borde. El
+     plato baja al tamaño de las otras hojas y el título aprieta */
+  #modal-hola .sheet-hero--olla { width: 84px; height: 84px; }
+  #modal-hola .sheet-title { font-size: var(--t-xl); }
+  #modal-hola .sheet-body { font-size: var(--t-sm); }
 }
 
 /* ============================================================
