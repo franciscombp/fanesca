@@ -27,8 +27,37 @@ await p.evaluate(async (s) => {
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200);
 await p.evaluate(() => document.querySelectorAll('[class*=actualiz]').forEach(x => x.remove()));
 
+/* 0 · EL SONIDO SE APAGA EN LA PORTADA, se recuerda y calla de
+   verdad. Se cuentan los osciladores que crea el juego: con el
+   silencio puesto, abrir la despensa (que suena) no crea ninguno. */
+await p.evaluate(() => {
+  window.__osc = 0;
+  const P = (window.AudioContext || window.webkitAudioContext).prototype;
+  const orig = P.createOscillator;
+  P.createOscillator = function () { window.__osc++; return orig.call(this); };
+});
+/* 900 ms y no 200: el juego se traga el click que llega justo detrás
+   de un toque (es el antifantasma de `tocable`), y abrir la despensa
+   enseguida no probaba nada */
+await p.tap('#btn-sonido'); await p.waitForTimeout(900);
+const mudo = await p.evaluate(() => ({
+  txt: document.querySelector('#btn-sonido').textContent,
+  guardado: JSON.parse(localStorage.getItem('fanesca_v1')).silencio,
+  osc: window.__osc,
+}));
+ok('S0 el botón de la portada apaga el sonido y se recuerda', /sin sonido/.test(mudo.txt) && mudo.guardado === true && mudo.osc === 0, JSON.stringify(mudo));
+/* y el contrario, que es lo que le da sentido al cero de arriba: al
+   encenderlo suena el toque de prueba. Luego se vuelve a apagar. */
+await p.tap('#btn-sonido'); await p.waitForTimeout(300);
+const suena = await p.evaluate(() => window.__osc);
+await p.tap('#btn-sonido'); await p.waitForTimeout(900);
+await p.evaluate(() => { window.__osc = 0; });
+ok('S0a encenderlo suena, así que el silencio calla algo que sí sonaba', suena > 0, 'osciladores: ' + suena);
+
 /* 1 · la portada abre la despensa */
 await p.click('#btn-empezar'); await p.waitForTimeout(900);
+const trasAbrir = await p.evaluate(() => ({ osc: window.__osc, pantalla: document.querySelector('.screen.active').id }));
+ok('S0b y en silencio abrir la despensa no suena', trasAbrir.pantalla === 'screen-mesa' && trasAbrir.osc === 0, JSON.stringify(trasAbrir));
 let r = await p.evaluate(() => ({
   pantalla: document.querySelector('.screen.active').id,
   bolsas: document.querySelectorAll('#mesa-lista .bolsa').length,

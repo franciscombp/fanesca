@@ -59,6 +59,9 @@ function nuevoEstado() {
     despensaVista: false,
     /* la hoja de bienvenida, también una sola vez */
     holaVisto: false,
+    /* sin sonido: para jugar en el bus, en misa o con el bebé dormido.
+       La vibración sigue, que es del teléfono y no molesta a nadie */
+    silencio: false,
     /* LA OLLA — el modo de partida completa. `olla` es la mejor
        partida TERMINADA (ms, cucharas y las marcas por acto), que es
        contra lo que se corre en las siguientes. */
@@ -427,6 +430,7 @@ const SFX = {
   fiesta:[{ f: 523, d: .12, g: .1 }, { f: 659, t: .1, d: .12, g: .1 }, { f: 784, t: .2, d: .12, g: .1 }, { f: 1046, t: .3, d: .3, g: .12 }],
 };
 function sfx(tipo, tono = 1) {
+  if (estado.silencio) return;
   initAudio(); if (!audioCtx) return;
   const now = audioCtx.currentTime;
   (SFX[tipo] || []).forEach(n => {
@@ -526,6 +530,13 @@ function pintarPortada() {
     reiniciar.classList.remove('hidden');
     if (!hechos) reiniciar.textContent = '↻ Empezar desde cero';
   }
+}
+
+function pintarSonido() {
+  const b = $('#btn-sonido');
+  if (!b) return;
+  b.textContent = estado.silencio ? '🔇 sin sonido' : '🔊 con sonido';
+  b.setAttribute('aria-pressed', estado.silencio ? 'true' : 'false');
 }
 
 function pintarDev() {
@@ -2947,6 +2958,20 @@ function bindEventos() {
       pintarDev();
       toast(estado.devMode ? 'Modo dev: todos los niveles abiertos 🛠' : 'Modo dev desactivado');
       if ($('#screen-mesa').classList.contains('active')) renderMesa();
+    });
+  }
+
+  /* EL SONIDO se apaga en la portada, que es donde está lo que no es
+     cocinar (la versión, empezar de nuevo). Al encenderlo suena un
+     toque: es la prueba de que volvió, sin tener que ir a un nivel. */
+  const btnSonido = $('#btn-sonido');
+  if (btnSonido) {
+    pintarSonido();
+    tocable(btnSonido, () => {
+      estado.silencio = !estado.silencio;
+      guardar();
+      pintarSonido();
+      if (!estado.silencio) sfx('tab');
     });
   }
 
