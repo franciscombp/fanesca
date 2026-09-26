@@ -297,6 +297,9 @@
   <div id="modal-olla" class="modal" role="dialog" aria-modal="true" aria-labelledby="olla-eyebrow">
     <div class="sheet">
       <p id="olla-eyebrow" class="sheet-eyebrow">la fanesca está servida</p>
+      <!-- el plato que salió: la olla cocina lo que sabes, y sin esto el
+           resumen de unas habas cocinadas no decía nunca qué se cocinó -->
+      <h3 id="olla-titulo" class="sheet-title"></h3>
       <p class="apuro-cifra"><span id="olla-tiempo">0:00</span></p>
       <p id="olla-tiempo-pie" class="apuro-cifra-pie">de principio a fin</p>
       <div id="olla-cucharas" class="cucharas" aria-hidden="true"></div>
@@ -305,6 +308,7 @@
       <p class="cucharas-pie">cómo salió — sin desastres son tres</p>
       <p id="olla-detalle" class="listo-tiempo"></p>
       <p id="olla-mejor" class="listo-mejor"></p>
+      <p id="olla-sigue" class="olla-sigue hidden"></p>
       <ul id="olla-actos" class="olla-actos"></ul>
       <ul id="olla-logros" class="logros"></ul>
       <button type="button" id="olla-otra" class="btn btn--nopal btn--lg btn--block">Otra vez, más rápido</button>

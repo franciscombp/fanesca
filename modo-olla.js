@@ -254,6 +254,9 @@ function terminar(porque) {
     /* si esta partida pasó por la feria: sin choclo en la despensa no
        hay puesto, y la medalla del ojo de feriante no se gana sola */
     conFeria: pasos.some(p => p.base === 'feria'),
+    /* cuántos cuencos llevó el caldero: con uno solo no hay orden que
+       saberse, y la medalla de la receta de memoria saldría regalada */
+    enLaOlla: ((pasos.find(p => p.base === 'caldero') || {}).config || {}).ingredientes?.length ?? 0,
     /* hasta dónde llegó, para el resumen de quien se salió a medias */
     pasos: Math.max(0, i), de: pasos.length,
     completa: porque === 'lista',

@@ -134,6 +134,39 @@ let pistaPega = 0;
    hace falta para jugar este mesón suelto. */
 let RECETA = ORDEN_OLLA;
 const siguiente = () => RECETA[echados] || null;
+let PLATO = null;         /* { enFrase } del plato que se cocina hoy */
+
+function recetaDe(cfg) {
+  const pedidos = Array.isArray(cfg.ingredientes) && cfg.ingredientes.length
+    ? cfg.ingredientes
+    : ORDEN_OLLA.map(o => o.id);
+  const r = ORDEN_OLLA.filter(o => pedidos.includes(o.id));
+  return r.length ? r : ORDEN_OLLA;
+}
+
+/* LO QUE VA CON EL FUEGO YA BAJO: del maní al queso. Es la segunda
+   faena de la olla, y sale de la receta misma y no de un número —con
+   la receta entera eran los últimos cuatro de dieciséis, pero la olla
+   ya no cocina siempre los dieciséis. */
+const DESDE_FINAL = ORDEN_OLLA.findIndex(o => o.id === 'mani');
+const esFinal = (ing) => ORDEN_OLLA.indexOf(ing) >= DESDE_FINAL;
+const mayuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* EL COLOR DEL CALDO SALE DE LO QUE LLEVA. Pasaba siempre de leche a
+   dorado de fanesca, y unas habas cocinadas —la primera olla de
+   todos— salían del color de la fanesca entera. El dorado lo pone el
+   zapallo (es literal su `porque`: «le da cuerpo y color»); sin él,
+   el caldo toma un tinte de lo que se echó y nada más. */
+function colorFinal() {
+  if (RECETA.some(o => o.id === 'zapallo')) return FANESCA;
+  const suma = [0, 0, 0];
+  RECETA.forEach(o => {
+    const c = new THREE.Color(ing2color(o));
+    suma[0] += c.r * 255; suma[1] += c.g * 255; suma[2] += c.b * 255;
+  });
+  return mezcla(AGUA, suma.map(v => v / RECETA.length), 0.6);
+}
+let COLOR_FINAL = FANESCA;
 
 /* ---------- la olla ---------- */
 
@@ -327,7 +360,11 @@ function rematar() {
   if (terminado) return;
   terminado = true;
   api.sfx('fiesta');
-  api.aviso('¡La fanesca está armada! 🍲', 'bien');
+  /* el plato de hoy, no siempre la fanesca: unas habas cocinadas que
+     se anuncian como «la fanesca armada» le mienten a quien apenas
+     está empezando la despensa */
+  const plato = (PLATO && PLATO.enFrase) || 'la fanesca';
+  api.aviso(`¡Ya ${/^l[ao]s /.test(plato) ? 'están' : 'está'} ${plato}! 🍲`, 'bien');
   api.pista('Que hierva despacio.', 2600);
   remateId = setTimeout(() => { remateId = null; api.completar(); }, 700);
 }
@@ -366,7 +403,7 @@ function revolverEn() {
 
 function pintarCaldo() {
   const k = echados / RECETA.length;
-  const base = mezcla(AGUA, FANESCA, k);
+  const base = mezcla(AGUA, COLOR_FINAL, k);
   /* la pega se ve ANTES de cobrarse: el caldo se va oscureciendo
      desde el aviso. Un medidor que solo avisa cuando ya perdiste no
      es un medidor, es un susto. */
@@ -430,11 +467,10 @@ export default {
        el que sigue sería recorrer una fila de izquierda a derecha:
        cero decisión. Barajados hay que RECONOCER el ingrediente, que
        es lo que el juego lleva dieciséis mesones enseñando. */
-    const pedidos = Array.isArray(cfg.ingredientes) && cfg.ingredientes.length
-      ? cfg.ingredientes
-      : ORDEN_OLLA.map(o => o.id);
-    RECETA = ORDEN_OLLA.filter(o => pedidos.includes(o.id));
-    if (!RECETA.length) RECETA = ORDEN_OLLA;
+    RECETA = recetaDe(cfg);
+    PLATO = cfg.plato || null;
+    COLOR_FINAL = colorFinal();
+    pintarCaldo();
     const baraja = RECETA.map((ing, i) => ({ ing, i }));
     for (let i = baraja.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -461,7 +497,37 @@ export default {
     /* sin aviso de arranque: el aviso vive donde vive la fila de
        faenas y se le montaba encima. La pista ya lo dice, y con más
        sitio para decirlo. */
-    api.pista('<b>Arrastra a la olla</b> el que va primero. Si te equivocas, la olla te dice por qué. Y <b>da vueltas dentro</b> para que no se pegue.', 5600);
+    /* con un solo cuenco no hay «el que va primero» ni orden que
+       equivocar: lo dice el gesto (ver `gesto`) y aquí se calla, o
+       saldrían dos pistas seguidas diciendo lo mismo */
+    if (RECETA.length > 1) {
+      api.pista('<b>Arrastra a la olla</b> el que va primero. Si te equivocas, la olla te dice por qué. Y <b>da vueltas dentro</b> para que no se pegue.', 5600);
+    }
+  },
+
+  /* LAS FAENAS Y EL GESTO SALEN DE LA RECETA DE HOY. La ficha de
+     niveles.js los escribe para los dieciséis —«los granos, en orden»,
+     «lo del final»—, y la primera olla de un jugador nuevo es un solo
+     cuenco de habas: una fila de dos faenas que nunca llega a la
+     segunda y un «cada cuenco en su turno» sobre un cuenco. El juego
+     pregunta al mesón antes de pintar el HUD. */
+  faenas(cfg = {}) {
+    const r = recetaDe(cfg);
+    const granos = r.filter(o => !esFinal(o));
+    const finales = r.filter(esFinal);
+    if (!granos.length || !finales.length) return [{ ico: '🥄', txt: 'A la olla', desde: 0 }];
+    const nombre = (lista, varios) => (lista.length === 1 ? mayuscula(lista[0].nombre) : varios);
+    return [
+      { ico: '🥄', txt: nombre(granos, 'Los granos, en orden'), desde: 0 },
+      /* un pelo antes de la fracción exacta: la barra llega justo a
+         ella al echar el último grano, y con redondeos no pasaría */
+      { ico: '🥛', txt: nombre(finales, 'Lo del final'), desde: granos.length / r.length - 0.01 },
+    ];
+  },
+  gesto(cfg = {}) {
+    const r = recetaDe(cfg);
+    if (r.length > 1) return null;
+    return `Arrastra <b>${r[0].nombre}</b> a la olla. Y <b>revuelve</b> dando vueltas: si se pega, se quema.`;
   },
 
   objetivos() { return [grupo]; },
@@ -549,6 +615,6 @@ export default {
     delete window.__caldero;
     cuencos = []; grupo = null; ollaGrupo = null; caldo = null;
     trozos = null; cuchara = null; cargado = null; modo = null; aro = null;
-    alumbrado = null; terminado = false;
+    alumbrado = null; terminado = false; PLATO = null;
   },
 };

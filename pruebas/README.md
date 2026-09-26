@@ -45,6 +45,7 @@ Dicen ✓ o ✗ y terminan con `TODO VERDE` o `HAY FALLOS`.
 | `retos` | los retos de cada bolsa: que se ofrezcan sólo donde pueden ganarse (ni cazagusanos en el queso ni «bolsa entera» en una bolsa de un nivel), que la cuenta diga la verdad, y que repetir un nivel peor no borre un reto ya ganado. |
 | `catalogo` | **la red del catálogo**: monta los 97 niveles uno por uno y comprueba que armen su mesón, que ninguna bolsa baje de tres, que la dificultad no baje dentro de un gesto y que ninguna pieza caiga fuera de la pantalla. Es lenta a propósito. |
 | `olla` | la partida completa del modo La Olla, con la despensa llena: los veinte pasos encadenados, los cuatro actos, el resumen y el récord del plato. |
+| `primera-olla` | la olla de alguien que sólo sabe las habas: un cuenco que se arrastra con el dedo, sin faenas ni gesto de la olla grande, el aviso y el resumen con el nombre del plato, qué plato sigue, y la medalla de la receta que no se regala. |
 | `feria` | el puesto del choclo: cuántos hay, que quepan en pantalla, abrir la hoja, gastar las aperturas y llenar el canasto. |
 | `caldero` | echar los dieciséis en orden, que equivocarse rebote y explique, y que la olla armada pase al plato. |
 | `porcion` | que el modo AVISE cuando da un mesón por hecho antes de terminarlo. Siete de los veinte se cortan —la olla pide una parte— y sin decirlo parecía que te quitaba el mesón a media pelada. |

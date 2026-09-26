@@ -1473,7 +1473,7 @@ export const OLLA_MODO = {
     { id: 'limpia',   pide: r => r.desastres === 0,             titulo: 'Sin un desastre',   meta: 'Termina sin arruinar nada',           texto: 'Ni un bicho, ni una quemada, ni una piedra.' },
     { id: 'abuela',   pide: r => r.cucharas >= 3,               titulo: 'Mano de abuela',    meta: 'Tres cucharas de calidad',            texto: 'Así sale la de la casa.' },
     { id: 'feriante', pide: r => r.feriaLimpia && r.conFeria,   titulo: 'Ojo de feriante',   meta: 'La feria sin escoger un solo maduro', texto: 'Ni un choclo de tostado se te coló.' },
-    { id: 'receta',   pide: r => r.ollaLimpia,                  titulo: 'La receta de memoria', meta: 'Echa todo en orden, sin fallar uno', texto: 'Te sabes el orden de la olla sin mirar.' },
+    { id: 'receta',   pide: r => r.ollaLimpia && r.enLaOlla >= 2, titulo: 'La receta de memoria', meta: 'Echa todo en orden, sin fallar uno', texto: 'Te sabes el orden de la olla sin mirar.' },
     { id: 'fanesca',  pide: r => r.de >= 20,                    titulo: 'La fanesca entera', meta: 'Cocina los dieciocho, de la feria al plato', texto: 'La despensa completa en una sola olla.' },
     { id: 'diez',     pide: r => r.de >= 20 && r.ms <= 10 * 60000, titulo: 'Antes del mediodía', meta: 'La fanesca entera en menos de 10 min', texto: 'La olla lista antes de que llegue la familia.' },
     { id: 'ocho',     pide: r => r.de >= 20 && r.ms <= 8 * 60000,  titulo: 'Cocina de guerra',  meta: 'La fanesca entera en menos de 8 min', texto: 'Eso ya es cocinar con las dos manos.' },

@@ -870,7 +870,7 @@ function renderMesa() {
     sub.textContent = !plato
       ? 'dieciocho bolsas y una olla vacía'
       : (proximo
-        ? `${proximo.faltan.length === 1 && !bolsaPlural(proximo.faltan[0]) ? 'te falta' : 'te faltan'} ${listaDeBolsas(proximo.faltan)} para ${proximo.plato.enFrase}${racha}`
+        ? `${fraseDelProximo(proximo)}${racha}`
         : `los dieciocho, y la mesa puesta${racha}`);
   }
   /* el anillo mira los INGREDIENTES, no los niveles: es el camino a
@@ -936,6 +936,14 @@ const bolsaPlural = (id) => /^(los|las)\s/.test(nombreDeBolsa(id));
 /* «el mote», «el mote y la col», «el mote, la col y 3 más»: la lista
    de lo que falta, que es la razón concreta para abrir otra bolsa.
    Más de tres nombres no caben en el renglón y dejan de informar. */
+/* «te faltan los chochos y el fréjol para la sopa de granos tiernos»:
+   lo dice la despensa arriba y lo repite el resumen de la olla, que es
+   justo cuando alguien se pregunta qué sigue */
+function fraseDelProximo(proximo) {
+  const uno = proximo.faltan.length === 1 && !bolsaPlural(proximo.faltan[0]);
+  return `${uno ? 'te falta' : 'te faltan'} ${listaDeBolsas(proximo.faltan)} para ${proximo.plato.enFrase}`;
+}
+
 function listaDeBolsas(ids) {
   const n = ids.map(nombreDeBolsa);
   if (n.length === 1) return n[0];
@@ -948,6 +956,7 @@ function listaDeBolsas(ids) {
    sólo baja la primera letra, que los nombres propios de dentro
    —Cuaresma— siguen siendo nombres propios */
 const aMinuscula = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+const aMayuscula = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
 
 /* ============================================================
    DENTRO DE UNA BOLSA — los niveles de un ingrediente.
@@ -1481,6 +1490,25 @@ function pintarPasos(n) {
     .map((p, i) => `<span class="hud-paso" data-i="${i}"><i>${p.ico || '•'}</i><b>${p.txt}</b></span>`)
     .join('');
   marcarPaso(0);
+}
+
+/* LO QUE EL MESÓN DICE DE SÍ MISMO con la config de hoy. La ficha de
+   niveles.js escribe las faenas y el gesto de una vez para siempre, y
+   eso vale para casi todos; el caldero no — cocina lo que el jugador
+   sabe, y su primera olla es un solo cuenco. Un mesón que exporta
+   `faenas(cfg)` o `gesto(cfg)` corrige a la ficha; los demás no
+   tienen que enterarse. Devuelve el gesto que toca decir. */
+function lecturaDelMeson(ficha, config) {
+  const m = modActual;
+  try {
+    const faenas = m && typeof m.faenas === 'function' && m.faenas(config || {});
+    if (Array.isArray(faenas)) pintarPasos({ pasos: faenas });
+    const gesto = m && typeof m.gesto === 'function' && m.gesto(config || {});
+    return gesto || ficha.gesto;
+  } catch (e) {
+    console.error(e);
+    return ficha.gesto;
+  }
 }
 
 function marcarPaso(i, delNivel) {
@@ -2044,6 +2072,7 @@ async function jugar(id) {
   }
   capturaPista = null;
   renderControles(modActual);
+  const gestoN = lecturaDelMeson(n, nivelConfig);
   /* La fila del arranque, con tres reglas aprendidas mirando jugar:
 
      · si el nivel puso SU pista al construirse, el gesto genérico
@@ -2060,7 +2089,7 @@ async function jugar(id) {
   const traeBichos = (Array.isArray(cfgN.gusanos) ? cfgN.gusanos.some(g => g > 0) : (cfgN.gusanos || 0) > 0)
     || (cfgN.moscas_frecuencia || 0) > 0;
   const fila = [];
-  if (!yaJugada && !capturadas.length) fila.push({ msg: n.gesto });
+  if (!yaJugada && !capturadas.length) fila.push({ msg: gestoN });
   fila.push(...capturadas);
   /* EL AVISO DEL BICHO, UNA VEZ POR BICHO Y NO POR PARADA. Salía en
      cada parada nueva con bichos —unas veinticinco veces a lo largo de
@@ -2076,7 +2105,7 @@ async function jugar(id) {
   /* el «?» arranca con el gesto del ingrediente: en una parada ya
      superada la fila viene vacía, y sin esto repetiría la pista del
      nivel anterior */
-  ultimaPista = n.gesto;
+  ultimaPista = gestoN;
   /* el mesón ya está armado detrás: la cortina puede irse, y las
      pistas arrancan cuando empieza a irse — si para entonces el
      jugador ya se salió (o entró a otra parada), no hay nada que
@@ -2217,14 +2246,15 @@ async function montarMeson(base, config, modo, opts = {}) {
   capturaPista = null;
   renderControles(modActual);
   Editor.nivel(ficha.id);
+  const gesto = lecturaDelMeson(ficha, config);
   /* EL GESTO, Y NADA MÁS. Un modo rápido no es excusa para soltar a
      alguien en las habas sin decirle qué se hace — pero tampoco es
      sitio para un párrafo: la regla del modo se cuenta una vez en la
      vida y el resto vive en el cuaderno. */
   const fila = [];
   if (opts.reglas) fila.push({ msg: opts.reglas });
-  fila.push({ msg: ficha.gesto }, ...capturadas);
-  ultimaPista = ficha.gesto;
+  fila.push({ msg: gesto }, ...capturadas);
+  ultimaPista = gesto;
   pistasEnFila(fila);
 }
 
@@ -2483,7 +2513,11 @@ function arrancarOlla() {
   const sabe = loQueSabe();
   const plato = platoDe(sabe);
   if (!plato) { toast('Primero aprende a preparar algo 🧺'); return; }
-  const pasos = pasosOlla(sabe);
+  /* el caldero anuncia el plato de hoy al terminar: sin esto, unas
+     habas cocinadas se celebraban como «la fanesca armada» */
+  const pasos = pasosOlla(sabe).map(p => (p.base === 'caldero'
+    ? { ...p, config: { ...(p.config || {}), plato: { id: plato.id, enFrase: plato.enFrase } } }
+    : p));
   if (!pasos.length) { toast('La olla está vacía todavía'); return; }
   platoEnCurso = plato;
   initAudio();
@@ -2558,7 +2592,7 @@ function cerrarOlla(resumen) {
         : 'Ni un desastre ni un descuido')
       : 'La olla se quedó a medias.';
     $('#olla-mejor').textContent = esRecord
-      ? (mejor ? `¡Nuevo récord! antes: ${relojDePartida(mejor.ms)}` : 'Tu primera fanesca completa')
+      ? (mejor ? `¡Nuevo récord! antes: ${relojDePartida(mejor.ms)}` : `Primer récord de ${plato ? plato.enFrase : 'esta olla'}`)
       : (mejor ? `Tu récord sigue siendo ${relojDePartida(mejor.ms)}` : 'Termínala entera y tendrás récord');
 
     /* LAS MARCAS POR ACTO, que es donde se ve dónde se pierde el
@@ -2596,6 +2630,16 @@ function cerrarOlla(resumen) {
           <span>${hecho ? l.texto : (l.meta || '')}</span></li>`;
       }).join('');
       nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
+    }
+
+    /* QUÉ SIGUE. Con la olla recién servida es cuando alguien se
+       pregunta cómo se llega a la fanesca; la respuesta vive en la
+       despensa, pero dicha aquí es la razón para volver a ella */
+    const sigue = $('#olla-sigue');
+    if (sigue) {
+      const proximo = resumen.completa ? proximoPlato(loQueSabe()) : null;
+      sigue.textContent = proximo ? aMayuscula(fraseDelProximo(proximo)) + '.' : '';
+      sigue.classList.toggle('hidden', !proximo);
     }
 
     $('#olla-otra').textContent = resumen.completa ? 'Otra vez, más rápido' : 'Volver a empezar';

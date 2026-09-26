@@ -704,6 +704,16 @@ svg[width="0"] { width: 0; height: 0; }
 .olla-acto i.mejor { color: var(--nopal-600, #2f5c28); }
 .olla-acto i.peor  { color: var(--brasa-600, #a5301a); }
 .olla-acto--sin { opacity: .45; }
+/* qué sigue en la escalera de platos: una línea que manda de vuelta
+   a la despensa, con el tono de la nota del plato */
+.olla-sigue {
+  margin: var(--sp-2) 0 0; padding: .45rem .7rem;
+  border-radius: var(--r-sm);
+  border-left: 3px solid var(--maiz-500, #e0a526);
+  background: rgba(224,165,38,.12);
+  font-size: var(--t-xs); line-height: 1.35; text-align: left;
+  width: 100%;
+}
 
 /* ---- dónde se cocina: dentro de su hoja, tres fichas en columna ---- */
 .escenarios { width: 100%; }

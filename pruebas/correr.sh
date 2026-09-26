@@ -21,7 +21,7 @@ export SITIO="http://localhost:${PUERTO}"
 
 # La batería, en orden de lo más general a lo más particular: si el
 # humo falla, lo demás casi seguro también, y conviene verlo primero.
-TODAS=(humo despensa retos catalogo olla feria caldero porcion didactica arveja dedo ficha-hecha carrusel huevo devmode nota actualiza)
+TODAS=(humo despensa retos catalogo olla primera-olla feria caldero porcion didactica arveja dedo ficha-hecha carrusel huevo devmode nota actualiza)
 PRUEBAS=("${@:-}")
 [ -z "${PRUEBAS[*]}" ] && PRUEBAS=("${TODAS[@]}")
 
