@@ -199,7 +199,14 @@ export const COMIDA = {
   crema_fanesca: '#f0dfae',
 
   /* la utilería del mesón */
-  tabla: '#ecc287',
+  /* LA TABLA ES DE MADERA DE VERDAD, y menos saturada que lo que se
+     pone encima. Era un crema plano '#ecc287' y todo lo pálido
+     (chocho, huevo, queso, bacalao, mote) quedaba crema sobre crema.
+     Un miel encendido tampoco sirve: con el tono y la luminancia de
+     la lenteja ('#c98a4b'), las lentejas buenas se camuflaban en la
+     tabla. Este separa por croma lo naranja y por luz lo pálido. */
+  tabla: '#bda484',
+  tabla_veta: '#8a6a48',
   ojo_blanco: '#fffdf6',
   ojo_negro: '#3a2a20',
 };
@@ -220,6 +227,28 @@ export const mate = (THREE, color, opts = {}) =>
    marca el volumen del grano sin ponerle un punto blanco encima. */
 export const brillante = (THREE, color, opts = {}) =>
   new THREE.MeshPhongMaterial({ color, shininess: 8, specular: '#3a3226', ...opts });
+
+/* APAGAR UN COLOR: misma familia, menos luz y menos croma. Es lo que
+   hace que el fondo se quede atrás sin cambiarle el color a nada —el
+   gabinete sigue siendo rosa, solo que en la sombra del mesón.
+
+   EN sRGB, que es donde se pensaron los tokens. getHSL de three
+   trabaja por defecto en espacio lineal, y ahí los mismos factores
+   daban otro tono: el café del mesón salía rosado. */
+export function apagar(THREE, color, kL = 0.62, kS = 0.7) {
+  const c = new THREE.Color(color);
+  const h = {};
+  c.getHSL(h, THREE.SRGBColorSpace);
+  c.setHSL(h.h, Math.min(1, h.s * kS), Math.min(1, h.l * kL), THREE.SRGBColorSpace);
+  return '#' + c.getHexString(THREE.SRGBColorSpace);
+}
+
+/* llevar un color un trecho hacia otro (k = 0 se queda, 1 llega) */
+export function mezclar(THREE, a, b, k) {
+  const c = new THREE.Color(a);
+  c.lerp(new THREE.Color(b), k);
+  return '#' + c.getHexString(THREE.SRGBColorSpace);
+}
 
 /* un material desde un token del sistema */
 export const mateToken = (THREE, nombre, respaldo, opts = {}) =>

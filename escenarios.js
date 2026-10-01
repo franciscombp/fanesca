@@ -20,12 +20,21 @@ export const ESCENARIOS = [
     nombre: 'Cocina de ciudad',
     pie: 'Azulejo de talavera y luz de ventana',
     emoji: '🏠',
-    pared: { tipo: 'azulejo', tinte: '#b3a08b' },
+    pared: { tipo: 'azulejo', tinte: '#c9b8a2' },
     piso: { tipo: 'damero', a: '--madera-200', b: '--peltre-300' },
     meson: { base: '--madera-300', veta: '--madera-500' },
     gabinete: '--rosa-500',
-    luz: { cielo: '#fff3dc', suelo: '--madera-400', hemi: 1.42,
-           sol: '#ffe6bd', solInt: 1.45, foco: '#ffd9a0', focoInt: 1.05 },
+    /* EL SOL MANDA, EL CIELO RELLENA. Antes el hemisferio ponía casi
+       la mitad de la luz sobre la tabla y el sol un tercio: la comida
+       no tenía lado oscuro y ninguna sombra se notaba. Ahora el sol
+       de ventana es más de la mitad —ámbar—, el cielo baja y se
+       enfría, y la suma sobre la tabla es la misma (la exposición no
+       se toca). Frío contra cálido es lo que da volumen sin oscurecer.
+       `sombra` es cuán oscura cae la sombra del sol: clara, de arcilla,
+       nunca negra. */
+    luz: { cielo: '#e4e9f2', suelo: '#8a5a36', hemi: 0.85,
+           sol: '#ffd9a6', solInt: 2.3, foco: '#ffd9a0', focoInt: 0.55,
+           relleno: '#cfdcff', rellenoInt: 0.45, sombra: 0.78 },
     ventana: true,
     textil: true,
   },
@@ -41,8 +50,9 @@ export const ESCENARIOS = [
     meson: { base: '--madera-400', veta: '--madera-700' },
     gabinete: '--madera-600',
     /* la luz de las cinco de la tarde en la sierra: baja y naranja */
-    luz: { cielo: '#ffe7c0', suelo: '--madera-600', hemi: 1.15,
-           sol: '#ffbf70', solInt: 1.7, foco: '#ffcf8c', focoInt: 1.2 },
+    luz: { cielo: '#e8e4ee', suelo: '--madera-600', hemi: 0.70,
+           sol: '#ffb868', solInt: 2.6, foco: '#ffcf8c', focoInt: 0.6,
+           relleno: '#cfdcff', rellenoInt: 0.45, sombra: 0.8 },
     ventana: true,
     textil: true,
   },
@@ -56,8 +66,9 @@ export const ESCENARIOS = [
     meson: { base: '--madera-300', veta: '--madera-600' },
     gabinete: '--nopal-600',
     /* mediodía afuera: luz clara, cenital, sombras cortas */
-    luz: { cielo: '#eaf6ff', suelo: '--nopal-600', hemi: 1.75,
-           sol: '#fffaf0', solInt: 1.35, foco: '#ffffff', focoInt: 0.75 },
+    luz: { cielo: '#eaf3ff', suelo: '--nopal-600', hemi: 1.10,
+           sol: '#fff6e8', solInt: 2.4, foco: '#ffffff', focoInt: 0.35,
+           relleno: '#cfdcff', rellenoInt: 0.45, sombra: 0.65 },
     ventana: false,
     textil: true,
   },

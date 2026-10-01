@@ -67,6 +67,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { pieza, parte, cargarGLB, token } from './modelos/index.js';
 import { construirCocina } from './modelos/cocina.js';
+import { apagar } from './modelos/paleta.js';
 import { sombraBlob as _sombraBlob, ojitos as _ojitos, aroDestino as _aroDestino } from './modelos/utileria.js';
 
 /* ---------- geografía compartida del mesón ---------- */
@@ -303,23 +304,119 @@ function armarCocina() {
   scene.add(grupo);
   vapores = v;
 
+  /* LOS CUENCOS UN PUNTO MÁS APAGADOS: ocupan las dos esquinas de
+     abajo y a croma plena pesaban más que la comida. La composta tiene
+     que seguir siendo inconfundiblemente VERDE —es una regla del
+     juego— y el relleno se queda vivo, que es la señal de que lo que
+     sacaste fue a algún lado. */
+  const quieto = (c) => apagar(THREE, c, 0.92, 0.75);
   bateaGrupo = pieza('cuenco', THREE, {
     radio: 0.44,
-    colorA: token('--madera-300', '#d07c3f'),
-    colorB: token('--madera-500', '#93491c'),
+    colorA: quieto(token('--madera-300', '#d07c3f')),
+    colorB: quieto(token('--madera-500', '#93491c')),
     relleno: token('--maiz-300', '#ffc93c'),
   });
   bateaGrupo.position.copy(bateaPos);
 
   compostaGrupo = pieza('cuenco', THREE, {
     radio: 0.4,
-    colorA: token('--nopal-600', '#4c7c1f'),
-    colorB: token('--nopal-600', '#4c7c1f'),
+    colorA: quieto(token('--nopal-600', '#4c7c1f')),
+    colorB: quieto(token('--nopal-600', '#4c7c1f')),
     relleno: token('--nopal-600', '#4c7c1f'),
   });
   compostaGrupo.position.copy(compostaPos);
 
   scene.add(bateaGrupo, compostaGrupo);
+  configurarSol();
+}
+
+/* ---------- la sombra del sol ----------
+   Una sola luz proyecta (el sol de la ventana, ver cocina.js) y solo
+   sobre la tabla. Lo que cuesta en un teléfono no es el mapa sino
+   cuántas piezas se vuelven a dibujar en él, así que se elige QUIÉN
+   proyecta:
+
+     · nada transparente, nada MeshBasic (ojitos, aros, trazos), nada
+       marcado `ignorar` ni la sombra pintada; nada escondido;
+     · las piezas que pasan de un radio mínimo, y si son más de
+       MAX_SOMBRAS el mínimo SUBE hasta dejar solo las grandes. Es un
+       UMBRAL y no un corte por orden: las piezas del mismo tamaño
+       (los granos, los chochos) quedan todas dentro o todas fuera, en
+       vez de que unas tengan sombra y sus gemelas no;
+     · una pieza que ya proyecta solo deja de hacerlo si baja de 0.9
+       del mínimo, para que nada parpadee cuando el reparto cambia;
+     · un nivel puede forzarlo por pieza con userData.sombra = true/false.
+
+   Todo lo opaco del nivel RECIBE (la auto-sombra se probó en maní,
+   zapallo y col y no da acné con estos bias). */
+const MAX_SOMBRAS = 24;
+const R_SOMBRA = 0.05;
+let sombrasOn = true;
+let marcaSombra = { t: 0, hijos: -1 };
+const _escala = new THREE.Vector3();
+
+/* la preferencia: 'no' la guardó la guardia en un teléfono lento;
+   'siempre' la ponen las pruebas, que corren en GL por software y
+   son lentas por fuerza, para poder fotografiar las sombras */
+function prefSombras() {
+  try { return localStorage.getItem('fanesca_sombras') || ''; } catch (e) { return ''; }
+}
+
+function radioMundo(m) {
+  const g = m.geometry;
+  if (!g.boundingSphere) g.computeBoundingSphere();
+  m.getWorldScale(_escala);
+  return g.boundingSphere.radius * Math.max(Math.abs(_escala.x), Math.abs(_escala.y), Math.abs(_escala.z));
+}
+
+function opaca(m) {
+  if (!m.isMesh || !m.geometry) return false;
+  if (m.userData.ignorar || m.name === 'sombra') return false;
+  const mats = Array.isArray(m.material) ? m.material : [m.material];
+  return !mats.some(x => !x || x.transparent || x.isMeshBasicMaterial);
+}
+
+function marcarSombras() {
+  if (!raiz) return;
+  const cand = [];
+  raiz.updateMatrixWorld(true);
+  raiz.traverse(o => {
+    if (!o.isMesh) return;
+    const ok = opaca(o);
+    o.receiveShadow = ok;
+    if (!sombrasOn || !ok || o.userData.sombra === false || !seVe(o)) { o.castShadow = false; return; }
+    if (o.userData.sombra === true) { o.castShadow = true; return; }
+    cand.push({ o, r: radioMundo(o) });
+  });
+  let minR = R_SOMBRA;
+  const grandes = cand.filter(c => c.r >= minR).sort((a, b) => b.r - a.r);
+  if (grandes.length > MAX_SOMBRAS) minR = grandes[MAX_SOMBRAS].r + 1e-3;
+  cand.forEach(c => { c.o.castShadow = c.r >= (c.o.castShadow ? minR * 0.9 : minR); });
+}
+
+/* el mapa del sol se fija aquí y no en cocina.js, porque aquí se sabe
+   en qué teléfono se está: con poca memoria, la mitad de resolución */
+function configurarSol() {
+  const sol = scene && scene.getObjectByName('sol');
+  if (!sol) return;
+  let poca = false;
+  try { poca = (navigator.deviceMemory && navigator.deviceMemory <= 3) || renderer.capabilities.maxTextureSize < 4096; } catch (e) {}
+  const lado = poca ? 512 : 1024;
+  sol.shadow.mapSize.set(lado, lado);
+  sol.castShadow = sombrasOn;
+}
+
+/* LA GUARDIA: si con sombras el teléfono no llega a ~33 cuadros por
+   segundo en el primer nivel, se apagan para siempre en ese teléfono.
+   Mide los cuadros 30 a 150 —los primeros traen la compilación de los
+   programas y no dicen nada del ritmo de verdad— y decide una sola vez. */
+let guardia = null, guardiaHecha = false;
+function apagarSombras() {
+  sombrasOn = false;
+  try { localStorage.setItem('fanesca_sombras', 'no'); } catch (e) {}
+  const sol = scene && scene.getObjectByName('sol');
+  if (sol) sol.castShadow = false;
+  marcarSombras();
 }
 
 /* sube el nivel del cuenco: se ve que lo que sacaste fue a algún lado */
@@ -700,8 +797,23 @@ export const Motor = {
        de exposición y luces sobre la misma escena: por encima de ~1.1
        los colores se lavan (el azulejo pierde el azul y la madera se
        vuelve beige) y por debajo de ~0.9 el fondo se apaga. */
+    /* Se probó Neutral (Khronos PBR Neutral, exposición 0.92) contra
+       este ACES sobre los mesones nuevos: las vainas salen más verdes,
+       pero los chochos se vuelven galletas doradas —dejan de leerse
+       como chocho pálido— y el amarillo del choclo se enciende. Los
+       colores que son ESTADO de juego (tierno contra duro, la pepa bajo
+       la piel) mandan sobre el gusto: se queda ACES. */
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.98;
+    /* PCF y no PCFSoft: en este three (r185) PCFSoft está retirado y
+       cae a PCF con un aviso; el PCF ya lee 5 veces en un disco
+       rotado, y shadow.radius lo ablanda. VSM pediría dos pasadas de
+       desenfoque más, que en un teléfono no se pagan. */
+    const pref = prefSombras();
+    sombrasOn = pref !== 'no';
+    guardiaHecha = pref !== '';
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.domElement.style.touchAction = 'none';
     cont.appendChild(renderer.domElement);
 
@@ -834,6 +946,13 @@ export const Motor = {
     cuenta.batea = 0; cuenta.composta = 0;
     if (onCuenco) onCuenco(cuenta);
     nivel.construir(ctx, nivelConfig);
+    /* quién proyecta, ya con el mesón armado; y los programas con
+       sombra se compilan AQUÍ, detrás de la cortina, y no en los
+       primeros cuadros del nivel, donde se notarían como un tirón */
+    marcarSombras();
+    marcaSombra = { t: clock.elapsedTime, hijos: raiz.children.length };
+    try { renderer.compile(scene, camera); } catch (e) {}
+    if (sombrasOn && !guardiaHecha) guardia = { n: 0, suma: 0 };
     return nivel;
   },
 
@@ -844,7 +963,13 @@ export const Motor = {
     if (!scene || id === escenarioActual) return;
     escenarioActual = id;
     const vieja = scene.getObjectByName('cocina');
-    if (vieja) { scene.remove(vieja); tirar(vieja); }
+    if (vieja) {
+      scene.remove(vieja);
+      /* tirar() no conoce las luces: sin esto el mapa de sombra del
+         sol viejo (~4 MB) se queda en la memoria a cada cambio */
+      vieja.traverse(o => { if (o.isLight && o.dispose) o.dispose(); });
+      tirar(vieja);
+    }
     vapores = [];
     armarCocina();
   },
@@ -972,6 +1097,24 @@ function bucle() {
   }
 
   if (nivel && nivel.actualizar) { try { nivel.actualizar(dt, t); } catch (e) { console.error(e); } }
+
+  /* las piezas que nacen a media partida (las mitades del zapallo, el
+     choclo que se abre en la feria) también tienen que proyectar */
+  if (nivel && raiz && (t - marcaSombra.t > 0.5 || raiz.children.length !== marcaSombra.hijos)) {
+    marcarSombras();
+    marcaSombra = { t, hijos: raiz.children.length };
+  }
+  if (guardia) {
+    guardia.n++;
+    if (guardia.n > 30) guardia.suma += dt;
+    if (guardia.n >= 150) {
+      const media = guardia.suma / 120;
+      guardia = null;
+      guardiaHecha = true;
+      if (media > 0.030) apagarSombras();
+      else { try { localStorage.setItem('fanesca_sombras', 'si'); } catch (e) {} }
+    }
+  }
 
   renderer.render(scene, camera);
 }
