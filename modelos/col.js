@@ -69,6 +69,32 @@ registrar('col-hoja', (THREE, opts = {}) => {
   return g;
 });
 
+/* la cara del rollo: una espiral de Arquímedes sobre el verde claro
+   del corazón de la hoja. Una sola textura para todos los rollos
+   (tirar() no libera texturas: una por rollo se quedaría en memoria). */
+let espiralTex = null;
+function texturaEspiral(THREE) {
+  if (espiralTex) return espiralTex;
+  const S = 128, c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#e1edc4';
+  ctx.fillRect(0, 0, S, S);
+  ctx.strokeStyle = '#86b257'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let t = 0; t <= 1.0001; t += 0.004) {
+    const r = 6 + 54 * t, th = t * Math.PI * 2 * 3.4;
+    const x = S / 2 + Math.cos(th) * r, y = S / 2 + Math.sin(th) * r;
+    if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = '#6f9e45'; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.arc(S / 2, S / 2, 61, 0, Math.PI * 2); ctx.stroke();
+  espiralTex = new THREE.CanvasTexture(c);
+  espiralTex.colorSpace = THREE.SRGBColorSpace;
+  return espiralTex;
+}
+
 /* el cigarro: la misma hoja, apretada. Se le da el largo por opts
    porque el rollo se acorta a cada tajada. */
 registrar('col-rollo', (THREE, opts = {}) => {
@@ -76,18 +102,24 @@ registrar('col-rollo', (THREE, opts = {}) => {
   const g = new THREE.Group();
   g.name = 'col-rollo';
 
+  /* ACOSTADO EN LA GEOMETRÍA, no con rotation.x. El nivel acorta el
+     rollo con cil.scale.z = largo/LARGO_HOJA a cada tajada; con el
+     cilindro girado en la malla, la z local era un RADIO: el rollo se
+     quedaba del largo entero y se aplastaba en una cinta, y la punta
+     quedaba enterrada a media cinta como una media luna blanca. */
   const cil = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.11, 0.115, largo, 12, 1),
+    new THREE.CylinderGeometry(0.11, 0.115, largo, 18, 1).rotateX(Math.PI / 2),
     mate(THREE, COMIDA.col_hoja)
   );
-  cil.rotation.x = Math.PI / 2;
   cil.name = 'cilindro';
   g.add(cil);
 
-  /* la espiral de la punta: sin esto un rollo de col es un tubo */
+  /* la espiral de la punta: sin esto un rollo de col es un tubo. Era
+     una dona blanca; ahora es la cara del rollo con la hoja enrollada
+     pintada, que es lo que se ve al mirar un cigarro de col de frente */
   const punta = new THREE.Mesh(
-    new THREE.TorusGeometry(0.055, 0.026, 6, 14),
-    mate(THREE, COMIDA.col_tronco)
+    new THREE.CircleGeometry(0.112, 24),
+    mate(THREE, '#ffffff', { map: texturaEspiral(THREE) })
   );
   punta.position.z = largo / 2 + 0.004;
   punta.name = 'punta';

@@ -18,7 +18,7 @@
 
 import { registrar } from './registro.js';
 import { COMIDA, mate, brillante } from './paleta.js';
-import { abollar, curvar, formaVariada } from './organico.js';
+import { abollar, curvar, forma, formaVariada } from './organico.js';
 
 registrar('melloco', (THREE, opts = {}) => {
   const g = new THREE.Group();
@@ -60,11 +60,14 @@ registrar('melloco', (THREE, opts = {}) => {
      manchados de rosa salían en pantalla como ocho dientes de ajo.
      Lo que tiene que verse mojado es el melloco, no una cápsula
      encima de él — el aviso de "sucio" lo da el brillo, no el velo. */
+  /* EL TAMAÑO VA EN LA GEOMETRÍA y la malla queda a escala 1. Iba en
+     mesh.scale, y el nivel escribe babaza.scale.setScalar(...) para
+     encogerla al refregar: al primer roce la baba pasaba de 0.17 a
+     ~1 de radio y una esfera lechosa tapaba un tercio de la pantalla. */
   const babaza = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 14, 10),
+    forma('melloco-babaza', () => new THREE.SphereGeometry(1, 14, 10).scale(0.168, 0.118, 0.122)),
     brillante(THREE, COMIDA.melloco_babaza, { transparent: true, opacity: 0.34 })
   );
-  babaza.scale.set(0.168, 0.118, 0.122);
   babaza.name = 'babaza';
   g.add(babaza);
 

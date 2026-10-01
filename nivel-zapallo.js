@@ -193,8 +193,11 @@ function ponerEntero() {
   entero.add(api.sombraBlob(1.5, -R_ENTERO * 0.78 + 0.06));
   grupo.add(entero);
 
-  const g = api.pieza('guia-zapallo', { ry: R_ENTERO * 0.78 + 0.045, rz: R_ENTERO + 0.045, grosor: 1.5 });
-  g.position.set(0, ALTO() + 0.02, TABLA_Z);
+  const g = api.pieza('guia-zapallo', { ry: R_ENTERO * 0.78 + 0.045, rz: R_ENTERO + 0.045, grosor: 1.5, sinCima: true });
+  /* EN EL CENTRO DEL ZAPALLO, no a ras de tabla: los radios de la guía
+     se miden desde el centro, y puesta abajo cuatro de sus cinco rayas
+     quedaban enterradas en el cuerpo y solo asomaba una astilla */
+  g.position.set(0, ALTO() + R_ENTERO * 0.78, TABLA_Z);
   g.userData.ignorar = true;
   grupo.add(g);
   guias.push({ grupo: g, b: 'lomo' });

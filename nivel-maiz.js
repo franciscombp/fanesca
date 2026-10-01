@@ -189,7 +189,7 @@ function nuevaHoja(i, total = HOJAS) {
   const pivot = new THREE.Group();
   pivot.rotation.y = th;
   pivot.position.y = BASE_HOJA;
-  const mesh = api.pieza('hoja-choclo', { indice: i });
+  const mesh = api.pieza('hoja-choclo', { indice: i, total });
   mesh.userData = { tipo: 'hoja', idx: i };
   pivot.add(mesh);
   /* los eslabones de la cadena, de la base a la punta: doblarlos en

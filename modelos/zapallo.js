@@ -92,13 +92,36 @@ registrar('guia-zapallo', (THREE, opts = {}) => {
   const ry = opts.ry != null ? opts.ry : R + 0.012;
   const rz = opts.rz != null ? opts.rz : R + 0.012;
   const gr = opts.grosor != null ? opts.grosor : 1;
-  const mat = mate(THREE, COMIDA.zapallo_guia);
+  /* CADA RAYA ES UNA TIRA PLANA tangente a la superficie, crema al
+     centro y oscura al borde (color de vértice: sin malla de más).
+     Eran cajas café de 5 cm de alto: flotaban sobre los valles de los
+     gajos y se leían como grapas clavadas, no como una línea. */
+  const geo = new THREE.PlaneGeometry(0.06 * gr, 0.15 * gr, 3, 1);
+  const pos = geo.attributes.position;
+  const col = new Float32Array(pos.count * 3);
+  const oscuro = new THREE.Color(COMIDA.zapallo_guia), claro = new THREE.Color(COMIDA.zapallo_tiza);
+  const w = 0.06 * gr;
+  for (let k = 0; k < pos.count; k++) {
+    const borde = Math.abs(Math.abs(pos.getX(k)) - w / 2) < 1e-6;
+    const c = borde ? oscuro : claro;
+    col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mat = mate(THREE, '#ffffff', { vertexColors: true, side: THREE.DoubleSide,
+    emissive: '#3a2a12', emissiveIntensity: 0.15 });
+  const X = new THREE.Vector3(1, 0, 0);
   for (let i = 0; i <= trozos; i++) {
     if (i % 2) continue;
     const a = (i / trozos) * Math.PI;
-    const d = new THREE.Mesh(new THREE.BoxGeometry(0.034 * gr, 0.05 * gr, 0.1 * gr), mat);
+    /* en el zapallo entero la cima es del rabo: una raya ahí asomaba
+       por detrás de él como una astilla */
+    if (opts.sinCima && Math.abs(Math.cos(a)) < 0.25) continue;
+    const d = new THREE.Mesh(geo, mat);
     d.position.set(0, Math.sin(a) * ry, -Math.cos(a) * rz);
-    d.rotation.x = -a;
+    /* ejes: ancho en x, largo a lo largo del arco, normal hacia fuera */
+    const normal = new THREE.Vector3(0, Math.sin(a), -Math.cos(a));
+    const tangente = new THREE.Vector3(0, -Math.cos(a), -Math.sin(a));
+    d.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, tangente, normal));
     d.name = 'raya' + i;
     d.userData.ignorar = true;
     g.add(d);
@@ -107,9 +130,31 @@ registrar('guia-zapallo', (THREE, opts = {}) => {
 });
 
 /* las pepas asomando por la cara abierta de las puntas */
+/* LA FORMA VA EN LA GEOMETRÍA: lágrima plana con su reborde. Iba en
+   p.scale (1, 0.45, 1.3) y el nivel hace p.scale.setScalar(2.3), que
+   pisaba la forma: salían pelotas de golf blancas. */
 registrar('pepa-zapallo', (THREE) => {
-  const p = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), mate(THREE, COMIDA.zapallo_pepa));
-  p.scale.set(1, 0.45, 1.3);
+  const geo = forma('pepa-zapallo', () => {
+    const g = new THREE.SphereGeometry(1, 16, 8);
+    const pos = g.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    const cara = new THREE.Color(COMIDA.zapallo_pepa), borde = new THREE.Color(COMIDA.zapallo_pepa_borde);
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      /* ancha atrás, afilada adelante */
+      const f = 0.3 + 0.7 * Math.pow((z + 1) / 2, 0.55);
+      pos.setXYZ(i, x * 0.62 * f, y * 0.2, z);
+      /* el reborde levantado de la pepa de zapallo, más tostado */
+      c.copy(cara).lerp(borde, 0.8 * Math.pow(1 - Math.abs(y), 3));
+      col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.scale(0.028 / 0.62, 0.009 / 0.2, 0.045);
+    g.computeVertexNormals();
+    return g;
+  });
+  const p = new THREE.Mesh(geo, mate(THREE, '#ffffff', { vertexColors: true }));
   p.name = 'pepa';
   p.userData.ignorar = true;
   return p;

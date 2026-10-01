@@ -105,11 +105,13 @@ registrar('garbanzo', (THREE, opts = {}) => {
   pico.rotation.z = -0.7;
   pico.userData.ignorar = true;
   /* la camisita: la piel remojada, holgada y a punto de soltarse */
+  /* el tamaño, en la geometría: el nivel la afloja con
+     camisita.scale.setScalar(1 + k·0.35), que con el tamaño metido en
+     la escala la inflaba a una esfera crema de media pantalla */
   const camisita = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 12, 9),
+    forma('garbanzo-camisita', () => new THREE.SphereGeometry(1, 12, 9).scale(0.098, 0.09, 0.094)),
     mate(THREE, COMIDA.garbanzo_camisita, { transparent: true, opacity: 0.55 })
   );
-  camisita.scale.set(0.098, 0.09, 0.094);
   camisita.name = 'camisita';
   camisita.userData.ignorar = true;
   g.add(pepa, pico, camisita);

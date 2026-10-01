@@ -302,7 +302,16 @@ function geoBandaDeHoja(THREE, n, u0, u1, arc) {
     const borde = Math.min(1, Math.abs(ang) / (arc / 2));
     const lomo = Math.cos(borde * Math.PI / 2);      /* 1 al centro, 0 al borde */
     const nervio = 1 + lomo * 0.050 + Math.cos(ang * 11) * 0.009;
-    const r = radioHoja(u) * nervio;
+    /* EN TEJA: cada hoja levanta su borde derecho un 8 % y así se monta
+       siempre sobre el izquierdo de la siguiente, como las tejas de un
+       tejado. Antes todas iban al mismo radio y el traslape no se leía
+       como capas. El 8 % tiene que ganarle al lomo del 5 %, o el borde
+       de la vecina atraviesa la hoja en la zona donde se tapan. Como
+       todas son iguales y solo giran, se puede pelar cualquiera en
+       cualquier orden sin que una cruce a otra. */
+    const lado = Math.max(-1, Math.min(1, ang / (arc / 2)));
+    const teja = 1 + 0.08 * (lado + 1) / 2;
+    const r = radioHoja(u) * nervio * teja;
     /* Y SE AFINA HACIA LA PUNTA. Sin esto la hoja mantiene el mismo
        ancho de arriba abajo y, una vez abierta, se lee como una
        placa — que es exactamente lo que la delataba.
@@ -332,22 +341,32 @@ function geoBandaDeHoja(THREE, n, u0, u1, arc) {
    de color y de ángulo—, así que la banda se calcula una vez por
    tramo y se reparte: tres geometrías en vez de quince, y el vuelto
    es medio segundo menos armando cada choclo. */
-function bandaDeHoja(THREE, n, u0, u1, arc, material) {
-  const geo = forma('hoja-choclo-banda:' + n, () => geoBandaDeHoja(THREE, n, u0, u1, arc));
+function bandaDeHoja(THREE, n, u0, u1, arc, material, total) {
+  const geo = forma('hoja-choclo-banda:' + n + ':' + total, () => geoBandaDeHoja(THREE, n, u0, u1, arc));
   return new THREE.Mesh(geo, material);
 }
 
 registrar('hoja-choclo', (THREE, opts = {}) => {
   const i = opts.indice || 0;
   /* con traslape holgado: las hojas se tapan entre sí como en el
-     choclo real, y de paso cubren lo que el afinado les quita */
-  const arc = (Math.PI * 2 / HOJAS) * 1.46;
+     choclo real, y de paso cubren lo que el afinado les quita.
+
+     El arco sale de CUÁNTAS HOJAS TIENE ESTE CHOCLO, no de la
+     constante: era siempre el de diez hojas (~53°), y los niveles
+     reparten cinco (maíz) o seis (feria) a 72° o 60°. Con el choclo
+     todavía cerrado ya se veían columnas de granos entre hoja y hoja —
+     se regalaba el descubrimiento— y en la feria los choclos cerrados
+     salían rayados de tusa como panes. */
+  const total = opts.total || HOJAS;
+  const arc = (Math.PI * 2 / total) * 1.46;
 
   /* colores según la posición: hojas exteriores más verdes,
      interiores más claras. Con 10 hojas, las primeras 5 (0-4) son
      verdes oscuras, y las últimas 5 (5-9) son claras y casi blancas */
   let color;
-  const esInterior = i >= HOJAS / 2;
+  /* con cinco o seis hojas todas son de afuera: las claras de adentro
+     solo existen en el choclo entero de diez */
+  const esInterior = total >= 8 && i >= Math.ceil(total / 2);
   if (esInterior) {
     /* hojas interiores: tonos muy claros, casi blancos */
     const blancos = ['#e8e8dc', '#e2e2d4', '#ebe7dc', '#dfe5d8'];
@@ -369,7 +388,7 @@ registrar('hoja-choclo', (THREE, opts = {}) => {
     nudo.name = 'nudo' + n;
     /* el primero nace en la base; los demás, donde acabó el anterior */
     if (n > 0) nudo.position.y = LARGO_HOJA / NUDOS;
-    const banda = bandaDeHoja(THREE, n, u0, u1, arc, material);
+    const banda = bandaDeHoja(THREE, n, u0, u1, arc, material, total);
     banda.name = 'banda' + n;
     nudo.add(banda);
     padre.add(nudo);

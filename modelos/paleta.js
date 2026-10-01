@@ -84,6 +84,11 @@ export const COMIDA = {
   zapallo_pulpa: '#f6b957',
   zapallo_pepa: '#f3e6bc',
   zapallo_guia: '#5b3b1c',
+  /* el centro de la raya de la guía: crema de tiza con el borde oscuro
+     de zapallo_guia. Una línea así se lee como marca sobre el naranja
+     y sobre la madera, y no como un objeto clavado */
+  zapallo_tiza: '#fff1cf',
+  zapallo_pepa_borde: '#cdb27a',
   zapallo_hueco: '#e0983f',
   zapallo_fibra: '#f2cb86',
   /* la cáscara vista de canto en la tajada tendida: más oscura que la

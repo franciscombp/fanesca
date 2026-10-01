@@ -71,6 +71,8 @@ function soltarCamisita(rec) {
   const cam = rec.camisita;
   rec.obj.remove(cam);
   cam.position.copy(donde);
+  /* sale de un grupo a ×1.6: sin esto la piel se encogía al soltarse */
+  cam.scale.multiplyScalar(1.6);
   raiz.add(cam);
   cam.userData.escalaBase = 1.6;
   cam.userData.suelto = true;

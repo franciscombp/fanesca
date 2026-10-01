@@ -115,7 +115,7 @@ function nuevaHoja(i, senal) {
   const pivot = new THREE.Group();
   pivot.rotation.y = (i / HOJAS_PUESTO) * Math.PI * 2;
   pivot.position.y = BASE_HOJA;
-  const mesh = api.pieza('hoja-choclo', { indice: i });
+  const mesh = api.pieza('hoja-choclo', { indice: i, total: HOJAS_PUESTO });
   /* Las hojas del modelo se colorean por su POSICIÓN en el choclo
      entero —las de dentro casi blancas, las de fuera verdes— y aquí
      las seis tienen que decir lo mismo: la señal. Sólo las dos
