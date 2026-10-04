@@ -30,10 +30,21 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.6.0';
+const APP_VERSION = '4.6.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.6.1',
+    fecha: '2026-10-04',
+    titulo: 'El choclo de antes',
+    cambios: [
+      '🌽 <b>Vuelve el choclo jugoso.</b> El grano nuevo, cuadrado y mate, se veía seco; el de antes, redondo y con su brillo, se veía más rico. Las hojas siguen cerrando bien: el choclo cerrado no enseña granos.',
+    ],
+    internos: [
+      'modelos/choclo.js, nivel-feria.js y nivel-maiz.js vuelven al estado de antes de 56c6791 (que ya traía el arco de las hojas por número real). Se conserva el arreglo del módulo negativo del color del grano (variante -1 de la feria daba un grano blanco). Los bichos nuevos se quedan.',
+    ],
+  },
   {
     v: '4.6.0',
     fecha: '2026-10-04',

@@ -42,7 +42,7 @@
    una tómbola.
    ============================================================ */
 
-import { LARGO, LARGO_HOJA, BASE_HOJA, NUDOS, ventanaDeGranos } from './modelos/choclo.js';
+import { LARGO, LARGO_HOJA, BASE_HOJA, NUDOS, posicionDe, A, P } from './modelos/choclo.js';
 
 let THREE, raiz, api;
 
@@ -57,22 +57,8 @@ const RADIO_TOQUE = 78;           /* px en pantalla para agarrar un choclo */
 
 /* Cuánta hoja se abre al mirar. No del todo: en el puesto se abre una
    ventanita con el pulgar y se vuelve a cerrar, no se desnuda el
-   choclo.
-
-   UNA VENTANA ARRIBA, no las seis hojas. Antes se doblaban todas: con
-   el choclo acostado las de arriba quedaban paradas como cintas que
-   tapaban al vecino, las de abajo se metían en la tabla, y lo que se
-   descubría era una tusa blanca con cinco bolitas de costado. Ahora
-   sólo se apartan las dos hojas que miran al cielo —cada una hacia su
-   lado, como las separa el pulgar— y queda a la vista una franja de
-   cuatro hileras de punta a punta: el grano se juzga de un vistazo.
-
-   Con cuna.rotation.z = π/2 el +X del choclo es el +Y del mundo, y
-   una hoja con pivote en th mira hacia (0, sin th, cos th): las que
-   miran arriba son las de sin th alto. */
-const GIRO_VENTANA = 0.9;          /* radianes que se aparta cada hoja */
-const ENSANCHE = 0.12;             /* para montarse SOBRE la vecina (la teja es 8 %) */
-const ENROSCA = [0.08, 0.15, 0.35]; /* la solapa se enrosca un poco, más en la punta */
+   choclo — y media hoja abierta deja ver el grano igual. */
+const ABRE = 0.62;
 
 /* ---------- las señales ----------
    El color de la hoja y el de los pelos son TODA la información que
@@ -140,31 +126,31 @@ function nuevaHoja(i, senal) {
   pivot.add(mesh);
   const nudos = [];
   for (let n = 0; n < NUDOS; n++) { const nd = api.parte(mesh, 'nudo' + n); if (nd) nudos.push(nd); }
-  const th = pivot.rotation.y;
-  /* ¿es de la ventana? y si sí, hacia qué lado se aparta: la de la
-     izquierda del cielo hacia su izquierda, la otra hacia la derecha */
-  const ventana = Math.sin(th) > 0.3;
-  const lado = Math.cos(th) > 0 ? -1 : 1;
-  return { pivot, nudos, th, ventana, lado };
+  return { pivot, nudos };
 }
 
-/* la hoja de la ventana a k (0 cerrada, 1 abierta). La escala ADELANTA
-   al giro: si crecen al mismo ritmo, a medio camino la hoja atraviesa
-   el borde de su vecina; así ya va por fuera antes de montarse. */
-function apartar(h, k) {
-  const s = 1 + ENSANCHE * Math.min(1, k / 0.35);
-  h.pivot.scale.set(s, 1, s);
-  h.pivot.rotation.y = h.th + h.lado * GIRO_VENTANA * k;
-  h.nudos.forEach((nd, n) => { nd.rotation.x = (ENROSCA[n] || 0.2) * k; });
-}
+const CURVA_HOJA = [1.15, 0.85, 0.70];
+function doblar(h, k) { h.nudos.forEach((nd, n) => { nd.rotation.x = (CURVA_HOJA[n] || 0.5) * k; }); }
 
 /* Los granos que se ven al abrir: sólo la cara de arriba, y no los
-   126. Nadie mira un choclo por detrás en el puesto. Van fundidos en
-   una malla (ver ventanaDeGranos en modelos/choclo.js): aquí ningún
-   grano se toca por separado. */
+   126. Nadie mira un choclo por detrás en el puesto, y ciento
+   veintiséis granos por seis choclos son setecientos objetos para
+   enseñar un color. */
 function nuevosGranos(clase) {
-  const g = ventanaDeGranos(THREE, clase.madurez);
+  const g = new THREE.Group();
   g.visible = false;
+  /* tres hileras y cinco granos: es la ventana que se ve desde arriba
+     con la hoja abierta. Cinco hileras eran setenta granos más por
+     choclo —casi doscientos en el puesto— para enseñar un color. */
+  for (let a = -1; a <= 1; a++) {
+    for (let p = 2; p < P - 2; p++) {
+      const { th, r, h } = posicionDe(((a % A) + A) % A, p);
+      const grano = api.pieza('grano-choclo', { madurez: clase.madurez, variante: a * 7 + p * 3 });
+      grano.position.set(Math.sin(th) * (r + 0.03), h, Math.cos(th) * (r + 0.03));
+      grano.rotation.y = th;
+      g.add(grano);
+    }
+  }
   return g;
 }
 
@@ -186,15 +172,10 @@ function nuevoChoclo(clase, senal, i) {
      pantalla no se leían como pelos sino como rayones sobre el
      choclo. La hoja llega hasta BASE_HOJA + LARGO_HOJA; ahí, y algo
      más corto, es un mechón asomando por la punta. */
-  /* pocas hebras y gruesas: a escala 0.22 una hebra fina mide menos
-     de un píxel, y el color del pelo es la mitad de la señal */
-  const pelos = api.pieza('pelos-choclo', { hebras: 20, grosor: 7 });
+  const pelos = api.pieza('pelos-choclo');
   tintar(pelos, senal.pelo);
-  /* el mechón nace a LARGO/2 + 0.26 dentro de su pieza: se baja eso
-     (ya escalado) para que las hebras salgan DE la punta de la hoja y
-     no floten medio choclo más allá, sueltas sobre la tabla */
+  pelos.position.y = BASE_HOJA + LARGO_HOJA - 0.10;
   pelos.scale.setScalar(0.72);
-  pelos.position.y = BASE_HOJA + LARGO_HOJA - 0.10 - (LARGO / 2 + 0.26) * 0.72;
   g.add(pelos);
 
   /* ACOSTADO A LO ANCHO, y esto costó una captura de pantalla
@@ -466,12 +447,11 @@ export default {
     puesto.forEach(rec => {
       if (!rec.abierto || rec.apertura >= 1) return;
       rec.apertura = Math.min(1, rec.apertura + dt / 0.34);
-      /* sólo las de la ventana; las otras cuatro siguen enseñando la
-         señal. Escalonadas: dos hojas a la vez es un parpadeo, una tras
-         otra es un pulgar abriendo la hoja */
-      rec.hojas.filter(h => h.ventana).forEach((h, k) => {
-        const p = Math.max(0, Math.min(1, (rec.apertura - k * 0.15) / 0.75));
-        apartar(h, p);
+      rec.hojas.forEach((h, k) => {
+        /* escalonadas: seis hojas abriéndose a la vez es un parpadeo;
+           una tras otra es un pulgar abriendo la hoja */
+        const p = Math.max(0, Math.min(1, (rec.apertura - k * 0.07) / 0.6));
+        doblar(h, p * ABRE);
       });
     });
   },

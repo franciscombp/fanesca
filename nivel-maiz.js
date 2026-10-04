@@ -160,9 +160,6 @@ function nuevoGrano(a, p) {
   const g = api.pieza(danado ? 'grano-podrido' : 'grano-choclo', {
     madurez: danado ? 'podrido' : madurez.id,
     punta,
-    /* la fila de abajo inclina la corona hacia abajo y la de arriba
-       hacia arriba: tapan el tope de la tusa */
-    lado: p === 0 ? -1 : 1,
     variante: a * 7 + p * 3,
   });
   /* apenas asomados: el grano se sienta EN la tusa, no flota sobre ella */
