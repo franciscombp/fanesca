@@ -255,7 +255,9 @@ distinguirse de un vistazo entre ciento veinte granos quietos.
   cada cierre de día se celebra una vez (`estado.diasVistos`). La
   despensa quedó vacía: los seis que esperaban minijuego (garbanzo,
   sambo, mote, queso, huevo, guarnición) ya cocinan, con sus piezas
-  en `modelos/despensa.js`.
+  en un archivo de modelos cada uno (`modelos/sambo.js`, `garbanzo.js`,
+  `mote.js`, `queso.js`, `huevo.js`, `guarnicion.js`; vivían juntos en
+  `despensa.js` hasta que la auditoría del 3D los hizo crecer).
 - **La olla se llena** (2.4): servir la olla abre el altar del jueves
   y, encima, la escena final (`#olla-escena`, `escenaOlla()` en
   `main.js`): los dieciséis caen uno a uno en el orden real de la
