@@ -39,6 +39,7 @@
 
 import { ORDEN_OLLA } from './niveles.js';
 import { ANCHO_SEGURO } from './motor3d.js';
+import { pintar, lienzo, azarCon, sstep } from './modelos/pintura.js';
 
 let THREE, raiz, api;
 
@@ -115,7 +116,18 @@ const AVISA = 0.6;
 
 /* ---------- estado ---------- */
 
+/* COLORES NUEVOS — de paso: van a mudarse a COMIDA en paleta.js.
+   Viven aquí mientras tanto para no pisar a quien edita la paleta. */
+const COLORES = {
+  olla_barro: '#9c4a25',          /* el barro cocido de la olla */
+  olla_barro_claro: '#b8693c',    /* el labio y las asas, que agarran la luz */
+  vapor: '#fff6e8',
+};
+
 let grupo = null, ollaGrupo = null, caldo = null, trozos = null, cuchara = null;
+/* el hervor y el vapor */
+const N_BURBUJAS = 10;
+let burbujas = null, vidaBurbuja = [], porNacer = 0, vapores = [];
 let aro = null;           /* el aro que marca la boca de la olla */
 let cuencos = [];                 /* { obj, ing, i, x, z, dentro } */
 let echados = 0;
@@ -174,22 +186,37 @@ function construirOlla() {
   const g = new THREE.Group();
   g.position.set(0, api.MESA_Y, OLLA_Z);
 
-  const barro = new THREE.MeshStandardMaterial({ color: 0x3f3a38, roughness: 0.72, metalness: 0.18 });
-  const cuerpo = new THREE.Mesh(
-    new THREE.CylinderGeometry(OLLA_R, OLLA_R * 0.82, OLLA_ALTO, 32, 1, true), barro);
-  cuerpo.material.side = THREE.DoubleSide;
-  cuerpo.position.y = OLLA_ALTO / 2;
-  const fondo = new THREE.Mesh(new THREE.CircleGeometry(OLLA_R * 0.82, 28), barro);
-  fondo.rotation.x = -Math.PI / 2;
-  fondo.position.y = 0.01;
-  const labio = new THREE.Mesh(new THREE.TorusGeometry(OLLA_R, 0.045, 8, 32), barro);
-  labio.rotation.x = Math.PI / 2;
-  labio.position.y = OLLA_ALTO;
+  /* UNA OLLA DE BARRO DE VERDAD. Era un cono casi negro (Standard con
+     metal y sin mapa de entorno) que se leía balde de plástico. Ahora
+     es un torno con panza, labio y pared por dentro, en el rojo del
+     barro cocido y con el hollín del fogón subiendo desde abajo,
+     pintado por vértice. La panza no pasa de 0.575 (la primera fila
+     de cuencos tiene su borde trasero en z 0.55) y el labio de 0.58. */
+  const perfil = [
+    /* por fuera, del asiento al labio */
+    [0, 0], [0.40, 0], [0.47, 0.02], [0.54, 0.1], [0.575, 0.2], [0.57, 0.3], [0.55, 0.4], [0.56, 0.46],
+    /* el labio */
+    [0.58, 0.47], [0.578, 0.49], [0.56, 0.497], [0.535, 0.485],
+    /* por dentro, 0.03 hacia adentro, hasta el fondo */
+    [0.525, 0.45], [0.52, 0.4], [0.54, 0.3], [0.545, 0.2], [0.51, 0.1], [0.44, 0.04], [0.37, 0.03], [0, 0.03],
+  ];
+  const DESDE_LABIO = 8, DESDE_DENTRO = 12;
+  const geo = new THREE.LatheGeometry(perfil.map(([r, y]) => new THREE.Vector2(r, y)), 40);
+  const barro = new THREE.Color(COLORES.olla_barro), claro = new THREE.Color(COLORES.olla_barro_claro);
+  pintar(THREE, geo, (c, i, x, y) => {
+    const j = i % perfil.length;
+    if (j >= DESDE_DENTRO) c.copy(barro).multiplyScalar(0.45);
+    else if (j >= DESDE_LABIO) c.copy(claro);
+    else c.copy(barro).multiplyScalar(0.35 + 0.65 * sstep(0.05, 0.3, y));
+  });
+  const cuerpo = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+  cuerpo.name = 'cuerpo';
   /* las dos asas: sin ellas es un vaso, con ellas es una olla */
+  const matAsa = new THREE.MeshLambertMaterial({ color: COLORES.olla_barro_claro });
   [-1, 1].forEach(s => {
-    const asa = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.032, 6, 14, Math.PI), barro);
+    const asa = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.032, 6, 14, Math.PI), matAsa);
     asa.rotation.y = Math.PI / 2;
-    asa.position.set(s * OLLA_R * 0.98, OLLA_ALTO * 0.78, 0);
+    asa.position.set(s * 0.555, OLLA_ALTO * 0.78, 0);
     g.add(asa);
   });
 
@@ -215,8 +242,88 @@ function construirOlla() {
   cuchara.rotation.z = 0.95;
   cuchara.position.set(OLLA_R * 0.34, OLLA_ALTO * 0.42, 0);
 
-  g.add(cuerpo, fondo, labio, caldo, trozos, cuchara);
+  /* EL HERVOR: burbujas que nacen, crecen y revientan en el caldo. Es
+     la mecánica entera a la vista —«hierve y se pega»— y con la pega
+     alta salen menos y más gordas: espeso, otra señal de «revuelve».
+     Una sola malla instanciada que comparte el material del caldo
+     (sigue su color). Cuelgan de los trozos: giran con la cuchara. */
+  burbujas = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(1, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), caldo.material, N_BURBUJAS);
+  /* nacen con escala 0: la esfera de recorte saldría degenerada */
+  burbujas.frustumCulled = false;
+  burbujas.userData.ignorar = true;
+  burbujas.userData.sombra = false;
+  vidaBurbuja = Array.from({ length: N_BURBUJAS }, () => ({ t: 1, dur: 1, r: 0, x: 0, z: 0 }));
+  const cero = new THREE.Matrix4().makeScale(0, 0, 0);
+  for (let i = 0; i < N_BURBUJAS; i++) burbujas.setMatrixAt(i, cero);
+  trozos.add(burbujas);
+
+  /* EL VAPOR: tres mechones que suben de la boca, más densos conforme
+     la olla se llena */
+  const texVapor = lienzo(THREE, 'vapor-mechon', 128, (x, S) => {
+    const r = azarCon(53);
+    for (let i = 0; i < 5; i++) {
+      const cx = S / 2 + (r() - 0.5) * 36, cy = S / 2 + (r() - 0.5) * 36, R = S * (0.22 + r() * 0.12);
+      const gr = x.createRadialGradient(cx, cy, 0, cx, cy, R);
+      gr.addColorStop(0, `rgba(255,255,255,${0.25 + r() * 0.25})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = gr; x.fillRect(0, 0, S, S);
+    }
+  });
+  vapores = [0, 1, 2].map(i => {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texVapor, color: COLORES.vapor, transparent: true, opacity: 0, depthWrite: false,
+    }));
+    /* todos los Sprite comparten UNA geometría interna: no se tira */
+    sp.geometry.userData.compartida = true;
+    sp.userData.fase = i / 3;
+    sp.userData.ignorar = true;
+    g.add(sp);
+    return sp;
+  });
+
+  g.add(cuerpo, caldo, trozos, cuchara);
   return g;
+}
+
+/* una burbuja nueva en un sitio libre del caldo */
+function nacerBurbuja(b) {
+  const th = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * OLLA_R * 0.78;
+  b.x = Math.cos(th) * r; b.z = Math.sin(th) * r;
+  b.t = 0;
+  const espeso = pega > AVISA;
+  b.dur = (0.5 + Math.random() * 0.6) * (espeso ? 1.4 : 1);
+  b.r = (0.03 + Math.random() * 0.02) * (espeso ? 1.5 : 1);
+}
+
+let _m4 = null;
+function hervir(dt, t) {
+  if (!burbujas) return;
+  if (!_m4) _m4 = new THREE.Matrix4();
+  const lleno = RECETA.length ? echados / RECETA.length : 0;
+  const tasa = (4 + 10 * lleno) * (pega > AVISA ? 0.4 : 1);
+  porNacer += tasa * dt;
+  vidaBurbuja.forEach((b, i) => {
+    if (b.t >= 1 && porNacer >= 1) { porNacer -= 1; nacerBurbuja(b); }
+    let k = 0;
+    if (b.t < 1) {
+      b.t = Math.min(1, b.t + dt / b.dur);
+      /* crece y, al final, revienta de golpe */
+      k = b.t < 0.85 ? b.r * (b.t / 0.85) : 0;
+    }
+    _m4.makeScale(k, k * 0.8, k).setPosition(b.x, -0.006, b.z);
+    burbujas.setMatrixAt(i, _m4);
+  });
+  porNacer = Math.min(porNacer, 2);
+  burbujas.instanceMatrix.needsUpdate = true;
+  /* el vapor sube 0.6 desde el caldo y se deshace */
+  const y0 = OLLA_ALTO * 0.74;
+  vapores.forEach(sp => {
+    const k = ((t * 0.28) + sp.userData.fase) % 1;
+    sp.position.set(Math.sin(t * 0.8 + sp.userData.fase * 6) * 0.08, y0 + k * 0.6, (sp.userData.fase - 0.33) * 0.2);
+    sp.scale.set(0.35 + k * 0.5, 0.3 + k * 0.4, 1);
+    sp.material.rotation = sp.userData.fase * 6 + k * 1.2;
+    sp.material.opacity = Math.sin(k * Math.PI) * (0.3 + 0.25 * lleno);
+  });
 }
 
 /* ---------- los cuencos del mesón ---------- */
@@ -296,6 +403,14 @@ function echar(rec) {
   seguidos = 0;
   cobradoEnTurno = false;
   rec.dentro = true;
+  /* con el primer ingrediente el caldo deja de ser leche lisa: entra
+     la textura (base BLANCA, así pintarCaldo sigue mandando el tono
+     sin oscurecerlo). Mientras es leche va liso: las motas grises en
+     la leche se leían leche sucia. Se asigna una sola vez. */
+  if (!caldo.material.map) {
+    caldo.material.map = texturaCaldo();
+    caldo.material.needsUpdate = true;
+  }
   echados++;
   api.sfx('plop', 0.82 + echados * 0.03);
   api.buzz(10);
@@ -327,6 +442,26 @@ function echar(rec) {
 }
 
 const ing2color = (ing) => ing.color || '#e8d9b8';
+
+/* el caldo con cuerpo: motas de lo deshecho y la espiral del cucharón,
+   en grises sobre BLANCO para que el color lo siga poniendo el nivel */
+function texturaCaldo() {
+  return lienzo(THREE, 'caldo-neutro', 256, (x, S) => {
+    const r = azarCon(59);
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, S, S);
+    for (let i = 0; i < 60; i++) {
+      x.fillStyle = r() < 0.6 ? 'rgba(176,176,176,.25)' : 'rgba(138,138,138,.2)';
+      x.beginPath(); x.arc(r() * S, r() * S, 2 + r() * 7, 0, 7); x.fill();
+    }
+    x.strokeStyle = 'rgba(200,200,200,.5)'; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath();
+    for (let t = 0; t < 9.5; t += 0.05) {
+      const rr = 6 + t * 10, a = t * 1.15;
+      const px = S / 2 + Math.cos(a) * rr, py = S / 2 + Math.sin(a) * rr * 0.9;
+      t ? x.lineTo(px, py) : x.moveTo(px, py);
+    }
+    x.stroke();
+  });
+}
 
 function volverASuSitio(rec) {
   api.tween(rec.obj.position, 'x', rec.x, 0.2);
@@ -584,6 +719,7 @@ export default {
 
   actualizar(dt, t) {
     if (aro) aro.latir(t);
+    hervir(dt, t);
     if (terminado) return;
     /* SE PEGA MIENTRAS NADIE REVUELVE. Sube sola y sube más conforme
        la olla se llena; revolver la baja y echar algo también. */
@@ -601,7 +737,7 @@ export default {
       trozos.rotation.y += giroCaldo * dt * 6;
       giroCaldo *= Math.max(0, 1 - dt * 3);
       /* y hierve: los trozos suben y bajan con el hervor */
-      trozos.children.forEach((tr, i) => { tr.position.y = Math.sin(t * 2.4 + i) * 0.012; });
+      trozos.children.forEach((tr, i) => { if (tr !== burbujas) tr.position.y = Math.sin(t * 2.4 + i) * 0.012; });
     }
     /* el cuenco alumbrado late hasta que se usa */
     if (alumbrado && !alumbrado.dentro) {
@@ -612,6 +748,9 @@ export default {
 
   destruir() {
     clearTimeout(remateId); remateId = null;
+    /* la matriz por instancia vive en la GPU; tirar() no la suelta */
+    if (burbujas) burbujas.dispose();
+    burbujas = null; vidaBurbuja = []; vapores = []; porNacer = 0;
     delete window.__caldero;
     cuencos = []; grupo = null; ollaGrupo = null; caldo = null;
     trozos = null; cuchara = null; cargado = null; modo = null; aro = null;

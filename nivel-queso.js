@@ -37,6 +37,7 @@ let PEDAZOS = 12;
 let MOSCA_CADA = MOSCA_CADA_REF;
 
 let bloqueObj = null, bloqueMalla = null, jarraObj = null, moscasGrupo = null;
+let chorro = null, sombraJarra = null;
 let moscas = [];              /* {obj, m, t0, estado} */
 let proximaMosca = 0;
 let hechos = 0;               /* migas + 1 por la leche */
@@ -48,7 +49,23 @@ let perdonMosca = false;
 let terminado = false;
 
 /* a 0.92 la jarra cabe entera en el ancho seguro; a 1.05 se cortaba */
-const JARRA_REPOSO = () => new THREE.Vector3(0.92, api.MESA_Y + 0.26, TABLA_Z + 0.15);
+/* a 0.92 la jarra cabe entera en el ancho seguro; a 1.05 se cortaba.
+   En y, la base (−0.21 local) en el tope de la tabla: a +0.26 se
+   hundía media décima en la madera */
+const JARRA_REPOSO = () => new THREE.Vector3(0.92, api.MESA_Y + 0.315, TABLA_Z + 0.15);
+
+/* la jarra VUELVE a su sitio deslizándose. Con volarA desaparecía:
+   el vuelo, al aterrizar, saca la pieza de la escena y la desecha —
+   soltarla fuera de la batea dejaba una jarra invisible en la mano */
+function volverJarra(dur = 0.35) {
+  const d = JARRA_REPOSO();
+  api.tween(jarraObj.position, 'x', d.x, dur);
+  api.tween(jarraObj.position, 'z', d.z, dur);
+  api.tween(jarraObj.position, 'y', d.y, dur);
+  api.tween(jarraObj.rotation, 'z', 0, dur * 0.6);
+  if (sombraJarra) sombraJarra.visible = true;
+  if (chorro) chorro.visible = false;
+}
 
 function moscaPosada() { return moscas.find(m => m.estado === 'posada'); }
 
@@ -124,10 +141,19 @@ function verterLeche(dt) {
   if (fase !== 'leche' || !jarraEnMano) return;
   const p = jarraObj.position;
   const sobreBatea = Math.hypot(p.x - api.BATEA.x, p.z - api.BATEA.z) < 0.7;
-  if (!sobreBatea) { vertiendo = Math.max(0, vertiendo - dt * 2); jarraObj.rotation.z = 0; return; }
+  if (!sobreBatea) { vertiendo = Math.max(0, vertiendo - dt * 2); jarraObj.rotation.z = 0; chorro.visible = false; return; }
   /* encima de la batea la jarra se vuelca sola: sostenerla ahí ES el gesto */
   vertiendo += dt;
   jarraObj.rotation.z = -Math.min(1.4, vertiendo * 2.2);
+  /* EL CHORRO: le da forma al gesto. Cuelga del pico hasta la batea;
+     sin updateMatrixWorld iría un cuadro atrasado respecto del giro */
+  if (vertiendo > 0.12) {
+    jarraObj.updateMatrixWorld();
+    const pico = jarraObj.localToWorld(new THREE.Vector3(0.24, 0.21, 0));
+    chorro.position.copy(pico);
+    chorro.scale.set(1 + 0.12 * Math.sin(api.reloj * 31), Math.max(0.05, pico.y - (api.MESA_Y + 0.12)), 1);
+    chorro.visible = true;
+  }
   if (Math.random() < 0.5) api.chispas(api.BATEA.clone().setY(api.MESA_Y + 0.45), '#fdfbf4', 3, 0.5);
   if (Math.random() < 0.2) api.sfx('frotar');
   if (vertiendo >= 0.9 && !terminado) {
@@ -135,7 +161,7 @@ function verterLeche(dt) {
     hechos = TOTAL;
     api.progreso(hechos, TOTAL);
     jarraEnMano = false;
-    api.volarA(jarraObj, JARRA_REPOSO(), { dur: 0.4, alto: 0.3 });
+    volverJarra(0.4);
     api.sfx('bien');
     api.completar();
   }
@@ -164,16 +190,42 @@ export default {
     raiz.add(tabla);
 
     bloqueObj = api.pieza('bloque-queso');
-    bloqueObj.position.set(-0.2, api.MESA_Y + 0.32, TABLA_Z);
+    /* el origen del bloque está en su BASE: va apoyado en el tope de
+       la tabla y al encogerse no despega */
+    bloqueObj.position.set(-0.2, api.MESA_Y + 0.105, TABLA_Z);
     bloqueObj.userData = { tipo: 'bloque' };
-    bloqueObj.add(api.sombraBlob(0.7, -0.3));
+    bloqueObj.add(api.sombraBlob(1.45, 0.002));
     raiz.add(bloqueObj);
+    /* la hoja se queda en la tabla: si siguiera colgada del bloque
+       encogería con él, y al final queda vacía como en el mercado */
+    const hoja = api.parte(bloqueObj, 'hoja');
+    if (hoja) {
+      bloqueObj.remove(hoja);
+      hoja.position.set(bloqueObj.position.x, api.MESA_Y + 0.104, bloqueObj.position.z);
+      raiz.add(hoja);
+    }
     bloqueMalla = api.parte(bloqueObj, 'bloque');
 
     jarraObj = api.pieza('jarra-leche');
     jarraObj.position.copy(JARRA_REPOSO());
     jarraObj.userData = { tipo: 'jarra' };
+    sombraJarra = api.sombraBlob(0.55, -0.21);
+    jarraObj.add(sombraJarra);
     raiz.add(jarraObj);
+
+    /* el chorro de leche, abierto y con el origen arriba: se estira
+       en y hasta la batea. Uno solo, escondido hasta que se vierte */
+    const leche = api.parte(jarraObj, 'leche');
+    chorro = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.028, 1, 8, 1, true).translate(0, -0.5, 0),
+      new THREE.MeshLambertMaterial({
+        color: leche && leche.material ? leche.material.color.clone() : '#fdfbf4',
+        transparent: true, opacity: 0.92,
+      })
+    );
+    chorro.userData.ignorar = true;
+    chorro.visible = false;
+    raiz.add(chorro);
 
     moscasGrupo = new THREE.Group();
     raiz.add(moscasGrupo);
@@ -214,6 +266,9 @@ export default {
     if (!p) return;
     if (fase === 'leche' && Math.hypot(p.x - jarraObj.position.x, p.z - jarraObj.position.z) < 0.6) {
       jarraEnMano = true;
+      /* en la mano la jarra va alta: su sombra de contacto quedaría
+         flotando en el aire */
+      if (sombraJarra) sombraJarra.visible = false;
       return;
     }
     if (fase === 'desmigar' && Math.hypot(p.x - bloqueObj.position.x, p.z - bloqueObj.position.z) < 0.75) {
@@ -246,9 +301,8 @@ export default {
     this._modo = null;
     if (jarraEnMano) {
       jarraEnMano = false;
-      jarraObj.rotation.z = 0;
       vertiendo = 0;
-      api.volarA(jarraObj, JARRA_REPOSO(), { dur: 0.35, alto: 0.25 });
+      volverJarra(0.35);
     }
   },
 
@@ -276,7 +330,9 @@ export default {
   },
 
   destruir() {
+    if (chorro) chorro.visible = false;
     moscas = []; bloqueObj = null; bloqueMalla = null; jarraObj = null; moscasGrupo = null;
+    chorro = null; sombraJarra = null;
     jarraEnMano = false; terminado = false;
     delete window.__queso;
   },

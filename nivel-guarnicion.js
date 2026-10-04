@@ -47,11 +47,17 @@ let terminado = false;
    izquierda, las tajadas crudas esperando a la derecha y el plato
    en medio. A 0.95 las tajadas y a -0.55 la sartén (que mide 0.6 de
    radio) se salían por los filos con la cámara cercana de ahora. */
-const SARTEN = () => new THREE.Vector3(-0.45, api.MESA_Y + 0.2, TABLA_Z);
+/* en y, la base de la sartén (−0.05 local) en el tope de la tabla:
+   el piso queda en MESA_Y+0.20 y la tajada (a +0.26) se apoya en vez
+   de hundirse */
+const SARTEN = () => new THREE.Vector3(-0.45, api.MESA_Y + 0.15, TABLA_Z);
 const ESPERA = (i) => new THREE.Vector3(0.72, api.MESA_Y + 0.16, TABLA_Z - 0.5 + i * 0.34);
 const PLATO = () => new THREE.Vector3(0.1, api.MESA_Y + 0.18, TABLA_Z + 0.05);
 /* la sartén se retira del fuego al armar: al fondo, fuera del paso */
-const SARTEN_RETIRADA = () => new THREE.Vector3(-0.95, api.MESA_Y + 0.2, TABLA_Z - 1.25);
+/* la sartén se retira del fuego al armar: al fondo, fuera del paso.
+   Apoyada en el MESÓN (fuera de la tabla, por eso más baja) y lejos
+   de la olla grande: en (−0.95, …, −1.25) las dos se atravesaban */
+const SARTEN_RETIRADA = () => new THREE.Vector3(-0.35, api.MESA_Y + 0.05, TABLA_Z - 1.52);
 
 function nuevaTajada(i) {
   const obj = api.pieza('maduro', { variante: i });
@@ -149,6 +155,9 @@ function armarFase() {
   if (sartenObj) {
     sartenObj.userData.tipo = null;
     deslizar(sartenObj, SARTEN_RETIRADA(), 0.5);
+    /* media vuelta al mango para que apunte a +x: con el ángulo de
+       la sartén en el fuego, desde allá atrás llegaría a la pared */
+    api.tween(sartenObj.rotation, 'y', -1.07, 0.5);
   }
 
   /* las empanaditas ya vinieron hechas —son de viento, de la tienda
@@ -349,6 +358,9 @@ export default {
 
   destruir() {
     generacion++;
+    /* la InstancedMesh de los granos guarda su matriz por instancia en
+       la GPU; tirar() del motor no la suelta */
+    if (platoObj) platoObj.traverse(o => { if (o.isInstancedMesh) o.dispose(); });
     tajadas = []; empanaditas = [];
     sartenObj = null; platoObj = null; ajiObj = null;
     enMano = null; terminado = false;

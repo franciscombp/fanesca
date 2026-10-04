@@ -25,6 +25,8 @@
    huevos trae la docena de hoy.
    ============================================================ */
 
+import { perfilHuevo } from './modelos/huevo.js';
+
 let THREE, raiz, api;
 
 const HONDO_TABLA = 1.7;
@@ -48,7 +50,10 @@ let terminado = false;
    empezar. Late hasta que alguien lo saca. */
 let primero = null;
 
-const CENTRO = () => new THREE.Vector3(0, api.MESA_Y + 0.33, TABLA_Z);
+/* el huevo APOYADO: medio alto 0.252·1.3·1.9 ≈ 0.62 sobre el tope de
+   la tabla (MESA_Y+0.10). En MESA_Y+0.33 se enterraba un tercio en la
+   madera, y eso —más que la franja— era lo que lo hacía campana */
+const CENTRO = () => new THREE.Vector3(0, api.MESA_Y + 0.715, TABLA_Z);
 const porHuevo = () => GOLPES + 8 + 1;   /* golpes + ocho cascos + la entrega */
 
 function ponerHuevo() {
@@ -58,7 +63,9 @@ function ponerHuevo() {
   huevoObj.scale.setScalar(1.9);
   huevoObj.position.copy(CENTRO());
   huevoObj.userData = { tipo: 'huevo' };
-  huevoObj.add(api.sombraBlob(0.35, -0.16));
+  /* la sombra de contacto en el tope de la tabla (en local del huevo,
+     que va a ×1.9): antes caía bajo la madera y no se veía */
+  huevoObj.add(api.sombraBlob(0.55, (api.MESA_Y + 0.106 - CENTRO().y) / 1.9));
   raiz.add(huevoObj);
   cascos = [];
   primero = null;
@@ -72,7 +79,10 @@ function ponerHuevo() {
          dirección se despega. */
       const fila = i < 4 ? 1 : -1, gajo = i % 4;
       const a = (gajo + 0.5) * Math.PI / 2;
-      c.userData.fuera = new THREE.Vector3(Math.sin(a), fila * 0.55, Math.cos(a)).normalize();
+      /* el gajo c de SphereGeometry está en (−cos a, ·, sin a); con
+         (sin a, ·, cos a) cada casco se deslizaba de lado sobre el
+         vecino en vez de abrirse en radial */
+      c.userData.fuera = new THREE.Vector3(-Math.cos(a), fila * 0.55, Math.sin(a)).normalize();
       c.userData.base = c.position.clone();
       cascos.push(c);
     }
@@ -92,15 +102,22 @@ function golpear() {
   api.sacudir(0.25);
   /* cada golpe dibuja su grieta: una rayita oscura sobre la cáscara */
   const a = Math.random() * Math.PI * 2;
-  const g = new THREE.Mesh(
-    new THREE.TorusGeometry(0.255, 0.006, 3, 10, 0.5 + Math.random() * 0.6),
-    new THREE.MeshBasicMaterial({ color: '#8a7a5e' })
-  );
-  g.scale.set(1, 1.3, 1);
-  g.rotation.set(Math.random() * 2 - 1, a, Math.random() * 2 - 1);
+  /* un arco quebrado (zigzag) que sigue el perfil de la cáscara: un
+     toro recto sobre el huevo ya no esférico flotaba afuera */
+  const tubos = 24;
+  const geo = new THREE.TorusGeometry(0.255, 0.005, 3, tubos, 0.5 + Math.random() * 0.6);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const seg = i % (tubos + 1);
+    pos.setZ(i, pos.getZ(i) + (seg % 2 ? 0.003 : -0.003));
+  }
+  geo.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(
+    new THREE.Euler(Math.random() * 2 - 1, a, Math.random() * 2 - 1)));
+  perfilHuevo(geo, 0.255);
+  const g = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#8a7a5e' }));
   g.userData.ignorar = true;
   grietas.add(g);
-  api.chispas(huevoObj.position.clone().setY(api.MESA_Y + 0.6), '#f0e0c8', 4, 0.5);
+  api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#f0e0c8', 4, 0.5);
   api.progreso(hechos, TOTAL);
 
   if (golpesDados >= GOLPES) cuartear();
@@ -129,13 +146,16 @@ function cuartear() {
   /* el de arriba del todo se levanta: es el que se ve mejor y el que
      el dedo alcanza sin tapar el huevo */
   primero = cascos.find(c => c.userData.tipo) || null;
-  api.chispas(huevoObj.position.clone().setY(api.MESA_Y + 0.62), '#f0e0c8', 10, 0.7);
+  api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#f0e0c8', 10, 0.7);
   api.pista('Ya está cuarteado: <b>rasca la cáscara</b> — toca los pedazos o pasa el dedo por encima.', 4200);
 }
 
 function jalarCasco(casco) {
   if (fase !== 'pelar' || !casco || !casco.userData.tipo) return;
   casco.userData.tipo = null;
+  /* con el primer pedazo fuera, las grietas ya dijeron lo suyo: si se
+     quedan, flotan sobre la clara pelada */
+  grietas.visible = false;
   if (primero === casco) primero = cascos.find(c => c.userData.tipo) || null;
   hechos++;
   /* el casco se despega: se reparenta al mundo y vuela a la composta */
@@ -159,7 +179,7 @@ function jalarCasco(casco) {
     primero = null;
     api.sfx('bien');
     api.toast('¡Blanquito! 🥚');
-    api.chispas(huevoObj.position.clone().setY(api.MESA_Y + 0.5), '#fdfaf0', 12, 0.8);
+    api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#fdfaf0', 12, 0.8);
     const mi = generacion;
     setTimeout(() => { if (generacion === mi && !terminado && fase === 'entregar') entregar(); }, 300);
   }
@@ -255,7 +275,7 @@ export default {
 
   alTocar() {
     if (terminado) return;
-    const p = api.puntoEnPlano(api.MESA_Y + 0.33);
+    const p = api.puntoEnPlano(CENTRO().y);
     if (!p || Math.hypot(p.x - CENTRO().x, p.z - CENTRO().z) > 0.85) return;
     if (fase === 'cascar') { golpear(); return; }
     if (fase === 'entregar') { entregar(); return; }
@@ -273,7 +293,7 @@ export default {
 
   alArrastrarInicio() {
     if (terminado || fase !== 'pelar') return;
-    pelarEn(api.puntoEnPlano(api.MESA_Y + 0.33));
+    pelarEn(api.puntoEnPlano(CENTRO().y));
   },
 
   /* el dedo va rascando: cada pedazo que roza se despega. Sin umbral
@@ -281,7 +301,7 @@ export default {
      pareciera funcionar. */
   alArrastrar() {
     if (terminado || fase !== 'pelar') return;
-    pelarEn(api.puntoEnPlano(api.MESA_Y + 0.33));
+    pelarEn(api.puntoEnPlano(CENTRO().y));
   },
 
   alArrastrarFin() {},

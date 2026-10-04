@@ -53,6 +53,8 @@ const FROTE = 0.11;              /* mundo recorrido por cada grano de sal */
    la pantalla es ir hacia allá en el mundo. Pasado TINA_LLEGA la
    presa se suelta y cae al agua. */
 const TINA_Z = -0.48;
+/* la altura de la presa sobre la tabla */
+const PRESA_Y = () => api.MESA_Y + 0.155;
 const TINA_LLEGA = -0.2;
 let tinaObj = null;
 let tinaBase = null;             /* la presa flota a esta altura */
@@ -120,17 +122,27 @@ function huecosDeLaTina(n) {
 
 function nuevaPresa(x, z) {
   const g = api.pieza('presa-bacalao');
-  g.position.set(x, api.MESA_Y + 0.14, z);
+  /* apoyada en el tope de la tabla (MESA_Y+0.10): a +0.14 la lonja
+     aplanada se hundía en la madera */
+  g.position.set(x, PRESA_Y(), z);
   g.rotation.y = (Math.random() - 0.5) * 0.5;
   g.userData = { tipo: 'presa' };
-  g.add(api.sombraBlob(0.62, -0.13));
+  /* la sombra de contacto encima de la tabla y ovalada como la lonja;
+     antes caía bajo la madera y no se veía */
+  const sombra = api.sombraBlob(0.85, -0.052);
+  sombra.scale.y = 0.66;
+  g.add(sombra);
+  /* la costra de sal se enciende aquí: la presa nace salada en este
+     mesón, y en el caldero (que usa la misma pieza) llega desalada */
+  const costra = api.parte(g, 'costra');
+  if (costra) { costra.visible = true; costra.material.opacity = 1; }
 
   /* los cristales de sal, que son el trabajo del nivel */
   const sal = [];
   for (let i = 0; i < SAL_POR_PRESA; i++) {
     const s = api.pieza('grano-sal');
     const a = Math.random() * Math.PI * 2, d = Math.random();
-    s.position.set(Math.cos(a) * d * 0.23, 0.068, Math.sin(a) * d * 0.15);
+    s.position.set(Math.cos(a) * d * 0.23, 0.058, Math.sin(a) * d * 0.15);
     s.rotation.set(Math.random(), Math.random(), Math.random());
     g.add(s);
     sal.push(s);
@@ -144,6 +156,13 @@ function quitarSal(rec) {
   if (!s) return;
   api.chispas(rec.obj.position.clone().setY(api.MESA_Y + 0.24), '#ffffff', 4, 0.5);
   rec.obj.remove(s);
+  /* la costra se va desvaneciendo con cada grano; sin sal, se apaga
+     del todo y no cuesta llamada */
+  const costra = api.parte(rec.obj, 'costra');
+  if (costra) {
+    costra.material.opacity = rec.sal.length / SAL_POR_PRESA;
+    costra.visible = rec.sal.length > 0;
+  }
   hechos++;
   api.progreso(hechos, TOTAL);
   api.sfx('frotar'); api.buzz(5);
@@ -179,6 +198,20 @@ function remojar(rec) {
   /* el chapuzón: agua que salta y el filo del agua que tiembla */
   api.sfx('bien'); api.buzz([15, 25]);
   api.chispas(destino.clone().setY(destino.y + 0.08), '#bcd7dd', 12, 0.9);
+  /* una onda que se abre en el agua donde cayó: el agua responde */
+  const onda = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.07, 32),
+    new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.6, depthWrite: false }));
+  onda.rotation.x = -Math.PI / 2;
+  onda.position.set(destino.x, api.MESA_Y + (tinaObj ? tinaObj.userData.nivelAgua || 0.17 : 0.17) + 0.012, destino.z);
+  onda.userData.suelto = true;
+  onda.userData.ignorar = true;
+  raiz.add(onda);
+  api.tween(onda.scale, 'x', 6, 0.6);
+  api.tween(onda.scale, 'y', 6, 0.6);
+  api.tween(onda.material, 'opacity', 0, 0.6, undefined, () => {
+    if (onda.parent) onda.parent.remove(onda);
+    onda.geometry.dispose(); onda.material.dispose();
+  });
   if (tinaObj) {
     const agua = api.parte(tinaObj, 'agua');
     if (agua) {
@@ -438,7 +471,7 @@ export default {
       const p = rec.suelo || rec.obj.position;
       if (p.z < TINA_LLEGA) remojar(rec);
       else {
-        api.tween(rec.obj, 'position', new THREE.Vector3(rec.x, api.MESA_Y + 0.14, rec.z), 0.24);
+        api.tween(rec.obj, 'position', new THREE.Vector3(rec.x, PRESA_Y(), rec.z), 0.24);
         rec.obj.rotation.x = 0;
         api.sfx('resist');
         api.pista('Más arriba: hasta la <b>tina</b> del fondo.', 2600);
@@ -476,7 +509,11 @@ export default {
     /* y el agua de la tina respira */
     if (tinaObj) {
       const agua = api.parte(tinaObj, 'agua');
-      if (agua) agua.rotation.z = Math.sin(t * 0.7) * 0.01;
+      if (agua) {
+        agua.rotation.z = Math.sin(t * 0.7) * 0.01;
+        /* las ondas pintadas se mecen apenas */
+        if (agua.material.map) agua.material.map.offset.x = Math.sin(t * 0.3) * 0.01;
+      }
     }
   },
 
