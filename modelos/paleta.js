@@ -50,11 +50,21 @@ export const COMIDA = {
   pelo_choclo: ['#d9b06a', '#c59a55'],
 
   /* habas: la vaina verde y el haba pálida */
-  vaina_haba: '#86b45c',
+  vaina_haba: '#80b055',
   vaina_haba_dentro: '#e8f0cd',
-  haba: '#cfe09b',
+  /* el forro verdea hacia el filo: algodón por dentro, vaina por fuera.
+     No más blanco que esto: la tapa abierta no puede ser lo más claro
+     de la pantalla, que es lo que tiene que mirarse son las habas */
+  vaina_haba_filo: '#bfd68e',
+  vaina_haba_borde: '#e8f5c4',
+  haba: '#d6e89a',
+  /* el canto del haba, más verde que su cara */
+  haba_canto: '#94b85a',
   haba_ombligo: '#9bb069',
+  /* la uña: la marca oscura en una punta, por donde se la reconoce */
+  haba_una: '#4f4a2a',
   hilo_haba: '#5f8a3e',
+  costura_haba: '#6e9a45',
 
   /* arveja: la vaina más tiesa y brillante que la del haba, y el
      hilo que la cose — que aquí es una pieza, no una raya pintada */
@@ -70,11 +80,20 @@ export const COMIDA = {
 
   /* chochos: piel translúcida, pepa amarilla */
   chocho_piel: '#efe7cd',
-  chocho_pepa: '#f5cf58',
-  chocho_ombligo: '#c9b184',
+  chocho_pepa: '#f8d56c',
+  /* la panza de la pepa, en su propia sombra: da el volumen cuando
+     sale volando sola hacia la batea */
+  chocho_pepa_sombra: '#d99a2b',
+  chocho_piel_borde: '#fff9e8',
+  chocho_ombligo: '#a88655',
 
   /* fréjol: vaina moteada, grano vino */
-  vaina_frejol: '#d9c27a',
+  /* la vaina de fréjol tierno es crema, y lo que la nombra son sus
+     vetas vino (frejol_veta), pintadas en la piel y no pegadas */
+  vaina_frejol: '#ecdca4',
+  frejol_veta: ['#8e2a4e', '#b03a60', '#78203f'],
+  rabo_frejol: '#7d8f3c',
+  frejol_ojo: '#f3e4c8',
   vaina_frejol_dentro: '#f2e7c0',
   frejol: '#c9526a',
   frejol_mota: '#8e3550',

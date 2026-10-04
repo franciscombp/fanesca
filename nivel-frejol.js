@@ -76,8 +76,15 @@ function nuevaVaina(x, z, conGorgojo) {
   v.position.set(x, api.MESA_Y + 0.2, z);
   v.rotation.y = (Math.random() - 0.5) * 0.8;
   v.userData = { tipo: 'vaina' };
-  v.add(api.sombraBlob(0.6, -0.19));
-  return { obj: v, conGorgojo, reventada: false, x, z };
+  /* LA SOMBRA ES HERMANA, no hija: la vaina se hincha hasta ×1.22 al
+     apretarla y una sombra hija se hundiría en la tabla (de hecho ya
+     estaba enterrada, a -0.19). Va en la cara de la tabla y gira con
+     la vaina. */
+  const sombra = api.sombraBlob(0.62, 0);
+  sombra.position.set(x, api.MESA_Y + 0.102, z);
+  sombra.rotation.z = v.rotation.y;
+  sombra.scale.set(1.3, 0.45, 1);
+  return { obj: v, conGorgojo, reventada: false, x, z, sombra };
 }
 
 function nuevoGrano(x, z) {
@@ -97,7 +104,9 @@ function reventar(rec) {
   api.sfx('crack'); api.buzz([30, 20, 40]);
   api.chispas(rec.obj.position.clone(), '#e9d9a0', 10, 0.9);
 
-  /* la cáscara salta y se va sola a la composta */
+  /* la cáscara salta y se va sola a la composta; su sombra se queda
+     y se apaga */
+  if (rec.sombra) rec.sombra.visible = false;
   rec.obj.userData.escalaBase = 1;
   api.volarA(rec.obj, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.55, alto: 0.7 });
   api.composta(vainas.filter(v => v.reventada).length / vainas.length);
@@ -217,7 +226,7 @@ export default {
     const xs = filaDeVainas(VAINAS);
     xs.forEach((x, i) => {
       const rec = nuevaVaina(x, TABLA_Z + (i % 2 ? 0.3 : -0.26), conBicho.has(i));
-      vainasGrupo.add(rec.obj);
+      vainasGrupo.add(rec.obj, rec.sombra);
       vainas.push(rec);
     });
 

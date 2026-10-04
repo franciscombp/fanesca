@@ -67,10 +67,15 @@ let terminado = false;
 function nuevoChocho(x, z, i) {
   const g = api.pieza('chocho', { variante: i });
   g.scale.setScalar(1.7);   /* que se vea el chocho, no el píxel */
-  g.position.set(x, api.MESA_Y + 0.16, z);
+  /* APOYADO EN LA TABLA (cara en MESA_Y + 0.10), no hundido: a 0.16
+     se enterraba un cuarto de su alto y parecía una galleta aplastada.
+     El plano de toque se queda en 0.16: el gesto es por área. */
+  g.position.set(x, api.MESA_Y + 0.222, z);
   g.rotation.y = Math.random() * Math.PI;
   g.userData = { tipo: 'chocho' };
-  g.add(api.sombraBlob(0.3, -0.15));
+  /* la sombra en la cara de la tabla (local al grupo a ×1.7): a -0.15
+     quedaba enterrada bajo la tabla */
+  g.add(api.sombraBlob(0.32, (0.102 - 0.222) / 1.7));
   return { obj: g, piel: api.parte(g, 'piel'), pepa: api.parte(g, 'pepa'), ido: false, x, z };
 }
 
@@ -90,8 +95,13 @@ function reventar(rec) {
   const pepa = rec.pepa;
   rec.obj.remove(pepa);
   pepa.position.copy(donde);
+  /* sale de un grupo a ×1.7: se lleva su tamaño consigo */
+  pepa.scale.multiplyScalar(1.7);
   raiz.add(pepa);
-  pepa.userData.escalaBase = 1;
+  pepa.userData.escalaBase = 1.7;
+  /* la sombra no vuela: un disco oscuro cruzando el aire se ve */
+  const sombraC = api.parte(rec.obj, 'sombra');
+  if (sombraC) sombraC.visible = false;
   api.volarA(pepa, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.42 + Math.random() * 0.12, alto: ALTO_SALTO });
 
   rec.obj.userData.escalaBase = 1;
@@ -268,7 +278,7 @@ export default {
     /* los que quedan tiemblan un pelo: la mesa está viva */
     chochos.forEach((c, i) => {
       if (c.ido) return;
-      c.obj.position.y = api.MESA_Y + 0.16 + Math.sin(t * 2 + i) * 0.004;
+      c.obj.position.y = api.MESA_Y + 0.222 + Math.sin(t * 2 + i) * 0.004;
     });
   },
 

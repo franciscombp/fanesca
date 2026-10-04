@@ -85,9 +85,27 @@ Si solo pones `grano-choclo.glb` (sin sufijo), sirve para los dos.
 
 Es un juego móvil y de estas piezas hay **decenas en pantalla a la
 vez** (126 granos por choclo). Mantén cada pieza por debajo de
-**~500 triángulos** y sin texturas: el juego usa color plano leído
-del sistema de diseño. Un grano con 5.000 caras se ve igual a esta
+**~500 triángulos**. Un grano con 5.000 caras se ve igual a esta
 distancia y hunde el cuadro por segundo.
+
+El detalle va DENTRO de la pieza y no pegado encima (cada malla
+pegada es una llamada de dibujo más y se lee como calcomanía). Las
+herramientas están en `pintura.js`:
+
+- **color por vértice** (`pintar`) — el lomo más claro que el canto,
+  la oclusión en los valles; es lo primero que se prueba.
+- **texturas pintadas a canvas** (`lienzo`) — solo cuando el detalle
+  es más fino que la malla (las vetas del fréjol). Una por clave y
+  por sesión: `tirar()` no libera texturas, así que una textura nueva
+  por pieza se quedaría en la memoria de video.
+- **luz de borde** (`conBorde`, `aterciopelado`) — terciopelo o
+  película mojada, en el propio shader, sin pasada extra.
+
+Y el **tamaño va en la geometría**, con la malla a escala 1: los
+niveles animan con `scale.setScalar(...)` y `volarA()` encoge las
+piezas a su `escalaBase`. Un tamaño metido en `mesh.scale` se pierde
+en cuanto alguien escala la pieza — así salieron la baba del melloco
+inflada a media pantalla y las pepas de zapallo como pelotas de golf.
 
 ## Los colores
 

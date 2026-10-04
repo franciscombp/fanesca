@@ -80,19 +80,31 @@ function nuevaVaina(x, z, conGusano) {
 
   /* las habas van DENTRO de la vaina: así se inclinan con ella y,
      cuando la cáscara vacía se va a la composta, no queda nada suelto.
-     Se distribuyen en profundidad (Z) en lugar de en ancho (X) para que
-     la vaina quede más vertical y no se salga de pantalla */
+
+     EN FILA A LO LARGO DE LA VAINA, de canto y con la uña hacia la
+     costura de atrás, que es donde se prenden. Iban a lo largo de la z
+     local —atravesadas a la vaina, que va en x— y al abrirla salían
+     colgando por fuera del forro. Ahora caben dentro de su huella, que
+     ya está en el ancho seguro; la recogida es por cercanía y el paso
+     entre habas es el mismo, así que el gesto no cambia. */
   const habas = [];
   for (let i = 0; i < POR_VAINA; i++) {
     const h = api.pieza('haba', { variante: i });
-    h.position.set(0, -0.008, (i - (POR_VAINA - 1) / 2) * PASO_HABA);
+    h.position.set((i - (POR_VAINA - 1) / 2) * PASO_HABA, -0.02, 0);
+    h.rotation.y = Math.PI / 2 + (Math.random() - 0.5) * 0.3;
     h.userData = { tipo: 'haba' };
     h.visible = false;
     habas.push(h);
     v.add(h);
   }
 
-  return { obj: v, bisagra, habas, conGusano, abierta: false, vaciada: false };
+  /* su sombra de contacto, en la cara de la tabla (MESA_Y + 0.10): la
+     vaina se apoya, no flota */
+  const sombra = api.sombraBlob(1.05, api.MESA_Y + 0.102 - v.position.y);
+  sombra.scale.set(1, 0.34, 1);
+  v.add(sombra);
+
+  return { obj: v, bisagra, habas, conGusano, abierta: false, vaciada: false, sombra };
 }
 
 function abrirVaina(rec) {
@@ -145,6 +157,9 @@ function revisarVaciadas() {
       if (!rec.obj.parent) return;
       rec.obj.userData.tipo = null;
       rec.obj.userData.escalaBase = 1;
+      /* la sombra se queda: un disco oscuro cruzando el aire hacia la
+         composta se ve como lo que es */
+      if (rec.sombra) rec.sombra.visible = false;
       api.volarA(rec.obj, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.5 });
       api.composta(vainas.filter(v => v.vaciada).length / vainas.length);
     }, 260);

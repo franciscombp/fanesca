@@ -28,6 +28,7 @@
 
 import { nuevaPlaga } from './plaga.js';
 import { POR_VAINA, PASO_ARVEJA, ARVEJA_R, HILO, VAINA, perfilVaina } from './modelos/arveja.js';
+import { ALTO_TABLA } from './modelos/utileria.js';
 
 let THREE, raiz, api;
 
@@ -75,9 +76,10 @@ let terminado = false;
 function nuevaVaina(x, z, conGusano) {
   const v = api.pieza('vaina-arveja');
   /* apoyada en la tabla, no flotando: la altura sale del GRUESO de la
-     vaina, así que adelgazarla no la deja en el aire. 0.082 es la cara
-     de la tabla sobre la mesa. */
-  v.position.set(x, api.MESA_Y + 0.082 + VAINA.alto, z);
+     vaina, así que adelgazarla no la deja en el aire. La cara de la
+     tabla es ALTO_TABLA sobre la mesa (0.10): con el 0.082 de antes se
+     hundía dos milímetros, que con la sombra del sol ya se notaban. */
+  v.position.set(x, api.MESA_Y + ALTO_TABLA + VAINA.alto, z);
   /* casi alineadas con el eje X, pero no del todo: si estuvieran
      perfectas se leería una cuadrícula y no una mesa de cocina */
   v.rotation.y = (Math.random() - 0.5) * 0.42;
@@ -121,8 +123,13 @@ function nuevaVaina(x, z, conGusano) {
     v.add(a);
   }
 
+  /* su sombra de contacto, en la cara de la tabla */
+  const sombra = api.sombraBlob(1.1, api.MESA_Y + ALTO_TABLA + 0.002 - v.position.y);
+  sombra.scale.set(1, 0.3, 1);
+  v.add(sombra);
+
   return {
-    obj: v, bisagra, hilo, granos, conGusano,
+    obj: v, bisagra, hilo, granos, conGusano, sombra,
     /* de qué lado está el rabito, en coordenadas del mundo: es por
        donde hay que empezar a jalar */
     deshilada: false, abierta: false, vaciada: false, jalado: 0,
@@ -224,6 +231,7 @@ function revisarVaciadas() {
       if (!rec.obj.parent) return;
       rec.obj.userData.tipo = null;
       rec.obj.userData.escalaBase = 1;
+      if (rec.sombra) rec.sombra.visible = false;
       api.volarA(rec.obj, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.5, alto: 0.5 });
       api.composta(vainas.filter(v => v.vaciada).length / vainas.length);
     }, 240);
