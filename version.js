@@ -30,10 +30,30 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.5.0';
+const APP_VERSION = '4.6.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.6.0',
+    fecha: '2026-10-04',
+    titulo: 'La cocina con luz de ventana',
+    cambios: [
+      '☀️ <b>La luz entra por la ventana y todo proyecta sombra.</b> La comida tiene su lado oscuro y se apoya en la mesa en vez de flotar.',
+      '🪵 <b>La tabla es de madera de verdad</b>, con veta y canto, y el fondo se calmó: lo que manda en la pantalla es la comida.',
+      '🫛 <b>Las vainas parecen vainas:</b> las habas en fila dentro de su vaina de terciopelo, el fréjol moteado de vino, los chochos mojados en salmuera.',
+      '🌽 <b>El choclo pelado parece choclo</b>, con sus granos de diente en hileras; y la feria abre una ventanita en la hoja.',
+      '🎃 <b>Zapallo, sambo, quinua y mote:</b> gajos, cara de sambo, rallador de hojalata y agua de verdad — la sucia y la limpia se distinguen mejor.',
+      '🥚 <b>Huevo con pintas, queso sobre hoja de plátano, sartén de hierro, bacalao con su costra de sal y la olla de barro hirviendo.</b>',
+      '🐛 <b>Arreglos que se veían jugando:</b> la baba del melloco y la piel del garbanzo ya no se inflan a media pantalla, el rollo de col se acorta al cortarlo, el choclo cerrado ya no enseña granos, la línea para partir el zapallo se ve.',
+    ],
+    internos: [
+      'Auditoría del 3D: seis directores de arte + críticos que verificaron la mecánica; plan con paquetes de archivos disjuntos, implementados en paralelo con fotos antes/después y renderer.info.',
+      'Sombras: un DirectionalLight con PCF 1024 (512 con poca memoria), marcarSombras() por umbral de tamaño con tope 24 e histéresis, guardia que las apaga bajo ~33 fps (localStorage fanesca_sombras; las pruebas fijan "siempre").',
+      'modelos/pintura.js: pintar, lienzo, conBorde/aterciopelado, mediaCascara, bultosEnFila. despensa.js repartido en un archivo por ingrediente. Regla: el tamaño va en la geometría.',
+      'Se probó Neutral contra ACES: los chochos dejaban de leerse pálidos; se queda ACES.',
+    ],
+  },
   {
     v: '4.5.0',
     fecha: '2026-09-26',
