@@ -27,8 +27,50 @@
    ============================================================ */
 
 import { registrar } from './registro.js';
-import { COMIDA, mate } from './paleta.js';
-import { abollar, gajos, forma } from './organico.js';
+import { COMIDA, mate, brillante } from './paleta.js';
+import { abollar, gajos, forma, formaVariada } from './organico.js';
+import { pintar, lienzo, sstep, azarCon } from './pintura.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* COLORES NUEVOS — de paso: van a mudarse a COMIDA en paleta.js.
+   Viven aquí mientras tanto para no pisar a quien edita la paleta. */
+const COLORES = {
+  zapallo_valle: '#a4501a',      /* el fondo del valle entre gajos, en sombra */
+  zapallo_cresta: '#f2a640',     /* el lomo del gajo, donde pega la luz */
+  zapallo_polo: '#8f5320',       /* tostado hacia el rabo y hacia el asiento */
+  rabo_verde: '#5d5a2a',         /* rabo seco: verde oliva en la base… */
+  rabo_paja: '#b59a62',          /* …pajizo hacia la punta… */
+  rabo_corte: '#e3d0a0',         /* …y la punta cortada, clara */
+  pulpa_centro: '#f9d27a',       /* la tajada tendida: pulpa clara al centro */
+  pulpa_orilla: '#ec9634',       /* y más subida de color hacia la cáscara */
+  pulpa_canto: '#f0a03a',        /* el canto de la tajada, a la sombra */
+  hueco_fondo: '#d9782a',
+  hueco_sombra: '#b8611f',
+  hueco_labio: '#f2b452',
+  fibra: '#f4b552',
+};
+
+/* LOS GAJOS PINTADOS: el valle oscuro y el lomo claro. La silueta ya
+   decía «gajos», pero de frente el zapallo era un bulto de un solo
+   naranja: sin oclusión en los valles, la luz no tenía dónde
+   quebrarse. v = 0 en la cresta, 1 al fondo del valle — la misma
+   cuenta con que gajos() cava, así el color cae justo en la forma.
+   `polo` tuesta las puntas del eje (rabo y asiento) si se pide. */
+function pintarGajos(THREE, geo, opts = {}) {
+  const n = opts.n || 9;
+  const base = new THREE.Color(opts.base || COMIDA.zapallo_piel);
+  const valle = new THREE.Color(COLORES.zapallo_valle);
+  const cresta = new THREE.Color(COLORES.zapallo_cresta);
+  const polo = new THREE.Color(COLORES.zapallo_polo);
+  const yPolo = opts.yPolo || 0;
+  return pintar(THREE, geo, (c, i, x, y, z) => {
+    const v = (1 - Math.cos(n * Math.atan2(x, z))) / 2;
+    c.copy(base).lerp(valle, 0.75 * Math.pow(v, 1.6)).lerp(cresta, 0.45 * Math.pow(1 - v, 4));
+    if (yPolo) c.lerp(polo, 0.55 * sstep(0.62, 1.0, Math.abs(y) / yPolo));
+    /* pecas finitas: ningún zapallo es de un solo naranja */
+    c.multiplyScalar(1 + 0.05 * Math.sin(x * 37 + z * 23) * Math.sin(y * 41 - x * 17));
+  });
+}
 
 export const N = 7;              /* tajadas */
 export const GRUESO = 0.36;      /* ancho de cada tajada */
@@ -65,10 +107,14 @@ registrar('tajada-zapallo', (THREE) => {
         { eje: 'y', n: 8, hondura: 0.14 }),
       { fuerza: 0.012, escala: 4.2, semilla: 41 },
     ));
+  /* los valles oscuros en la piel: los lomos se leen durante toda la
+     fase de corte. Las tapas no usan el color de vértice (miran de
+     canto a la cámara; pintarles un hueco sería trabajo invisible). */
+  if (!geo.attributes.color) pintarGajos(THREE, geo, { n: 8 });
   const g = new THREE.Mesh(
     geo,
     [
-      mate(THREE, COMIDA.zapallo_piel),
+      mate(THREE, '#ffffff', { vertexColors: true }),
       mate(THREE, COMIDA.zapallo_pulpa),
       mate(THREE, COMIDA.zapallo_pulpa),
     ]
@@ -171,24 +217,55 @@ registrar('zapallo-entero', (THREE, opts = {}) => {
   const g = new THREE.Group();
   g.name = 'zapallo-entero';
 
-  const geo = forma('zapallo-entero', () =>
-    abollar(
-      gajos(new THREE.SphereGeometry(1, 34, 22), { eje: 'y', n: 9, hondura: 0.17 }),
-      { fuerza: 0.02, escala: 3.4, semilla: 61 },
-    ));
-  const cuerpo = new THREE.Mesh(geo, mate(THREE, COMIDA.zapallo_piel));
+  /* Más segmentos que antes (eran 34×22, unos cuatro por gajo: la
+     silueta salía en facetas). Y SIN achatar(): achatar sube la base
+     y el nivel asienta el zapallo contando con que el fondo está en
+     y = -1, a ras de la tabla — achatado quedaba flotando, con la
+     sombra del sol despegada. Desde esta cámara el asiento no se ve.
+     Lo que sí se ve es la copa: se baja hacia el rabo (no es un
+     hoyuelo de verdad, pero la corona del rabo tapa el centro). */
+  const geo = forma('zapallo-entero', () => {
+    const s = gajos(new THREE.SphereGeometry(1, 56, 26), { eje: 'y', n: 9, hondura: 0.17 });
+    const pos = s.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      if (y > 0.55) pos.setY(i, y - 0.16 * Math.pow(sstep(0.55, 1, y), 1.6));
+    }
+    s.computeVertexNormals();
+    abollar(s, { fuerza: 0.012, escala: 3.4, semilla: 61 });
+    return pintarGajos(THREE, s, { yPolo: 0.84 });
+  });
+  const cuerpo = new THREE.Mesh(geo, mate(THREE, '#ffffff', { vertexColors: true }));
   cuerpo.scale.set(r, r * 0.78, r);
   cuerpo.name = 'cuerpo';
   g.add(cuerpo);
 
   /* el rabo: corto, grueso y torcido. Es el detalle que más rápido
-     dice "esto es un zapallo y no una pelota". */
-  const rabo = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.085, 0.2, 7),
-    mate(THREE, COMIDA.zapallo_guia)
-  );
-  rabo.position.y = r * 0.78;
-  rabo.rotation.z = 0.22;
+     dice "esto es un zapallo y no una pelota". Un cilindro de siete
+     lados se leía como estaca clavada: el de verdad es una estrella
+     de cinco aristas, se ensancha como campana donde nace, se tuerce
+     y se dobla, y está seco — verde oliva abajo, paja arriba, y la
+     punta del corte clara. */
+  const geoR = forma('rabo-zapallo', () => {
+    const rg = new THREE.CylinderGeometry(0.05, 0.075, 0.24, 15, 8);
+    const rp = rg.attributes.position;
+    for (let i = 0; i < rp.count; i++) {
+      const x = rp.getX(i), y = rp.getY(i), z = rp.getZ(i);
+      const t = (y + 0.12) / 0.24;              /* 0 base, 1 punta */
+      const k = (1 + 0.22 * Math.cos(Math.atan2(x, z) * 5)) * (1 + 0.9 * Math.pow(1 - sstep(0, 0.35, t), 2));
+      const xs = x * k, zs = z * k, tw = t * 0.9;
+      rp.setXYZ(i, xs * Math.cos(tw) - zs * Math.sin(tw) + t * t * 0.07, y, xs * Math.sin(tw) + zs * Math.cos(tw));
+    }
+    rg.computeVertexNormals();
+    const seco = new THREE.Color(COLORES.rabo_verde), paja = new THREE.Color(COLORES.rabo_paja), corte = new THREE.Color(COLORES.rabo_corte);
+    return pintar(THREE, rg, (c, i, x, y) => {
+      if (y > 0.119) c.copy(corte);
+      else c.copy(seco).lerp(paja, sstep(0.2, 0.95, (y + 0.12) / 0.24));
+    });
+  });
+  const rabo = new THREE.Mesh(geoR, mate(THREE, '#ffffff', { vertexColors: true }));
+  rabo.position.y = r * 0.78 * 0.84 + 0.1;
+  rabo.rotation.z = 0.18;
   rabo.name = 'rabo';
   rabo.userData.ignorar = true;
   g.add(rabo);
@@ -212,7 +289,10 @@ registrar('mitad-zapallo', (THREE, opts = {}) => {
         { eje: 'y', n: 9, hondura: 0.17 }),
       { fuerza: 0.02, escala: 3.4, semilla: 62 },
     ));
-  const piel = new THREE.Mesh(geo, mate(THREE, COMIDA.zapallo_piel));
+  /* la misma piel pintada del entero: si no, al partirlo cambiaba de
+     zapallo */
+  if (!geo.attributes.color) pintarGajos(THREE, geo, { yPolo: 1 });
+  const piel = new THREE.Mesh(geo, mate(THREE, '#ffffff', { vertexColors: true }));
   piel.scale.set(r, r * 0.78, r);
   piel.name = 'piel';
   g.add(piel);
@@ -263,6 +343,52 @@ registrar('cascara-zapallo', (THREE, opts = {}) => {
   return m;
 });
 
+/* LAS TEXTURAS DEL CORTE, una por sesión (lienzo() las guarda: tirar()
+   no libera texturas, así que crearlas por pieza las dejaría en la
+   memoria de video para siempre). */
+function texCorteZapallo(THREE) {
+  return lienzo(THREE, 'corteZapallo-sinPiel', 512, (x, S) => {
+    const R = S / 2;
+    const g = x.createRadialGradient(R, R, 0, R, R, R);
+    g.addColorStop(0, COLORES.pulpa_centro); g.addColorStop(0.42, '#f8c96a');
+    g.addColorStop(0.8, '#f2a845'); g.addColorStop(0.9, '#ee9a36'); g.addColorStop(1, COLORES.pulpa_orilla);
+    x.fillStyle = g; x.fillRect(0, 0, S, S);
+    /* las venitas de la pulpa, apenas: más fuertes salían rayos de sol */
+    const az = azarCon(29);
+    x.globalAlpha = 0.04; x.strokeStyle = '#fff3c8'; x.lineWidth = 2;
+    for (let i = 0; i < 80; i++) {
+      const a = az() * Math.PI * 2, r0 = R * (0.4 + az() * 0.12), r1 = R * (0.78 + az() * 0.12);
+      x.beginPath(); x.moveTo(R + Math.cos(a) * r0, R + Math.sin(a) * r0);
+      x.lineTo(R + Math.cos(a + (az() - 0.5) * 0.08) * r1, R + Math.sin(a + (az() - 0.5) * 0.08) * r1); x.stroke();
+    }
+    x.globalAlpha = 1;
+  }, { anisotropia: 4 });
+}
+
+/* el hueco: con hebras mientras está sucio, y el mismo degradado sin
+   ellas cuando se raspó — así se VE que se limpió */
+export function texHueco(THREE, conHebras) {
+  return lienzo(THREE, conHebras ? 'huecoZapallo' : 'huecoZapallo-limpio', 256, (x, S) => {
+    const R = S / 2;
+    const g = x.createRadialGradient(R, R, 0, R, R, R);
+    g.addColorStop(0, COLORES.hueco_fondo); g.addColorStop(0.7, '#e58a34');
+    g.addColorStop(0.9, COLORES.hueco_sombra); g.addColorStop(1, COLORES.hueco_labio);
+    x.fillStyle = g; x.fillRect(0, 0, S, S);
+    if (!conHebras) return;
+    const az = azarCon(53);
+    x.lineCap = 'round';
+    for (let i = 0; i < 60; i++) {
+      const a = az() * Math.PI * 2, r0 = az() * R * 0.3, r1 = R * (0.6 + az() * 0.3);
+      x.strokeStyle = `rgba(255,${200 + (i % 30)},${120 + (i % 40)},${0.12 + az() * 0.18})`;
+      x.lineWidth = 1.5 + az() * 3;
+      x.beginPath(); x.moveTo(R + Math.cos(a) * r0, R + Math.sin(a) * r0);
+      x.bezierCurveTo(R + Math.cos(a + 0.5) * r1 * 0.4, R + Math.sin(a + 0.5) * r1 * 0.4,
+        R + Math.cos(a - 0.4) * r1 * 0.7, R + Math.sin(a - 0.4) * r1 * 0.7, R + Math.cos(a) * r1, R + Math.sin(a) * r1);
+      x.stroke();
+    }
+  });
+}
+
 /* ---------- la tajada tendida: media luna con cáscara y hueco ----------
    Es la pieza de la faena técnica. El cuerpo es la media luna
    extruida (con todas sus paredes, que un medio cilindro abierto
@@ -291,11 +417,20 @@ registrar('tajada-plana', (THREE, opts = {}) => {
     forma2d.moveTo(-r, 0);
     forma2d.absarc(0, 0, r, Math.PI, 0, true);
     forma2d.lineTo(-r, 0);
-    return new THREE.ExtrudeGeometry(forma2d, { depth: h, bevelEnabled: false, curveSegments: 40 });
+    const e = new THREE.ExtrudeGeometry(forma2d, { depth: h, bevelEnabled: false, curveSegments: 40 });
+    /* uv planos centrados en el eje: el degradado de la textura queda
+       en anillos alrededor del hueco, como en el corte de verdad. Con
+       r/0.93 la orilla cae dentro del naranja subido; se usa la
+       variante SIN piel pintada, porque una raya parda en la orilla
+       se leía como cáscara olvidada después de pelar. */
+    const uv = e.attributes.uv, pos = e.attributes.position, rr = r / 0.93;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / (2 * rr) + 0.5, pos.getY(i) / (2 * rr) + 0.5);
+    return e;
   });
+  /* grupo 0 = tapas (la cara que se mira), 1 = costados (el canto) */
   const cuerpo = new THREE.Mesh(geo, [
-    mate(THREE, COMIDA.zapallo_pulpa),
-    mate(THREE, COMIDA.zapallo_pulpa),
+    mate(THREE, '#ffffff', { map: texCorteZapallo(THREE) }),
+    mate(THREE, COLORES.pulpa_canto),
   ]);
   /* la extrusión va en +Z: acostada, +Z pasa a ser arriba y el arco
      de la forma (+Y) pasa a -Z, al fondo */
@@ -329,9 +464,12 @@ registrar('tajada-plana', (THREE, opts = {}) => {
   }
 
   /* el hueco de las pepas, al centro de la orilla recta */
+  /* pintado y no plano: un labio iluminado, la sombra de la cavidad
+     justo debajo, y las hebras. Era un medio disco de un solo naranja
+     y no se leía como hueco: se raspaba algo que no se veía. */
   const hueco = new THREE.Mesh(
     new THREE.CircleGeometry(r * HUECO, 24, 0, Math.PI),
-    mate(THREE, COMIDA.zapallo_hueco)
+    mate(THREE, '#ffffff', { map: texHueco(THREE, true) })
   );
   hueco.rotation.x = -Math.PI / 2;
   hueco.position.y = h + 0.002;
@@ -343,24 +481,55 @@ registrar('tajada-plana', (THREE, opts = {}) => {
 });
 
 /* el pedazo de pulpa que se va con un raspón hondo o con una cáscara
-   gruesa: es lo que el nivel castiga, así que tiene que verse irse */
+   gruesa: es lo que el nivel castiga, así que tiene que verse irse.
+   LA FORMA VA EN LA GEOMETRÍA y la malla queda en escala uniforme:
+   iba en scale (1.4, 0.6, 1) y volarA() termina el vuelo con
+   setScalar(escalaBase), que la inflaba en el último tramo. Es un
+   taco cortado y no un bollo: caja soldada (sin soldar, abollar abre
+   grietas en las aristas, porque cada cara empuja por su normal), con
+   la arista de cáscara tostada. Mide lo que medía: 0.21 × 0.09 × 0.15. */
 registrar('trozo-pulpa', (THREE, opts = {}) => {
-  const geo = forma('trozo-pulpa', () =>
-    abollar(new THREE.SphereGeometry(1, 8, 6), { fuerza: 0.25, escala: 3, semilla: 73 }));
-  const m = new THREE.Mesh(geo, mate(THREE, COMIDA.zapallo_pulpa));
-  const s = opts.tam || 0.075;
-  m.scale.set(s * 1.4, s * 0.6, s);
+  const geo = forma('trozo-pulpa', () => {
+    let b = new THREE.BoxGeometry(0.21, 0.09, 0.15, 3, 2, 2);
+    b.deleteAttribute('normal'); b.deleteAttribute('uv');
+    b = mergeVertices(b);
+    abollar(b, { fuerza: 0.006, escala: 30, semilla: 73 });
+    const piel = new THREE.Color(COMIDA.zapallo_cascara);
+    const claro = new THREE.Color(COLORES.pulpa_centro), subido = new THREE.Color(COLORES.pulpa_orilla);
+    return pintar(THREE, b, (c, i, x, y, z) => {
+      if (y > 0.03 && z > 0.05) c.copy(piel);
+      else c.copy(claro).lerp(subido, sstep(-0.075, 0.075, z));
+    });
+  });
+  const m = new THREE.Mesh(geo, mate(THREE, '#ffffff', { vertexColors: true }));
+  m.scale.setScalar((opts.tam || 0.075) / 0.075);
   m.name = 'trozo-pulpa';
   return m;
 });
 
-/* ---------- la hebra que envuelve las pepas ---------- */
+/* ---------- la hebra que envuelve las pepas ----------
+   Hebras de verdad, no un bollo de papel arrugado: seis tubos finos
+   ondulados, unidos en una sola geometría (una llamada de dibujo).
+   La proporción va en los PUNTOS de la curva y el grosor en unidades
+   de mundo: escalar el tubo después lo aplastaba a un píxel que
+   parpadeaba. El nivel la agranda ×1.6 de forma uniforme. */
 registrar('fibra-zapallo', (THREE, opts = {}) => {
-  const geo = forma('fibra-zapallo', () =>
-    abollar(new THREE.SphereGeometry(1, 8, 6), { fuerza: 0.3, escala: 4.5, semilla: 71 }));
-  const m = new THREE.Mesh(geo, mate(THREE, COMIDA.zapallo_fibra));
-  const s = 0.06 + (opts.variante || 0) % 3 * 0.012;
-  m.scale.set(s * 1.6, s * 0.5, s);
+  const geo = formaVariada('fibra-zapallo', 3, opts.variante || 0, (k) => {
+    const s = 0.06 + 0.012 * k;
+    const tubos = [];
+    for (let j = 0; j < 6; j++) {
+      const pts = [];
+      for (let q = 0; q <= 5; q++) {
+        const t = q / 5;
+        pts.push(new THREE.Vector3((t - 0.5) * 1.6 * s,
+          (0.12 + 0.12 * Math.sin(3 * t + j + k)) * 0.5 * s,
+          (0.25 * Math.sin(5 * t + 2 * j + k) + (j - 2.5) * 0.12) * s));
+      }
+      tubos.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, 0.0035, 3, false));
+    }
+    return mergeGeometries(tubos);
+  });
+  const m = new THREE.Mesh(geo, brillante(THREE, COLORES.fibra));
   m.name = 'fibra';
   return m;
 });

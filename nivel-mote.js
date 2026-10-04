@@ -72,7 +72,9 @@ const VIRA_ANGULO = 0.6;
    gris-crema de cal y de hollejo. Se distingue de la quinua (espuma)
    y del arroz de antes (leche) a simple vista, que es lo que enseña
    qué suelta cada grano. */
-const AGUA_CLARA = '#bcd7dd';
+/* el agua clara, verde-azulada: la de antes ('#bcd7dd') sobre el
+   fondo de la batea se leía salmón y se parecía demasiado a la turbia */
+const AGUA_CLARA = '#7fb0b5';
 const AGUA_TURBIA = '#ded8c4';
 const MOTE_LIMPIO = '#f7efd6';
 
@@ -149,8 +151,10 @@ function agitarHasta(p) {
 function perderGrano(lado) {
   const c = centro();
   for (let i = 0; i < 3; i++) {
-    const g = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 6), new THREE.MeshLambertMaterial({ color: MOTE_LIMPIO }));
-    g.scale.set(1.15, 0.8, 1);
+    /* el grano de mote de verdad, con su forma horneada en la
+       geometría: escala 1, que volarA() no lo deforme al aterrizar */
+    const g = api.pieza('grano-mote', { limpio: true });
+    if (!g) break;
     g.position.set(c.x + lado * RADIO_BATEA * 0.6, api.MESA_Y + 0.3, c.z + (Math.random() - 0.5) * 0.3);
     g.userData.escalaBase = 1;
     raiz.add(g);

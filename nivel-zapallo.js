@@ -44,7 +44,7 @@
 
 import { nuevoGusano } from './modelos/bichos.js';
 import { ARRUINADO } from './arruinado.js';
-import { N, GRUESO, R, R_ENTERO, R_PLANA, GRUESO_PLANA, CASCARA, HUECO, SEGMENTOS_CASCARA } from './modelos/zapallo.js';
+import { N, GRUESO, R, R_ENTERO, R_PLANA, GRUESO_PLANA, CASCARA, HUECO, SEGMENTOS_CASCARA, texHueco } from './modelos/zapallo.js';
 
 let THREE, raiz, api;
 
@@ -476,10 +476,18 @@ function limpiarEn(p) {
   if (actual.gusano && !actual.salio) nacerBicho();
   if (actual.pepas.every(x => x.userData.ida)) {
     actual.limpia = true;
+    huecoRaspado();
     actual.fibras.forEach(x => { if (!x.userData.ida) { x.userData.ida = true; volar(x, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), 0.5, 0.4); } });
     sumar(1);
     revisarTajada();
   }
+}
+
+/* raspado, el hueco pierde las hebras pintadas: si se quedaban, la
+   tajada «limpia» seguía viéndose sucia */
+function huecoRaspado() {
+  const h = actual && api.parte(actual.obj, 'hueco');
+  if (h && h.material) h.material.map = texHueco(THREE, false);
 }
 
 function pelarEn(p) {
@@ -664,7 +672,7 @@ export default {
       partir() { partir(); },
       cortar(b) { if (fase === 'cortar') cortar(b, 0, 0); },
       cortarTodo() { if (fase === 'cortar') for (let b = 1; b < TAJADAS; b++) cortar(b, 0, 0); },
-      limpiar() { if (!actual) return; gesto = { tipo: 'limpiar', hondo: false, pelados: 0 }; actual.pepas.forEach(pe => { if (!pe.userData.ida) { pe.userData.ida = true; volar(pe, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16)); } }); if (actual.gusano && !actual.salio) nacerBicho(); actual.limpia = true; sumar(1); gesto = null; revisarTajada(); },
+      limpiar() { if (!actual) return; gesto = { tipo: 'limpiar', hondo: false, pelados: 0 }; actual.pepas.forEach(pe => { if (!pe.userData.ida) { pe.userData.ida = true; volar(pe, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16)); } }); if (actual.gusano && !actual.salio) nacerBicho(); actual.limpia = true; huecoRaspado(); sumar(1); gesto = null; revisarTajada(); },
       pelar() { if (!actual) return; actual.cascaras.forEach(c => { if (!c.userData.ida) { c.userData.ida = true; volar(c, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16)); } }); actual.pelada = true; sumar(1); revisarTajada(); },
       sinBichos() { bichos.forEach(w => { if (w.estado !== 'ido') { w.estado = 'ido'; if (w.nodo.parent) w.nodo.parent.remove(w.nodo); } }); api.aviso(null); if (actual) revisarTajada(); else revisarFinal(); },
     };

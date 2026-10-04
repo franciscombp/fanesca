@@ -206,15 +206,22 @@ function listo() {
   if (terminado) return;
   if (plaga.vivos()) { api.aviso('Falta sacar el gorgojo antes de llevar la batea', 'bien'); return; }
   terminado = true;
-  /* la quinua limpia se va a la olla; el agua turbia se queda */
-  granosGrupo.children.forEach((m, i) => {
-    const g = m.clone();
-    g.userData.escalaBase = m.scale.x;
-    g.position.copy(m.getWorldPosition(new THREE.Vector3()));
+  /* la quinua limpia se va a la olla; el agua turbia se queda. El
+     montón es un montículo y una capa instanciada: no se puede clonar
+     grano por grano (volaría como un bloque), así que se esconde y
+     salen granos sueltos desde puntos del montón. */
+  const RL = RADIO_BATEA * 0.66;
+  granosGrupo.visible = false;
+  for (let i = 0; i < 14; i++) {
+    const g = api.pieza('grano-quinua', { limpio: true });
+    if (!g) break;
+    const a = i * 2.399963, rad = Math.sqrt((i + 0.5) / 14) * RL;
+    g.position.copy(granosGrupo.localToWorld(new THREE.Vector3(Math.cos(a) * rad, 0.03, Math.sin(a) * rad)));
+    g.scale.setScalar(1.6);
+    g.userData.escalaBase = 1.6;
     raiz.add(g);
-    m.visible = false;
     api.volarA(g, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.4 + (i % 7) * 0.03, alto: 0.55 });
-  });
+  }
   api.sfx('bien');
   api.completar();
 }
