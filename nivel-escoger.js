@@ -21,6 +21,7 @@
 
 import { nuevaPlaga } from './plaga.js';
 import { ANCHO_SEGURO } from './motor3d.js';
+import { texturaSombra } from './modelos/utileria.js';
 
 let THREE, raiz, api;
 
@@ -54,6 +55,7 @@ const RADIO_DEDO = 0.17;         /* fino a propósito, pero no imposible */
 const RADIO_BARRIDO = 0.28;
 
 let granosGrupo = null;
+let sombras = null;               /* InstancedMesh: la sombrita de contacto de cada grano */
 let granos = [];                 /* {obj, clase:'buena'|'piedra'|'picado', ido} */
 let plaga = null;
 let sacados = 0;                 /* impurezas fuera */
@@ -86,9 +88,17 @@ function nuevoGrano(clase, x, z) {
   return { obj: g, clase, ido: false };
 }
 
+/* el grano se va: su sombra se queda en la tabla si no se apaga */
+function apagarSombra(rec) {
+  if (!sombras || rec.sombra == null) return;
+  sombras.setMatrixAt(rec.sombra, new THREE.Matrix4().makeScale(0, 0, 0));
+  sombras.instanceMatrix.needsUpdate = true;
+}
+
 function sacar(rec) {
   if (rec.ido) return;
   rec.ido = true;
+  apagarSombra(rec);
   rec.obj.userData.tipo = null;
   const buena = rec.clase === 'buena';
 
@@ -115,6 +125,7 @@ function sacar(rec) {
 function recoger(rec) {
   if (rec.ido || rec.clase !== 'buena') return;
   rec.ido = true;
+  apagarSombra(rec);
   rec.obj.userData.tipo = null;
   recogidas++;
   rec.obj.userData.escalaBase = 1;
@@ -255,6 +266,35 @@ export default {
     for (let i = 0; i < PIEDRAS; i++) meter('piedra');
     for (let i = 0; i < PICADOS; i++) meter('picado');
 
+    /* LA SOMBRITA DE CONTACTO, una sola malla instanciada para todos:
+       sin ella los granos se ven pegados encima de la foto de la tabla.
+       Un sombraBlob por grano serían treinta llamadas más.
+
+       Y los granos NO van al mapa del sol: con MAX_SOMBRAS el corte caía
+       entre los radios de las variantes, y unas lentejas iguales tenían
+       sombra y otras no — el piso se veía al azar. Así todos igual, y
+       además se ahorran ~16 llamadas de la pasada de sombra. */
+    sombras = new THREE.InstancedMesh(
+      new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ map: texturaSombra(THREE), transparent: true, depthWrite: false }),
+      granos.length);
+    sombras.name = 'sombra';
+    sombras.userData.ignorar = true;
+    sombras.position.y = api.MESA_Y + 0.102;
+    const mtx = new THREE.Matrix4();
+    granos.forEach((rec, i) => {
+      rec.sombra = i;
+      rec.obj.traverse(o => { if (o.isMesh) o.userData.sombra = false; });
+      const p = rec.obj.position;
+      /* fuera de la madera la sombra flotaría sobre el mesón */
+      const enTabla = Math.abs(p.x) <= 1.55 && Math.abs(p.z - TABLA_Z) <= 0.85;
+      const k = enTabla ? 0.36 : 0;
+      sombras.setMatrixAt(i, mtx.makeScale(k, k, k).setPosition(p.x, 0, p.z));
+    });
+    sombras.instanceMatrix.needsUpdate = true;
+    sombras.frustumCulled = false;
+    raiz.add(sombras);
+
     /* los gorgojos están desde el principio: son parte de lo que hay
        que encontrar, no una sorpresa a mitad de camino.
        Salen entre el grano, con la regada que le haya tocado a esta
@@ -344,7 +384,7 @@ export default {
 
   destruir() {
     if (plaga) plaga.destruir();
-    granos = []; plaga = null; granosGrupo = null;
+    granos = []; plaga = null; granosGrupo = null; sombras = null;
     modo = null; pellizcando = false; terminado = false;
   },
 };

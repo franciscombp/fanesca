@@ -52,7 +52,7 @@ const ORILLA_X = LARGO_PIEDRA * 0.4;
 const ORILLA_Z = ANCHO_PIEDRA * 0.3;
 let CON_GORGOJO = 2;
 
-let piedra = null, mano = null, granosGrupo = null;
+let piedra = null, mano = null, canto = null, granosGrupo = null;
 let granos = [];                 /* {obj, molido, hecho} */
 let plaga = null;
 let hechos = 0;
@@ -123,7 +123,9 @@ function pasar(p, dx, dz) {
   /* la mano de piedra sigue al dedo, sin salirse de la losa */
   mano.position.x = Math.max(-LARGO_PIEDRA / 2 + 0.12, Math.min(LARGO_PIEDRA / 2 - 0.12, p.x));
   mano.position.z = Math.max(PIEDRA_Z - HONDO_PIEDRA / 2 + 0.1, Math.min(PIEDRA_Z + HONDO_PIEDRA / 2 - 0.1, p.z));
-  mano.rotation.z -= dx * 2.2;   /* rueda: no se desliza como un jabón */
+  /* rueda: no se desliza como un jabón. Gira la piedra y no el grupo:
+     la sombrita de contacto es hija del grupo y rodaba con ella */
+  if (canto) canto.rotation.z -= dx * 2.2;
 
   const paso = Math.hypot(dx, dz);
   if (paso < PASO_MINIMO) return;
@@ -213,9 +215,12 @@ export default {
     }
 
     mano = api.pieza('mano-piedra');
-    mano.position.set(-LARGO_PIEDRA * 0.32, caraLosa() + 0.1, PIEDRA_Z);
+    /* +0.15: la mano es redonda y gorda (radio 0.16), y apoyada así
+       no se hunde en la losa */
+    mano.position.set(-LARGO_PIEDRA * 0.32, caraLosa() + 0.15, PIEDRA_Z);
     mano.userData = { tipo: 'mano' };
-    mano.add(api.sombraBlob(0.5, -0.09));
+    canto = api.parte(mano, 'canto');
+    mano.add(api.sombraBlob(0.5, -0.14));
     raiz.add(mano);
 
     plaga = nuevaPlaga(THREE, api, raiz, { nombre: 'gorgojo', vel: 0.13, gracia: 1.8,
@@ -309,12 +314,12 @@ export default {
     }
 
     /* la mano descansa apoyada, con su peso: sin esto flota */
-    if (mano) mano.position.y = caraLosa() + 0.1 + Math.sin(t * 3) * 0.002;
+    if (mano) mano.position.y = caraLosa() + 0.15 + Math.sin(t * 3) * 0.002;
   },
 
   destruir() {
     if (plaga) plaga.destruir();
-    granos = []; plaga = null; piedra = null; mano = null; granosGrupo = null;
+    granos = []; plaga = null; piedra = null; mano = null; canto = null; granosGrupo = null;
     modo = null; ultimoPunto = null; pellizcando = false; terminado = false;
   },
 };

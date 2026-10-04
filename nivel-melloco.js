@@ -119,8 +119,10 @@ function raspar(rec, cuanto) {
   rec.limpio = true;
   rec.obj.userData.tipo = null;
   rec.babaza.visible = false;
-  /* limpio se ve más claro: el melloco lavado pierde el velo gris */
-  if (rec.cuerpo) rec.cuerpo.material.color.set('#f8dc8e');
+  /* limpio se ve más claro: el melloco lavado pierde el velo gris.
+     Blanco y no un amarillo: la piel ya trae su color por vértice, y
+     un amarillo encima volvía café las manchas magenta */
+  if (rec.cuerpo) rec.cuerpo.material.color.set('#ffffff');
   hechos++;
   api.sfx(hechos % 2 ? 'pop' : 'pop2');
   api.buzz(12);
