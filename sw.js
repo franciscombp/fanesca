@@ -68,6 +68,7 @@ const PRECACHE = [
   './modelos/builders.js',
   './modelos/paleta.js',
   './modelos/organico.js',
+  './modelos/pintura.js',
   './modelos/utileria.js',
   './modelos/cocina.js',
   './modelos/bichos.js',
