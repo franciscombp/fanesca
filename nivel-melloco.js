@@ -154,6 +154,13 @@ function resbalar(rec, dx, dz) {
   api.sfx('resist'); api.buzz([18, 24]);
   if (!resbalados++) {
     api.pista('Se te disparó. La baba no se quita a lo bruto: <b>refriega parejo</b>, sin arrebato.', 3600);
+  } else if ((api.dificultad || 1) >= 3 && api.fallo) {
+    /* LO QUE EL RETO PROMETE: «el melloco se dispara si lo empujas:
+       ir rápido cuesta descuidos». Desde tres chiles el segundo
+       resbalón en adelante es un descuido LEVE —baja cucharas y corta
+       la racha, pero no suma para arruinar la olla—; el primero sólo
+       enseña, como el perdón de los bichos. */
+    api.fallo('resbalon', null, { leve: true });
   }
 }
 
@@ -255,6 +262,22 @@ export default {
   },
 
   objetivos() { return [mellocosGrupo, plaga.grupo]; },
+
+  /* la mano guía: el gusanito suelto; si no, refregar corto y parejo
+     encima de un melloco con baba —el que más avanzado vaya, y si no
+     el del medio, que la mano no quede en el filo de la pantalla—: el
+     vaivén lento de la mano es justo el que no lo dispara */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const m = mellocos.filter(r => !r.limpio && r.resbalando <= 0)
+      .sort((a, c) => (a.baba - c.baba) || (Math.abs(a.obj.position.x) - Math.abs(c.obj.position.x)))[0];
+    if (!m) return null;
+    const w = new THREE.Vector3();
+    m.obj.getWorldPosition(w);
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x - 0.16, w.y, w.z), hasta: new THREE.Vector3(w.x + 0.16, w.y, w.z) };
+  },
 
   alTocar(info) {
     if (terminado) return;

@@ -27,8 +27,17 @@ await p.click('#btn-empezar'); await p.waitForTimeout(700);
 
 /* --- terminar una parada: la hoja de listo no puede traer un ensayo --- */
 await p.evaluate(() => window.Fanesca.jugar('maiz-1-introduccion'));
-await p.waitForTimeout(3400);
-await p.evaluate(() => { window.Fanesca.api.progreso(1, 10); window.Fanesca.api.completar(); });
+/* SE ESPERA AL MESÓN, no 3.4 s fijos: completar() sólo vale con el
+   reloj armado, y en un Chromium sin GPU cargado el choclo tarda más */
+for (let t = 0; t < 60; t++) {
+  await p.waitForTimeout(250);
+  if (await p.evaluate(() => !!window.Fanesca.modulo && window.Fanesca.nivel && window.Fanesca.nivel.id === 'maiz-1-introduccion' && !!window.Fanesca.Motor.escena)) break;
+}
+for (let t = 0; t < 12; t++) {
+  await p.evaluate(() => { window.Fanesca.api.progreso(1, 10); window.Fanesca.api.completar(); });
+  await p.waitForTimeout(400);
+  if (await p.evaluate(() => document.querySelector('#modal-listo').classList.contains('open'))) break;
+}
 await p.waitForTimeout(1400);
 const listo = await p.evaluate(() => {
   const m = document.querySelector('#modal-listo');
@@ -75,9 +84,16 @@ ok('D8 y el texto del ingrediente, entero', !!texto && texto.length > 150, (text
 await p.evaluate(() => document.querySelector('#cuaderno-volver').click());
 await p.waitForTimeout(800);
 await p.evaluate(() => window.Fanesca.jugar('maiz-1-introduccion'));
-await p.waitForTimeout(3400);
-await p.evaluate(() => { window.Fanesca.api.progreso(1, 10); window.Fanesca.api.arruinar({ clave: 'aplastado', titulo: 'Lo aplastaste', texto: 'El gusanito reventó encima de la comida.' }); });
-await p.waitForTimeout(1600);
+for (let t = 0; t < 60; t++) {
+  await p.waitForTimeout(250);
+  if (await p.evaluate(() => !!window.Fanesca.modulo && window.Fanesca.nivel && window.Fanesca.nivel.id === 'maiz-1-introduccion' && !!window.Fanesca.Motor.escena && !document.querySelector('.modal.open'))) break;
+}
+for (let t = 0; t < 12; t++) {
+  await p.evaluate(() => { window.Fanesca.api.progreso(1, 10); window.Fanesca.api.arruinar({ clave: 'aplastado', titulo: 'Lo aplastaste', texto: 'El gusanito reventó encima de la comida.' }); });
+  await p.waitForTimeout(500);
+  if (await p.evaluate(() => document.querySelector('#modal-arruinado').classList.contains('open'))) break;
+}
+await p.waitForTimeout(1200);
 const mal = await p.evaluate(() => ({
   abierto: !!(document.querySelector('#modal-arruinado') || {}).classList.contains('open'),
   motivo: (document.querySelector('#arruinado-motivo') || {}).textContent,

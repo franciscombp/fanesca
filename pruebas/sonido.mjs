@@ -162,12 +162,22 @@ const fin = await p.evaluate(async () => {
   window.__notas = [];
   const t0 = performance.now();
   window.Fanesca.api.completar ? window.Fanesca.api.completar() : window.Fanesca.api.progreso(1, 1);
-  await new Promise(r => setTimeout(r, 2200));
-  const notas = window.__notas.map(n => ({ hz: Math.round(n.hz), t: Math.round(n.t - t0) }));
+  /* se espera a la cadencia entera (las tres cucharas y la fiesta), no
+     un tiempo fijo: con la batería en paralelo los temporizadores llegan
+     tarde */
+  for (let t = 0; t < 40; t++) {
+    await new Promise(r => setTimeout(r, 250));
+    const llenas = document.querySelectorAll('#listo-cucharas .cuchara.llena').length;
+    if (llenas >= 3 && window.__notas.some(n => Math.abs(n.hz - 1046.5) < 0.6)) break;
+  }
+  await new Promise(r => setTimeout(r, 300));
+  const notas = window.__notas.map(n => ({ hz: Math.round(n.hz), hzExacto: n.hz, t: Math.round(n.t - t0) }));
   const llenas = document.querySelectorAll('#listo-cucharas .cuchara.llena').length;
   return { notas, llenas, abierta: document.querySelector('#modal-listo').classList.contains('open') };
 });
-const do6 = fin.notas.filter(n => Math.abs(n.hz - 1047) < 3);
+/* el Do6 exacto de la fiesta (1046.5): la cuchara del IV toca 1045.3
+   (Sol × 4/3), y con un margen de 3 Hz se confundían */
+const do6 = fin.notas.filter(n => Math.abs(n.hzExacto - 1046.5) < 0.6);
 const ultimaCuchara = fin.notas.filter(n => n.t < (do6[0] ? do6[0].t : Infinity)).pop();
 ok('SO6 el nivel termina con su hoja y sus cucharas', fin.abierta && fin.llenas >= 1, JSON.stringify({ llenas: fin.llenas, abierta: fin.abierta }));
 ok('SO6a la fiesta no suena antes de las cucharas', fin.llenas < 3 || (do6.length && do6[0].t > 900), JSON.stringify(fin.notas.slice(0, 20)));

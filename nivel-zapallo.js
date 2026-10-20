@@ -529,13 +529,16 @@ function revisarTajada() {
   }
   const obj = actual.obj;
   const hechas = TAJADAS - cola.length;
+  const limpia = !actual.merma;
   actual = null;
   obj.userData.tipo = null;
   api.chispas(obj.position.clone().setY(ALTO_PLANA() + 0.2), '#ffd28a', 12, 0.9);
   obj.userData.escalaBase = 1;
   api.volarA(obj, api.BATEA.clone().setY(api.MESA_Y + 0.24), { dur: 0.55, alto: 0.72 });
   api.sfx('bien'); api.buzz([14, 20, 14]);
-  api.toast(`Tajada ${hechas} de ${TAJADAS} 🎃`);
+  /* la tajada sin merma se celebra por lo que es: limpia. Contar
+     «3 de 5» igual con pulpa perdida o sin ella no enseñaba nada */
+  api.toast(limpia ? `¡Limpia! Tajada ${hechas} de ${TAJADAS} 🎃` : `Tajada ${hechas} de ${TAJADAS} · algo de pulpa`);
   const mi = ++generacion;
   setTimeout(() => {
     if (generacion !== mi || terminado) return;
@@ -687,6 +690,59 @@ export default {
   },
 
   objetivos() { return [grupo, ...bichos.map(w => w.nodo)]; },
+
+  /* la mano guía: el gusano a la composta; si no, la faena que toca.
+     Los cortes van ENCIMA de la raya punteada, de arriba a abajo (en
+     el tajado, la raya pendiente más al centro: la perspectiva desvía
+     menos el trazo). En la tendida, raspar de lado a lado entre las
+     pepas que quedan; y pelar, un tramo de la orilla pegado a la
+     cáscara — corto, para que la recta no se meta en la pulpa. */
+  guia() {
+    if (terminado) return null;
+    const w = new THREE.Vector3();
+    const b = bichos.find(x => x.estado === 'suelto');
+    if (b) { b.nodo.getWorldPosition(w); return { tipo: 'arrastrar', desde: w.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) }; }
+    /* un punto de la raya: `a` va de 0 (atrás, abajo) a π (adelante, abajo) */
+    const enRaya = (g, a, ry, rz) => g.localToWorld(new THREE.Vector3(0, Math.sin(a) * ry, -Math.cos(a) * rz));
+    if (fase === 'partir') {
+      const g = guias.find(x => x.b === 'lomo');
+      if (!g) return null;
+      const ry = R_ENTERO * 0.78 + 0.045, rz = R_ENTERO + 0.045;
+      return { tipo: 'arrastrar', desde: enRaya(g.grupo, Math.PI * 0.32, ry, rz), hasta: enRaya(g.grupo, Math.PI * 0.92, ry, rz) };
+    }
+    if (fase === 'cortar') {
+      const g = guias.filter(x => x.b !== 'lomo' && !cortes.has(x.b))
+        .sort((x, y) => Math.abs(xFrontera(x.b)) - Math.abs(xFrontera(y.b)))[0];
+      if (!g) return null;
+      const r = R + 0.012;
+      return { tipo: 'arrastrar', desde: enRaya(g.grupo, Math.PI * 0.32, r, r), hasta: enRaya(g.grupo, Math.PI * 0.92, r, r) };
+    }
+    if (fase !== 'limpiar' || !actual) return null;
+    if (!actual.limpia) {
+      const quedan = actual.pepas.filter(x => !x.userData.ida).map(x => x.getWorldPosition(new THREE.Vector3()));
+      if (!quedan.length) return null;
+      quedan.sort((x, y) => x.x - y.x);
+      const izq = quedan[0], der = quedan[quedan.length - 1];
+      if (der.x - izq.x < 0.2) { izq.x -= 0.12; der.x += 0.12; }
+      return { tipo: 'frotar', desde: izq.setY(ALTO_PLANA()), hasta: der.setY(ALTO_PLANA()) };
+    }
+    if (!actual.pelada) {
+      const K = SEGMENTOS_CASCARA, paso = Math.PI / K;
+      const k = actual.cascaras.findIndex(x => x && !x.userData.ida);
+      if (k < 0) return null;
+      let k1 = k;
+      while (k1 < k + 2 && actual.cascaras[k1 + 1] && !actual.cascaras[k1 + 1].userData.ida) k1++;
+      let a0 = k * paso + 0.04, a1 = (k1 + 1) * paso - 0.04;
+      if (a1 - a0 < Math.PI / 4) {
+        const m = (a0 + a1) / 2;
+        a0 = Math.max(0.04, m - Math.PI / 6); a1 = Math.min(Math.PI - 0.04, m + Math.PI / 6);
+      }
+      const c = centroPlana(), r = R_PLANA - CASCARA / 2 + 0.04;
+      const punto = a => new THREE.Vector3(c.x + Math.cos(a) * r, ALTO_PLANA(), c.z - Math.sin(a) * r);
+      return { tipo: 'arrastrar', desde: punto(a0), hasta: punto(a1) };
+    }
+    return null;
+  },
 
   alTocar(info) {
     if (terminado) return;

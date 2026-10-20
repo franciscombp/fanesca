@@ -542,7 +542,7 @@ function initAudio() {
    oye una melodía que sube y la persigue. Arriba del todo se queda
    alternando las dos últimas, para seguir sonando sin volverse chillona. */
 const ESCALERA = [659.26, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
-const notaRacha = (n) => n < ESCALERA.length ? ESCALERA[Math.max(0, n)] : ESCALERA[ESCALERA.length - 2 + (n % 2)];
+const notaRacha = (n) => n < ESCALERA.length ? ESCALERA[Math.max(0, n)] : ESCALERA[6 + (n % 2)];
 
 /* Las recetas. Una voz es un oscilador ({ f, f2 si barre, w, t, d, g })
    o un golpe de ruido filtrado ({ ruido, filtro, fq, fq2, q, t, d, g }).
@@ -652,6 +652,8 @@ function sfx(tipo, tono = 1, opc = {}) {
    cómo dejarlo sonando al salir del mesón. */
 const BUCLES = {
   frotar: { filtro: 'bandpass', fq: 1500, q: 2, g: .07 },
+  /* remover agua: más grave y más blando que frotar */
+  remover: { filtro: 'lowpass', fq: 650, q: 1, g: .07 },
   rallar: { filtro: 'bandpass', fq: 3200, q: 3, g: .06 },
   verter: { filtro: 'lowpass', fq: 1100, q: .7, g: .09 },
   /* el aceite: un siseo agudo mientras haya algo en la sartén */
@@ -1946,6 +1948,7 @@ let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque *
 let hechosAhora = 0, totalAhora = 1;
 let fallosAhora = 0;         /* los descuidos de esta partida */
 let fallosTipos = {};        /* …y de qué fueron, para que la hoja lo diga */
+let fallosLeves = 0;         /* los que bajan cucharas pero no arruinan */
 let bichosAhora = 0;         /* los bichos que salvaste en esta partida */
 
 /* ---------- las faenas del mesón ----------
@@ -2033,8 +2036,11 @@ function pintarFallos() {
      o penalización y calidad (La Olla), pero nunca corta la partida */
   const tope = enModo() ? Infinity : topeFallos();
   el.classList.toggle('visible', fallosAhora > 0);
-  el.textContent = Number.isFinite(tope) ? `✗ ${fallosAhora} / ${tope}` : `✗ ${fallosAhora}`;
-  el.classList.toggle('hud-fallos--rojo', Number.isFinite(tope) && fallosAhora >= tope - 1);
+  /* contra el tope cuentan los graves: un melloco disparado baja
+     cucharas pero no acerca la olla a arruinarse */
+  const graves = fallosAhora - fallosLeves;
+  el.textContent = Number.isFinite(tope) ? `✗ ${graves} / ${tope}` : `✗ ${fallosAhora}`;
+  el.classList.toggle('hud-fallos--rojo', Number.isFinite(tope) && graves >= tope - 1);
 }
 /* opc.yaSono: quien avisa ya hizo su ruido (el bicho que se escapa
    suena y vibra él mismo). Dos zumbidos en el mismo instante no avisan
@@ -2042,6 +2048,7 @@ function pintarFallos() {
 function registrarFallo(tipo, msg, opc = {}) {
   if (!enModo() && !corriendo && !relojEnEspera) return;
   fallosAhora++;
+  if (opc.leve) fallosLeves++;
   if (tipo) fallosTipos[tipo] = (fallosTipos[tipo] || 0) + 1;
   if (fallosAhora === 1) exclamar(tipo === 'quemada' ? '¡Arrarray!' : '¡Chuta!');
   if (!opc.yaSono) { sfx('mal', 1.5); buzz('aviso'); Motor.destello('rgba(230,57,70,.16)'); }
@@ -2065,9 +2072,11 @@ function registrarFallo(tipo, msg, opc = {}) {
     if (msg) alerta(msg, 'peligro');
     return;
   }
+  /* los leves no cuentan para arruinar: sólo para las cucharas */
   const tope = topeFallos();
-  if (fallosAhora >= tope) { arruinarNivel(ARRUINADO.descuidos(fallosAhora)); return; }
-  if (Number.isFinite(tope) && fallosAhora === tope - 1) alerta(`¡Cuidado! Un descuido más y se arruina · ${fallosAhora} de ${tope}`, 'peligro');
+  const graves = fallosAhora - fallosLeves;
+  if (!opc.leve && graves >= tope) { arruinarNivel(ARRUINADO.descuidos(fallosAhora)); return; }
+  if (!opc.leve && Number.isFinite(tope) && graves === tope - 1) alerta(`¡Cuidado! Un descuido más y se arruina · ${graves} de ${tope}`, 'peligro');
   else if (msg) alerta(msg, 'peligro');
 }
 
@@ -2399,8 +2408,18 @@ const api = {
      persigue sin darse cuenta, y se reinicia sola al parar. EL TONO
      QUE PIDE EL NIVEL SE RESPETA: esto se lo comía, y la olla del
      caldero, que sube con cada ingrediente, sonaba siempre igual. */
-  sfx: (tipo, tono) => (tono == null && (tipo === 'pop' || tipo === 'pop2'))
-    ? sfx(tipo, 1, { hz: notaRacha(rachaN) }) : sfx(tipo, tono ?? 1),
+  /* los niveles suenan ANTES de contar (api.sfx y luego api.progreso),
+     así que si la racha ya se cortó por el respiro, la nota se toma
+     desde abajo y no desde la cima de la racha anterior. Y arriba del
+     todo, un pelo más bajo: dos kilohercios en un parlante de teléfono
+     cansan. */
+  sfx: (tipo, tono) => {
+    if (tono == null && (tipo === 'pop' || tipo === 'pop2')) {
+      const hz = notaRacha(performance.now() - rachaT > RACHA_VENTANA ? 0 : rachaN);
+      return sfx(tipo, 1, { hz, vol: hz > 1500 ? 0.8 : 1 });
+    }
+    return sfx(tipo, tono ?? 1);
+  },
   voz,
   /* un nivel con fases puede renombrar lo que se está haciendo */
   rotulo(txt) { if (txt) $('#hud-tarea').textContent = txt; },
@@ -2634,7 +2653,7 @@ async function jugar(id) {
   $('#hud-barra').style.width = '0%';
   const pct0 = $('#hud-pct'); if (pct0) pct0.textContent = '0%';
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(n.icono);
-  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0; fallosTipos = {}; bichosAhora = 0;
+  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0; fallosTipos = {}; fallosLeves = 0; bichosAhora = 0;
   reiniciarRacha();
   pintarReloj();
   alerta(null);
@@ -2866,7 +2885,7 @@ async function montarMeson(base, config, modo, opts = {}) {
      pantalla — construir el nivel ahora lo pondría a vivir detrás del
      modal, encolando pistas para nadie */
   if (!modo.activo) return;
-  hechosAhora = 0; totalAhora = 1; fallosAhora = 0; fallosTipos = {}; bichosAhora = 0;
+  hechosAhora = 0; totalAhora = 1; fallosAhora = 0; fallosTipos = {}; fallosLeves = 0; bichosAhora = 0;
   pintarFallos();
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE mesón y no del que se estaba jugando */
@@ -3409,6 +3428,7 @@ const FALLO_TXT = {
   pulpa: ['pulpa a la composta'],
   agua: ['agua limpia botada'],
   feria: ['un choclo maduro', 'choclos maduros'],
+  resbalon: ['un melloco disparado', 'mellocos disparados'],
   orden: ['un cuenco fuera de turno', 'cuencos fuera de turno'],
   pegado: ['la olla pegada'],
 };
@@ -3439,6 +3459,17 @@ function veredicto(n, cuch, dif) {
     return {
       porque: fallosAhora && dif <= 2 ? 'Tres cucharas — al tercer descuido se va una' : 'Tres cucharas: mano de abuela',
       repetir: 'Repetirlo',
+    };
+  }
+  /* bajar el tiempo no siempre basta: con tres chiles un descuido
+     deja el techo en dos cucharas, y prometer la tercera «bajándolo de
+     40 s» era mentir (chochos-2 en 42 s con un descuido) */
+  const sube = corte && cucharasConFallos(cuch + 1, fallosAhora, dif) > cuch;
+  if (corte && !sube) {
+    const limpio = dif <= 2 ? 'con menos de tres descuidos' : 'sin descuidos';
+    return {
+      porque: `Bájalo de ${corte} s y ${limpio}: así sale la ${cuch === 2 ? 'tercera' : 'segunda'} cuchara`,
+      repetir: `Repetirlo más rápido y ${dif <= 2 ? 'con menos descuidos' : 'sin descuidos'}`,
     };
   }
   return {

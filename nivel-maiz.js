@@ -481,6 +481,7 @@ function granoBajoElDedo() {
    dedo que se posa encima APRIETA (y eso sí mata, con un perdón); el
    dedo que va de paso desgranando solo lo empuja. */
 let perdonado = false;
+let perdonadoBatea = false;   /* una llegada a la batea perdonada (presentaciones) */
 let avisadoRoce = false;
 let perdonadoPodrido = false;
 
@@ -491,14 +492,14 @@ function tocado(w) {
   /* con bichos mansos apretarlo no lo revienta: se asusta y se aparta */
   if (manso()) {
     w.inmune = api.reloj + 1.0;
-    w.nodo.position.x += 0.06;
+    w.obj.position.x += 0.06;
     api.sfx('resist');
     api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda.', 2600);
     return false;
   }
   if (api.reloj - w.t0 < gracia()) {
     w.inmune = api.reloj + (dif() >= 3 ? 0.35 : 1.0);
-    w.nodo.position.x += 0.06;
+    w.obj.position.x += 0.06;
     api.sfx('resist'); api.buzz([20, 20]);
     api.pista('¡Casi! <b>No lo aprietes</b>: arrástralo hasta la composta.', 2600);
     return false;
@@ -894,7 +895,7 @@ export default {
     /* el perdón del apretón sólo existe en la presentación */
     /* el perdón del apretón y del picotazo al grano dañado existe
        hasta los dos chiles; de tres en adelante se cobra */
-    perdonado = dif() > 2; avisadoRoce = false;
+    perdonado = dif() > 2; perdonadoBatea = dif() > 2; avisadoRoce = false;
     perdonadoPodrido = dif() > 2;
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     hechos = 0; choclo = 0; compostaN = 0;
@@ -987,6 +988,50 @@ export default {
 
   objetivos() {
     return [hojasGrupo, pelos, tusa, granosGrupo, gusanosGrupo].filter(Boolean);
+  },
+
+  /* la mano guía: el gusanito a la composta; deshojando, jalar hacia
+     abajo la hoja que da la cara (sin hojas, el jalón de los pelos); y
+     desgranando, desde el grano suelto más alto de la hilera de
+     enfrente, a lo largo hacia abajo — así corre la cascada */
+  guia() {
+    if (terminado || fase === 'transicion' || !giro) return null;
+    const w = new THREE.Vector3();
+    const b = gusanos.find(x => x.estado === 'fuera');
+    if (b) { b.obj.getWorldPosition(w); return { tipo: 'arrastrar', desde: w.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) }; }
+    /* cuánto le falta a un ángulo de la mazorca para dar la cara */
+    const alFrente = th => Math.abs(acercarAngulo(0, giro.rotation.y + th - FRENTE));
+    if (fase === 'deshojar') {
+      const vivas = hojas.filter(h => !h.ida);
+      if (vivas.length) {
+        const h = vivas.reduce((m, x) => (alFrente(x.th) < alFrente(m.th) ? x : m));
+        /* sobre la hoja, del hombro del choclo hacia abajo: un jalón de
+           sobra para pasar SUELTA_HOJA */
+        const s = Math.sin(h.th) * R * 1.15, c = Math.cos(h.th) * R * 1.15;
+        return { tipo: 'arrastrar', desde: giro.localToWorld(new THREE.Vector3(s, 0.55, c)), hasta: giro.localToWorld(new THREE.Vector3(s, -0.45, c)) };
+      }
+      if (!pelos) return null;
+      return { tipo: 'arrastrar', desde: giro.localToWorld(new THREE.Vector3(0, LARGO / 2 + 0.4, 0)), hasta: giro.localToWorld(new THREE.Vector3(0, LARGO / 2 + 1.0, 0)) };
+    }
+    const filas = [];
+    for (let a = 0; a < A; a++) if (granos[a]) filas.push(a);
+    filas.sort((x, y) => alFrente((x / A) * Math.PI * 2) - alFrente((y / A) * Math.PI * 2));
+    for (const a of filas) {
+      let p = P - 1;
+      while (p >= 0 && !(existe(a, p) && granos[a][p].userData.tipo === 'grano' && suelto(a, p))) p--;
+      if (p < 0) continue;
+      let q = p;
+      while (q > 0 && existe(a, q - 1) && granos[a][q - 1].userData.tipo === 'grano') q--;
+      granos[a][p].getWorldPosition(w);
+      if (q === p) return { tipo: 'tocar', desde: w };
+      return { tipo: 'arrastrar', desde: w.clone(), hasta: granos[a][q].getWorldPosition(new THREE.Vector3()) };
+    }
+    /* sólo queda papilla: se limpia tocándola */
+    for (const a of filas) {
+      const g = granos[a].find(x => x && x.userData.tipo === 'papilla');
+      if (g) { g.getWorldPosition(w); return { tipo: 'tocar', desde: w }; }
+    }
+    return null;
   },
 
   alTocar(info) {
@@ -1285,20 +1330,51 @@ export default {
         }
 
         if (w.enTransicion) {
-          /* Mueve el gusano hacia la batea mundialmente */
+          /* Mueve el gusano hacia la BATEA mundialmente. Iba hacia la
+             composta —justo donde hay que llevarlo— y al llegar arruinaba
+             la olla diciendo «se te fue a la batea». Ahora va a la batea,
+             llega por radio como los de la plaga, avisa a dos pasos y,
+             en las presentaciones (o con bichos mansos), se perdona. */
           const suelo = api.MESA_Y;
           const pos = w.obj.position;
-          const dx = api.COMPOSTA.x - pos.x;
-          const dz = api.COMPOSTA.z - pos.z;
+          const dx = api.BATEA.x - pos.x;
+          const dz = api.BATEA.z - pos.z;
           const dist = Math.hypot(dx, dz);
           const vel = gusanoVel() * 1.2;
+          const CERCA = 0.42;
 
-          if (dist < vel * dt) {
-            /* Llegó a la batea */
+          if (api.reloj < (w.quietoHasta || 0)) { w.obj.rotation.y = Math.atan2(dx, dz); continue; }
+          if (dist < CERCA) {
+            if (!perdonadoBatea || manso()) {
+              perdonadoBatea = true;
+              /* de vuelta a donde empezó la carrera, mareado un momento */
+              const k = 1.15 / Math.max(0.01, dist);
+              pos.x = api.BATEA.x - dx * k; pos.z = api.BATEA.z - dz * k;
+              pos.x = Math.max(-1.0, Math.min(1.0, pos.x));
+              w.quietoHasta = api.reloj + 0.8;
+              w.inmune = api.reloj + 1.2;
+              w.avisadoBatea = false;
+              w.obj.scale.setScalar(w.escala || 1);
+              api.sfx('mal'); api.buzz('fallo');
+              api.destello('rgba(230,57,70,.3)');
+              api.aviso('💛 ¡Uy, casi se mete a la batea! Esta te la perdono', 'peligro');
+              api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda. A la próxima se arruina la olla.', 4200);
+              if (api.fallo) api.fallo('bicho', null, { yaSono: true });
+              continue;
+            }
             w.estado = 'ido';
             api.arruinar(ARRUINADO.enLaBatea('gusanito'));
             return;
           } else {
+            if (dist < CERCA * 2.2) {
+              if (!w.avisadoBatea) {
+                w.avisadoBatea = true;
+                if (w.escala == null) w.escala = w.obj.scale.x;
+                api.aviso('⚠️ ¡El gusanito va derecho a la batea!', 'peligro');
+                api.sfx('resist'); api.buzz('aviso');
+              }
+              w.obj.scale.setScalar((w.escala || 1) * (1 + 0.075 * (1 + Math.sin(t * 6 * Math.PI * 2))));
+            }
             /* Avanza hacia la batea */
             pos.x += (dx / dist) * vel * dt;
             pos.z += (dz / dist) * vel * dt;
