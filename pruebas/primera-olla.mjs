@@ -164,6 +164,9 @@ ok('P10 el resumen se titula con el plato', fin.abierto && fin.titulo === '¡Hab
 ok('P11 el récord es de las habas, no de «tu primera fanesca»', /habas cocinadas/.test(fin.mejor) && !/fanesca/.test(fin.mejor) && !!fin.record, fin.mejor);
 ok('P12 y dice qué plato sigue', fin.sigueVisible && /chochos/.test(fin.sigue) && /sopa de granos tiernos/.test(fin.sigue), fin.sigue);
 ok('P13 la receta de memoria no se regala con un solo cuenco', fin.logros.includes('primera') && !fin.logros.includes('receta'), fin.logros.join(','));
+/* ni las de hacerlo bien: una olla de un cuenco no es «sin un desastre»
+   ni «mano de abuela» (las daba de golpe, con la primera) */
+ok('P13a ni «sin un desastre» ni «mano de abuela» con un solo cuenco', !fin.logros.includes('limpia') && !fin.logros.includes('abuela'), fin.logros.join(','));
 
 /* ---- P0b: repetir el nivel no vuelve a anunciar el plato ---- */
 await p.evaluate(() => { document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); window.Fanesca.jugar('habas-1-facil'); });

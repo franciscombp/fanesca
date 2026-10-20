@@ -13,7 +13,7 @@
    ============================================================ */
 
 import { nuevoGusano, nuevoGorgojo } from './modelos/bichos.js';
-import { ARRUINADO } from './arruinado.js';
+import { ARRUINADO, icoBicho } from './arruinado.js';
 import { ANCHO_SEGURO } from './motor3d.js';
 
 export function nuevaPlaga(THREE, api, raiz, opts = {}) {
@@ -61,6 +61,13 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   let cargado = null;
   let avisados = 0;
   let perdonado = !PERDONA;   /* un apretón perdonado por nivel — sólo en la presentación */
+  /* …y una llegada a la batea. Era la única falta sin perdón ni aviso:
+     el primer nivel del juego trae un gusanito, y quien todavía estaba
+     aprendiendo a abrir vainas perdía la olla sin saber qué pasó —a
+     veces con todo ya en la batea. Ahora se anuncia cuando se acerca y,
+     en las presentaciones, la primera vez se devuelve. */
+  let perdonadoBatea = !PERDONA;
+  const ICO = icoBicho(nombre);
   let avisadoRoce = false; /* el "lo empujaste" se explica una vez */
 
   const destino = api.BATEA.clone().setY(api.MESA_Y + ALTO);
@@ -87,15 +94,18 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     nodo.position.y = SUELO(nodo.position.x, nodo.position.z) + ALTO;
     grupo.add(nodo);
     nodo.scale.setScalar(0.01);
-    api.tween(nodo.scale, 'x', 1, 0.28); api.tween(nodo.scale, 'y', 1, 0.28); api.tween(nodo.scale, 'z', 1, 0.28);
+    /* aparece con un saltito (sobrepaso): se nota que llegó algo vivo */
+    const pop = api.ease && api.ease.pop;
+    api.tween(nodo.scale, 'x', 1, 0.32, pop); api.tween(nodo.scale, 'y', 1, 0.32, pop); api.tween(nodo.scale, 'z', 1, 0.32, pop);
 
-    const rec = { nodo, bicho, estado: 'suelto', t0: api.reloj };
+    const rec = { nodo, bicho, estado: 'suelto', t0: api.reloj, nace: api.reloj };
     lista.push(rec);
-    api.sfx('crack'); api.buzz([25, 30, 25]);
+    /* su propio chirrido: antes sonaba igual que abrir una vaina */
+    api.sfx('bicho'); api.buzz('bicho');
     if (!avisados++) {
       api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde (o arrástralo con uno). Si lo tocas, lo aplastas.', 5200);
     }
-    api.aviso(`🪱 ¡Un ${nombre}! Llévalo a la composta — no lo aplastes`);
+    api.aviso(`${ICO} ¡Un ${nombre}! Llévalo a la composta — no lo aplastes`);
     return rec;
   }
 
@@ -142,12 +152,12 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
         rec.t0 = api.reloj + 0.6;          /* mareado: dos segundos sin caminar */
         rec.inmune = api.reloj + 1.4;
         rec.nodo.position.z += 0.1;
-        api.sfx('mal'); api.buzz([40, 30, 40]);
+        api.sfx('mal'); api.buzz('fallo');
         api.destello('rgba(230,57,70,.3)');
         api.aviso('💛 ¡Casi lo aplastas! Esta te la perdono', 'peligro');
         api.pista('No lo toques con la yema: <b>arrástralo</b> hasta la composta. A la próxima se arruina la olla.', 3800);
         /* perdonado, pero cuenta como descuido */
-        if (api.fallo) api.fallo('bicho');
+        if (api.fallo) api.fallo('bicho', null, { yaSono: true });
         return false;
       }
       api.arruinar(ARRUINADO.aplastado(nombre));
@@ -205,6 +215,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
       if (!rec || rec.estado !== 'suelto') return false;
       rec.estado = 'cargado';
       cargado = rec;
+      rec.nodo.scale.setScalar(1);   /* deja de latir: ya está en la mano */
       rec.bicho.aro.visible = false;
       api.sfx('tab'); api.buzz(12);
       api.aviso('Llévalo a la composta 🌿', 'bien');
@@ -261,7 +272,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
       rec.nodo.position.y = SUELO(rec.nodo.position.x, rec.nodo.position.z) + ALTO;
       rec.nodo.rotation.z = 0;
       api.sfx('resist');
-      api.aviso(`🪱 Se te resbaló. Otra vez: hasta la composta`);
+      api.aviso(`${ICO} Se te resbaló. Otra vez: hasta la composta`);
       return 'devuelto';
     },
 
@@ -274,10 +285,42 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
         const dx = destino.x - p.x, dz = destino.z - p.z;
         const d = Math.hypot(dx, dz);
         if (d < CERCA_BATEA) {
+          if (!perdonadoBatea) {
+            perdonadoBatea = true;
+            /* de vuelta a donde empezó la carrera, mareado un momento */
+            const k = ARRANQUE / Math.max(0.01, d);
+            p.x = destino.x - dx * k; p.z = destino.z - dz * k;
+            const tope = ANCHO_SEGURO - 0.16;
+            p.x = Math.max(-tope, Math.min(tope, p.x));
+            p.z = Math.max(-0.45, Math.min(1.05, p.z));
+            p.y = SUELO(p.x, p.z) + ALTO;
+            rec.t0 = api.reloj + 0.8;
+            rec.inmune = api.reloj + 1.2;
+            rec.avisadoBatea = false;
+            rec.nodo.scale.setScalar(1);
+            api.sfx('mal'); api.buzz('fallo');
+            api.destello('rgba(230,57,70,.3)');
+            api.aviso('💛 ¡Uy, casi se mete a la batea! Esta te la perdono', 'peligro');
+            api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta, el cuenco verde. A la próxima se arruina la olla.', 4200);
+            if (api.fallo) api.fallo('bicho', null, { yaSono: true });
+            continue;
+          }
           rec.estado = 'ido';
           api.arruinar(ARRUINADO.enLaBatea(nombre));
           return true;
         }
+        /* EL PELIGRO SE ANUNCIA: a dos pasos de la batea el bicho late y
+           el aviso lo dice, una vez por carrera */
+        if (d < CERCA_BATEA * 2.2) {
+          if (!rec.avisadoBatea) {
+            rec.avisadoBatea = true;
+            api.aviso(`⚠️ ¡El ${nombre} va derecho a la batea!`, 'peligro');
+            api.sfx('resist'); api.buzz('aviso');
+          }
+          if (t - (rec.nace || 0) > 0.4) rec.nodo.scale.setScalar(1 + 0.075 * (1 + Math.sin(t * 6 * Math.PI * 2)));
+        }
+        /* mareado (perdonado o empujado): un momento sin caminar */
+        if (api.reloj < rec.t0) continue;
         p.x += (dx / d) * VEL * dt;
         p.z += (dz / d) * VEL * dt;
         p.y = SUELO(p.x, p.z) + ALTO;    /* sube y baja de la tabla */

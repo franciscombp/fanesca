@@ -80,6 +80,7 @@ let castigoToken = 0;       /* para que un castigo viejo no monte nada tarde */
 let ganchos = null;         /* lo que el modo le pide al juego */
 let pidiendoSiguiente = false;
 let pendiente = null;      /* la ración cuyo nivel se está montando */
+let permitidas = null;     /* las bases que el jugador ya sabe (null: todas) */
 
 /* ---------- la baraja ----------
    Sin reposición y barajada: sacar al azar puro repetía el mismo
@@ -87,8 +88,15 @@ let pendiente = null;      /* la ración cuyo nivel se está montando */
    se siente rota, aunque sea perfectamente aleatoria. Se agota la
    bolsa y se rebaraja, que es como reparte una baraja de verdad. */
 
+/* SÓLO LO QUE YA SABES. Repartía las dieciocho aunque supieras tres:
+   con habas, chochos y fréjol aprendidos, El Apuro servía el queso y
+   la leche de la bolsa dieciséis, con su mosca, contra el reloj — un
+   gesto nunca enseñado cobrado a segundos, y de paso la sorpresa de
+   la bolsa destripada. Con menos de dos bases no hay baraja que
+   valga (se repetiría el mismo), y entonces va la lista entera. */
 function rebarajar() {
-  bolsa = APURO.raciones.slice();
+  const sabidas = permitidas ? APURO.raciones.filter(r => permitidas.has(r.base)) : [];
+  bolsa = sabidas.length >= 2 ? sabidas : APURO.raciones.slice();
   for (let i = bolsa.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [bolsa[i], bolsa[j]] = [bolsa[j], bolsa[i]];
@@ -119,8 +127,9 @@ const bonoDeTanda = (t) => Math.max(APURO.bonoMinimo, APURO.bonoBase - (t - 1));
 
 /* ---------- la partida ---------- */
 
-function arrancar(g) {
+function arrancar(g, opciones = {}) {
   ganchos = g;
+  permitidas = opciones.bases ? new Set(opciones.bases) : null;
   activo = true;
   reloj = APURO.relojInicial;
   raciones = 0; tanda = 1; cadena = 0; mejorCadena = 0;

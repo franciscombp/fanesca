@@ -238,7 +238,7 @@ function cortarEn(z) {
     finas++;
     finasSeguidas++;
     api.sfx('corte');
-    api.chispas(t.position.clone().setY(api.MESA_Y + 0.3), '#dcecb8', 5, 0.7);
+    api.chispas(t.position.clone().setY(api.MESA_Y + 0.3), '#dcecb8', 5, 0.7, { forma: 'miga' });
     api.buzz(9);
     /* la racha de finitas se celebra: es la maestría del nivel */
     if (finasSeguidas === 5) { api.toast('¡Cinco finitas seguidas! ✨'); api.sfx('fiesta'); }

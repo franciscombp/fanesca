@@ -246,7 +246,7 @@ function alCanasto(rec) {
   api.volarA(rec.raizChoclo, api.BATEA, { dur: 0.5, alto: 0.7 });
   if (rec.clase.sirve) {
     llevados++;
-    api.chispas(api.BATEA, 8, '#f4d35e');
+    api.chispas(api.BATEA, '#f4d35e', 8);
     api.aviso(rec.clase.alTomar, 'bien');
     api.progreso(llevados, PEDIDOS);
     if (llevados >= PEDIDOS) rematar();

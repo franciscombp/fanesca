@@ -150,7 +150,7 @@ ok('O11 se abre el resumen de la partida', fin.abierto);
 ok('O12 con el tiempo total en mm:ss', /^\d+:\d\d$/.test(fin.tiempo || ''), fin.tiempo);
 ok('O13 con las cuatro marcas por acto', fin.actos.length === 4, JSON.stringify(fin.actos));
 ok('O14 y guarda el récord del plato', !!(fin.guardado && fin.guardado.ms > 0), JSON.stringify(fin.guardado && { ms: fin.guardado.ms, cucharas: fin.guardado.cucharas }));
-ok('O15 la escalera de logros está entera', fin.logros === 8, fin.logros + ' logros');
+ok('O15 la escalera de logros está entera', fin.logros === 10, fin.logros + ' logros');
 console.log('  mejor:', fin.mejor, '| pie:', fin.pie);
 
 /* ---- segunda partida: las marcas se comparan contra el récord ---- */

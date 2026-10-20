@@ -426,7 +426,7 @@ function echar(rec) {
   const th = Math.random() * Math.PI * 2, r = Math.random() * OLLA_R * 0.7;
   tr.position.set(Math.cos(th) * r, 0, Math.sin(th) * r);
   trozos.add(tr);
-  api.chispas(new THREE.Vector3(0, CALDO_Y(), OLLA_Z), 10, ing2color(rec.ing));
+  api.chispas(new THREE.Vector3(0, CALDO_Y(), OLLA_Z), ing2color(rec.ing), 10, 1, { forma: 'gota' });
 
   /* echar también revuelve un poco: el chorro mueve el caldo */
   pega = Math.max(0, pega - 0.12);

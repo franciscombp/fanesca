@@ -198,7 +198,15 @@ let contenedor = null;
 let tweens = [];
 let particulas = [];
 let vuelos = [];
-let sacudida = { t: 0, fuerza: 0 };
+/* la sacudida es un TRAUMA que se acumula y se desinfla (Eiserloh,
+   «Juicing your cameras with math»): dos golpes seguidos suman, uno
+   flojo apenas se nota, y el temblor es el cuadrado del trauma */
+let trauma = 0, traumaT = 0;
+/* MOVIMIENTO REDUCIDO: quien lo pidió al sistema no quiere la cámara
+   temblando (WCAG 2.3.3). El destello y el sonido ya dicen lo mismo. */
+let mqReducido = null;
+try { mqReducido = matchMedia('(prefers-reduced-motion: reduce)'); } catch (e) {}
+export const movReducido = () => !!(mqReducido && mqReducido.matches);
 let camBase = new THREE.Vector3();
 let camMira = new THREE.Vector3();
 /* Mira más abajo de lo que parece natural, y es a propósito: subir
@@ -259,15 +267,23 @@ const ndc = new THREE.Vector2();
 
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 const easePop = (t) => 1 + 2.7 * Math.pow(t - 1, 3) + 1.7 * Math.pow(t - 1, 2);
+/* para los niveles: lo que APARECE entra con un pelín de sobrepaso,
+   que es lo que lo hace sentir elástico y vivo */
+export const EASE = { out: easeOut, pop: easePop };
 
 /* La forma de las cosas vive en modelos/, no aquí. El motor arma la
    escena y lee los dedos; qué aspecto tiene un grano de choclo es
    asunto de modelos/choclo.js — y puede venir de un .glb esculpido
    en Blender sin que este archivo se entere. */
 
-let chispaTex = null;
-function texturaChispa() {
-  if (!chispaTex) {
+/* LAS CHISPAS TIENEN LA FORMA DE SU MATERIAL. Había una sola
+   estrella para todo: el agua de la quinua salpicaba estrellitas
+   blancas y la piel del chocho también. Ahora el agua salta en
+   GOTAS, la piel y la cáscara en MIGAS, y la estrella queda para lo
+   que es premio. Se hacen una vez cada una. */
+const chispaTex = {};
+function texturaChispa(forma) {
+  if (!chispaTex[forma]) {
     const S = 64;
     const c = document.createElement('canvas');
     c.width = c.height = S;
@@ -275,16 +291,52 @@ function texturaChispa() {
     ctx.fillStyle = '#fff';
     ctx.translate(S / 2, S / 2);
     ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 ? S * .16 : S * .44;
-      const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-      ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r);
+    if (forma === 'gota') {
+      /* una gota redonda con su brillo arriba a un lado */
+      const g = ctx.createRadialGradient(-S * .1, -S * .12, S * .02, 0, 0, S * .3);
+      g.addColorStop(0, '#fff'); g.addColorStop(.55, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.arc(0, 0, S * .3, 0, Math.PI * 2);
+    } else if (forma === 'miga') {
+      /* un pellejito irregular: girando ya no parece el mismo */
+      const n = 6;
+      for (let i = 0; i < n; i++) {
+        const r = S * (.2 + ((i * 7) % 5) * .045);
+        const a = (i / n) * Math.PI * 2;
+        ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r * .75);
+      }
+    } else {
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 ? S * .16 : S * .44;
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r);
+      }
     }
     ctx.closePath(); ctx.fill();
-    chispaTex = new THREE.CanvasTexture(c);
-    chispaTex.colorSpace = THREE.SRGBColorSpace;
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    chispaTex[forma] = tex;
   }
-  return chispaTex;
+  return chispaTex[forma];
+}
+/* las chispas se REUSAN: una cascada del choclo creaba y tiraba
+   decenas de materiales por segundo para el recolector de basura */
+const reservaChispas = [];
+function sacarChispa() {
+  const s = reservaChispas.pop();
+  if (s) return s;
+  const m = new THREE.SpriteMaterial({ transparent: true });
+  m.userData.compartida = true;
+  const n = new THREE.Sprite(m);
+  /* todos los Sprite de three comparten UNA geometría interna: si al
+     apagarse una chispa la tiráramos, las tirábamos todas */
+  n.geometry.userData.compartida = true;
+  return n;
+}
+function guardarChispa(s) {
+  scene.remove(s);
+  if (reservaChispas.length < 96) reservaChispas.push(s);
+  else s.material.dispose();
 }
 
 /* re-exportadas para los niveles, que las piden por `ctx.api` */
@@ -453,19 +505,36 @@ function pasoTweens() {
   listos.forEach(tw => { if (tw.fin) tw.fin(); });
 }
 
-export function chispas(pos, color = '#ffd24d', cuantas = 10, escala = 1) {
-  const tex = texturaChispa();
+/* opts.forma: 'estrella' (premio, la de siempre), 'gota' (agua: cae
+   más rápido y se encoge) o 'miga' (piel, cáscara: gira) */
+export function chispas(pos, color = '#ffd24d', cuantas = 10, escala = 1, opts = {}) {
+  /* dos niveles llamaban con la cantidad y el color al revés y el
+     bucle comparaba `i < '#f4d35e'`: no salía ni una */
+  if (typeof color === 'number' && typeof cuantas === 'string') {
+    console.warn('chispas: color y cantidad al revés', color, cuantas);
+    [color, cuantas] = [cuantas, color];
+  }
+  cuantas = Math.max(0, Math.round(+cuantas || 0));
+  if (movReducido()) cuantas = Math.ceil(cuantas / 2);
+  const forma = opts.forma === 'gota' || opts.forma === 'miga' ? opts.forma : 'estrella';
+  const tex = texturaChispa(forma);
   for (let i = 0; i < cuantas; i++) {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, color }));
-    /* todos los Sprite de three comparten UNA geometría interna: si al
-       apagarse una chispa la tiráramos, las tirábamos todas */
-    s.geometry.userData.compartida = true;
+    const s = sacarChispa();
+    s.material.map = tex;
+    s.material.color.set(color);
+    s.material.opacity = 1;
+    s.material.rotation = forma === 'miga' ? Math.random() * Math.PI * 2 : 0;
     s.position.copy(pos);
-    s.scale.setScalar((0.08 + Math.random() * 0.1) * escala);
+    const tam = (0.08 + Math.random() * 0.1) * escala * (forma === 'estrella' ? 1 : 0.8);
+    s.scale.setScalar(tam);
     const a = Math.random() * Math.PI * 2;
-    s.userData.vel = new THREE.Vector3(Math.cos(a) * (0.6 + Math.random()), 1.1 + Math.random() * 1.2, Math.sin(a) * 0.6 + 0.3);
-    s.userData.nace = clock.elapsedTime;
-    s.userData.vida = 0.55 + Math.random() * 0.3;
+    const ud = s.userData;
+    ud.vel = new THREE.Vector3(Math.cos(a) * (0.6 + Math.random()), (forma === 'gota' ? 1.6 : 1.1) + Math.random() * 1.2, Math.sin(a) * 0.6 + 0.3);
+    ud.nace = clock.elapsedTime;
+    ud.vida = 0.55 + Math.random() * 0.3;
+    ud.gravedad = forma === 'gota' ? 7 : 4.2;
+    ud.giro = forma === 'miga' ? (Math.random() - .5) * 14 : 0;
+    ud.encoge = forma === 'gota' ? tam : 0;
     scene.add(s);
     particulas.push(s);
   }
@@ -533,7 +602,10 @@ function pasoVuelos() {
   });
 }
 
-export function sacudir(fuerza = 1) { sacudida = { t: 0, fuerza }; }
+export function sacudir(fuerza = 1) {
+  if (movReducido()) return;
+  trauma = Math.min(1, trauma + fuerza * 0.6);
+}
 
 export function destello(color = 'rgba(230,57,70,.55)') {
   if (!destelloEl) return;
@@ -993,7 +1065,7 @@ export const Motor = {
     tweens = [];
     vuelos.forEach(v => { scene.remove(v.obj); tirar(v.obj); });
     vuelos = [];
-    particulas.forEach(p => { scene.remove(p); tirar(p); });
+    particulas.forEach(guardarChispa);
     particulas = [];
     if (raiz) {
       while (raiz.children.length) {
@@ -1074,26 +1146,31 @@ function bucle() {
   });
 
   particulas = particulas.filter(s => {
-    const edad = t - s.userData.nace;
-    if (edad > s.userData.vida) { scene.remove(s); s.material.dispose(); return false; }
-    s.userData.vel.y -= 4.2 * dt;
-    s.position.addScaledVector(s.userData.vel, dt);
-    s.material.opacity = 1 - edad / s.userData.vida;
+    const ud = s.userData;
+    const edad = t - ud.nace;
+    if (edad > ud.vida) { guardarChispa(s); return false; }
+    ud.vel.y -= ud.gravedad * dt;
+    s.position.addScaledVector(ud.vel, dt);
+    const k = edad / ud.vida;
+    s.material.opacity = 1 - k;
+    if (ud.giro) s.material.rotation += ud.giro * dt;
+    if (ud.encoge) s.scale.setScalar(ud.encoge * (1 - k * 0.7));
     return true;
   });
 
-  if (sacudida.fuerza > 0) {
-    sacudida.t += dt;
-    const k = Math.max(0, 1 - sacudida.t / 0.45);
-    if (k <= 0) { sacudida.fuerza = 0; camera.position.copy(camBase); }
+  if (trauma > 0) {
+    trauma = Math.max(0, trauma - 1.1 * dt);
+    traumaT += dt;
+    if (trauma <= 0) { camera.position.copy(camBase); camera.lookAt(camMira); }
     else {
-      camera.position.set(
-        camBase.x + Math.sin(sacudida.t * 62) * 0.09 * k * sacudida.fuerza,
-        camBase.y + Math.sin(sacudida.t * 51) * 0.06 * k * sacudida.fuerza,
-        camBase.z
-      );
+      /* ruido suave (senos que no se repiten igual) en vez de un seno
+         fijo; y un pelín de giro, que en 3D se siente más que el desliz */
+      const k = Math.pow(trauma, 1.5);
+      const r = (f, s) => Math.sin(traumaT * f + s) * 0.6 + Math.sin(traumaT * f * 2.31 + s * 3.7) * 0.4;
+      camera.position.set(camBase.x + r(31, 1) * 0.2 * k, camBase.y + r(27, 2) * 0.13 * k, camBase.z);
+      camera.lookAt(camMira);
+      camera.rotateZ(r(23, 3) * 0.035 * k);
     }
-    camera.lookAt(camMira);
   }
 
   if (nivel && nivel.actualizar) { try { nivel.actualizar(dt, t); } catch (e) { console.error(e); } }

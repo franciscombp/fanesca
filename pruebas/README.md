@@ -55,6 +55,7 @@ Dicen ✓ o ✗ y terminan con `TODO VERDE` o `HAY FALLOS`.
 | `ficha-hecha` | volver a un nivel ya jugado por los dos caminos (la bolsa desde la despensa, el renglón dentro de la bolsa), y entrar y salir a lo bruto sin dejar la pantalla de juego sin mesón. |
 | `carrusel` | recorrer con el dedo las dos pantallas que se recorren: bajar la despensa sin abrir bolsas sin querer, y pasar página en el cuaderno. |
 | `huevo` | cascar y pelar: el mesón que más se quejaba de que no se entendía. |
+| `sonido` | que la racha suba por una escala de verdad (la pentatónica de Do) y no en zigzag, que el tono que pide un nivel se respete, que las chispas salgan aunque se pidan al revés, que con movimiento reducido la cámara no tiemble, que la vibración no apile golpes que el dedo no distingue, y que en la hoja de listo suenen primero las cucharas y después la fiesta. |
 | `devmode` | el ritual de los cinco toques en el número de versión. |
 | `nota` | que la nota de versión se pueda cerrar en cuatro tamaños de teléfono. El botón se salía de la pantalla. |
 | `actualiza` | la actualización de verdad, con service worker: instalar, publicar una versión nueva, ver el botón y estrenarla. |

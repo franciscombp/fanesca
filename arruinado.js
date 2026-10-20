@@ -27,26 +27,33 @@ const conArticulo = (bicho) => {
   return (bicho === 'mosca' ? 'la ' : 'el ') + bicho;
 };
 const Mayus = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+/* el dibujo de la hoja es EL bicho que fue: salía un gusano 🪱 aunque
+   te hubiera ganado un gorgojo o una mosca */
+export const icoBicho = (bicho = '') => /gorgojo/i.test(bicho) ? '🪲' : (/mosca/i.test(bicho) ? '🪰' : '🪱');
 
 export const ARRUINADO = {
   /* demasiados descuidos en una parada brava: la calidad también
      es un objetivo, no sólo el reloj */
   descuidos: (n = 3) => ({
+    ico: '💔',
     titulo: 'Demasiados descuidos',
     texto: `${n} fallos en una sola parada — granos reventados, perdidos o quemados. Con esa mano la olla no sale: otra vez, con más cuidado.`,
   }),
   aplastado: (bicho = 'gusanito') => ({
     clave: 'aplastado',
+    ico: icoBicho(bicho),
     titulo: bicho === 'mosca' ? 'La aplastaste' : 'Lo aplastaste',
     texto: `${Mayus(conArticulo(bicho))} reventó encima de la comida. Con eso ya no hay nada que hacer: se bota todo y se empieza de nuevo.`,
   }),
   enLaBatea: (bicho = 'gusanito') => ({
     clave: 'enLaBatea',
+    ico: icoBicho(bicho),
     titulo: 'Se te fue a la batea',
     texto: `${Mayus(conArticulo(bicho))} llegó hasta la batea y se mezcló con lo bueno. Ya no se puede separar: toca botar todo y empezar de nuevo.`,
   }),
   granoPodrido: () => ({
     clave: 'granoPodrido',
+    ico: '🌽',
     titulo: 'Picaste un grano dañado',
     texto: `Los granos cafés están podridos y no se sacan: se dejan en la tusa y se van con ella a la composta. Este lo reventaste encima de lo bueno, y con eso se bota todo.`,
   }),

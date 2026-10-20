@@ -101,8 +101,8 @@ function reventar(rec) {
   if (rec.reventada) return;
   rec.reventada = true;
   rec.obj.userData.tipo = null;
-  api.sfx('crack'); api.buzz([30, 20, 40]);
-  api.chispas(rec.obj.position.clone(), '#e9d9a0', 10, 0.9);
+  api.sfx('chasquido'); api.buzz([30, 50, 40]);
+  api.chispas(rec.obj.position.clone(), '#e9d9a0', 10, 0.9, { forma: 'miga' });
 
   /* la cáscara salta y se va sola a la composta; su sombra se queda
      y se apaga */

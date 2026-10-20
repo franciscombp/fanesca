@@ -77,7 +77,7 @@ function pasadaHecha() {
   api.sfx(hechos % 2 ? 'frotar' : 'corte'); api.buzz(8);
   const donde = mediaObj.position.clone();
   soltarHebra(donde); soltarHebra(donde);
-  api.chispas(donde.clone().setY(api.MESA_Y + 0.34), '#f6edcf', 4, 0.6);
+  api.chispas(donde.clone().setY(api.MESA_Y + 0.34), '#f6edcf', 4, 0.6, { forma: 'miga' });
   /* la media se gasta a la vista: es la barra de progreso de verdad */
   const k = 1 - mediaGastada / PASADAS_POR_MEDIA;
   mediaObj.scale.setScalar(Math.max(0.35, 0.4 + 0.6 * k));

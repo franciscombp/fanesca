@@ -54,7 +54,12 @@ const BABA_OPACA = 0.34;
    yema quieta encima, que no es raspar— sino pidiendo más centímetros
    de recorrido. Los tres valores se separan lo justo para que la suave
    no se caiga de un roce y la apretada no acabe siendo un fregado. */
-const RASPADO_POR_RESISTENCIA = [0.5, 0.78, 1.15];
+/* EL ÚLTIMO PELDAÑO NO PUEDE SER MÁS FÁCIL QUE EL ANTERIOR. La tabla
+   tenía tres entradas y el peldaño más alto pide resistencia 3: el
+   índice caía fuera y tomaba el valor normal, así que «la tanda» se
+   abría más fácil que «apretadas». Cuarta entrada con un paso suave
+   (~12 %, lo que supone pruebas/tiempos.mjs) e índice acotado. */
+const RASPADO_POR_RESISTENCIA = [0.5, 0.78, 1.15, 1.3];
 let RASPADO = 0.78;
 /* Y el filo de la navaja: pasar de aquí y el melloco sale disparado.
    Se mide en mundo POR SEGUNDO, no por cuadro: medirlo por cuadro
@@ -112,7 +117,7 @@ function raspar(rec, cuanto) {
   rec.babaza.material.opacity = BABA_OPACA * rec.baba;
   rec.babaza.scale.setScalar(1 - 0.1 * (1 - rec.baba));
   if (rec.baba > 0) {
-    if (Math.random() < 0.25) api.chispas(rec.obj.position.clone().setY(api.MESA_Y + ALTO + 0.1), '#eef6d8', 2, 0.5);
+    if (Math.random() < 0.25) api.chispas(rec.obj.position.clone().setY(api.MESA_Y + ALTO + 0.1), '#eef6d8', 2, 0.5, { forma: 'miga' });
     return;
   }
 
@@ -126,7 +131,7 @@ function raspar(rec, cuanto) {
   hechos++;
   api.sfx(hechos % 2 ? 'pop' : 'pop2');
   api.buzz(12);
-  api.chispas(rec.obj.position.clone().setY(api.MESA_Y + ALTO + 0.12), '#fbf3d0', 8, 0.8);
+  api.chispas(rec.obj.position.clone().setY(api.MESA_Y + ALTO + 0.12), '#fbf3d0', 8, 0.8, { forma: 'miga' });
   rec.obj.userData.escalaBase = 1;
   api.volarA(rec.obj, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.46, alto: 0.6 });
   api.progreso(hechos, CUANTOS);
@@ -186,10 +191,9 @@ export default {
     /* ocho es la tabla de siempre: dos hileras de cuatro */
     CUANTOS = cfg.cantidad ?? 8;
     CON_GUSANO = cfg.gusanos ?? 2;
-    /* una resistencia fuera de la tabla cae en la normal en vez de
-       dejar el nivel con un NaN por raspar: un dato mal escrito no
-       debería costar una olla */
-    RASPADO = RASPADO_POR_RESISTENCIA[cfg.resistencia ?? 1] ?? 0.78;
+    /* el índice va acotado: un dato mal escrito no deja el nivel con
+       un NaN por raspar, ni el último peldaño más fácil que el anterior */
+    RASPADO = RASPADO_POR_RESISTENCIA[Math.min(3, Math.max(0, Math.round(cfg.resistencia ?? 1)))];
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     mellocos = []; hechos = 0; terminado = false;
     modo = null; ultimoPunto = null; resbalados = 0; pellizcando = false;

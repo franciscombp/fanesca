@@ -878,9 +878,13 @@ export const HUEVO_NIVELES = {
       gusanos: 0,
     }
   },
+  /* LOS NOMBRES DICEN LO QUE HAY. «Media docena» traía cuatro huevos,
+     «la docena» seis y «la cáscara pegada» ninguna cáscara pegada: un
+     peldaño que promete y no cumple se siente como trampa. Los ids no
+     se tocan (son los récords guardados). */
   'huevo-2-media-docena': {
-    nombre: 'Media docena de huevos',
-    corto: 'Media docena',
+    nombre: 'Cuatro huevos',
+    corto: 'Cuatro huevos',
     dificultad: 3, bloque: 'CASCAR',
     tiempoBase: 57,
     config: {cantidad: 4, golpes: 4, gusanos: 0},
@@ -893,15 +897,15 @@ export const HUEVO_NIVELES = {
     config: {cantidad: 4, golpes: 5, gusanos: 0},
   },
   'huevo-4-cascara-pegada': {
-    nombre: 'La cáscara pegada',
-    corto: 'Cáscara pegada',
+    nombre: 'Cinco huevos',
+    corto: 'Cinco huevos',
     dificultad: 4, bloque: 'CASCAR',
     tiempoBase: 73,
     config: {cantidad: 5, golpes: 5, gusanos: 0},
   },
   'huevo-5-la-docena': {
-    nombre: 'La docena',
-    corto: 'La docena',
+    nombre: 'La media docena',
+    corto: 'Media docena',
     dificultad: 5, bloque: 'CASCAR',
     tiempoBase: 79,
     config: {cantidad: 6, golpes: 5, gusanos: 0},
@@ -1476,10 +1480,17 @@ export const OLLA_MODO = {
   entera: 20,
   logros: [
     { id: 'primera',  pide: r => true,                          titulo: 'La primera olla',   meta: 'Cocina algo de principio a fin',      texto: 'Cocinaste una olla entera con tus manos.' },
-    { id: 'limpia',   pide: r => r.desastres === 0,             titulo: 'Sin un desastre',   meta: 'Termina sin arruinar nada',           texto: 'Ni un bicho, ni una quemada, ni una piedra.' },
-    { id: 'abuela',   pide: r => r.cucharas >= 3,               titulo: 'Mano de abuela',    meta: 'Tres cucharas de calidad',            texto: 'Así sale la de la casa.' },
+    /* SIN REGALOS: la primera olla de habas —un cuenco, quince
+       segundos— daba tres de las ocho medallas de golpe, y después no
+       había ninguna hasta la fanesca entera. Las de hacerlo bien piden
+       una olla de verdad (cinco cosas o más), y en medio de la
+       escalera hay dos peldaños: la sopa de nueve y la que espesa. */
+    { id: 'limpia',   pide: r => r.desastres === 0 && r.enLaOlla >= 5, titulo: 'Sin un desastre', meta: 'Una olla de cinco o más sin arruinar nada', texto: 'Ni un bicho, ni una quemada, ni una piedra.' },
+    { id: 'abuela',   pide: r => r.cucharas >= 3 && r.enLaOlla >= 5,   titulo: 'Mano de abuela',  meta: 'Tres cucharas en una olla de cinco o más', texto: 'Así sale la de la casa.' },
     { id: 'feriante', pide: r => r.feriaLimpia && r.conFeria,   titulo: 'Ojo de feriante',   meta: 'La feria sin escoger un solo maduro', texto: 'Ni un choclo de tostado se te coló.' },
     { id: 'receta',   pide: r => r.ollaLimpia && r.enLaOlla >= 2, titulo: 'La receta de memoria', meta: 'Echa todo en orden, sin fallar uno', texto: 'Te sabes el orden de la olla sin mirar.' },
+    { id: 'cuaresma', pide: r => r.enLaOlla >= 9,               titulo: 'De Cuaresma',       meta: 'Cocina una sopa de nueve cosas',      texto: 'Nueve en la olla, y la casa ya huele a Semana Santa.' },
+    { id: 'cuerpo',   pide: r => r.enLaOlla >= 13,              titulo: 'Con cuerpo',        meta: 'Cocina con el zapallo y el sambo',    texto: 'Ahora sí la olla espesa.' },
     { id: 'fanesca',  pide: r => r.de >= 20,                    titulo: 'La fanesca entera', meta: 'Cocina los dieciocho, de la feria al plato', texto: 'La despensa completa en una sola olla.' },
     { id: 'diez',     pide: r => r.de >= 20 && r.ms <= 10 * 60000, titulo: 'Antes del mediodía', meta: 'La fanesca entera en menos de 10 min', texto: 'La olla lista antes de que llegue la familia.' },
     { id: 'ocho',     pide: r => r.de >= 20 && r.ms <= 8 * 60000,  titulo: 'Cocina de guerra',  meta: 'La fanesca entera en menos de 8 min', texto: 'Eso ya es cocinar con las dos manos.' },

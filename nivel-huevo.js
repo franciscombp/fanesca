@@ -98,7 +98,7 @@ function golpear() {
   if (fase !== 'cascar') return;
   golpesDados++;
   hechos++;
-  api.sfx('crack'); api.buzz([14, 10]);
+  api.sfx('cascara'); api.buzz([14, 50, 10]);
   api.sacudir(0.25);
   /* cada golpe dibuja su grieta: una rayita oscura sobre la cáscara */
   const a = Math.random() * Math.PI * 2;
@@ -117,7 +117,7 @@ function golpear() {
   const g = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#8a7a5e' }));
   g.userData.ignorar = true;
   grietas.add(g);
-  api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#f0e0c8', 4, 0.5);
+  api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#f0e0c8', 4, 0.5, { forma: 'miga' });
   api.progreso(hechos, TOTAL);
 
   if (golpesDados >= GOLPES) cuartear();
@@ -146,7 +146,7 @@ function cuartear() {
   /* el de arriba del todo se levanta: es el que se ve mejor y el que
      el dedo alcanza sin tapar el huevo */
   primero = cascos.find(c => c.userData.tipo) || null;
-  api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#f0e0c8', 10, 0.7);
+  api.chispas(huevoObj.position.clone().setY(CENTRO().y + 0.3), '#f0e0c8', 10, 0.7, { forma: 'miga' });
   api.pista('Ya está cuarteado: <b>rasca la cáscara</b> — toca los pedazos o pasa el dedo por encima.', 4200);
 }
 

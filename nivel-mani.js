@@ -40,7 +40,12 @@ let MOLIENDA = 1.15;
    que pide más pasadas, no la que vuelve el gesto torpe. Tocar el radio
    habría hecho lo segundo — el jugador fallaría el grano en vez de
    insistir sobre él, que es justo lo que este nivel quiere enseñar. */
-const MOLIENDAS = [0.7, 1.15, 1.7];
+/* EL ÚLTIMO PELDAÑO NO PUEDE SER MÁS FÁCIL QUE EL ANTERIOR. La tabla
+   tenía tres entradas y el peldaño más alto pide resistencia 3: el
+   índice caía fuera y tomaba el valor normal, así que «la tanda» se
+   abría más fácil que «apretadas». Cuarta entrada con un paso suave
+   (~12 %, lo que supone pruebas/tiempos.mjs) e índice acotado. */
+const MOLIENDAS = [0.7, 1.15, 1.7, 1.9];
 /* Por debajo de esto el dedo no muele: tiembla. Hoy sólo descarta el
    ruido del puntero, pero es el mismo umbral con el que se le puede
    exigir un vaivén de verdad, porque manda sobre las dos cosas que un
@@ -101,9 +106,9 @@ function moler(rec, cuanto) {
   rec.pasta = pasta;
 
   hechos++;
-  api.sfx(hechos % 2 ? 'crack' : 'pop2');
+  api.sfx(hechos % 2 ? 'crujir' : 'pop2');
   api.buzz(14);
-  api.chispas(pasta.position.clone().setY(caraLosa() + 0.1), '#e8c98a', 5, 0.6);
+  api.chispas(pasta.position.clone().setY(caraLosa() + 0.1), '#e8c98a', 5, 0.6, { forma: 'miga' });
   api.progreso(hechos, CUANTOS);
   revisarFinal();
 }
@@ -178,7 +183,7 @@ export default {
   construir(ctx, cfg = {}) {
     THREE = ctx.THREE; raiz = ctx.raiz; api = ctx.api;
     CUANTOS = cfg.cantidad ?? 16;
-    MOLIENDA = MOLIENDAS[cfg.resistencia ?? 1] ?? 1.15;
+    MOLIENDA = MOLIENDAS[Math.min(3, Math.max(0, Math.round(cfg.resistencia ?? 1)))];
     /* el umbral viaja en unidades de la losa por evento de arrastre, no
        en metros por segundo: es la misma vara con la que se mide el
        avance de la molienda, y compararlas en escalas distintas sería

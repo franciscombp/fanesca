@@ -8,7 +8,7 @@
    cronometrarlos y celebrarlos.
    ============================================================ */
 
-import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA } from './motor3d.js';
+import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA, EASE } from './motor3d.js';
 import { NIVELES, POR_VENIR, OLLA, ORDEN_OLLA, porId, cucharasDe, cucharasConFallos, tiempoBonito } from './niveles.js';
 import { ARRUINADO } from './arruinado.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
@@ -50,7 +50,7 @@ function nuevoEstado() {
     mejores: {}, vistoPortada: false, intentos: 0, arruinadas: 0,
     leidos: [], cuadernoVisto: true, devMode: false,
     /* la racha de días: cocinar algo hoy la mantiene viva */
-    dias: { ultima: null, seguidos: 0 },
+    dias: { ultima: null, total: 0, sellos: [] },
     /* dónde se cocina: se elige en la mesa y se recuerda */
     escenario: POR_DEFECTO,
     /* el último nivel jugado: para scrollear a él cuando regresas a la mesa */
@@ -144,7 +144,18 @@ function migrar(s) {
     const r = s.ollas[k];
     if (!r || typeof r !== 'object' || typeof r.ms !== 'number') delete s.ollas[k];
   }
-  if (!s.dias || typeof s.dias !== 'object') s.dias = { ultima: null, seguidos: 0 };
+  if (!s.dias || typeof s.dias !== 'object') s.dias = { ultima: null, total: 0, sellos: [] };
+  /* DE LA RACHA A LOS DÍAS EN LA COCINA. Lo que se llevaba eran días
+     SEGUIDOS: un día sin jugar te dejaba en uno sin decir nada, y la
+     despensa seguía enseñando el 🔥 de hace una semana. Eso es miedo a
+     perder, no ganas de volver. Ahora se cuentan los días que has
+     cocinado, que no se pierden nunca; la racha vieja entra entera. */
+  if (typeof s.dias.total !== 'number') {
+    s.dias.total = s.dias.ultima ? Math.max(1, s.dias.seguidos || 1) : 0;
+    s.dias.sellos = s.dias.ultima ? [s.dias.ultima] : [];
+    delete s.dias.seguidos;
+  }
+  if (!Array.isArray(s.dias.sellos)) s.dias.sellos = [];
   /* el ingrediente entero pasó a ser una temporada: su récord es el
      de la primera parada */
   NIVELES.forEach(ing => {
@@ -200,6 +211,13 @@ function migrar(s) {
       if (ns.some(n => !!s.mejores[n.id])) s.sabidos.push(bolsa);
     }
     s.mapa = 'bolsas';
+  }
+  /* quien aprendió el choclo en la feria antes de que eso abriera su
+     página (ver la clave de TARJETAS en terminarNivel) se la queda
+     ahora, con el capítulo que trae */
+  if (s.mejores['feria-1-escoger'] && !s.leidos.includes('maiz') && TARJETAS.maiz) {
+    s.leidos.push('maiz', ...[].concat(TARJETAS.maiz.abre || []).filter(c => !s.leidos.includes(c)));
+    s.cuadernoVisto = false;
   }
   return s;
 }
@@ -318,6 +336,43 @@ function resumenBolsa(bolsa) {
   return r;
 }
 
+/* LO MÁS CERCA. Con los dieciocho sabidos la cabecera decía «los
+   dieciocho, y la mesa puesta» y ya: el juego se daba por terminado
+   con un cuarto de los niveles hechos. Lo que sigue es el reto más
+   próximo de toda la despensa, dicho con lo que le falta — el
+   gradiente de meta: lo que está a un paso se persigue solo. */
+function metaMasCercana() {
+  let mejor = null;
+  ORDEN_BOLSAS.forEach(b => {
+    if (!bolsaAbierta(b)) return;
+    const r = resumenBolsa(b);
+    retosDe(r).forEach(x => {
+      if (x.pide(r)) return;
+      const falta = x.id === 'rapida' ? r.metaRapida - r.tresCucharas
+        : x.id === 'limpia' ? r.metaLimpia - r.limpios
+        : x.id === 'cazador' ? Math.ceil((r.metaBichos - r.bichos) / 2)
+        : r.total - r.hechos;
+      if (falta > 0 && (!mejor || falta < mejor.falta)) mejor = { bolsa: b, reto: x, falta, r };
+    });
+  });
+  return mejor;
+}
+function fraseMeta(m) {
+  const ing = nombreDeBolsa(m.bolsa);
+  const n = (k, uno, varios) => k === 1 ? uno : `${k} ${varios}`;
+  const que = m.reto.id === 'rapida' ? `${n(m.falta, 'un nivel más', 'niveles más')} con tres cucharas`
+    : m.reto.id === 'limpia' ? `${n(m.falta, 'un nivel más', 'niveles más')} sin descuidos`
+    : m.reto.id === 'cazador' ? `${n(m.r.metaBichos - m.r.bichos, 'un bicho más', 'bichos más')} a la composta`
+    : `${n(m.falta, 'un nivel por jugar', 'niveles por jugar')}`;
+  return `lo más cerca: ${m.reto.titulo} en ${ing} — ${que}`;
+}
+/* cuántos retos hay y cuántos van, en toda la despensa */
+function cuentaRetos() {
+  let hay = 0, van = 0;
+  ORDEN_BOLSAS.forEach(b => { const r = resumenBolsa(b); hay += retosDe(r).length; van += retosDe(r).filter(x => x.pide(r)).length; });
+  return { hay, van };
+}
+
 /* los retos GANADOS de una bolsa, por id */
 function retosGanados(bolsa) {
   const r = resumenBolsa(bolsa);
@@ -409,42 +464,177 @@ function obtenerConfigNivel(id) {
 
 /* ---------- sonido y vibración ---------- */
 
-let audioCtx = null;
+/* TODO PASA POR UN BUS MAESTRO CON COMPRESOR. Cada voz iba directa a
+   los parlantes: el pop, que es lo que más suena, quedaba en −23 dBFS
+   —bajito en un teléfono— y cuando coincidían varias cosas se sumaban
+   sin freno. Con una ganancia general y un compresor el juego suena
+   más presente y los choques (fin de nivel con fiesta y cucharas) no
+   saturan. El ruido blanco se hace UNA vez: es la materia prima de
+   todo lo que suena a comida (la vaina que cruje, el agua). */
+let audioCtx = null, bus = null, ruidoBuf = null;
 function initAudio() {
-  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; } }
-  if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; }
+    if (audioCtx) {
+      try {
+        const comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.value = -14; comp.knee.value = 6; comp.ratio.value = 4;
+        comp.attack.value = .003; comp.release.value = .12;
+        bus = audioCtx.createGain(); bus.gain.value = 1.6;
+        bus.connect(comp); comp.connect(audioCtx.destination);
+      } catch (e) { bus = audioCtx.destination; }
+      try {
+        const n = audioCtx.sampleRate;
+        ruidoBuf = audioCtx.createBuffer(1, n, n);
+        const d = ruidoBuf.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      } catch (e) { ruidoBuf = null; }
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended' && !document.hidden) { try { audioCtx.resume(); } catch (e) {} }
 }
+
+/* LA ESCALERA DE LA RACHA ES UNA ESCALA, no un tono que se multiplica.
+   Los pops subían un 4.5 % por acierto y además los niveles alternaban
+   dos alturas (720 y 840 Hz): medido sonaba 752, 916, 817, 991… un
+   zigzag que no estaba en ninguna tonalidad. Ahora cada acierto es la
+   nota siguiente de la pentatónica de Do —la de las fanfarrias—, como
+   los doce «pling» de Juicy Breakout o las clavijas de Peggle: el oído
+   oye una melodía que sube y la persigue. Arriba del todo se queda
+   alternando las dos últimas, para seguir sonando sin volverse chillona. */
+const ESCALERA = [659.26, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+const notaRacha = (n) => n < ESCALERA.length ? ESCALERA[Math.max(0, n)] : ESCALERA[ESCALERA.length - 2 + (n % 2)];
+
+/* Las recetas. Una voz es un oscilador ({ f, f2 si barre, w, t, d, g })
+   o un golpe de ruido filtrado ({ ruido, filtro, fq, fq2, q, t, d, g }).
+   `var` es cuánto varía cada vez, en cents: un sonido idéntico repetido
+   cien veces se vuelve ametralladora (Godot lo resuelve igual, con su
+   AudioStreamRandomizer). Lo musical —la escalera, las cucharas, las
+   fanfarrias— no varía: desafinaría. `prio` calla un momento lo menudo
+   para que un error o una fiesta se oigan limpios. */
 const SFX = {
-  pop:   [{ f: 720, d: .05, g: .07 }],
-  pop2:  [{ f: 840, d: .05, g: .07 }],
-  crack: [{ f: 260, d: .07, g: .06, w: 'square' }],
-  resist:[{ f: 150, d: .08, g: .05, w: 'sawtooth' }],
-  corte: [{ f: 950, d: .1, g: .06, w: 'triangle' }, { f: 520, t: .05, d: .12, g: .05, w: 'triangle' }],
-  frotar:[{ f: 320, d: .06, g: .035, w: 'sawtooth' }],
-  /* el chapoteo de algo que cae a la olla: grave y corto, sube de
-     tono con cada ingrediente */
-  plop:  [{ f: 300, d: .09, g: .07 }, { f: 170, t: .03, d: .14, g: .06, w: 'triangle' }],
-  tab:   [{ f: 620, d: .05, g: .07 }],
-  mal:   [{ f: 190, d: .3, g: .11, w: 'sawtooth' }, { f: 120, t: .12, d: .35, g: .1, w: 'sawtooth' }],
-  bien:  [{ f: 523, d: .1, g: .1 }, { f: 659, t: .08, d: .1, g: .1 }, { f: 784, t: .16, d: .22, g: .12 }],
-  fiesta:[{ f: 523, d: .12, g: .1 }, { f: 659, t: .1, d: .12, g: .1 }, { f: 784, t: .2, d: .12, g: .1 }, { f: 1046, t: .3, d: .3, g: .12 }],
+  /* pop y pop2 son la MISMA nota con distinto timbre: los niveles que
+     los alternan siguen alternando, pero ya no en zigzag */
+  pop:   { var: 0, v: [{ f: 720, d: .05, g: .07 }] },
+  pop2:  { var: 0, v: [{ f: 720, d: .055, g: .085, w: 'triangle' }] },
+  crack: { v: [{ ruido: true, filtro: 'bandpass', fq: 1800, q: 1.2, d: .03, g: .12 }, { f: 260, d: .07, g: .045, w: 'square' }] },
+  /* la vaina que se abre: un chasquido seco y un golpecito que cae */
+  chasquido: { v: [{ ruido: true, filtro: 'bandpass', fq: 3200, q: 1.5, d: .025, g: .14 }, { f: 420, f2: 180, d: .06, g: .08 }] },
+  /* la cáscara del huevo: tres tics agudos, uno tras otro */
+  cascara: { v: [0, .018, .041].map(t => ({ ruido: true, filtro: 'highpass', fq: 2500, t, d: .014, g: .11 })) },
+  /* el maní en la piedra */
+  crujir: { v: [0, .035, .07].map((t, i) => ({ ruido: true, filtro: 'bandpass', fq: 1200 + i * 250, q: 2, t, d: .04, g: .1 })) },
+  /* agua que se vuelca o se cambia: un chorro que se apaga y burbujas */
+  agua:  { v: [{ ruido: true, filtro: 'lowpass', fq: 900, fq2: 300, d: .35, g: .12 },
+    ...[.05, .12, .2].map(t => ({ f: 380, f2: 900, t, d: .05, g: .05 }))] },
+  /* lo que aparece en el mesón y no debería: un chirrido de bicho, que
+     ya no se confunde con el crujido de abrir una vaina */
+  bicho: { v: [{ f: 900, f2: 1400, d: .08, g: .06, w: 'triangle' }, { f: 900, f2: 1400, t: .1, d: .08, g: .06, w: 'triangle' }] },
+  resist:{ v: [{ f: 150, d: .08, g: .05, w: 'sawtooth' }, { ruido: true, filtro: 'lowpass', fq: 500, d: .06, g: .05 }] },
+  corte: { v: [{ f: 950, d: .1, g: .06, w: 'triangle' }, { f: 520, t: .05, d: .12, g: .05, w: 'triangle' }, { ruido: true, filtro: 'highpass', fq: 3000, d: .05, g: .06 }] },
+  frotar:{ v: [{ ruido: true, filtro: 'bandpass', fq: 1500, q: 2, d: .07, g: .06 }] },
+  /* el chapoteo de algo que cae a la olla: baja como una gota y lleva
+     un poco de agua; la olla lo sube de tono con cada ingrediente. Sus
+     graves de antes (300 y 170 Hz) no salían por un parlante de teléfono */
+  plop:  { v: [{ f: 520, f2: 260, d: .09, g: .1 }, { ruido: true, filtro: 'lowpass', fq: 700, d: .12, g: .06 }] },
+  tab:   { v: [{ f: 620, d: .05, g: .07 }] },
+  mal:   { prio: true, v: [{ f: 190, d: .3, g: .11, w: 'sawtooth' }, { f: 120, t: .12, d: .35, g: .1, w: 'sawtooth' }] },
+  bien:  { var: 0, v: [{ f: 523.25, d: .1, g: .1 }, { f: 659.26, t: .08, d: .1, g: .1 }, { f: 783.99, t: .16, d: .22, g: .12 }] },
+  fiesta:{ var: 0, prio: true, v: [{ f: 523.25, d: .12, g: .1 }, { f: 659.26, t: .1, d: .12, g: .1 }, { f: 783.99, t: .2, d: .12, g: .1 }, { f: 1046.5, t: .3, d: .3, g: .12 }] },
+  /* un hito de racha: dos notas (la base y su quinta) — ya no la
+     fanfarria de terminar, que se gastaba a mitad de nivel */
+  racha: { var: 0, v: [{ f: 783.99, d: .08, g: .08, w: 'triangle' }, { f: 1174.66, t: .08, d: .16, g: .08, w: 'triangle' }] },
+  /* un reto o un plato nuevo: su propio motivo, Sol–Do–Mi–Sol */
+  logro: { var: 0, prio: true, v: [783.99, 1046.5, 1318.51, 1567.98].map((f, i) => ({ f, t: i * .09, d: i === 3 ? .32 : .12, g: .09, w: 'triangle' })) },
 };
-function sfx(tipo, tono = 1) {
+/* lo menudo, que calla tras un sonido con prioridad */
+const MENUDO = new Set(['pop', 'pop2', 'frotar', 'tab', 'resist', 'crack', 'chasquido', 'crujir']);
+const ultimoSfx = {};
+let calladoHasta = 0;
+
+/* opc: { hz } fija la altura de la primera voz (y las demás la
+   siguen); { vol } escala la ganancia */
+function sfx(tipo, tono = 1, opc = {}) {
   if (estado.silencio) return;
+  const receta = SFX[tipo];
+  if (!receta) return;
   initAudio(); if (!audioCtx) return;
   const now = audioCtx.currentTime;
-  (SFX[tipo] || []).forEach(n => {
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.type = n.w || 'sine'; o.frequency.value = n.f * tono;
+  /* UNO POR EVENTO: las cascadas del choclo disparan varios pops en el
+     mismo cuadro, y sumados no suenan a más sino a más fuerte */
+  if (now - (ultimoSfx[tipo] ?? -1) < .025) return;
+  if (MENUDO.has(tipo) && now < calladoHasta) return;
+  ultimoSfx[tipo] = now;
+  if (receta.prio) calladoHasta = now + .12;
+  const salida = bus || audioCtx.destination;
+  const k = opc.hz ? opc.hz / receta.v[0].f : tono;
+  const variar = receta.var ?? 25;
+  const vol = (opc.vol ?? 1) * (variar ? 0.9 + Math.random() * 0.2 : 1);
+  receta.v.forEach(n => {
     const t0 = now + (n.t || 0), dur = n.d || .1;
+    const g = audioCtx.createGain();
     g.gain.setValueAtTime(.0001, t0);
-    g.gain.exponentialRampToValueAtTime(n.g || .1, t0 + .012);
+    g.gain.exponentialRampToValueAtTime((n.g || .1) * vol, t0 + (n.ruido ? .004 : .012));
     g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
-    o.connect(g).connect(audioCtx.destination);
-    o.start(t0); o.stop(t0 + dur + .03);
+    let fuente;
+    if (n.ruido) {
+      if (!ruidoBuf) return;
+      fuente = audioCtx.createBufferSource();
+      fuente.buffer = ruidoBuf;
+      const f = audioCtx.createBiquadFilter();
+      f.type = n.filtro || 'bandpass';
+      f.frequency.setValueAtTime(n.fq * k, t0);
+      if (n.fq2) f.frequency.exponentialRampToValueAtTime(n.fq2 * k, t0 + dur);
+      if (n.q) f.Q.value = n.q;
+      fuente.connect(f).connect(g);
+      /* cada golpe lee un trozo distinto del ruido */
+      fuente.start(t0, Math.random() * .8);
+    } else {
+      fuente = audioCtx.createOscillator();
+      fuente.type = n.w || 'sine';
+      fuente.frequency.setValueAtTime(n.f * k, t0);
+      if (n.f2) fuente.frequency.exponentialRampToValueAtTime(n.f2 * k, t0 + dur);
+      if (variar) fuente.detune.value = (Math.random() * 2 - 1) * variar;
+      fuente.connect(g);
+      fuente.start(t0);
+    }
+    g.connect(salida);
+    fuente.stop(t0 + dur + .03);
   });
 }
-function buzz(p) { if (navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
+
+/* LA VIBRACIÓN TIENE VOCABULARIO. Había cien patrones sueltos con
+   pausas de 10–12 ms, que el dedo no distingue (Android pide 50 ms o
+   más entre golpes), y se pisaban: el navegador corta el patrón en
+   curso cuando llega otro, así que un bicho perdonado vibraba fuerte y
+   el descuido que venía detrás, en el mismo instante, lo dejaba en un
+   temblor flojo. Ahora: las pausas cortas se estiran, un patrón menor
+   no interrumpe a uno mayor que sigue sonando, los golpecitos de
+   acierto tienen tope de frecuencia, y todo se puede apagar. */
+const HAPTICA = {
+  acierto: 8, toque: 10, pieza: 14,
+  logro: [14, 70, 22], aviso: [24, 60, 24], fallo: [40, 80, 40],
+  arruinado: [50, 90, 50, 90, 80], bicho: [10, 50, 10],
+};
+let vibraHasta = 0, vibraPeso = 0, ultimoGolpecito = 0;
+function buzz(p) {
+  if (estado.vibracion === false || !navigator.vibrate) return;
+  if (typeof p === 'string') p = HAPTICA[p];
+  if (p == null) return;
+  const patron = (Array.isArray(p) ? p : [p]).map((x, i) => (i % 2 && x < 50) ? 50 : x);
+  const largo = patron.reduce((a, b) => a + b, 0);
+  const peso = patron.filter((_, i) => i % 2 === 0).reduce((a, b) => a + b, 0);
+  const ahora = performance.now();
+  if (largo <= 16) {
+    /* un golpecito por grano, como mucho uno cada 70 ms: las cascadas
+       del choclo eran un zumbido continuo */
+    if (ahora - ultimoGolpecito < 70) return;
+    ultimoGolpecito = ahora;
+  }
+  if (ahora < vibraHasta && peso < vibraPeso) return;
+  vibraHasta = ahora + largo; vibraPeso = peso;
+  try { navigator.vibrate(patron); } catch (e) {}
+}
 
 /* LA FECHA ES LA DEL RELOJ DE LA CASA, no la de Greenwich: con
    toISOString(), en Ecuador (UTC-5) cocinar después de las siete de
@@ -519,9 +709,18 @@ function pintarPortada() {
   const tarjeta = $('#portada-tarjeta');
   if (tarjeta) {
     tarjeta.classList.toggle('hidden', !hechos);
-    const pct = Math.round(hechos / ORDEN_BOLSAS.length * 100);
+    /* CON LA DESPENSA LLENA EL ANILLO PASA A MAESTRÍA. Decía «100%»
+       con veinticinco de noventa y siete niveles: el juego se daba
+       por acabado justo cuando empieza lo bravo. Desde ahí cuenta
+       niveles y retos, y la cifra deja de mentir. */
+    const llena = hechos >= ORDEN_BOLSAS.length;
+    const rt = llena ? cuentaRetos() : null;
+    const pct = llena
+      ? Math.floor((niveles + rt.van) / (RUTA.length + rt.hay) * 100)
+      : Math.round(hechos / ORDEN_BOLSAS.length * 100);
     const anillo = $('#portada-anillo'); if (anillo) anillo.style.setProperty('--p', pct);
     const cifra = $('#portada-anillo-n'); if (cifra) cifra.textContent = pct + '%';
+    if (llena && avance) avance.textContent = `maestría · ${niveles} de ${RUTA.length} niveles · ${rt.van} de ${rt.hay} retos`;
     const d = $('#portada-dia');
     if (d) d.textContent = plato ? `${plato.nombre} · ${plato.eyebrow}` : 'La despensa, por abrir';
   }
@@ -537,6 +736,11 @@ function pintarSonido() {
   if (!b) return;
   b.textContent = estado.silencio ? '🔇 sin sonido' : '🔊 con sonido';
   b.setAttribute('aria-pressed', estado.silencio ? 'true' : 'false');
+  const v = $('#btn-vibracion');
+  if (!v) return;
+  const sin = estado.vibracion === false;
+  v.textContent = sin ? '📴 sin vibración' : '📳 con vibración';
+  v.setAttribute('aria-pressed', sin ? 'true' : 'false');
 }
 
 function pintarDev() {
@@ -878,17 +1082,22 @@ function renderMesa() {
   const plato = platoDe(sabe);
   const proximo = proximoPlato(sabe);
   const nivelesHechos = RUTA.filter(n => estaListo(n.id)).length;
-  const racha = (estado.dias && estado.dias.seguidos > 1) ? ` · 🔥${estado.dias.seguidos}` : '';
+  /* corto: la cabecera tiene dos renglones y el plato manda */
+  const racha = (estado.dias && estado.dias.total > 1) ? ` · 🍲 ${estado.dias.total} días` : '';
 
   const titulo = $('#mesa-titulo');
   if (titulo) titulo.textContent = plato ? plato.nombre : 'La despensa';
   const sub = $('#mesa-progreso');
   if (sub) {
+    const meta = plato && !proximo && !estado.devMode ? metaMasCercana() : null;
     sub.textContent = !plato
       ? 'dieciocho bolsas y una olla vacía'
       : (proximo
         ? `${fraseDelProximo(proximo)}${racha}`
-        : `los dieciocho, y la mesa puesta${racha}`);
+        : (meta ? `${fraseMeta(meta)} ›` : `los dieciocho, y la mesa puesta${racha}`));
+    /* tocar la meta lleva a su bolsa */
+    sub.dataset.bolsa = meta ? meta.bolsa : '';
+    sub.classList.toggle('mesa-progreso--meta', !!meta);
   }
   /* el anillo mira los INGREDIENTES, no los niveles: es el camino a
      la fanesca, y los peldaños de más de una bolsa no lo acercan */
@@ -901,7 +1110,10 @@ function renderMesa() {
     nota.classList.remove('hidden');
   }
   const pista = $('#mesa-niveles');
-  if (pista) pista.textContent = nivelesHechos ? `${nivelesHechos} de ${RUTA.length} niveles` : '';
+  if (pista) {
+    const rt = nivelesHechos ? cuentaRetos() : null;
+    pista.textContent = nivelesHechos ? `${nivelesHechos} de ${RUTA.length} niveles · ${rt.van} de ${rt.hay} retos` : '';
+  }
 
   const lista = $('#mesa-lista');
   if (!btnApuroEl) btnApuroEl = document.getElementById('btn-apuro');
@@ -919,7 +1131,7 @@ function renderMesa() {
     const pie = btnApuroEl.querySelector('#btn-apuro-pie');
     if (pie) pie.textContent = estado.apuro
       ? `Tu récord: ${estado.apuro.raciones} ${estado.apuro.raciones === 1 ? 'ración' : 'raciones'}`
-      : 'Raciones sin fin, contra el reloj';
+      : 'Raciones sin fin con lo que ya sabes';
     if (hayApuro) $('#mesa-extras').appendChild(btnApuroEl);
   }
 
@@ -1379,6 +1591,12 @@ function renderCuaderno() {
     <p id="cuaderno-entradilla" class="cuaderno-entradilla">${HISTORIA.entradilla}</p>
     <p class="capitulo-cerrojo">Pasa la página →</p>`);
 
+  /* LA PÁGINA CERRADA DICE QUÉ LA ABRE. «Prepara ingredientes y se
+     abre sola» no le decía a nadie cuál: una colección se persigue
+     cuando se sabe qué falta y por dónde. El primer ingrediente que
+     la abre, en el orden de la despensa. */
+  const abreCon = {};
+  ORDEN_BOLSAS.forEach(b => [].concat((TARJETAS[b] && TARJETAS[b].abre) || []).forEach(c => { if (!abreCon[c]) abreCon[c] = b; }));
   HISTORIA.capitulos.forEach(cap => {
     const abierto = capituloAbierto(cap.id);
     const cabeza = `<div class="capitulo-head">
@@ -1386,7 +1604,11 @@ function renderCuaderno() {
         <h3 class="capitulo-titulo">${cap.titulo}</h3>
       </div>`;
     if (!abierto) {
-      pagina('pagina capitulo cerrado', cabeza + '<div class="capitulo-cuerpo"><p class="capitulo-cerrojo">Todavía no. Prepara ingredientes y esta página se abre sola.</p></div>');
+      const b = abreCon[cap.id];
+      const cerrojo = b
+        ? `Se abre al aprender ${nombreDeBolsa(b)}${bolsaAbierta(b) ? '' : ` (bolsa ${PUESTO[b] + 1} de ${ORDEN_BOLSAS.length})`}.`
+        : 'Todavía no. Prepara ingredientes y esta página se abre sola.';
+      pagina('pagina capitulo cerrado', cabeza + `<div class="capitulo-cuerpo"><p class="capitulo-cerrojo">🔒 ${cerrojo}</p></div>`);
       return;
     }
     let html = cap.cuerpo.map(p => `<p>${p}</p>`).join('');
@@ -1413,6 +1635,9 @@ function renderCuaderno() {
      porque a esta página se entra queriendo. Y no se pierde nada: es
      el mismo texto, entero, con su cita. */
   const ganadas = Object.entries(TARJETAS).filter(([k]) => (estado.leidos || []).includes(k));
+  /* las que faltan se ven, en gris y con su nombre: una lista de lo
+     ganado sin lo que falta no dice cuánto queda */
+  const faltan = ORDEN_BOLSAS.filter(b => TARJETAS[b] && !(estado.leidos || []).includes(b));
   if (ganadas.length) {
     pagina('pagina capitulo', `
       <div class="capitulo-head">
@@ -1420,12 +1645,13 @@ function renderCuaderno() {
         <h3 class="capitulo-titulo">Los ingredientes</h3>
       </div>
       <div class="capitulo-cuerpo">
-        <p class="capitulo-cerrojo">Uno por cada cosa que ya cocinaste. Los que faltan se abren solos.</p>
+        <p class="capitulo-cerrojo">${ganadas.length} de ${ganadas.length + faltan.length} páginas: una por cada cosa que ya cocinaste.</p>
         ${ganadas.map(([, t]) => `
           <h4 class="tarjeta-titulo">${t.titulo}</h4>
           <p>${t.texto}</p>
           ${t.cita ? `<blockquote class="cita"><p>«${t.cita.texto}»</p>
             <footer>${t.cita.quien}<span>${t.cita.datos || ''}</span></footer></blockquote>` : ''}`).join('')}
+        ${faltan.length ? `<ul class="tarjetas-faltan">${faltan.map(b => `<li>🔒 ${TARJETAS[b].titulo} — se abre al aprender ${nombreDeBolsa(b)}</li>`).join('')}</ul>` : ''}
       </div>`);
   }
 
@@ -1479,6 +1705,7 @@ let t0 = 0, tiempoMs = 0, corriendo = false, relojId = null;
 let relojEnEspera = false;   /* montado y sin arrancar: espera el primer toque */
 let hechosAhora = 0, totalAhora = 1;
 let fallosAhora = 0;         /* los descuidos de esta partida */
+let fallosTipos = {};        /* …y de qué fueron, para que la hoja lo diga */
 let bichosAhora = 0;         /* los bichos que salvaste en esta partida */
 
 /* ---------- las faenas del mesón ----------
@@ -1569,11 +1796,15 @@ function pintarFallos() {
   el.textContent = Number.isFinite(tope) ? `✗ ${fallosAhora} / ${tope}` : `✗ ${fallosAhora}`;
   el.classList.toggle('hud-fallos--rojo', Number.isFinite(tope) && fallosAhora >= tope - 1);
 }
-function registrarFallo(tipo, msg) {
+/* opc.yaSono: quien avisa ya hizo su ruido (el bicho que se escapa
+   suena y vibra él mismo). Dos zumbidos en el mismo instante no avisan
+   el doble: se pisan, y en el teléfono gana el más flojo. */
+function registrarFallo(tipo, msg, opc = {}) {
   if (!enModo() && !corriendo && !relojEnEspera) return;
   fallosAhora++;
-  sfx('mal', 1.5); buzz([18, 12, 18]);
-  Motor.destello('rgba(230,57,70,.16)');
+  if (tipo) fallosTipos[tipo] = (fallosTipos[tipo] || 0) + 1;
+  if (!opc.yaSono) { sfx('mal', 1.5); buzz('aviso'); Motor.destello('rgba(230,57,70,.16)'); }
+  cortarRacha();
   pintarFallos();
   const el = $('#hud-fallos');
   if (el) { el.classList.remove('brinca'); void el.offsetWidth; el.classList.add('brinca'); }
@@ -1827,13 +2058,15 @@ const api = {
   },
   aviso: alerta,
   /* un descuido: lo cuenta el juego, no el nivel (ver registrarFallo) */
-  fallo: (tipo, msg) => registrarFallo(tipo, msg),
+  fallo: (tipo, msg, opc) => registrarFallo(tipo, msg, opc),
   pista: (msg, ms) => { if (capturaPista && msg) capturaPista(msg, ms); else pista(msg, ms); },
-  /* los pops suben de tono con la racha: la escalerita sonora es la
+  /* los pops suben de nota con la racha: la escalerita sonora es la
      recompensa más barata y más efectiva que existe — el jugador la
-     persigue sin darse cuenta, y se reinicia sola al parar */
-  sfx: (tipo) => sfx(tipo, (tipo === 'pop' || tipo === 'pop2')
-    ? 1 + Math.min(rachaN, 14) * 0.045 : 1),
+     persigue sin darse cuenta, y se reinicia sola al parar. EL TONO
+     QUE PIDE EL NIVEL SE RESPETA: esto se lo comía, y la olla del
+     caldero, que sube con cada ingrediente, sonaba siempre igual. */
+  sfx: (tipo, tono) => (tono == null && (tipo === 'pop' || tipo === 'pop2'))
+    ? sfx(tipo, 1, { hz: notaRacha(rachaN) }) : sfx(tipo, tono ?? 1),
   voz,
   /* un nivel con fases puede renombrar lo que se está haciendo */
   rotulo(txt) { if (txt) $('#hud-tarea').textContent = txt; },
@@ -1848,6 +2081,8 @@ const api = {
   destello: (...a) => Motor.destello(...a),
   sacudir: (...a) => Motor.sacudir(...a),
   tween: (...a) => Motor.tween(...a),
+  /* las curvas: `pop` para lo que aparece (entra con sobrepaso) */
+  ease: EASE,
   volarA: (...a) => Motor.volarA(...a),
   raycast: (...a) => Motor.raycast(...a),
   puntoEnPlano: (...a) => Motor.puntoEnPlano(...a),
@@ -1874,11 +2109,22 @@ const RACHA_VENTANA = 1500;      /* ms sin acertar y se corta */
 const RACHA_GRITOS = [
   { n: 5, txt: '¡Cinco seguidas!' },
   { n: 10, txt: '¡Diez! 🔥' },
-  { n: 18, txt: '¡Qué mano! 🙌' },
+  { n: 18, txt: '¡Qué ritmo! 🙌' },
   { n: 28, txt: '¡Imparable! ✨' },
 ];
 
 let rachaN = 0, rachaT = 0, rachaGritado = 0, rachaTimer = null;
+
+/* UN DESCUIDO CORTA LA RACHA. Antes sólo la cortaba el respiro de
+   segundo y medio, y se podía seguir sumando «¡PERFECTO! x9» con un
+   bicho escapándose al lado: la racha premia ir limpio, así que lo
+   sucio la apaga, sin regaño, sólo la apaga. */
+function cortarRacha() {
+  rachaN = 0; rachaGritado = 0;
+  clearTimeout(rachaTimer);
+  const c = $('#hud-combo');
+  if (c) c.classList.remove('visible');
+}
 
 function racha(cuanto, k) {
   const ahora = performance.now();
@@ -1899,7 +2145,8 @@ function racha(cuanto, k) {
   if (combo) {
     if (rachaN >= 2) {
       $('#hud-combo-x').textContent = 'x' + rachaN;
-      $('#hud-combo-tit').textContent = rachaN >= 8 ? '¡IMPARABLE!' : rachaN >= 5 ? '¡PERFECTO!' : '¡BIEN!';
+      /* «perfecto» no: la racha mide seguidilla, no calidad */
+      $('#hud-combo-tit').textContent = rachaN >= 8 ? '¡IMPARABLE!' : rachaN >= 5 ? '¡QUÉ MANO!' : '¡BIEN!';
       combo.classList.add('visible');
       combo.classList.remove('brinca');
       void combo.offsetWidth;
@@ -1909,12 +2156,17 @@ function racha(cuanto, k) {
     rachaTimer = setTimeout(() => combo.classList.remove('visible'), RACHA_VENTANA + 400);
   }
 
-  const grito = RACHA_GRITOS.filter(g => rachaN >= g.n).pop();
+  /* EL HITO VA EN EL COMBO, no en un toast: el «¡Media faena!» que
+     llega un toque después lo pisaba y nadie leía el «¡Cinco
+     seguidas!». Y suena el suyo, dos notas que suben con el hito: la
+     fanfarria de terminar se gastaba a mitad de nivel. */
+  const gi = RACHA_GRITOS.reduce((k, g, i) => rachaN >= g.n ? i : k, -1);
+  const grito = RACHA_GRITOS[gi];
   if (grito && grito.n > rachaGritado) {
     rachaGritado = grito.n;
-    toast(grito.txt);
-    sfx('fiesta');
-    buzz([12, 20, 12]);
+    if (combo) $('#hud-combo-tit').textContent = grito.txt;
+    sfx('racha', 1, { hz: [783.99, 880, 1046.5, 1174.66][gi] });
+    buzz('logro');
     Motor.destello('rgba(255,222,140,.28)');
   }
 
@@ -1927,7 +2179,9 @@ function racha(cuanto, k) {
 /* ---------- los +N que suben desde la batea ----------
    El acierto ya sonaba y ya volaba; lo que faltaba era el número, que
    es lo que convierte "hice algo" en "gané algo". Sale donde cae el
-   grano, no en una esquina. */
+   grano, no en una esquina. Y CUENTA LO QUE HAY: decía +10 y +20 de
+   un puntaje que no existe en ninguna parte; ahora dice cuántos
+   entraron, con una chispa cuando la mano va en racha. */
 function puntosFlotantes(cuanto) {
   const caja = $('#hud-flotantes');
   if (!caja || !Motor.camara) return;
@@ -1935,7 +2189,7 @@ function puntosFlotantes(cuanto) {
   try { p = Motor.proyectar(BATEA.clone().setY(MESA_Y + 0.5)); } catch (e) { return; }
   const el = document.createElement('span');
   el.className = 'flota';
-  el.textContent = '+' + (cuanto * (rachaN >= 5 ? 2 : 1) * 10);
+  el.textContent = '+' + cuanto + (rachaN >= 5 ? ' ✨' : '');
   el.style.left = (p.x + (Math.random() - 0.5) * 26) + 'px';
   el.style.top = (p.y + (Math.random() - 0.5) * 14) + 'px';
   caja.appendChild(el);
@@ -1943,10 +2197,8 @@ function puntosFlotantes(cuanto) {
 }
 
 function reiniciarRacha() {
-  rachaN = 0; rachaT = 0; rachaGritado = 0;
-  clearTimeout(rachaTimer);
-  const c = $('#hud-combo');
-  if (c) c.classList.remove('visible');
+  cortarRacha();
+  rachaT = 0;
   api._medio = false; api._casi = false;
 }
 
@@ -2034,7 +2286,7 @@ async function jugar(id) {
   $('#hud-barra').style.width = '0%';
   const pct0 = $('#hud-pct'); if (pct0) pct0.textContent = '0%';
   const ic = $('#hud-icono'); if (ic) ic.innerHTML = icono(n.icono);
-  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0; bichosAhora = 0;
+  tiempoMs = 0; hechosAhora = 0; totalAhora = 1; fallosAhora = 0; fallosTipos = {}; bichosAhora = 0;
   reiniciarRacha();
   pintarReloj();
   alerta(null);
@@ -2240,7 +2492,7 @@ async function montarMeson(base, config, modo, opts = {}) {
      pantalla — construir el nivel ahora lo pondría a vivir detrás del
      modal, encolando pistas para nadie */
   if (!modo.activo) return;
-  hechosAhora = 0; totalAhora = 1; fallosAhora = 0; bichosAhora = 0;
+  hechosAhora = 0; totalAhora = 1; fallosAhora = 0; fallosTipos = {}; bichosAhora = 0;
   pintarFallos();
   /* justo antes de construir: a partir de aquí el progreso que llegue
      es de ESTE mesón y no del que se estaba jugando */
@@ -2298,7 +2550,7 @@ const GANCHOS_APURO = {
   castigo({ coste, motivo }) {
     sfx('mal'); buzz([50, 40, 60]);
     Motor.destello('rgba(230,57,70,.4)');
-    Motor.sacudir(0.7);
+    Motor.sacudir(0.4);
     flotarTiempo('−' + coste + 's', 'pierde');
     /* con el qué, el cuánto y la consecuencia: perder la ración sin
        que nadie lo diga se sentía a fallo del juego, no del dedo */
@@ -2336,7 +2588,10 @@ function arrancarApuro() {
   alerta(null);
   pista(null);
   mostrar('juego');
-  Apuro.arrancar(GANCHOS_APURO);
+  /* las raciones salen de los GESTOS hechos (la base del nivel), no de
+     las bolsas: saber el choclo por la feria no enseña a desgranar */
+  const bases = new Set(RUTA.filter(n => estaListo(n.id) || ((estado.sabidos || []).includes(n.bolsa) && n.id === basicoDe(n.bolsa))).map(n => n.base));
+  Apuro.arrancar(GANCHOS_APURO, { bases: estado.devMode ? null : [...bases] });
   arrancarReloj();
   estado.intentos++;
   guardar();
@@ -2352,6 +2607,7 @@ function cerrarApuro(resumen) {
   const mejor = estado.apuro || { raciones: 0 };
   const esRecord = resumen.raciones > mejor.raciones;
   if (esRecord) estado.apuro = { raciones: resumen.raciones, cadena: resumen.mejorCadena, fecha: fechaLocal() };
+  if (resumen.raciones > 0) marcarDia();
   guardar();
 
   setTimeout(() => {
@@ -2391,7 +2647,7 @@ function cerrarApuro(resumen) {
         <strong>${hecho ? l.titulo : '· ' + l.titulo}</strong>
         <span>${hecho ? l.texto : (l.meta || '')}</span></li>`;
     }).join('');
-    nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
+    nuevos.forEach((_, i) => setTimeout(() => sfx('logro'), 900 + i * 450));
 
     /* LA PARTE DIDÁCTICA. El Apuro va tan rápido que no da tiempo de
        leer nada mientras se juega — así que lo que se aprende se
@@ -2499,7 +2755,7 @@ const GANCHOS_OLLA = {
   castigo({ coste, motivo }) {
     sfx('mal'); buzz([50, 40, 60]);
     Motor.destello('rgba(230,57,70,.4)');
-    Motor.sacudir(0.7);
+    Motor.sacudir(0.4);
     flotarTiempo('+' + coste + 's', 'pierde');
     alerta(`${motivo && motivo.titulo ? motivo.titulo : 'Se dañó'} · +${coste}s`, 'peligro');
     setTimeout(() => alerta(null), 2800);
@@ -2566,7 +2822,8 @@ function cerrarOlla(resumen) {
   pararReloj();
   Olla.parar();
   const cartel = $('#acto-cartel'); if (cartel) { clearTimeout(cartelId); cartel.hidden = true; }
-  if (resumen.completa) { sfx('fiesta'); buzz([20, 40, 20, 60]); }
+  /* la fiesta llega con las cucharas (ver revelarCucharas) */
+  if (resumen.completa) { sfx('plop'); buzz('pieza'); }
   else sfx('tab');
 
   /* EL RÉCORD ES DE PARTIDAS TERMINADAS. Media fanesca en cuatro
@@ -2585,6 +2842,7 @@ function cerrarOlla(resumen) {
   } else if (mejor && resumen.completa) {
     mejor.cucharas = Math.max(mejor.cucharas || 1, resumen.cucharas);
   }
+  if (resumen.pasos >= 1) marcarDia();
   guardar();
 
   setTimeout(() => {
@@ -2602,11 +2860,9 @@ function cerrarOlla(resumen) {
 
     /* las cucharas son de CALIDAD: cómo salió, no cuánto tardaste */
     $('#olla-cucharas').innerHTML = cucharasHTML(0);
-    const huecos = $('#olla-cucharas').querySelectorAll('.cuchara');
+    const huecos = [...$('#olla-cucharas').querySelectorAll('.cuchara')];
     const cuch = resumen.completa ? resumen.cucharas : 0;
-    for (let i = 0; i < cuch; i++) {
-      setTimeout(() => { huecos[i].classList.add('llena', 'cae'); sfx('bien', 1 + i * 0.18); buzz(14); }, 280 + i * 230);
-    }
+    revelarCucharas(huecos, cuch, () => $('#modal-olla').classList.contains('open'), { confeti: esRecord ? 54 : 30 });
     $('#olla-detalle').textContent = resumen.completa
       ? (resumen.desastres || resumen.descuidos
         ? `${resumen.desastres} desastre${resumen.desastres === 1 ? '' : 's'} · ${resumen.descuidos} descuido${resumen.descuidos === 1 ? '' : 's'}`
@@ -2650,7 +2906,8 @@ function cerrarOlla(resumen) {
           <strong>${hecho ? l.titulo : '· ' + l.titulo}</strong>
           <span>${hecho ? l.texto : (l.meta || '')}</span></li>`;
       }).join('');
-      nuevos.forEach((_, i) => setTimeout(() => sfx('bien', 1 + i * 0.12), 900 + i * 320));
+      /* después de las cucharas, no encima */
+      nuevos.forEach((_, i) => setTimeout(() => { if ($('#modal-olla').classList.contains('open')) sfx('logro'); }, 1600 + i * 450));
     }
 
     /* QUÉ SIGUE. Con la olla recién servida es cuando alguien se
@@ -2665,13 +2922,108 @@ function cerrarOlla(resumen) {
 
     $('#olla-otra').textContent = resumen.completa ? 'Otra vez, más rápido' : 'Volver a empezar';
     $('#modal-olla').classList.add('open');
-    if (resumen.completa) celebrar(esRecord ? 54 : 30);
   }, 700);
+}
+
+/* LOS DÍAS EN LA COCINA se alimentan terminando CUALQUIER cosa hoy
+   —un nivel, una olla, una ración de El Apuro—: no piden ganar más,
+   piden volver, que es lo único que un juego de este tamaño puede
+   pedirle a alguien. Y no se pierden: un día sin jugar no borra nada. */
+function marcarDia() {
+  const hoy = fechaLocal();
+  const d = estado.dias || (estado.dias = { ultima: null, total: 0, sellos: [] });
+  if (d.ultima === hoy) return;
+  d.ultima = hoy;
+  d.total = (d.total || 0) + 1;
+  d.sellos = [...(d.sellos || []), hoy].slice(-35);
+  if (d.total >= 2) setTimeout(() => toast(`🍲 Otro día en la cocina: ya van ${d.total}`), 2600);
+}
+
+/* EL VEREDICTO EXPLICA. La hoja decía siempre «tu tiempo, en
+   cucharas» y el botón «Repetirlo más rápido», aunque la cuchara la
+   hubiera quitado un grano reventado y el tiempo sobrara: se le pedía
+   ir más rápido a quien tenía que ir más limpio. Un veredicto que no
+   dice por qué no enseña nada (lo de Papa's o Cooking Simulator: la
+   nota con su desglose). Ahora dice qué se llevó la cuchara y qué
+   falta para la siguiente, y el botón pide eso. */
+const FALLO_TXT = {
+  reventado: ['un grano reventado', 'granos reventados'],
+  perdido: ['una buena a la composta', 'buenas a la composta'],
+  podrido: ['un grano podrido', 'granos podridos'],
+  bicho: ['un bicho apretado', 'bichos apretados'],
+  mosca: ['una mosca aplastada', 'moscas aplastadas'],
+  quemada: ['una tajada quemada', 'tajadas quemadas'],
+  chueca: ['una tajada chueca', 'tajadas chuecas'],
+  gruesa: ['una tira gruesa', 'tiras gruesas'],
+  pulpa: ['pulpa a la composta'],
+  agua: ['agua limpia botada'],
+  feria: ['un choclo maduro', 'choclos maduros'],
+  orden: ['un cuenco fuera de turno', 'cuencos fuera de turno'],
+  pegado: ['la olla pegada'],
+};
+const NUMERO = ['cero', 'una', 'dos', 'tres'];
+function quienQuito() {
+  const tipos = Object.entries(fallosTipos);
+  if (tipos.length === 1) {
+    const [t, n] = tipos[0];
+    const txt = FALLO_TXT[t];
+    if (txt && (n === 1 || txt.length === 1)) return { quien: txt[0], plural: false };
+    if (txt) return { quien: `${n} ${txt[1]}`, plural: true };
+  }
+  return fallosAhora === 1 ? { quien: 'un descuido', plural: false } : { quien: `${fallosAhora} descuidos`, plural: true };
+}
+function veredicto(n, cuch, dif) {
+  const porTiempo = cucharasDe(n, tiempoMs);
+  const quitadas = Math.max(0, porTiempo - cuch);
+  /* el corte que da una cuchara más, en segundos enteros hacia abajo */
+  const corte = cuch < 3 && Array.isArray(n.cucharas) ? Math.floor(n.cucharas[cuch === 2 ? 0 : 1]) : null;
+  if (quitadas) {
+    const { quien, plural } = quienQuito();
+    return {
+      porque: `Tu tiempo daba ${NUMERO[porTiempo]}; ${quien} te ${plural ? 'quitaron' : 'quitó'} ${NUMERO[quitadas]}`,
+      repetir: dif <= 2 ? 'Repetirlo con menos descuidos' : 'Repetirlo sin descuidos',
+    };
+  }
+  if (cuch >= 3) {
+    return {
+      porque: fallosAhora && dif <= 2 ? 'Tres cucharas — al tercer descuido se va una' : 'Tres cucharas: mano de abuela',
+      repetir: 'Repetirlo',
+    };
+  }
+  return {
+    porque: corte ? `Bájalo de ${corte} s y sale la ${cuch === 2 ? 'tercera' : 'segunda'} cuchara` : 'tu tiempo, en cucharas — tres es mano de abuela',
+    repetir: corte ? `Repetirlo en menos de ${corte} s` : 'Repetirlo más rápido',
+  };
+}
+
+/* EL FINAL ES UNA CADENCIA: primero el plato se asienta, luego las
+   cucharas de una en una —cada llena con su acorde, Do, Fa, Sol— y la
+   fiesta al último, del tamaño de lo que salió. Antes la fanfarria y
+   el confeti llegaban ANTES que las cucharas: se celebraba a ciegas
+   y con dieciséis notas encima en un segundo. Las cucharas vacías
+   suenan bajito, para cerrar el momento sin burlarse.
+   `abierto` dice si la hoja sigue ahí: si el jugador ya pasó al
+   siguiente, el resto de la cadencia no suena sobre otro mesón. */
+const CADENCIA = [1, 4 / 3, 3 / 2];
+function revelarCucharas(huecos, llenas, abierto, { alFinal, confeti } = {}) {
+  const paso = 240, t0 = 300;
+  huecos.forEach((h, i) => setTimeout(() => {
+    if (!abierto()) return;
+    if (i < llenas) { h.classList.add('llena', 'cae'); sfx('bien', CADENCIA[i] || 1); buzz('acierto'); }
+    else sfx('tab', 0.8, { vol: 0.5 });
+  }, t0 + i * paso));
+  setTimeout(() => {
+    if (!abierto()) return;
+    if (llenas >= 3) { sfx('fiesta'); buzz('logro'); celebrar(confeti || 44); }
+    else if (llenas === 2) { sfx('bien'); celebrar(confeti || 28); }
+    else if (llenas === 1) { sfx('bien', 1, { vol: 0.6 }); celebrar(confeti || 12); }
+    if (alFinal) alFinal();
+  }, t0 + huecos.length * paso + 180 - paso);
 }
 
 function terminarNivel() {
   pararReloj();
-  sfx('bien'); buzz([20, 40, 60]);
+  sfx('plop'); buzz('pieza');
   Motor.destello('rgba(108,191,90,.45)');
   const n = nivelActual;
   /* el tiempo pone las cucharas y los descuidos las quitan */
@@ -2706,17 +3058,7 @@ function terminarNivel() {
   if (fallosAhora === 0) m.limpio = true;
   if (bichosAhora) m.bichos = (m.bichos || 0) + bichosAhora;
 
-  /* la racha de días se alimenta terminando CUALQUIER nivel hoy:
-     no pide ganar más, pide volver — que es lo único que un juego
-     de este tamaño puede pedirle a alguien */
-  const hoy = fechaLocal();
-  const d = estado.dias || (estado.dias = { ultima: null, seguidos: 0 });
-  if (d.ultima !== hoy) {
-    const ayer = fechaLocal(new Date(Date.now() - 864e5));
-    d.seguidos = d.ultima === ayer ? d.seguidos + 1 : 1;
-    d.ultima = hoy;
-    if (d.seguidos >= 2) setTimeout(() => toast(`🔥 ${d.seguidos} días cocinando seguidos`), 2600);
-  }
+  marcarDia();
   guardar();
 
   /* LA HOJA ASOMA ENSEGUIDA. Esperaba 620 ms mirando un mesón ya
@@ -2730,18 +3072,15 @@ function terminarNivel() {
        choclo a la olla", no "El choclo · primeros granos a la olla" */
     $('#listo-nombre').textContent = (n.intro ? (n.corto || n.nombre) : n.nombre) + ' a la olla';
     const heroe = $('#listo-icono'); if (heroe) heroe.innerHTML = icono(n.icono);
-    /* las cucharas se revelan de a una, cada una más aguda: el
-       redoble del final es la mitad de la celebración */
+    /* las cucharas se revelan de a una: el redoble del final es la
+       mitad de la celebración, y la fiesta viene cuando ya se sabe */
     $('#listo-cucharas').innerHTML = cucharasHTML(0);
-    const huecos = $('#listo-cucharas').querySelectorAll('.cuchara');
-    for (let i = 0; i < cuch; i++) {
-      setTimeout(() => {
-        huecos[i].classList.add('llena', 'cae');
-        sfx('bien', 1 + i * 0.18);
-        buzz(14);
-      }, 280 + i * 230);
-    }
+    const huecos = [...$('#listo-cucharas').querySelectorAll('.cuchara')];
+    const hojaAbierta = () => $('#modal-listo').classList.contains('open');
     $('#listo-tiempo').textContent = tiempoBonito(tiempoMs);
+    const ver = veredicto(n, cuch, n.dificultad || 1);
+    $('#listo-porque').textContent = ver.porque;
+    $('#listo-repetir').textContent = ver.repetir;
     /* la ficha de "tu mejor" enseña el mejor DESPUÉS de esta partida:
        si fue récord, es este mismo tiempo */
     const mejorN = $('#listo-mejor-n'); if (mejorN) mejorN.textContent = tiempoBonito(estado.mejores[n.id].ms);
@@ -2764,8 +3103,12 @@ function terminarNivel() {
        por base ('maiz'), y n.id es 'maiz-1-introduccion'. Buscar por
        el id dejaba las doce tarjetas mudas y —peor— el cuaderno
        cerrado para siempre, porque tarjeta.abre es el único
-       desbloqueo de capítulos que tiene la campaña. */
-    const clave = n.base || n.id;
+       desbloqueo de capítulos que tiene la campaña.
+       Y POR LA BOLSA, no por la base: el básico del choclo es la feria
+       (base 'feria', bolsa 'maiz'), y aprender el choclo no abría ni su
+       página ni el capítulo de Tránsito Amaguaña hasta cuatro niveles
+       después, en el desgrane. */
+    const clave = TARJETAS[n.bolsa] ? n.bolsa : (n.base || n.id);
     const tarjeta = TARJETAS[clave];
     const caja = $('#listo-nota');
     if (tarjeta) {
@@ -2787,6 +3130,7 @@ function terminarNivel() {
        más difícil de conseguir: si en esta partida cayó uno, eso es
        lo que hay que contar, por delante del nivel siguiente. */
     const ganados = retosGanados(n.bolsa).filter(id => !retosAntes.includes(id));
+    let retoGanado = false;
     const cajaReto = $('#listo-reto');
     if (cajaReto) {
       const reto = ganados.length ? RETOS.find(r => r.id === ganados[0]) : null;
@@ -2795,7 +3139,7 @@ function terminarNivel() {
         $('#listo-reto-ico').textContent = reto.ico;
         $('#listo-reto-titulo').textContent = reto.titulo;
         $('#listo-reto-txt').textContent = reto.texto;
-        setTimeout(() => { sfx('fiesta'); buzz([18, 30, 18]); celebrar(26); }, 900);
+        retoGanado = true;
       }
     }
 
@@ -2816,9 +3160,12 @@ function terminarNivel() {
       ? `¡Se ${bolsaPlural(nueva) ? 'abrieron' : 'abrió'} ${nombreDeBolsa(nueva)}!`
       : (sig ? 'Siguiente nivel' : 'A la despensa');
     $('#modal-listo').classList.add('open');
-    sfx('fiesta');
-    /* tres cucharas merecen más papelitos que una */
-    celebrar(cuch >= 3 ? 44 : (cuch === 2 ? 28 : 16));
+    /* tres cucharas merecen más papelitos que una; y el reto o el plato
+       nuevo, su propio motivo, después: dos noticias a la vez son ruido */
+    const subioPlato = cajaPlato && !cajaPlato.classList.contains('hidden');
+    revelarCucharas(huecos, cuch, hojaAbierta, { alFinal: () => {
+      if (retoGanado || subioPlato) setTimeout(() => { if (hojaAbierta()) { sfx('logro'); buzz('logro'); if (retoGanado) celebrar(26); } }, 600);
+    } });
     /* y mientras se lee, se va trayendo el que sigue */
     if (sig) precargarParada(sig);
   }, 240);
@@ -2826,9 +3173,11 @@ function terminarNivel() {
 
 function arruinarNivel(motivo) {
   pararReloj();
-  sfx('mal'); buzz([60, 50, 120]);
+  sfx('mal'); buzz('arruinado');
   Motor.destello('rgba(230,57,70,.55)');
-  Motor.sacudir(1.2);
+  /* la sacudida vende golpes (el zapallo que se parte); para subrayar
+     un castigo a una familia basta el rojo y el sonido */
+  Motor.sacudir(0.6);
   estado.arruinadas++;
   guardar();
   setTimeout(() => {
@@ -2838,11 +3187,18 @@ function arruinarNivel(motivo) {
       ? motivo.texto
       : 'Un bicho llegó a la comida. Toca botar todo y volver a empezar.';
     /* el near-miss: saber que ibas 17 de 20 es lo que hace apretar
-       "Empezar de nuevo" en vez de cerrar la app */
-    if (totalAhora > 1 && hechosAhora / totalAhora >= 0.45) {
+       "Empezar de nuevo" en vez de cerrar la app. PERO CON VERDAD: con
+       todo ya en la batea decía «Ibas 9 de 9… ¡ya casi era!», y no era
+       casi: lo único que faltaba era sacar el bicho. */
+    const porBicho = motivo && (motivo.clave === 'enLaBatea' || motivo.clave === 'aplastado');
+    if (totalAhora > 1 && hechosAhora >= totalAhora && porBicho) {
+      texto += ' Ya tenías todo listo: sólo faltaba sacar el bicho a la composta.';
+    } else if (totalAhora > 1 && hechosAhora < totalAhora && hechosAhora / totalAhora >= 0.45) {
       texto += ` Ibas ${hechosAhora} de ${totalAhora}… ¡ya casi era!`;
     }
     $('#arruinado-motivo').textContent = texto;
+    const ic = document.querySelector('#modal-arruinado .arruinado-ic');
+    if (ic) ic.textContent = (motivo && motivo.ico) || '🪱';
     /* y la frase de cocina del ingrediente, si la tiene: aquí no le
        quita el sitio a nada — el jugador está detenido a la fuerza */
     const notaEl = $('#arruinado-nota');
@@ -2974,6 +3330,18 @@ function bindEventos() {
       if (!estado.silencio) sfx('tab');
     });
   }
+  /* la vibración va aparte: hay quien juega en silencio en el bus y
+     quiere sentir los granos, y hay quien quiere oír y no temblar */
+  const btnVibra = $('#btn-vibracion');
+  if (btnVibra && 'vibrate' in navigator) {
+    btnVibra.classList.remove('hidden');
+    tocable(btnVibra, () => {
+      estado.vibracion = estado.vibracion === false;
+      guardar();
+      pintarSonido();
+      buzz('toque');
+    });
+  }
 
   /* El Apuro: cerrado hasta saber tres ingredientes. Soltar a
      alguien que no ha jugado nada en un contrarreloj de mesones al
@@ -3009,6 +3377,12 @@ function bindEventos() {
     if (ultimaPista) pistaAhora(ultimaPista, duracionDe(ultimaPista));
   });
   tocable($('#btn-cuaderno'), () => { sfx('tab'); mostrar('cuaderno'); });
+  /* la meta más cercana (con la despensa llena) lleva a su bolsa */
+  const progreso = $('#mesa-progreso');
+  if (progreso) tocable(progreso, () => {
+    const b = progreso.dataset.bolsa;
+    if (b) { sfx('tab'); abrirBolsa(b); }
+  });
   /* el renglón de «se abrió una página» lleva DIRECTO a leerla: si
      obligara a cerrar la hoja, volver a la mesa y buscar el cuaderno,
      no la abriría nadie */
@@ -3219,6 +3593,9 @@ function bindEventos() {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && corriendo) { corriendo = false; }
     else if (!document.hidden && relojId && !corriendo) { arrancarReloj(); }
+    /* con la pestaña escondida el audio se suspende: no hay nada que
+       oír y el contexto despierto gasta batería */
+    if (audioCtx) { try { document.hidden ? audioCtx.suspend() : audioCtx.resume(); } catch (e) {} }
   });
 }
 

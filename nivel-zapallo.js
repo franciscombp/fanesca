@@ -472,7 +472,7 @@ function limpiarEn(p) {
   const f = actual.fibras.find(x => !x.userData.ida);
   if (f) { f.userData.ida = true; volar(f, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), 0.5, 0.42); }
   api.sfx(saco > 1 ? 'pop2' : 'pop'); api.buzz(saco > 1 ? 14 : 9);
-  api.chispas(p.clone().setY(ALTO_PLANA() + 0.2), '#f3e6bc', 4 + saco * 2, 0.8);
+  api.chispas(p.clone().setY(ALTO_PLANA() + 0.2), '#f3e6bc', 4 + saco * 2, 0.8, { forma: 'miga' });
   if (actual.gusano && !actual.salio) nacerBicho();
   if (actual.pepas.every(x => x.userData.ida)) {
     actual.limpia = true;

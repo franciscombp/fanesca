@@ -653,7 +653,7 @@ function pelarHoja(h) {
   api.sfx('crack'); api.buzz(10);
   const mundo = new THREE.Vector3();
   h.mesh.getWorldPosition(mundo);
-  api.chispas(mundo.setY(mundo.y + 0.4), '#9dbb70', 5, 0.6);
+  api.chispas(mundo.setY(mundo.y + 0.4), '#9dbb70', 5, 0.6, { forma: 'miga' });
   /* el último tramo lo termina sola, con un rebotito de hoja fibrosa */
   api.tween({ get v() { return h.abierta; }, set v(x) { doblarHoja(h, x); } }, 'v', 1.12, 0.16,
     undefined, () => api.tween({ get v() { return h.abierta; }, set v(x) { doblarHoja(h, x); } }, 'v', 1, 0.22));
@@ -714,7 +714,7 @@ function picotearPodrido(a, p) {
   if (!g) return;
   const mundo = new THREE.Vector3();
   g.getWorldPosition(mundo);
-  api.chispas(mundo, '#6b4423', 8, 0.7);
+  api.chispas(mundo, '#6b4423', 8, 0.7, { forma: 'miga' });
   api.sfx('crack');
   if (!perdonadoPodrido) {
     perdonadoPodrido = true;

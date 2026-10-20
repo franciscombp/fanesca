@@ -165,7 +165,7 @@ function deshilar(rec, avance) {
   if (k < 1) return;
 
   rec.deshilada = true;
-  api.sfx('crack'); api.buzz(16);
+  api.sfx('chasquido'); api.buzz(16);
   /* el hilo suelto no se queda en la mesa: es basura, va a la composta */
   rec.obj.remove(rec.hilo);
   rec.hilo.position.copy(rec.obj.position);
@@ -210,7 +210,7 @@ function sacarArveja(a) {
   a.userData.ida = true;
   hechos++;
   cadena++;
-  api.chispas(a.position.clone(), '#cfe58f', 4, 0.7);
+  api.chispas(a.position.clone(), '#cfe58f', 4, 0.7, { forma: 'miga' });
   api.volarA(a, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.4 + Math.random() * 0.1, alto: 0.58 });
   /* el sonido sube con la cadena: correr el pulgar de punta a punta
      suena a escalita, y esa escalita ES la recompensa del gesto */

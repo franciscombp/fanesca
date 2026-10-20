@@ -47,7 +47,12 @@ let CON_GUSANO = 2;                         /* cuántas vainas traen sorpresa */
    encima, que no es desvainar. Los tres valores están separados lo
    justo para notarse en el pulgar sin que la suave se abra sola de un
    roce ni la apretada se vuelva un forcejeo. */
-const FROTE_POR_RESISTENCIA = [0.09, 0.16, 0.28];
+/* EL ÚLTIMO PELDAÑO NO PUEDE SER MÁS FÁCIL QUE EL ANTERIOR. La tabla
+   tenía tres entradas y el peldaño más alto pide resistencia 3: el
+   índice caía fuera y tomaba el valor normal, así que «la tanda» se
+   abría más fácil que «apretadas». Cuarta entrada con un paso suave
+   (~12 %, lo que supone pruebas/tiempos.mjs) e índice acotado. */
+const FROTE_POR_RESISTENCIA = [0.09, 0.16, 0.28, 0.32];
 let ABRIR = 0.16;                           /* mundo que recorre el dedo para abrir la vaina */
 
 let vainasGrupo = null;
@@ -116,7 +121,7 @@ function abrirVaina(rec) {
      tapa abierta girada hacia el jugador se leían como una segunda
      fila de habas falsas (mismo arreglo que en la arveja) */
   rec.bisagra.children.forEach(c => { if (c.name && c.name.startsWith('bulto')) c.visible = false; });
-  api.sfx('crack'); api.buzz(14);
+  api.sfx('chasquido'); api.buzz(14);
   rec.habas.forEach((h, i) => {
     h.visible = true;
     h.scale.setScalar(0.01);
@@ -136,7 +141,7 @@ function sacarHaba(h) {
   h.userData.ida = true;
   h.visible = true;
   hechos++;
-  api.chispas(h.position.clone(), '#e4f0b4', 4, 0.7);
+  api.chispas(h.position.clone(), '#e4f0b4', 4, 0.7, { forma: 'miga' });
   h.userData.escalaBase = 1;
   api.volarA(h, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.44 + Math.random() * 0.1, alto: 0.6 });
   api.sfx(hechos % 2 ? 'pop' : 'pop2');
@@ -222,7 +227,7 @@ export default {
        así la parada de hoy sale clavada y cada hilera extra empuja el
        borde de atrás justo un paso */
     HONDO_TABLA = 1.7 + (filas - 2) * PASO_FILA;
-    ABRIR = FROTE_POR_RESISTENCIA[cfg.resistencia ?? 1] ?? 0.16;
+    ABRIR = FROTE_POR_RESISTENCIA[Math.min(3, Math.max(0, Math.round(cfg.resistencia ?? 1)))];
     /* nunca más bichos que vainas donde esconderlos: el sorteo de abajo
        es un Set y con un número imposible se quedaría girando en seco */
     CON_GUSANO = Math.min(cfg.gusanos ?? 2, cantidad);

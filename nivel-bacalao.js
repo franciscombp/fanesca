@@ -154,7 +154,7 @@ function nuevaPresa(x, z) {
 function quitarSal(rec) {
   const s = rec.sal.pop();
   if (!s) return;
-  api.chispas(rec.obj.position.clone().setY(api.MESA_Y + 0.24), '#ffffff', 4, 0.5);
+  api.chispas(rec.obj.position.clone().setY(api.MESA_Y + 0.24), '#ffffff', 4, 0.5, { forma: 'miga' });
   rec.obj.remove(s);
   /* la costra se va desvaneciendo con cada grano; sin sal, se apaga
      del todo y no cuesta llamada */
@@ -196,8 +196,8 @@ function remojar(rec) {
   rec.obj.userData.flotando = { y: destino.y, fase: Math.random() * 6 };
 
   /* el chapuzón: agua que salta y el filo del agua que tiembla */
-  api.sfx('bien'); api.buzz([15, 25]);
-  api.chispas(destino.clone().setY(destino.y + 0.08), '#bcd7dd', 12, 0.9);
+  api.sfx('agua'); api.buzz([15, 50, 25]);
+  api.chispas(destino.clone().setY(destino.y + 0.08), '#bcd7dd', 12, 0.9, { forma: 'gota' });
   /* una onda que se abre en el agua donde cayó: el agua responde */
   const onda = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.07, 32),
     new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.6, depthWrite: false }));

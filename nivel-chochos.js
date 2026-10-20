@@ -86,7 +86,7 @@ function reventar(rec) {
   hechos++;
 
   const donde = rec.obj.position.clone();
-  api.chispas(donde.clone().setY(api.MESA_Y + 0.3), '#fdf3c8', 6, 0.7);
+  api.chispas(donde.clone().setY(api.MESA_Y + 0.3), '#fdf3c8', 6, 0.7, { forma: 'miga' });
   api.sfx(hechos % 2 ? 'pop' : 'pop2');
   api.buzz(9);
 

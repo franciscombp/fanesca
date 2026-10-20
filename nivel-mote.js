@@ -138,7 +138,7 @@ function agitarHasta(p) {
     recorrido -= VAIVEN;
     enAgua++; hechos++;
     api.sfx('frotar'); api.buzz(6);
-    if (Math.random() < 0.3) api.chispas(c.clone().setY(api.MESA_Y + 0.34), AGUA_TURBIA, 3, 0.5);
+    if (Math.random() < 0.3) api.chispas(c.clone().setY(api.MESA_Y + 0.34), AGUA_TURBIA, 3, 0.5, { forma: 'gota' });
     pintar();
     api.progreso(hechos, TOTAL);
     /* la última agua no pide botarse: si ya no queda cal que soltar,
@@ -169,7 +169,7 @@ function botarAgua(opts = {}) {
     /* agua clara botada: se va mote con ella, y eso es un descuido */
     api.sfx('resist');
     perderGrano(lado);
-    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), AGUA_CLARA, 8, 0.8);
+    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), AGUA_CLARA, 8, 0.8, { forma: 'gota' });
     if (api.fallo) api.fallo('agua', 'Esa agua estaba clara: se fue mote con ella');
     else api.aviso('Esa agua está clara todavía — agita primero', 'bien');
     return;
@@ -179,8 +179,8 @@ function botarAgua(opts = {}) {
   /* botar a medias no está prohibido: solo no avanza el agua */
   enAgua = 0; recorrido = 0; dirPrevia = 0; previo = null; avisadoTurbia = false;
   if (!opts.desdeGesto) api.tween(bateaObj.rotation, 'z', -0.34, 0.22, undefined, () => api.tween(bateaObj.rotation, 'z', 0, 0.3));
-  api.chispas(centro().clone().setY(api.MESA_Y + 0.36), AGUA_TURBIA, 10, 0.9);
-  api.sfx('frotar'); api.buzz([12, 18, 12]);
+  api.chispas(centro().clone().setY(api.MESA_Y + 0.36), AGUA_TURBIA, 10, 0.9, { forma: 'gota' });
+  api.sfx('agua'); api.buzz([12, 18, 12]);
   api.composta(Math.min(1, (aguas - 1) / LAVADAS));
   pintar();
   if (hechos >= TOTAL) { listo(); return; }

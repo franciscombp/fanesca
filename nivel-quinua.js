@@ -133,7 +133,7 @@ function removerHasta(p) {
   quitado = Math.min(TOTAL_RAD, quitado + avance);
   espuma = Math.min(1, espuma + avance / CAPACIDAD_AGUA);
   pintar();
-  if (Math.random() < 0.12) api.chispas(c.clone().setY(api.MESA_Y + 0.34), '#fdfbf3', 2, 0.5);
+  if (Math.random() < 0.12) api.chispas(c.clone().setY(api.MESA_Y + 0.34), '#fdfbf3', 2, 0.5, { forma: 'gota' });
   api.progreso(Math.round(quitado), Math.round(TOTAL_RAD));
 
   if (quitado >= TOTAL_RAD) listo();
@@ -175,7 +175,7 @@ function botarAgua(opts = {}) {
     /* agua limpia botada: se va grano con ella, y eso es un descuido */
     api.sfx('resist');
     perderGrano(lado);
-    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#e8f2f4', 8, 0.8);
+    api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#e8f2f4', 8, 0.8, { forma: 'gota' });
     if (api.fallo) api.fallo('agua', 'Esa agua estaba limpia: se fue grano con ella');
     else api.aviso('Esa agua está limpia todavía', 'bien');
     return;
@@ -189,8 +189,8 @@ function botarAgua(opts = {}) {
   /* con el gesto, la batea ya va inclinada por el dedo: sólo el
      botón de prueba necesita el vaivén */
   if (!opts.desdeGesto) api.tween(bateaObj.rotation, 'z', -0.34, 0.22, undefined, () => api.tween(bateaObj.rotation, 'z', 0, 0.3));
-  api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#e8f2f4', 10, 0.9);
-  api.sfx('frotar'); api.buzz([12, 18, 12]);
+  api.chispas(centro().clone().setY(api.MESA_Y + 0.36), '#e8f2f4', 10, 0.9, { forma: 'gota' });
+  api.sfx('agua'); api.buzz([12, 18, 12]);
   api.composta(Math.min(1, (aguas - 1) / LAVADAS));
   /* `!terminado` no basta: destruir() lo devuelve a false, así que un
      aviso pendiente pasaba el filtro y salía sobre el mesón siguiente

@@ -792,6 +792,9 @@ svg[width="0"] { width: 0; height: 0; }
 .capitulo p { font-size: var(--t-sm); line-height: var(--lead); color: var(--text); }
 .capitulo p + p { margin-top: var(--sp-3); }
 .capitulo-cerrojo { font-size: var(--t-sm); color: var(--text-muted); font-style: italic; }
+/* las páginas de ingrediente que faltan: en gris, con lo que las abre */
+.tarjetas-faltan { list-style: none; margin: .8rem 0 0; padding: .6rem 0 0; border-top: 1px dashed var(--hairline); display: grid; gap: .3rem; }
+.tarjetas-faltan li { font-size: var(--t-xs); color: var(--text-muted); }
 
 /* los granos, repartidos por orilla */
 .granos-mapa { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-3); }
@@ -1210,7 +1213,7 @@ svg[width="0"] { width: 0; height: 0; }
 .sheet-hero--olla { width: 120px; height: 120px; box-shadow: 0 0 0 8px rgba(244,185,66,.25), var(--glow-oro), var(--e-3); }
 
 #listo-cucharas .cuchara { width: 2.4rem; height: 2.4rem; }
-.cucharas-pie { margin: -.1rem 0 .2rem; font-size: var(--t-2xs); color: var(--text-muted); }
+.cucharas-pie { margin: -.1rem 0 .2rem; font-size: var(--t-xs); color: var(--text-muted); text-wrap: balance; }
 /* la cuchara que cae al revelarse */
 .cuchara.cae { animation: cuchara-cae .4s var(--ease-spring) both; }
 @keyframes cuchara-cae {
@@ -1681,6 +1684,8 @@ body.con-editor #stage { margin-right: 340px; }
 /* la frase de qué falta es la razón para abrir otra bolsa: cabe en
    dos renglones antes que cortarse con puntos suspensivos */
 #screen-mesa .sign-sub { white-space: normal; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* la meta más cercana se toca: lleva a su bolsa */
+.mesa-progreso--meta { text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
 /* la tarea y la cuenta caben en un renglón bajando el cuerpo: en dos
    renglones empujaban el nombre del ingrediente fuera de la cabecera */
 #screen-bolsa .sign-sub { font-size: clamp(.72rem, 3.4vw, .9rem); line-height: 1.2; }

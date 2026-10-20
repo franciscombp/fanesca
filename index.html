@@ -63,6 +63,9 @@
       </div>
       <div class="portada-secundario">
         <button type="button" id="btn-sonido" class="portada-link" aria-pressed="false">🔊 con sonido</button>
+        <!-- sólo donde el teléfono vibra: en iPhone la web no puede, y un
+             interruptor que no hace nada es peor que ninguno -->
+        <button type="button" id="btn-vibracion" class="portada-link hidden" aria-pressed="false">📳 con vibración</button>
         <button type="button" id="btn-reiniciar" class="portada-link portada-link--peligro hidden">Empezar de nuevo</button>
         <button type="button" id="btn-dev" class="portada-link">🛠 modo dev</button>
         <!-- un BOTÓN y no un span: en iOS Safari un span sin cursor:pointer
@@ -240,7 +243,7 @@
 
     <!-- el combo, grande, a la izquierda -->
     <div id="hud-combo" class="hud-combo" aria-hidden="true">
-      <p id="hud-combo-tit" class="hud-combo-tit">¡PERFECTO!</p>
+      <p id="hud-combo-tit" class="hud-combo-tit">¡BIEN!</p>
       <p id="hud-combo-x" class="hud-combo-x">x2</p>
       <p class="hud-combo-pie">COMBO</p>
     </div>
@@ -333,7 +336,7 @@
       <p class="sheet-eyebrow">a la olla</p>
       <h3 id="listo-nombre" class="sheet-title"></h3>
       <div id="listo-cucharas" class="cucharas" aria-hidden="true"></div>
-      <p class="cucharas-pie">tu tiempo, en cucharas — tres es mano de abuela</p>
+      <p id="listo-porque" class="cucharas-pie">tu tiempo, en cucharas — tres es mano de abuela</p>
       <div class="stats">
         <div class="stat"><span id="listo-tiempo" class="stat-n"></span><span class="stat-l">tu tiempo</span></div>
         <div class="stat"><span id="listo-mejor-n" class="stat-n"></span><span class="stat-l">tu mejor</span></div>

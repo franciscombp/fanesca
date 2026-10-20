@@ -120,7 +120,7 @@ function desmigar() {
   raiz.add(miga);
   api.volarA(miga, api.BATEA.clone().setY(api.MESA_Y + 0.2), { dur: 0.42 + Math.random() * 0.12, alto: 0.55 });
   api.sfx(hechos % 2 ? 'pop' : 'pop2'); api.buzz(9);
-  api.chispas(donde, '#f8f3e2', 5, 0.6);
+  api.chispas(donde, '#f8f3e2', 5, 0.6, { forma: 'miga' });
 
   /* el bloque se gasta a la vista */
   const k = 1 - Math.min(1, hechos / PEDAZOS);
