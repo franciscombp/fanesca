@@ -60,6 +60,17 @@ let actos = [];
 let actoDesde = 0;           /* ms en que arrancó el acto de ahora */
 let parciales = [];          /* { acto, ms, total } al cerrar cada acto */
 let desastres = 0, descuidos = 0;
+/* LA OLLA RECUERDA DÓNDE. El resumen decía «1 desastre · 2 descuidos»
+   sin nombrar un ingrediente, y así no hay a qué volver a practicar.
+   Por base: cuántos descuidos, qué desastre y cuántos segundos costó. */
+let porPaso = {};
+function anotar(seg, desastre) {
+  const paso = pasoActual && pasoActual.paso;
+  if (!paso) return;
+  const r = porPaso[paso.base] || (porPaso[paso.base] = { descuidos: 0, desastre: null, seg: 0 });
+  r.seg += seg;
+  if (desastre) r.desastre = desastre; else r.descuidos++;
+}
 let feriaLimpia = true, ollaLimpia = true;   /* para los logros */
 let pasoActual = null;       /* { paso, cuota, total, hechos, servido } */
 let pendiente = null;        /* el paso cuyo mesón se está montando */
@@ -82,7 +93,7 @@ function arrancar(g, mejorGuardado, pasosDeLaPartida, actosDeLaPartida) {
   activo = true;
   ms = 0; penalizacionMs = 0;
   i = -1; actoDesde = 0; parciales = [];
-  desastres = 0; descuidos = 0;
+  desastres = 0; descuidos = 0; porPaso = {};
   feriaLimpia = true; ollaLimpia = true;
   pasoActual = null; pendiente = null;
   pidiendo = false; montajesFallidos = 0;
@@ -200,6 +211,7 @@ function arruinar(motivo) {
   const coste = OLLA_MODO.castigo[clave] ?? OLLA_MODO.castigo.otro;
   desastres++;
   penalizacionMs += coste * 1000;
+  anotar(coste, (motivo && motivo.titulo) || 'un desastre');
   const paso = pasoActual && pasoActual.paso;
   if (paso && paso.acto === 'feria') feriaLimpia = false;
   if (paso && paso.acto === 'olla') ollaLimpia = false;
@@ -222,6 +234,7 @@ function descontar(seg) {
   if (!activo) return;
   descuidos++;
   penalizacionMs += seg * 1000;
+  anotar(seg, null);
   const paso = pasoActual && pasoActual.paso;
   if (paso && paso.acto === 'feria') feriaLimpia = false;
   if (paso && paso.acto === 'olla') ollaLimpia = false;
@@ -248,7 +261,7 @@ function terminar(porque) {
     ms: ms + penalizacionMs,
     msLimpio: ms,
     penalizacion: penalizacionMs,
-    desastres, descuidos,
+    desastres, descuidos, porPaso,
     cucharas: cucharasDeCalidad(),
     feriaLimpia, ollaLimpia,
     /* si esta partida pasó por la feria: sin choclo en la despensa no

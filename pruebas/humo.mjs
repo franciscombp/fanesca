@@ -93,8 +93,11 @@ ok('S2 la bolsa abre con sus niveles y su botón', r.pantalla === 'screen-bolsa'
 
 /* 3 · el dock de la bolsa entra al nivel que toca */
 await p.evaluate(() => document.querySelector('#bolsa-sigue').click());
-await p.waitForTimeout(3200);
-r = await p.evaluate(() => ({ pantalla: document.querySelector('.screen.active').id, mod: window.Fanesca.modulo && window.Fanesca.modulo.id, nivel: window.Fanesca.nivel && window.Fanesca.nivel.id }));
+for (let t = 0; t < 50; t++) {
+  await p.waitForTimeout(250);
+  r = await p.evaluate(() => ({ pantalla: document.querySelector('.screen.active').id, mod: window.Fanesca.modulo && window.Fanesca.modulo.id, nivel: window.Fanesca.nivel && window.Fanesca.nivel.id }));
+  if (t >= 11 && r.mod) break;
+}
 ok('S3 el dock de la bolsa entra al mesón que toca', r.pantalla === 'screen-juego' && !!r.mod, JSON.stringify(r));
 
 /* 4 · terminarlo deja la hoja de «a la olla» */
@@ -124,12 +127,23 @@ await p.evaluate(() => document.querySelector('#cuaderno-volver').click()); awai
 
 /* 7 · El Apuro arranca y sirve */
 await p.evaluate(() => document.querySelector('#btn-apuro').click());
-await p.waitForTimeout(3200);
+/* SE ESPERA AL MESÓN, no un tiempo fijo: El Apuro reparte sólo lo que
+   ya sabes (las habas, los chochos…), y montar en frío uno de esos con
+   su plaga pasa de los tres segundos en un Chromium sin GPU cargado */
+for (let t = 0; t < 50; t++) {
+  r = await p.evaluate(() => ({ activo: window.Fanesca.Apuro.activo, pantalla: document.querySelector('.screen.active').id, mod: window.Fanesca.modulo && window.Fanesca.modulo.id, armado: !!(window.Fanesca.Motor.escena && window.Fanesca.Motor.escena.children.length) }));
+  if (r.mod && r.armado) break;
+  await p.waitForTimeout(250);
+}
+await p.waitForTimeout(600);
 r = await p.evaluate(() => ({ activo: window.Fanesca.Apuro.activo, pantalla: document.querySelector('.screen.active').id, mod: window.Fanesca.modulo && window.Fanesca.modulo.id }));
 ok('S8 El Apuro arranca con un ingrediente montado', r.activo && r.pantalla === 'screen-juego' && !!r.mod, JSON.stringify(r));
 await p.evaluate(() => window.Fanesca.Apuro.terminar('salida'));
-await p.waitForTimeout(1200);
-r = await p.evaluate(() => document.querySelector('#modal-apuro').classList.contains('open'));
+for (let t = 0; t < 20; t++) {
+  await p.waitForTimeout(250);
+  r = await p.evaluate(() => document.querySelector('#modal-apuro').classList.contains('open'));
+  if (r) break;
+}
 ok('S9 y al terminar enseña el resumen', r === true, String(r));
 
 console.log('---');

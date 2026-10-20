@@ -17,6 +17,7 @@ import Editor, { esEscritorio } from './editor.js';
 import { variantesDe, nivelesDeBolsa, nivelPor as configPor, APURO, OLLA_MODO, pasosOlla, actosOlla } from './niveles-config.js';
 import { ORDEN_BOLSAS, PUESTO, PLATOS, platoDe, proximoPlato } from './bolsas.js';
 import { RETOS, retosDe, metasDe } from './retos.js';
+import { lineaDeTemporada, lineaDelViernes } from './calendario.js';
 import Apuro from './modo-apuro.js';
 import Olla from './modo-olla.js';
 
@@ -775,6 +776,16 @@ function mostrar(pantalla) {
 /* ---------- modo dev: todos los niveles abiertos, para probar mecánicas ---------- */
 
 function pintarPortada() {
+  /* en Cuaresma y Semana Santa la línea de arriba es la fiesta: el
+     juego sabe en qué fecha vive (ver calendario.js) */
+  const over = document.querySelector('.portada-over');
+  if (over) {
+    if (!over.dataset.siempre) over.dataset.siempre = over.textContent;
+    let linea = null;
+    try { linea = lineaDeTemporada(); } catch (e) {}
+    over.textContent = linea || over.dataset.siempre;
+    over.classList.toggle('portada-over--fiesta', !!linea);
+  }
   const hechos = listos();
   const btn = $('#btn-empezar');
   const avance = $('#portada-avance');
@@ -1699,6 +1710,8 @@ function renderCuaderno() {
       return;
     }
     let html = cap.cuerpo.map(p => `<p>${p}</p>`).join('');
+    /* la página de la fecha dice la de este año */
+    if (cap.id === 'fecha') { try { html += `<p class="capitulo-fecha">📅 ${lineaDelViernes()}</p>`; } catch (e) {} }
     if (cap.granos) {
       html += `<div class="granos-mapa">${cap.granos.map(g =>
         `<span class="grano-chip ${g.de}">${g.n}</span>`).join('')}</div>
@@ -3091,6 +3104,18 @@ function cerrarOlla(resumen) {
         ? `${resumen.desastres} desastre${resumen.desastres === 1 ? '' : 's'} · ${resumen.descuidos} descuido${resumen.descuidos === 1 ? '' : 's'}`
         : 'Ni un desastre ni un descuido')
       : 'La olla se quedó a medias.';
+    /* DÓNDE SE PERDIÓ: hasta tres renglones, de lo que más costó a lo
+       que menos. Es la respuesta a «¿qué practico?» */
+    const donde = $('#olla-donde');
+    if (donde) {
+      const filas = Object.entries(resumen.porPaso || {}).sort((a, b) => b[1].seg - a[1].seg).slice(0, 3);
+      const nombreDe = (base) => base === 'caldero' ? 'La olla' : (base === 'feria' ? 'La feria' : aMayuscula(nombreDeBolsa(base)));
+      donde.innerHTML = filas.map(([base, r]) => {
+        const que = r.desastre ? r.desastre.toLowerCase() : `${r.descuidos} descuido${r.descuidos === 1 ? '' : 's'}`;
+        return `<li>${r.desastre ? '💥' : '✗'} <b>${nombreDe(base)}</b> · ${que} · +${Math.round(r.seg)} s</li>`;
+      }).join('');
+      donde.classList.toggle('hidden', !filas.length || !resumen.completa);
+    }
     $('#olla-mejor').textContent = esRecord
       ? (mejor ? `¡Nuevo récord! antes: ${relojDePartida(mejor.ms)}` : `Primer récord de ${plato ? plato.enFrase : 'esta olla'}`)
       : (mejor ? `Tu récord sigue siendo ${relojDePartida(mejor.ms)}` : 'Termínala entera y tendrás récord');

@@ -792,6 +792,8 @@ svg[width="0"] { width: 0; height: 0; }
 .capitulo p { font-size: var(--t-sm); line-height: var(--lead); color: var(--text); }
 .capitulo p + p { margin-top: var(--sp-3); }
 .capitulo-cerrojo { font-size: var(--t-sm); color: var(--text-muted); font-style: italic; }
+/* el renglón con la fecha de este año, en la página de la fecha */
+.capitulo-fecha { margin-top: .6rem; padding: .5rem .7rem; border-radius: var(--r-sm); background: rgba(244,185,66,.14); font-size: var(--t-sm); }
 /* las páginas de ingrediente que faltan: en gris, con lo que las abre */
 .tarjetas-faltan { list-style: none; margin: .8rem 0 0; padding: .6rem 0 0; border-top: 1px dashed var(--hairline); display: grid; gap: .3rem; }
 .tarjetas-faltan li { font-size: var(--t-xs); color: var(--text-muted); }
@@ -1366,6 +1368,10 @@ svg[width="0"] { width: 0; height: 0; }
 /* la escalera de logros: pendientes en gris, el nuevo brilla */
 /* la escalera de logros en rejilla de dos: siete peldaños que caben
    sin bajar la hoja */
+/* dónde se perdió el tiempo en la olla */
+.olla-donde { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: .2rem; }
+.olla-donde li { font-size: var(--t-xs); color: var(--text-muted); text-align: center; }
+.olla-donde b { color: var(--text); }
 .logros { list-style: none; width: 100%; margin: .3rem 0 .1rem; display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; }
 /* «y N más por ganar»: una línea que despliega la escalera entera */
 .logro--mas { grid-column: 1 / -1; background: none; border: 0; padding: 0; }
