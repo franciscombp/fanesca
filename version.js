@@ -30,10 +30,30 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.7.0';
+const APP_VERSION = '4.8.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.8.0',
+    fecha: '2026-10-20',
+    titulo: 'Tu cocina, y la familia que llega',
+    cambios: [
+      '⚙️ <b>Tu cocina.</b> Desde la portada, la despensa o la pausa: sonido, vibración, <b>letra grande</b>, <b>menos movimiento</b> y <b>bichos mansos</b> (caminan despacio y un toque los rescata). No cambian la receta, sólo lo difícil, y se quitan cuando quieras.',
+      '⏸ <b>La olla espera.</b> Con faena empezada, ‹ abre una pausa: el reloj se queda quieto y los bichos también.',
+      '👵 <b>La familia vuelve a la cocina.</b> Cada plato que sube trae a alguien —la abuela, la tía con el costal, los primos, el tío con el bacalao— y en la despensa se oye la voz de la casa.',
+      '🗣 <b>Se habla como en casa:</b> «¡Eso, guagua!», «¡Bacán!», y un «¡Atatay!» cuando sale el bicho.',
+      '📖 <b>El cuaderno abre en la página que ganaste</b>, cada bolsa trae al pie la nota de su ingrediente y de qué lado del mar vino, y algunas frases del cuaderno se corrigieron para decir sólo lo que se sabe.',
+    ],
+    internos: [
+      'Tu cocina: estado.opciones {letra, menosMov, bichosMansos}, aplicarOpciones() antes del primer pintado (html[data-letra], html.menos-mov), renderOpciones/abrirCocina, #btn-cocina siempre visible (⚙️) y #btn-opciones en la portada; motor3d movReducido() mira también html.menos-mov; menosMovimiento() en main para confeti y escena de la olla.',
+      'Pausa: pausar()/reanudar()/salirDePausa(), #modal-pausa; sustituye al doble toque con aviso (el segundo ‹ con la pausa abierta sale, así que las pruebas que hacían doble clic siguen igual). visibilitychange no rearranca el reloj en pausa; Escape reanuda.',
+      'Bichos mansos en plaga.js (VEL ×0.55, quieto 1.5 s, GRACIA ×2, sin barrer que aplaste, tocar rescata con volarA, batea siempre perdona); en los gusanos propios del maíz y el zapallo caminan a 0.55 y apretarlos no los revienta; las moscas del bacalao y el queso vienen 1.6 veces más espaciadas. Se ofrecen en la hoja de «se arruinó» a la segunda ruina por bicho del mismo nivel (#arruinado-ayuda). window.__plaga para las pruebas.',
+      'Piso de letra: --t-2xs = max(.66rem, 12px); .bolsa-pie y .renglon-dif suben.',
+      'Cultura (auditoría con fuentes de prensa ecuatoriana y la regla del propio historia.js): PLATOS.llega/dice con la prosa de DIAS_RELATO; #listo-plato-llega, #mesa-voz (Caveat, se oculta < 700 px de alto), #olla-mesa. Exactitud: uchucuta sin habas y como «versión más aceptada», entradilla y bienvenida «se cocina una vez al año», platos sin «doce granos», fanesca regional, nota del choclo, parafrasis:true en Chancoso sin «», párrafo del Jueves Santo y «—dicen los historiadores—». RACHA_GRITOS ecuatorianos, exclamar() una vez por mesón. ORIGEN y pintarNotaBolsa(); estado.paginaNueva y data-tarjeta/data-pagina para aterrizar en el cuaderno; tarjetas en el orden de la despensa. calendario.js: Mushuk Nina del 20 al 22 de marzo (gana la Semana Santa si coinciden).',
+      'Pruebas: pruebas/opciones.mjs nueva (hoja, letra grande persistente, pausa con reloj quieto, bichos mansos, ayuda tras arruinar).',
+    ],
+  },
   {
     v: '4.7.0',
     fecha: '2026-10-20',

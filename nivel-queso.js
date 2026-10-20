@@ -182,7 +182,8 @@ export default {
     PEDAZOS = Math.max(2, Math.round(cfg.pedazos ?? 12));
     TOTAL = PEDAZOS + 1;   /* la leche es el último punto */
     const frecuencia = cfg.moscas_frecuencia ?? FRECUENCIA_REF;
-    MOSCA_CADA = frecuencia > 0 ? MOSCA_CADA_REF * (FRECUENCIA_REF / frecuencia) : Infinity;
+    /* con bichos mansos las moscas vienen menos (Tu cocina) */
+    MOSCA_CADA = frecuencia > 0 ? MOSCA_CADA_REF * (FRECUENCIA_REF / frecuencia) * (api.ayudas && api.ayudas.bichosMansos ? 1.6 : 1) : Infinity;
     proximaMosca = api.reloj + Math.min(MOSCA_CADA, 7);
 
     const tabla = api.pieza('tabla', { ancho: 3.1, hondo: HONDO_TABLA });

@@ -51,7 +51,9 @@ await p.waitForTimeout(2800);
    `Olla.paso` es null. Con un número fijo de vueltas, cada hueco se
    comía una y en el renderizador por software nunca se llegaba al
    caldero: hay que ESPERAR a que haya paso, no gastar la vuelta. */
-for (let vuelta = 0; vuelta < 60; vuelta++) {
+/* 200 vueltas y no 60: son dieciocho mesones que montar en frío, y en
+   un Chromium sin GPU con la máquina cargada cada uno pasa de 3 s */
+for (let vuelta = 0; vuelta < 200; vuelta++) {
   const base = await p.evaluate(() => window.Fanesca.Olla.paso && window.Fanesca.Olla.paso.paso.base);
   if (base === 'caldero') break;
   if (!base) { await p.waitForTimeout(400); continue; }
@@ -59,7 +61,7 @@ for (let vuelta = 0; vuelta < 60; vuelta++) {
   await p.waitForTimeout(700);
 }
 await p.waitForTimeout(1400);
-ok('C0 se llega al caldero', await p.evaluate(() => window.Fanesca.Olla.paso.paso.base === 'caldero'));
+ok('C0 se llega al caldero', await p.evaluate(() => !!window.Fanesca.Olla.paso && window.Fanesca.Olla.paso.paso.base === 'caldero'));
 
 const donde = () => p.evaluate(() => {
   const F = window.Fanesca; const out = {};

@@ -60,7 +60,8 @@ let TABLA_Z = 0;
 let LARGO_MIN = 0.3;            /* largo mínimo del trazo que corta */
 const dif = () => Math.max(1, Math.min(5, (api && api.dificultad) || 1));
 const GUSANO_VEL_REF = 0.05;
-const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1));
+const manso = () => !!(api && api.ayudas && api.ayudas.bichosMansos);   /* Tu cocina: bichos mansos */
+const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1)) * (manso() ? 0.55 : 1);
 
 /* LA EXIGENCIA, por `resistencia` de la parada. Todo en mundo:
      trazo   — largo mínimo del trazo que parte o corta
@@ -597,6 +598,13 @@ let avisadoRoce = false;
 function tocarBicho(w) {
   if (!w || w.estado !== 'suelto') return;
   if (w.inmune && api.reloj < w.inmune) return;
+  /* con bichos mansos apretarlo no lo revienta */
+  if (manso()) {
+    w.inmune = api.reloj + 1.0;
+    api.sfx('resist');
+    api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda.', 2600);
+    return;
+  }
   if (!perdonado) {
     perdonado = true;
     if (api.fallo) api.fallo('bicho');

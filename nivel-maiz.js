@@ -69,7 +69,8 @@ const FRENTE = 0;
    también lo revienta. */
 const dif = () => Math.max(1, Math.min(5, (api && api.dificultad) || 1));
 const GUSANO_VEL_REF = 0.38;   /* posiciones por segundo que BAJA el bicho */
-const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1));
+const manso = () => !!(api && api.ayudas && api.ayudas.bichosMansos);   /* Tu cocina: bichos mansos */
+const gusanoVel = () => GUSANO_VEL_REF * (1.2 + 0.2 * (dif() - 1)) * (manso() ? 0.55 : 1);
 /* px/s: más rápido que esto es "con fuerza", y el tierno lo cobra */
 /* y el tierno pide más pulso conforme sube la dificultad: en las
    bravas revienta con un dedo que en la presentación habría pasado */
@@ -487,6 +488,14 @@ let perdonadoPodrido = false;
 function tocado(w) {
   if (!w || w.estado !== 'suelto') return false;
   if (w.inmune && api.reloj < w.inmune) return false;
+  /* con bichos mansos apretarlo no lo revienta: se asusta y se aparta */
+  if (manso()) {
+    w.inmune = api.reloj + 1.0;
+    w.nodo.position.x += 0.06;
+    api.sfx('resist');
+    api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda.', 2600);
+    return false;
+  }
   if (api.reloj - w.t0 < gracia()) {
     w.inmune = api.reloj + (dif() >= 3 ? 0.35 : 1.0);
     w.nodo.position.x += 0.06;

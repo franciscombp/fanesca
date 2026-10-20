@@ -286,7 +286,8 @@ export default {
        moscas, y se juega así. Con la espera en infinito la cuenta atrás
        de actualizar() nunca llega a cero y no hace falta un caso aparte
        allá abajo, ni tampoco la mosca de apertura. */
-    MOSCA_CADA = frecuencia > 0 ? MOSCA_CADA_REF * (FRECUENCIA_REF / frecuencia) : Infinity;
+    /* con bichos mansos las moscas vienen menos (Tu cocina) */
+    MOSCA_CADA = frecuencia > 0 ? MOSCA_CADA_REF * (FRECUENCIA_REF / frecuencia) * (api.ayudas && api.ayudas.bichosMansos ? 1.6 : 1) : Infinity;
     /* El respiro de apertura no puede durar más que el intervalo mismo:
        en una parada plagada, hacer esperar a la primera mosca más que a
        las siguientes regalaría el tramo más fácil justo al principio. */
