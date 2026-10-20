@@ -26,7 +26,7 @@ export const NIVELES = [
     modulo: () => import('./nivel-maiz.js'),
     gesto: 'Jala las hojas <b>hacia abajo</b>; pelado, toca una punta y <b>arrastra a lo largo</b>.',
 
-    nota: 'Doce granos, doce apóstoles. El choclo se compra con hoja —así se sabe que es de hoy— y se desgrana con el pulgar, empezando siempre por una orilla.',
+    nota: 'Doce granos —dicen que por los apóstoles—. El choclo se compra con hoja —así se sabe que es de hoy— y se desgrana con el pulgar, empezando siempre por una orilla.',
     bicho: 'el gusanito',
     /* segundos para 3, 2 y 1 cuchara */
     cucharas: [80, 120, 175],

@@ -2,7 +2,7 @@
    FANESCA — calendario.js
    Cuándo es Cuaresma y Semana Santa, en el reloj de la casa.
 
-   La bienvenida promete «se come un solo día al año, en Semana Santa»
+   La bienvenida dice «se cocina una vez al año, para Semana Santa»
    y el cuaderno explica por qué cae ahí, pero el juego no sabía en qué
    fecha estaba. Con esto lo sabe, y lo usa como SABOR: la portada dice
    cuánto falta para el Viernes Santo y el cuaderno, en qué día cae este
@@ -57,6 +57,13 @@ export const fechaBonita = (f) => `${f.getDate()} de ${MESES[f.getMonth()]}`;
    null (y la portada deja la de siempre) */
 export function lineaDeTemporada(hoy = new Date()) {
   const t = temporada(hoy);
+  /* EL OTRO CALENDARIO TAMBIÉN CUENTA: el Mushuk Nina, el año nuevo
+     andino del fuego nuevo, con el equinoccio de marzo (cae el 20 o el
+     21, según el año). El cuaderno cuenta que la fanesca viene de ahí.
+     Si coincide con Semana Santa, gana la Semana Santa. */
+  if (t.fase !== 'semana-santa' && hoy.getMonth() === 2 && hoy.getDate() >= 20 && hoy.getDate() <= 22) {
+    return 'mushuk nina · el año nuevo andino, el del fuego nuevo';
+  }
   if (t.fase === 'semana-santa') {
     if (t.diasAlViernes > 1) return 'semana santa · la olla se prende el jueves';
     if (t.diasAlViernes === 1) return 'jueves santo · hoy se prende la olla';

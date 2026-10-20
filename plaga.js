@@ -135,6 +135,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     pintarAro();
     /* su propio chirrido: antes sonaba igual que abrir una vaina */
     api.sfx('bicho'); api.buzz('bicho');
+    if (api.exclamar) api.exclamar('¡Atatay!');
     if (MANSO && !avisados) {
       api.aviso(`${ICO} ¡Un ${nombre}!`);
       api.pista('<b>Tócalo</b> y se va solo a la composta.', 3600);

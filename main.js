@@ -1291,6 +1291,11 @@ function renderMesa() {
   /* la escalera se ofrece en cuanto hay más de un plato que cocinar */
   const escPl = $('#mesa-escalera');
   if (escPl) escPl.classList.toggle('hidden', PLATOS.filter(pl => pl.pide.every(id => sabe.has(id))).length < 2);
+  const voz = $('#mesa-voz');
+  if (voz) {
+    voz.textContent = plato && plato.dice ? plato.dice : '';
+    voz.classList.toggle('hidden', !(plato && plato.dice));
+  }
   const nota = $('#mesa-plato-nota');
   if (nota) {
     nota.textContent = plato ? plato.texto : 'Abre la primera bolsa y ya tendrás qué cocinar.';
@@ -1392,6 +1397,28 @@ function abrirBolsa(bolsa) {
   mostrar('bolsa');
 }
 
+/* DE QUÉ LADO DEL MAR VIENE cada ingrediente: la rejilla del cuaderno
+   lo enseña para los granos, y aquí va con su nota de cocina */
+const ORIGEN = {
+  maiz: 'aca', chochos: 'aca', frejol: 'aca', melloco: 'aca', quinua: 'aca', mani: 'aca', zapallo: 'aca', sambo: 'aca', mote: 'aca',
+  habas: 'alla', arveja: 'alla', escoger: 'alla', garbanzo: 'alla', col: 'alla', bacalao: 'alla', queso: 'alla', huevo: 'alla',
+  guarnicion: 'mezcla',
+};
+const ORIGEN_TXT = { aca: '🌎 de este lado del mar', alla: '⛵ llegó del otro lado', mezcla: '🌎⛵ de las dos orillas' };
+function pintarNotaBolsa(bolsa, ing) {
+  const caja = $('#bolsa-nota');
+  if (!caja) return;
+  const nota = ing && ing.nota;
+  caja.classList.toggle('hidden', !nota);
+  if (!nota) return;
+  const ganada = (estado.leidos || []).includes(bolsa) && TARJETAS[bolsa];
+  caja.innerHTML = `<small class="bolsa-nota-origen">${ORIGEN_TXT[ORIGEN[bolsa]] || ''}</small>
+    <p>${nota}</p>
+    ${ganada ? '<button type="button" class="bolsa-nota-ir">Leer en el cuaderno ›</button>' : '<small class="bolsa-nota-cierre">Su página del cuaderno se abre al aprenderlo.</small>'}`;
+  const ir = caja.querySelector('.bolsa-nota-ir');
+  if (ir) tocable(ir, () => { sfx('tab'); estado.paginaNueva = bolsa; mostrar('cuaderno'); });
+}
+
 function renderBolsa() {
   const bolsa = bolsaAbiertaId;
   if (!bolsa) return;
@@ -1425,6 +1452,7 @@ function renderBolsa() {
   const fichaGesto = enFoco ? porId(enFoco.base) : ing;
   const gesto = $('#bolsa-gesto');
   if (gesto) gesto.innerHTML = fichaGesto ? fichaGesto.gesto : '';
+  pintarNotaBolsa(bolsaAbiertaId, ing);
 
   const ol = $('#bolsa-niveles');
   ol.innerHTML = '';
@@ -1801,12 +1829,13 @@ function renderCuaderno() {
       const cerrojo = b
         ? `Se abre al aprender ${nombreDeBolsa(b)}${bolsaAbierta(b) ? '' : ` (bolsa ${PUESTO[b] + 1} de ${ORDEN_BOLSAS.length})`}.`
         : 'Todavía no. Prepara ingredientes y esta página se abre sola.';
-      pagina('pagina capitulo cerrado', cabeza + `<div class="capitulo-cuerpo"><p class="capitulo-cerrojo">🔒 ${cerrojo}</p></div>`);
+      pagina('pagina capitulo cerrado', cabeza + `<div class="capitulo-cuerpo"><p class="capitulo-cerrojo">🔒 ${cerrojo}</p></div>`).dataset.pagina = cap.id;
       return;
     }
     let html = cap.cuerpo.map(p => `<p>${p}</p>`).join('');
     /* la página de la fecha dice la de este año */
     if (cap.id === 'fecha') { try { html += `<p class="capitulo-fecha">📅 ${lineaDelViernes()}</p>`; } catch (e) {} }
+    if (cap.id === 'origen') html += '<p class="capitulo-fecha">📅 El equinoccio de marzo cae en torno al 21: ese día es el <b>Mushuk Nina</b>, el año nuevo andino.</p>';
     if (cap.granos) {
       html += `<div class="granos-mapa">${cap.granos.map(g =>
         `<span class="grano-chip ${g.de}">${g.n}</span>`).join('')}</div>
@@ -1817,10 +1846,10 @@ function renderCuaderno() {
     }
     const citas = cap.citas || (cap.cita ? [cap.cita] : []);
     citas.forEach(c => {
-      html += `<blockquote class="cita"><p>«${c.texto}»</p>
+      html += `<blockquote class="cita"><p>${c.parafrasis ? c.texto + ' <i>(en palabras de la entrevista)</i>' : '«' + c.texto + '»'}</p>
         <footer>${c.quien}<span>${c.datos}</span></footer></blockquote>`;
     });
-    pagina('pagina capitulo', cabeza + `<div class="capitulo-cuerpo">${html}</div>`);
+    pagina('pagina capitulo', cabeza + `<div class="capitulo-cuerpo">${html}</div>`).dataset.pagina = cap.id;
   });
 
   /* ---------- LOS INGREDIENTES ----------
@@ -1829,7 +1858,8 @@ function renderCuaderno() {
      pulgar encima de «siguiente». Nadie lo leía. Aquí sí se lee,
      porque a esta página se entra queriendo. Y no se pierde nada: es
      el mismo texto, entero, con su cita. */
-  const ganadas = Object.entries(TARJETAS).filter(([k]) => (estado.leidos || []).includes(k));
+  /* en el orden de la despensa, que es el orden en que se ganan */
+  const ganadas = ORDEN_BOLSAS.filter(b => TARJETAS[b] && (estado.leidos || []).includes(b)).map(b => [b, TARJETAS[b]]);
   /* las que faltan se ven, en gris y con su nombre: una lista de lo
      ganado sin lo que falta no dice cuánto queda */
   const faltan = ORDEN_BOLSAS.filter(b => TARJETAS[b] && !(estado.leidos || []).includes(b));
@@ -1841,10 +1871,10 @@ function renderCuaderno() {
       </div>
       <div class="capitulo-cuerpo">
         <p class="capitulo-cerrojo">${ganadas.length} de ${ganadas.length + faltan.length} páginas: una por cada cosa que ya cocinaste.</p>
-        ${ganadas.map(([, t]) => `
-          <h4 class="tarjeta-titulo">${t.titulo}</h4>
+        ${ganadas.map(([k, t]) => `
+          <h4 class="tarjeta-titulo" data-tarjeta="${k}">${t.titulo}</h4>
           <p>${t.texto}</p>
-          ${t.cita ? `<blockquote class="cita"><p>«${t.cita.texto}»</p>
+          ${t.cita ? `<blockquote class="cita"><p>${t.cita.parafrasis ? t.cita.texto + ' <i>(en palabras de la entrevista)</i>' : '«' + t.cita.texto + '»'}</p>
             <footer>${t.cita.quien}<span>${t.cita.datos || ''}</span></footer></blockquote>` : ''}`).join('')}
         ${faltan.length ? `<ul class="tarjetas-faltan">${faltan.map(b => `<li>🔒 ${TARJETAS[b].titulo} — se abre al aprender ${nombreDeBolsa(b)}</li>`).join('')}</ul>` : ''}
       </div>`);
@@ -1879,8 +1909,23 @@ function renderCuaderno() {
       alCambiar: pintarPuntosCuaderno,
     });
   }
-  /* se abre en el primer capítulo abierto que aún no se vio: el
-     cuaderno avisa que hay algo nuevo y eso nuevo debe estar a mano */
+  /* EL CUADERNO ABRE EN LO QUE SE ACABA DE GANAR. La hoja de listo
+     decía «nueva página: El haba cruzó el mar», y tocarla llevaba al
+     primer capítulo abierto —otra página—. Ahora va a esa tarjeta (o
+     a ese capítulo), y la deja a la vista. */
+  const marca = estado.paginaNueva;
+  if (marca) {
+    estado.paginaNueva = null;
+    const paginas = [...pista.children];
+    const el = pista.querySelector(`[data-tarjeta="${marca}"], [data-pagina="${marca}"]`);
+    const idx = el ? paginas.findIndex(pg => pg.contains(el)) : -1;
+    if (idx >= 0) {
+      cuadernoCarrusel.irA(idx, false);
+      if (el.dataset.tarjeta) setTimeout(() => { try { el.scrollIntoView({ block: 'start' }); } catch (e) {} }, 60);
+      return;
+    }
+  }
+  /* si no, en el primer capítulo abierto que aún no se vio */
   const nuevo = HISTORIA.capitulos.findIndex(c => capituloAbierto(c.id));
   cuadernoCarrusel.irA(estado.cuadernoVisto ? 0 : Math.max(0, nuevo + 1), false);
 }
@@ -1998,6 +2043,7 @@ function registrarFallo(tipo, msg, opc = {}) {
   if (!enModo() && !corriendo && !relojEnEspera) return;
   fallosAhora++;
   if (tipo) fallosTipos[tipo] = (fallosTipos[tipo] || 0) + 1;
+  if (fallosAhora === 1) exclamar(tipo === 'quemada' ? '¡Arrarray!' : '¡Chuta!');
   if (!opc.yaSono) { sfx('mal', 1.5); buzz('aviso'); Motor.destello('rgba(230,57,70,.16)'); }
   cortarRacha();
   pintarFallos();
@@ -2234,7 +2280,8 @@ function voz(cita, ms = 9000, opts = {}) {
   if (corriendo) { pararReloj(); vozPauso = true; }
   /* sobre la escena va la versión corta si la hay: la cita entera se
      lee en el cuaderno, con su contexto y su fuente */
-  $('#voz-texto').textContent = '«' + ((opts.corta && cita.corta) || cita.texto) + '»';
+  const dicho = (opts.corta && cita.corta) || cita.texto;
+  $('#voz-texto').textContent = cita.parafrasis ? dicho : '«' + dicho + '»';
   $('#voz-quien').textContent = cita.quien;
   v.classList.add('visible');
   clearTimeout(vozId);
@@ -2338,6 +2385,7 @@ const api = {
   /* la plaga compartida se anuncia al armarse, y dice si hay bicho
      suelto: el «?» y la ayuda lo necesitan saber */
   hayPlaga() { plagaEnMeson = true; },
+  exclamar,
   /* las ayudas de Tu cocina que un nivel puede leer (bichos mansos…) */
   get ayudas() { return estado.opciones || {}; },
   bichoSuelto(si) { bichoSueltoAhora = !!si; },
@@ -2392,12 +2440,25 @@ const api = {
    sola con un respiro de segundo y medio, para que valga algo. */
 
 const RACHA_VENTANA = 1500;      /* ms sin acertar y se corta */
+/* EL HABLA DE LA CASA. Los gritos eran genéricos («¡Cinco seguidas!»)
+   y en todo lo que se juega no había una sola palabra de aquí: el
+   kichwa y los dichos vivían sólo en el cuaderno. La lengua se pone en
+   el juego, no en un glosario (lo de Venba o Mulaka): lo dice la
+   abuela, no un narrador, y nunca para reírse de nadie. */
 const RACHA_GRITOS = [
-  { n: 5, txt: '¡Cinco seguidas!' },
-  { n: 10, txt: '¡Diez! 🔥' },
-  { n: 18, txt: '¡Qué ritmo! 🙌' },
-  { n: 28, txt: '¡Imparable! ✨' },
+  { n: 5, txt: '¡Eso, guagua!' },
+  { n: 10, txt: '¡Qué manos! 🔥' },
+  { n: 18, txt: '¡Chévere! 🙌' },
+  { n: 28, txt: '¡Bacán! ✨' },
 ];
+/* una exclamación de una palabra, una vez por mesón: va antes del
+   aviso mecánico, nunca en su lugar */
+let exclamados = new Set();
+function exclamar(txt) {
+  if (!txt || exclamados.has(txt)) return;
+  exclamados.add(txt);
+  toast(txt, 1100);
+}
 
 let rachaN = 0, rachaT = 0, rachaGritado = 0, rachaTimer = null;
 
@@ -2623,7 +2684,7 @@ async function jugar(id) {
   pintarFallos();
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
-  plagaEnMeson = false; bichoSueltoAhora = false;
+  plagaEnMeson = false; bichoSueltoAhora = false; exclamados = new Set();
   /* SI CONSTRUIR REVIENTA, SE VUELVE A LA MESA CON UN AVISO. Antes la
      excepción se escapaba de aquí y dejaba la cortina bajada para
      siempre —la parada "no abría" y no había cómo salir sin recargar. */
@@ -2813,7 +2874,7 @@ async function montarMeson(base, config, modo, opts = {}) {
   api.dificultad = opts.dificultad || 1;
   /* en los modos no hay presentación del bicho: se juega con lo sabido */
   api.primerBicho = false; api.bichoVisto = null;
-  plagaEnMeson = false; bichoSueltoAhora = false;
+  plagaEnMeson = false; bichoSueltoAhora = false; exclamados = new Set();
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   /* si construir revienta, se salta en vez de dejar medio mesón
@@ -3204,6 +3265,16 @@ function cerrarOlla(resumen) {
         ? `${resumen.desastres} desastre${resumen.desastres === 1 ? '' : 's'} · ${resumen.descuidos} descuido${resumen.descuidos === 1 ? '' : 's'}`
         : 'Ni un desastre ni un descuido')
       : 'La olla se quedó a medias.';
+    /* A LA MESA: los que llegaron con cada plato hasta éste. El final
+       del juego dice que la fanesca se come entre varios; el resumen de
+       la olla era un cronómetro solo. */
+    const mesa = $('#olla-mesa');
+    if (mesa) {
+      const hasta = plato ? PLATOS.findIndex(pl => pl.id === plato.id) : -1;
+      const quienes = PLATOS.slice(0, hasta + 1).map(pl => pl.llega).filter(Boolean);
+      mesa.textContent = resumen.completa && quienes.length ? `A la mesa: ${quienes.join(' · ')}` : '';
+      mesa.classList.toggle('hidden', !(resumen.completa && quienes.length));
+    }
     /* DÓNDE SE PERDIÓ: hasta tres renglones, de lo que más costó a lo
        que menos. Es la respuesta a «¿qué practico?» */
     const donde = $('#olla-donde');
@@ -3498,7 +3569,7 @@ function terminarNivel() {
       /* la página se GANA aquí y se LEE en el cuaderno: lo que sale en
          la hoja de listo es un renglón diciendo que hay algo nuevo */
       const esNueva = !(estado.leidos || []).includes(clave);
-      if (esNueva) { estado.leidos.push(clave); estado.cuadernoVisto = false; }
+      if (esNueva) { estado.leidos.push(clave); estado.cuadernoVisto = false; estado.paginaNueva = clave; }
       [].concat(tarjeta.abre || []).forEach(abrirCapitulo);
       if (esNueva) guardar();
       caja.classList.toggle('hidden', !esNueva);
@@ -3534,6 +3605,9 @@ function terminarNivel() {
       if (subio) {
         $('#listo-plato-eyebrow').textContent = platoAntes ? 'la olla sube de plato' : 'tu primer plato';
         $('#listo-plato-titulo').textContent = platoAhora.nombre;
+        /* y quién llega a la cocina con él */
+        const llega = $('#listo-plato-llega');
+        if (llega) llega.textContent = platoAhora.llega ? `a la cocina: ${platoAhora.llega}` : '';
       }
     }
 

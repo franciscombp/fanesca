@@ -97,6 +97,8 @@
         <span class="anillo consola-anillo" id="mesa-anillo" style="--p:0" aria-hidden="true"><b id="mesa-anillo-n">0/18</b></span>
       </header>
       <p id="mesa-plato-nota" class="mesa-plato-nota"></p>
+      <!-- la voz de la casa: quién llegó con este plato -->
+      <p id="mesa-voz" class="mesa-voz hidden"></p>
       <button type="button" id="mesa-escalera" class="mesa-escalera hidden">🍲 la escalera de platos ›</button>
       <div class="scroll scroll--despensa">
         <div id="mesa-lista" class="mesa-bolsas"></div>
@@ -145,6 +147,9 @@
              se juega, y cuando ya no queda peldaño nuevo es cuando
              hacen falta. Quien baja hasta aquí es quien los busca. -->
         <section id="bolsa-retos" class="bolsa-retos"></section>
+        <!-- la nota del ingrediente, donde se lee con calma: debajo de
+             todo, para quien baja a mirar; antes sólo salía al arruinar -->
+        <section id="bolsa-nota" class="bolsa-nota hidden"></section>
       </div>
       <footer class="dock">
         <button type="button" id="bolsa-volver" class="icono-boton dock-lado" aria-label="Volver a la despensa">🧺</button>
@@ -189,8 +194,8 @@
     <div class="sheet">
       <div class="sheet-hero sheet-hero--olla" aria-hidden="true"><span class="plate" data-icon="fanesca"></span></div>
       <p class="sheet-eyebrow">la fanesca</p>
-      <h3 id="hola-titulo" class="sheet-title">Una olla con dieciocho cosas dentro</h3>
-      <p class="sheet-body">Se come un solo día al año, en Semana Santa: doce granos, zapallo, maní, bacalao y queso. Todo pasa por tus manos antes de llegar a la olla.</p>
+      <h3 id="hola-titulo" class="sheet-title">Dieciocho cosas en un plato</h3>
+      <p class="sheet-body">Se cocina una vez al año, para Semana Santa: los doce granos (cada casa cuenta los suyos), zapallo, maní, bacalao y queso. Todo pasa por tus manos antes de llegar a la olla.</p>
       <ol class="hola-escalera" aria-label="Lo que sale de tu olla">
         <li><b>habas</b></li>
         <li>sopa de granos</li>
@@ -352,6 +357,7 @@
       <p class="cucharas-pie">cómo salió — sin desastres son tres</p>
       <p id="olla-detalle" class="listo-tiempo"></p>
       <ul id="olla-donde" class="olla-donde hidden"></ul>
+      <p id="olla-mesa" class="olla-mesa hidden"></p>
       <p id="olla-mejor" class="listo-mejor"></p>
       <p id="olla-sigue" class="olla-sigue hidden"></p>
       <ul id="olla-actos" class="olla-actos"></ul>
@@ -417,6 +423,7 @@
         <span class="listo-nota-txt">
           <small id="listo-plato-eyebrow">la olla sube de plato</small>
           <strong id="listo-plato-titulo"></strong>
+          <em id="listo-plato-llega" class="listo-plato-llega"></em>
         </span>
         <span class="listo-nota-ir" aria-hidden="true">›</span>
       </button>

@@ -91,9 +91,16 @@ export const PUESTO = Object.fromEntries(ORDEN_BOLSAS.map((id, i) => [id, i]));
    de Cuaresma muy buena; con el bacalao es fanesca. Eso no es un
    ajuste de dificultad, es lo que el plato es.
    ============================================================ */
+/* LA COMIDA SIEMPRE ES DE ALGUIEN. Cada plato que sube trae a alguien
+   a la cocina (`llega`) y una frase de la casa (`dice`). Es la prosa
+   del relato de la semana —la abuela, la tía con el costal, los primos,
+   el tío con el bacalao—, que estaba escrita y había quedado sin usar
+   desde que el mapa de días se volvió despensa. */
 export const PLATOS = [
   {
     id: 'habas',
+    llega: 'tú y la abuela',
+    dice: '«Mañana viene tu tía con el costal», dice la abuela, y apunta en un papelito lo que falta.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'las habas cocinadas',
     nombre: 'Habas cocinadas',
@@ -104,6 +111,8 @@ export const PLATOS = [
   },
   {
     id: 'granos',
+    llega: 'la tía, con el costal',
+    dice: 'La tía llegó con el costal al hombro y noticias de medio mundo.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la sopa de granos tiernos',
     nombre: 'Sopa de granos tiernos',
@@ -114,6 +123,8 @@ export const PLATOS = [
   },
   {
     id: 'choclo',
+    llega: 'los primos, al desgrane',
+    dice: 'Los primos desgranan más de lo que botan, que en ellos ya es decir.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la sopa de granos y choclo',
     nombre: 'Sopa de granos y choclo',
@@ -124,6 +135,8 @@ export const PLATOS = [
   },
   {
     id: 'cuaresma',
+    llega: 'la vecina, por la ventana',
+    dice: '—¿Ya están con la fanesca? —Todavía no, vecina: es sopa de Cuaresma.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la sopa de Cuaresma',
     nombre: 'Sopa de Cuaresma',
@@ -134,6 +147,8 @@ export const PLATOS = [
   },
   {
     id: 'cuaresma-col',
+    llega: 'la vecina, con col de su huerta',
+    dice: 'La vecina mandó col de su huerta, y la abuela la pica más fino que nadie.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la sopa de Cuaresma con col',
     nombre: 'Sopa de Cuaresma con col',
@@ -144,9 +159,12 @@ export const PLATOS = [
   },
   {
     id: 'zapallo',
+    llega: 'el zapallo de la huerta vecina',
+    dice: 'Llegó el zapallo de la huerta de la vecina. La refri ya no cierra a la primera.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la sopa de zapallo',
-    nombre: 'Sopa de zapallo y doce granos',
+    /* «doce granos» no: este plato lleva nueve u once (ver `pide`) */
+    nombre: 'Sopa de zapallo y granos tiernos',
     corto: 'Con zapallo',
     eyebrow: 'ahora sí, el cuerpo',
     pide: ['habas', 'chochos', 'frejol', 'arveja', 'maiz', 'mote', 'melloco', 'escoger', 'garbanzo', 'col', 'quinua', 'sambo', 'zapallo'],
@@ -154,9 +172,11 @@ export const PLATOS = [
   },
   {
     id: 'mani',
+    llega: 'la piedra de moler',
+    dice: 'El maní, majado en la piedra: «En licuadora no sabe igual».',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la sopa de maní',
-    nombre: 'Sopa de maní y doce granos',
+    nombre: 'Sopa de maní y granos',
     corto: 'Con maní',
     eyebrow: 'le falta una sola cosa',
     pide: ['habas', 'chochos', 'frejol', 'arveja', 'maiz', 'mote', 'melloco', 'escoger', 'garbanzo', 'col', 'quinua', 'sambo', 'zapallo', 'mani'],
@@ -164,16 +184,22 @@ export const PLATOS = [
   },
   {
     id: 'fanesca',
+    llega: 'el tío, con el bacalao',
+    dice: 'El tío apareció con el bacalao envuelto en papel: se le sacudió la sal y quedó en la tina, en remojo.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la fanesca',
     nombre: 'Fanesca',
     corto: 'Fanesca',
     eyebrow: 'ya es la de verdad',
     pide: ['habas', 'chochos', 'frejol', 'arveja', 'maiz', 'mote', 'melloco', 'escoger', 'garbanzo', 'col', 'quinua', 'sambo', 'zapallo', 'mani', 'bacalao'],
-    texto: 'El bacalao es el que la nombra. Doce granos y el pescado seco: eso, y no otra cosa, es una fanesca.',
+    /* cada región le pone su pescado: decir «eso y no otra cosa» dejaba
+       fuera la de camarón de la Costa y la de bagre de la Amazonía */
+    texto: 'En la sierra, el bacalao es el que la nombra. En la Costa hay quien la hace con camarón o cangrejo, y en la Amazonía con bagre: cada región le pone su pescado.',
   },
   {
     id: 'fanesca-casa',
+    llega: 'todos, y todos opinan',
+    dice: 'Ya no cabe un alma en la cocina. La abuela prueba y, por primera vez en la semana, no corrige nada.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la fanesca de la casa',
     nombre: 'Fanesca de la casa',
@@ -184,6 +210,8 @@ export const PLATOS = [
   },
   {
     id: 'servida',
+    llega: 'todos los que caben, y más',
+    dice: '«Sirve tú», dice la abuela. Y la puerta no deja de sonar.',
     /* el nombre metido en una frase: «te falta el mote para …» */
     enFrase: 'la fanesca servida',
     nombre: 'Fanesca servida',

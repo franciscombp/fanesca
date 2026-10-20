@@ -52,6 +52,9 @@ export const CHANCOSO_AGRICULTURA = {
   texto: 'La agricultura es una historia, una identidad: quienes cultivan lo hacen gracias a la herencia que dejaron los ancestros, mantenida por milenios.',
   quien: 'Blanca Chancoso',
   datos: 'Kichwa otavalo, cofundadora de Ecuarunari y de la CONAIE. (Declaración recogida en entrevista, no cita de archivo: por eso va parafraseada y marcada como tal.)',
+  /* va sin «»: comillas de cita sobre una paráfrasis la harían pasar
+     por palabras textuales */
+  parafrasis: true,
 };
 
 export const VOCES = [AMAGUANA_MAZORCA, CACUANGO_PARAMO, AMAGUANA_SANGRE, CHANCOSO_AGRICULTURA];
@@ -118,7 +121,7 @@ export const VIERNES = {
 };
 
 export const HISTORIA = {
-  entradilla: 'Se come un solo día al año y casi nadie la cocina solo. Debajo del queso y la leche hay una fiesta de cosecha más vieja que las iglesias que hoy le ponen fecha: la de agradecer a la Pachamama por sus frutos.',
+  entradilla: 'Se cocina una vez al año, para Semana Santa, y casi nadie la cocina solo. Debajo del queso y la leche hay una fiesta de cosecha más vieja que las iglesias que hoy le ponen fecha: la de agradecer a la Pachamama por sus frutos.',
 
   capitulos: [
     {
@@ -126,7 +129,10 @@ export const HISTORIA = {
       titulo: 'Antes se llamaba uchucuta',
       icono: 'maiz',
       cuerpo: [
-        'Mucho antes de la Semana Santa, en los Andes ya se cocinaba esta olla. Se llamaba <b>uchucuta</b>: en kichwa, granos tiernos cocidos con ají y hierbas. Se hacía con lo primero que daba la tierra —choclo, fréjol, habas, mellocos, zapallo, sambo— y se comía con carne de llama.',
+        /* las habas no: son del Mediterráneo (lo dice este mismo
+           cuaderno, en la página de los granos y en la tarjeta del haba).
+           Y es la versión más aceptada, no un hecho de archivo: se dice. */
+        'La versión más aceptada dice que, mucho antes de la Semana Santa, en los Andes ya se cocinaba esta olla. Se llamaba <b>uchucuta</b>: en kichwa, granos tiernos cocidos con ají y hierbas. Se hacía con lo primero que daba la tierra —choclo, fréjol, chochos, mellocos, zapallo, sambo— y se comía con carne de llama.',
         'No era una comida cualquiera: era la del <b>Mushuk Nina</b>, la fiesta del Fuego Nuevo, y la del <b>Pawkar Raymi</b>, la del florecimiento. Se apagaban los fogones y se encendía fuego nuevo para estrenar el año. Comerse los primeros granos tiernos, todos juntos en una olla, era la manera de darle las gracias a la <b>Pachamama</b>: la tierra había vuelto a responder, y eso se celebra comiéndosela juntos.',
       ],
     },
@@ -156,8 +162,12 @@ export const HISTORIA = {
       titulo: 'Doce apóstoles encima, la Pachamama debajo',
       icono: 'granos_mixtos',
       cuerpo: [
-        'Los españoles le pusieron encima la lectura que hoy todos repiten: los <b>doce granos son los doce apóstoles</b> y el bacalao es Cristo. Eso tiene nombre — <b>sincretismo</b>: vestir de misa una fiesta que ya existía, para que lo de antes pareciera venir de ellos.',
+        'Los españoles le pusieron encima la lectura que hoy todos repiten: los <b>doce granos son los doce apóstoles</b> y el bacalao es Cristo. Eso tiene nombre — <b>sincretismo</b>: vestir de misa una fiesta que ya existía —dicen los historiadores— para que lo de antes pareciera venir de ellos.',
         'Pero rasca el caldo y ahí sigue lo primero: una olla de cosecha para <b>agradecer a la Pachamama</b> por sus frutos, con los granos tiernos de marzo. Decirlo no es resentimiento — es la alegría de descubrir que en medio de la fiesta religiosa hay algo más, y que ese algo nunca se fue. Como la paja de páramo de Dolores Cacuango: la arrancaron, y volvió a crecer dentro de la misma olla.',
+        /* SUMAR, NO QUITAR: la fe de hoy también es de aquí. Las familias
+           que juegan esto son, en buena parte, las que rezan antes de
+           servir; ninguna lectura tiene que corregir a la otra. */
+        'Y para muchas familias la fanesca es, ante todo, la mesa del <b>Jueves Santo</b>: la cena de la víspera, sin carne como pide la vigilia, rezada antes de servir, con un plato de más para quien llegue. Esa fe también es de aquí: la cocinan y la comparten desde hace siglos. Son dos calendarios comiendo del mismo plato.',
         'Mira de dónde viene cada grano y el plato lo cuenta solo. No es un plato indígena con añadidos ni un plato español con adornos: es literalmente las dos despensas revueltas y hervidas juntas hasta que no se pueden separar.',
       ],
       cita: CACUANGO_PARAMO,
