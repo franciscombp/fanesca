@@ -70,6 +70,8 @@ No afirman nada: imprimen números para mirar. Se corren a mano.
 | `caldero-mide` | los objetos de la escena ordenados por tamaño real. Encontró piezas que salían diez veces más grandes porque se les escribía la escala encima de la suya. |
 | `mesa-geo` | dónde cae cada ficha del menú en pantalla, para entender por qué un toque no llega. |
 | `tiempos` | de dónde sale el `tiempoBase` de cada nivel. `node pruebas/tiempos.mjs` compara lo escrito con lo derivado y enseña la PRESIÓN implícita de cada peldaño — que es la forma de esa escalera. No es una prueba: no falla, informa. |
+| `fotos` | una foto de cada mesón como lo ve el jugador (sombras forzadas) y lo que le cuesta al motor: `node pruebas/fotos.mjs <carpeta> [nivel …]`. Con `POSE=archivo.js` corre ese JS en la página antes de la foto (abrir vainas, pelar el choclo). Es lo que se usó para la auditoría del 3D. |
+| `compara` | antes y después lado a lado: `node pruebas/compara.mjs <antes> <después> <salida.png> [nivel …]`. Mirar las dos fotos es la única forma honesta de decir que algo «se ve mejor». |
 
 ## Escribir una nueva
 
