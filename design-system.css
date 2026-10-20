@@ -177,7 +177,10 @@
 .btn:focus-visible { outline: 3px solid var(--oro-300); outline-offset: 3px; }
 
 .btn--maiz   { --btn-face: var(--oro-500);  --btn-face-hi: var(--oro-300);  --btn-edge: var(--oro-600);  --btn-ink: var(--maiz-800); text-shadow: 0 1px 0 rgba(255,255,255,.35); }
-.btn--nopal  { --btn-face: var(--hoja-500); --btn-face-hi: var(--hoja-400); --btn-edge: var(--hoja-600); }
+/* el verde del botón es un pelo más hondo que la hoja: el blanco sobre
+   hoja-500 daba 2.55:1 («Siguiente nivel», medido), y un botón grande
+   pide 3:1. Con esta cara da 3.2–3.5:1 sin dejar de ser el mismo verde */
+.btn--nopal  { --btn-face: #4a9a45; --btn-face-hi: #52a34d; --btn-edge: #336f30; }
 .btn--chile  { --btn-face: var(--brasa-500); --btn-face-hi: var(--brasa-400); --btn-edge: var(--brasa-600); }
 .btn--madera { --btn-face: var(--cobre-500); --btn-face-hi: var(--cobre-400); --btn-edge: var(--cobre-600); }
 .btn--rosa   { --btn-face: var(--fiesta-500); --btn-face-hi: var(--rosa-400); --btn-edge: var(--rosa-600); }

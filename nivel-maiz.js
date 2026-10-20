@@ -251,7 +251,7 @@ function despertarGusano(w) {
   giroObjetivo = acercarAngulo(giro.rotation.y, FRENTE - (w.a / A) * Math.PI * 2);
   api.sfx('crack'); api.buzz([25, 30, 25]);
   api.aviso('🪱 ¡Un gusanito! Llévalo a la composta — no lo aplastes');
-  api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde de la izquierda (o arrástralo con uno).', 5200);
+  api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda (o pellízcalo con dos dedos).', 5200);
 }
 
 /* el giro más corto hacia un ángulo: la mazorca no da vueltas de más */

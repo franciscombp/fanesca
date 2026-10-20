@@ -133,10 +133,10 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
          vez —alerta y pista— y un pellizco de dos dedos nunca enseñado.
          Arrastrar basta; el pellizco se cuenta cuando se le resbale. */
       api.aviso(`${ICO} ¡Un ${nombre}!`);
-      api.pista('<b>Arrástralo</b> al cuenco verde. <b>No lo aplastes.</b>', 4000);
+      api.pista('<b>Arrástralo</b> al cuenco verde de la izquierda. <b>No lo aplastes.</b>', 4000);
       if (api.bichoVisto) api.bichoVisto();
     } else {
-      if (!avisados) api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde (o arrástralo con uno). Si lo tocas, lo aplastas.', 5200);
+      if (!avisados) api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda (o pellízcalo con dos dedos). Si lo aprietas, lo aplastas.', 5200);
       api.aviso(`${ICO} ¡Un ${nombre}! Llévalo a la composta — no lo aplastes`);
     }
     avisados++;
@@ -341,7 +341,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
             api.sfx('mal'); api.buzz('fallo');
             api.destello('rgba(230,57,70,.3)');
             api.aviso('💛 ¡Uy, casi se mete a la batea! Esta te la perdono', 'peligro');
-            api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta, el cuenco verde. A la próxima se arruina la olla.', 4200);
+            api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda. A la próxima se arruina la olla.', 4200);
             if (api.fallo) api.fallo('bicho', null, { yaSono: true });
             continue;
           }

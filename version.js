@@ -30,10 +30,37 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.6.1';
+const APP_VERSION = '4.7.0';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.7.0',
+    fecha: '2026-10-20',
+    titulo: 'Lo que hacen bien los buenos juegos',
+    cambios: [
+      '👆 <b>Si te quedas quieto, te enseña.</b> En un mesón que todavía no ganaste, a los pocos segundos vuelve la pista y una mano hace el gesto encima de la pieza. Lo mismo si fallas tres veces el mismo toque, o si tocas «?» dos veces.',
+      '🥄 <b>La hoja dice por qué.</b> «Tu tiempo daba tres; un grano reventado te quitó una», o «Bájalo de 30 s y sale la tercera cuchara». El botón de repetir pide lo que falta.',
+      '🎶 <b>Suena a cocina.</b> La vaina cruje, el agua salpica, la sartén chisporrotea y frotar suena mientras frotas. La racha sube por una escala de verdad y la fiesta llega después de las cucharas, del tamaño de lo que salió.',
+      '🪱 <b>El bicho avisa.</b> Cuando va derecho a la batea, late y te lo dice; en los niveles de presentación, la primera vez te lo devuelve. El primer gusanito de tu vida sale tras abrir unas vainas, camina despacio y la composta se marca con un aro verde.',
+      '🍲 <b>Cocina el plato que quieras.</b> «La escalera de platos», en la despensa: cada plato con su récord. Y el resumen de la olla dice en qué ingrediente se te fue el tiempo.',
+      '⏱ <b>El Apuro reparte sólo lo que ya sabes</b>, y los días en la cocina se cuentan sin perderse: un día sin jugar ya no borra nada.',
+      '📖 <b>El cuaderno dice qué abre cada página</b>, y la del choclo por fin se abre al aprenderlo. En Cuaresma y Semana Santa, la portada cuenta los días al Viernes Santo.',
+      '📳 <b>Vibración con su propio interruptor</b> en la portada (donde el teléfono vibra), y con movimiento reducido la cámara ya no tiembla.',
+    ],
+    internos: [
+      'Benchmark (workflow de auditoría por áreas: cocina, sensación, primera partida, progresión, accesibilidad, cultura, técnica) con fuentes: Juicy Breakout, ZzFX/jsfxr, Godot AudioStreamRandomizer, Apple HIG y Android haptics, WCAG 2.3.3, Cooking Mama, Papa\'s, WarioWare, Duolingo/Brain Age, ICO age-appropriate design.',
+      'main.js: bus maestro con compresor, ruido blanco como materia prima, recetas con barridos y ruido, variación por reproducción (var en cents), un sonido por evento (25 ms), prioridad que calla lo menudo 120 ms, ESCALERA pentatónica para la racha, CADENCIA I–IV–V en las cucharas, motivo «logro», bucles de gesto (sonarGesto) que se apagan solos, audio suspendido con la pestaña oculta.',
+      'buzz(): vocabulario HAPTICA, pausas ≥ 50 ms, tope de golpecitos (70 ms), prioridad que no deja que un patrón menor corte a uno mayor, estado.vibracion.',
+      'motor3d.js: chispas con forma (estrella/gota/miga) y reserva de sprites; trauma con giro en la sacudida y nada con movimiento reducido; EASE exportado; presionables (la pieza cede en onDown y rebota en onUp).',
+      'Vigía de quietud y mano guía (#mano-guia, guia() en habas, chochos, fréjol y arveja, api.pistaError). El «?» separa pistaGesto de los avisos. api.primerBicho/bichoVisto/hayPlaga/bichoSuelto; bichoTras en habas-1.',
+      'plaga.js: aviso a dos pasos de la batea, perdón de una llegada en dif ≤ 2, aro verde sobre la composta, quietoHasta y vel por bicho, icoBicho.',
+      'Veredicto (FALLO_TXT, fallosTipos), racha que se corta con un descuido, +N honestos, revelarCucharas, marcarDia/dias.total, metaMasCercana, cuentaRetos, maestría en la portada, abrirPlatos/arrancarOlla(platoId), resumen.porPaso en modo-olla, lemaDelActo, calendario.js (en el precache).',
+      'Arreglos: api.sfx descartaba el tono; chispas con argumentos al revés en caldero y feria; TARJETAS por bolsa (la feria es el básico del choclo); peldaños finales de habas, melloco y maní fuera de tabla; nombres del huevo; medallas de la olla sin regalo (10 en vez de 8).',
+      'Accesibilidad (lo rápido; las opciones van en otra versión): .btn--nopal un pelo más hondo (blanco a 3.2–3.5:1, antes 2.55:1), toasts largos duran lo que se tarda en leerlos, #listo-cucharas con role=img y aria-label, la copia del bicho pone primero arrastrar con un dedo y dice dónde está la composta (no sólo «verde»).',
+      'Pruebas: pruebas/sonido.mjs nueva; humo espera al mesón en vez de 3.2 s fijos; olla.mjs O15 a 10 logros; primera-olla P13a.',
+    ],
+  },
   {
     v: '4.6.1',
     fecha: '2026-10-04',

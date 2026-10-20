@@ -731,6 +731,10 @@ let toastId = null;
 /* `ms` opcional: un toast con oración entera (los chips de la
    despensa) no se lee en los 1.9 s del aviso corto */
 function toast(msg, ms = 1900) {
+  /* una oración entera dura lo que se tarda en leerla: «¿Terminar El
+     Apuro? Toca otra vez — lo que llevas se guarda» no cabe en 1.9 s */
+  const palabras = String(msg).replace(/<[^>]*>/g, ' ').trim().split(/\s+/).length;
+  if (palabras > 6) ms = Math.max(ms, Math.min(6000, 1400 + palabras * 340));
   const t = $('#toast');
   t.textContent = msg;
   t.classList.add('visible');
@@ -2091,7 +2095,7 @@ function pasoQuietud() {
   if (!nivelActual || !modActual || enModo() || (!corriendo && !relojEnEspera) || $$('.modal.open').length) return;
   quietoPaso++;
   if (quietoPaso === 1) {
-    const msg = bichoSueltoAhora ? '<b>Arrástralo</b> al cuenco verde, la composta. <b>No lo aprietes.</b>' : pistaGesto;
+    const msg = bichoSueltoAhora ? '<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda. <b>No lo aprietes.</b>' : pistaGesto;
     if (msg) pistaAhora(msg, duracionDe(msg), bichoSueltoAhora);
     latirPregunta();
     quietoId = setTimeout(pasoQuietud, 8000);
@@ -2577,7 +2581,9 @@ async function jugar(id) {
   if (traeBichos && n.bicho && !loEnsenaLaPlaga && !(estado.bichosVistos || []).includes(n.bicho)) {
     estado.bichosVistos = [...(estado.bichosVistos || []), n.bicho];
     guardar();
-    fila.push({ msg: n.avisoBicho || `${icoBicho(n.bicho)} Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>`, aviso: true });
+    /* el dedo único primero: arrastrar funciona en los veinte mesones y
+       el pellizco es para quien tenga las dos manos libres */
+    fila.push({ msg: n.avisoBicho || `${icoBicho(n.bicho)} Si sale <b>${n.bicho}</b>: <b>arrástralo</b> a la composta. <b>No lo aplastes.</b>`, aviso: true });
   }
   /* el «?» arranca con el gesto del ingrediente: en una parada ya
      superada la fila viene vacía, y sin esto repetiría la pista del
@@ -3356,6 +3362,8 @@ function terminarNivel() {
     /* las cucharas se revelan de a una: el redoble del final es la
        mitad de la celebración, y la fiesta viene cuando ya se sabe */
     $('#listo-cucharas').innerHTML = cucharasHTML(0);
+    /* para un lector de pantalla las cucharas son dibujo: lleva su texto */
+    $('#listo-cucharas').setAttribute('aria-label', `${cuch} de 3 cucharas`);
     const huecos = [...$('#listo-cucharas').querySelectorAll('.cuchara')];
     const hojaAbierta = () => $('#modal-listo').classList.contains('open');
     $('#listo-tiempo').textContent = tiempoBonito(tiempoMs);
@@ -3687,7 +3695,7 @@ function bindEventos() {
     /* con un bicho suelto, lo urgente es el bicho; sin haber hecho nada
        todavía, el gesto; si no, la última pista (la de la fase en que
        el jugador está) */
-    const msg = bichoSueltoAhora ? '<b>Arrástralo</b> al cuenco verde, la composta. <b>No lo aprietes.</b>'
+    const msg = bichoSueltoAhora ? '<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda. <b>No lo aprietes.</b>'
       : (hechosAhora === 0 && pistaGesto) ? pistaGesto : (ultimaPista || pistaGesto);
     if (msg) pistaAhora(msg, duracionDe(msg), bichoSueltoAhora);
   });
