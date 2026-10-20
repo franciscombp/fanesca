@@ -71,6 +71,25 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   let avisadoRoce = false; /* el "lo empujaste" se explica una vez */
 
   const destino = api.BATEA.clone().setY(api.MESA_Y + ALTO);
+  if (api.hayPlaga) api.hayPlaga();
+
+  /* EL DESTINO SE MARCA. «Llévalo a la composta» decía una palabra que
+     el jugador nuevo no había visto atada a nada. Mientras haya un
+     bicho suelto, la boca de la composta lleva un aro verde que late;
+     con el bicho en la mano se enciende. Es el mismo aro del caldero y
+     de la feria: la única señal del juego que dice «aquí». */
+  const aro = api.aroDestino ? api.aroDestino(0.46, '#8ab143') : null;
+  if (aro) {
+    aro.obj.position.copy(api.COMPOSTA).setY(api.MESA_Y + 0.28);
+    aro.obj.visible = false;
+    grupo.add(aro.obj);
+  }
+  const vivosSueltos = () => lista.some(r => r.estado === 'suelto' || r.estado === 'cargado');
+  const pintarAro = () => {
+    const hay = vivosSueltos();
+    if (aro) aro.obj.visible = hay;
+    if (api.bichoSuelto) api.bichoSuelto(hay);
+  };
 
   function soltar(clase, pos) {
     const bicho = clase === 'gorgojo'
@@ -98,14 +117,29 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     const pop = api.ease && api.ease.pop;
     api.tween(nodo.scale, 'x', 1, 0.32, pop); api.tween(nodo.scale, 'y', 1, 0.32, pop); api.tween(nodo.scale, 'z', 1, 0.32, pop);
 
-    const rec = { nodo, bicho, estado: 'suelto', t0: api.reloj, nace: api.reloj };
+    /* EL PRIMERO DE LA VIDA camina a la mitad y se queda quieto un
+       momento al salir: la regla se lee con el bicho delante. Medido,
+       el gusanito de la presentación llegaba a la batea en 4 a 9 s, y
+       leer su pista tomaba casi 8. */
+    const primero = !!api.primerBicho;
+    const rec = { nodo, bicho, estado: 'suelto', t0: api.reloj, nace: api.reloj,
+      vel: VEL * (primero ? 0.5 : 1), quietoHasta: api.reloj + (primero ? 1.5 : 0) };
     lista.push(rec);
+    pintarAro();
     /* su propio chirrido: antes sonaba igual que abrir una vaina */
     api.sfx('bicho'); api.buzz('bicho');
-    if (!avisados++) {
-      api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde (o arrástralo con uno). Si lo tocas, lo aplastas.', 5200);
+    if (primero && !avisados) {
+      /* UNA LÍNEA, con el bicho a la vista: eran treinta palabras a la
+         vez —alerta y pista— y un pellizco de dos dedos nunca enseñado.
+         Arrastrar basta; el pellizco se cuenta cuando se le resbale. */
+      api.aviso(`${ICO} ¡Un ${nombre}!`);
+      api.pista('<b>Arrástralo</b> al cuenco verde. <b>No lo aplastes.</b>', 4000);
+      if (api.bichoVisto) api.bichoVisto();
+    } else {
+      if (!avisados) api.pista('<b>Pellízcalo con dos dedos</b> y llévalo a la composta verde (o arrástralo con uno). Si lo tocas, lo aplastas.', 5200);
+      api.aviso(`${ICO} ¡Un ${nombre}! Llévalo a la composta — no lo aplastes`);
     }
-    api.aviso(`${ICO} ¡Un ${nombre}! Llévalo a la composta — no lo aplastes`);
+    avisados++;
     return rec;
   }
 
@@ -216,6 +250,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
       rec.estado = 'cargado';
       cargado = rec;
       rec.nodo.scale.setScalar(1);   /* deja de latir: ya está en la mano */
+      if (aro) aro.apuntar(true);
       rec.bicho.aro.visible = false;
       api.sfx('tab'); api.buzz(12);
       api.aviso('Llévalo a la composta 🌿', 'bien');
@@ -254,6 +289,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     soltarMano() {
       if (!cargado) return null;
       const rec = cargado; cargado = null;
+      if (aro) aro.apuntar(false);
       const p = rec.suelo || rec.nodo.position;
       if (Math.hypot(p.x - api.COMPOSTA.x, p.z - api.COMPOSTA.z) < CERCA_COMPOSTA) {
         rec.estado = 'ido';
@@ -265,6 +301,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
         /* el juego lleva la cuenta: es lo que mide el reto de
            cazagusanos de cada bolsa */
         if (api.bichoSalvado) api.bichoSalvado();
+        pintarAro();
         return 'composta';
       }
       rec.estado = 'suelto';
@@ -273,10 +310,13 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
       rec.nodo.rotation.z = 0;
       api.sfx('resist');
       api.aviso(`${ICO} Se te resbaló. Otra vez: hasta la composta`);
+      /* ahora sí, la otra manera: con dos dedos no se resbala */
+      if (!rec.pellizcoContado) { rec.pellizcoContado = true; api.pista('También vale <b>pellizcarlo con dos dedos</b>: así no se te cae.', 3200); }
       return 'devuelto';
     },
 
     actualizar(dt, t) {
+      if (aro && aro.obj.visible) aro.latir(t);
       for (const rec of lista) {
         if (rec.estado === 'ido') continue;
         rec.bicho.animar(t);
@@ -306,6 +346,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
             continue;
           }
           rec.estado = 'ido';
+          pintarAro();
           api.arruinar(ARRUINADO.enLaBatea(nombre));
           return true;
         }
@@ -319,10 +360,12 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
           }
           if (t - (rec.nace || 0) > 0.4) rec.nodo.scale.setScalar(1 + 0.075 * (1 + Math.sin(t * 6 * Math.PI * 2)));
         }
-        /* mareado (perdonado o empujado): un momento sin caminar */
-        if (api.reloj < rec.t0) continue;
-        p.x += (dx / d) * VEL * dt;
-        p.z += (dz / d) * VEL * dt;
+        /* mareado (perdonado o empujado) o recién presentado: un
+           momento sin caminar */
+        if (api.reloj < rec.t0 || api.reloj < (rec.quietoHasta || 0)) continue;
+        const vel = rec.vel || VEL;
+        p.x += (dx / d) * vel * dt;
+        p.z += (dz / d) * vel * dt;
         p.y = SUELO(p.x, p.z) + ALTO;    /* sube y baja de la tabla */
         rec.nodo.rotation.y = Math.atan2(dx, dz);
       }
@@ -332,6 +375,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     destruir() {
       lista.length = 0;
       cargado = null;
+      if (api.bichoSuelto) api.bichoSuelto(false);
       if (grupo.parent) grupo.parent.remove(grupo);
     },
   };

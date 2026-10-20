@@ -35,25 +35,33 @@ export const ARRUINADO = {
   /* demasiados descuidos en una parada brava: la calidad también
      es un objetivo, no sólo el reloj */
   descuidos: (n = 3) => ({
+    clave: 'descuidos',
     ico: '💔',
+    como: 'La próxima: más despacio; el reloj perdona más que los descuidos.',
     titulo: 'Demasiados descuidos',
     texto: `${n} fallos en una sola parada — granos reventados, perdidos o quemados. Con esa mano la olla no sale: otra vez, con más cuidado.`,
   }),
   aplastado: (bicho = 'gusanito') => ({
     clave: 'aplastado',
     ico: icoBicho(bicho),
+    /* el arreglo, dicho una vez: el error enseña más que cualquier pista */
+    como: bicho === 'mosca' || /mosca/.test(bicho)
+      ? 'La próxima: espántala de un roce, sin apretar.'
+      : 'La próxima: no lo aprietes con la yema; arrástralo, o pellízcalo con dos dedos.',
     titulo: bicho === 'mosca' ? 'La aplastaste' : 'Lo aplastaste',
     texto: `${Mayus(conArticulo(bicho))} reventó encima de la comida. Con eso ya no hay nada que hacer: se bota todo y se empieza de nuevo.`,
   }),
   enLaBatea: (bicho = 'gusanito') => ({
     clave: 'enLaBatea',
     ico: icoBicho(bicho),
+    como: 'La próxima: apenas salga, arrástralo con el dedo hasta el cuenco verde.',
     titulo: 'Se te fue a la batea',
     texto: `${Mayus(conArticulo(bicho))} llegó hasta la batea y se mezcló con lo bueno. Ya no se puede separar: toca botar todo y empezar de nuevo.`,
   }),
   granoPodrido: () => ({
     clave: 'granoPodrido',
     ico: '🌽',
+    como: 'La próxima: los granos cafés no se tocan; se quedan en la tusa.',
     titulo: 'Picaste un grano dañado',
     texto: `Los granos cafés están podridos y no se sacan: se dejan en la tusa y se van con ella a la composta. Este lo reventaste encima de lo bueno, y con eso se bota todo.`,
   }),

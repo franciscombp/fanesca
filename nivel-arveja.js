@@ -345,6 +345,20 @@ export default {
 
   objetivos() { return [vainasGrupo, plaga.grupo]; },
 
+  /* la mano guía: el bicho; si no, jalar el hilo de una vaina cosida a
+     lo largo; si ya está abierta, correr el pulgar por sus granos */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const v = vainas.find(x => !x.deshilada) || vainas.find(x => x.abierta && x.granos.some(a => a.visible && !a.userData.ida));
+    if (!v) return null;
+    const w = new THREE.Vector3();
+    v.obj.getWorldPosition(w);
+    const e = ejeDe(v);
+    return { tipo: 'arrastrar', desde: new THREE.Vector3(w.x - e.x * 0.35, w.y, w.z - e.z * 0.35), hasta: new THREE.Vector3(w.x + e.x * 0.35, w.y, w.z + e.z * 0.35) };
+  },
+
   alTocar(info) {
     if (terminado || !info.raiz) return;
     const t = info.raiz.userData.tipo;
@@ -359,7 +373,7 @@ export default {
       if (rec && !rec.deshilada) {
         api.sfx('resist');
         api.tween(rec.obj.rotation, 'z', 0.1, 0.07, undefined, () => api.tween(rec.obj.rotation, 'z', 0, 0.14));
-        api.pista('Está cosida por el <b>hilo</b>. Agárralo del rabito y <b>jala a lo largo</b>.', 3200);
+        (api.pistaError || ((k, m, ms) => api.pista(m, ms)))('hilo', 'Está cosida por el <b>hilo</b>. Agárralo del rabito y <b>jala a lo largo</b>.', 3200);
       }
     }
   },

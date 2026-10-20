@@ -198,6 +198,18 @@ export default {
 
   objetivos() { return [chochosGrupo, plaga.grupo]; },
 
+  /* la mano guía: el gorgojo suelto a la composta, o apretar un chocho */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const c = chochos.find(r => !r.ido);
+    if (!c) return null;
+    const w = new THREE.Vector3();
+    c.obj.getWorldPosition(w);
+    return { tipo: 'tocar', desde: w };
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }

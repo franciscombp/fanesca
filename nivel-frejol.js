@@ -235,6 +235,21 @@ export default {
 
   objetivos() { return [vainasGrupo, granosGrupo, plaga.grupo]; },
 
+  /* la mano guía: el bicho, un grano regado, o mantener el dedo sobre
+     una vaina hasta que truene — el gesto que nadie descubre solo */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const w = new THREE.Vector3();
+    const g = granos.find(x => !x.userData.ido && x.visible !== false);
+    if (g) { g.getWorldPosition(w); return { tipo: 'tocar', desde: w }; }
+    const v = vainas.find(x => !x.reventada);
+    if (!v) return null;
+    v.obj.getWorldPosition(w);
+    return { tipo: 'mantener', desde: w };
+  },
+
   /* la presión empieza en cuanto baja el dedo, no al soltarlo */
   alPresionar(info) {
     if (terminado || !info.raiz) return;
@@ -251,7 +266,7 @@ export default {
     if (t === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
     if (t === 'vaina') {
       api.sfx('resist');
-      api.pista('No basta un toquecito: <b>mantén el dedo</b> apretado hasta que truene.', 3200);
+      (api.pistaError || ((k, m, ms) => api.pista(m, ms)))('toquecito', 'No basta un toquecito: <b>mantén el dedo</b> apretado hasta que truene.', 3200);
       return;
     }
     if (t === 'grano') { recogerGrano(info.raiz); return; }

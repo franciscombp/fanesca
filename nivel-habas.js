@@ -41,6 +41,7 @@ const PASO_FILA = 0.6;                      /* separación entre hileras */
 let HONDO_TABLA = 1.7;
 let TABLA_Z = 0;                 /* se fija en construir(), desde api */
 let CON_GUSANO = 2;                         /* cuántas vainas traen sorpresa */
+let BICHO_TRAS = 0, abiertas = 0;               /* el bicho sale de la vaina N abierta (0: sorteo) */
 /* El frote es distancia recorrida por la yema, así que la costura más
    apretada es sencillamente más centímetros de dedo. Se descartó
    hacerla resistir por tiempo: eso premiaría apoyar el dedo quieto
@@ -129,6 +130,8 @@ function abrirVaina(rec) {
       api.tween(h.scale, 'x', 1, 0.22); api.tween(h.scale, 'y', 1, 0.22); api.tween(h.scale, 'z', 1, 0.22);
     }, i * 35);
   });
+  abiertas++;
+  if (BICHO_TRAS && abiertas === BICHO_TRAS && CON_GUSANO > 0) rec.conGusano = true;
   if (rec.conGusano) {
     const p = rec.obj.position.clone();
     p.z += 0.12;
@@ -231,6 +234,12 @@ export default {
     /* nunca más bichos que vainas donde esconderlos: el sorteo de abajo
        es un Set y con un número imposible se quedaría girando en seco */
     CON_GUSANO = Math.min(cfg.gusanos ?? 2, cantidad);
+    /* PRESENTAR, PRACTICAR Y LUEGO EL GIRO: con `bichoTras` el bicho no
+       se sortea —salía en la primera vaina una de cada cuatro veces, y
+       el primer nivel de la vida enseñaba tres cosas a la vez— sino que
+       sale de la vaina número N que se abra */
+    BICHO_TRAS = Math.max(0, Math.round(cfg.bichoTras || 0));
+    abiertas = 0;
 
     TABLA_Z = api.FRENTE_TABLA - HONDO_TABLA / 2;
     vainas = []; hechos = 0; terminado = false; modo = null; ultimoPunto = null; pellizcando = false;
@@ -252,7 +261,7 @@ export default {
 
     /* qué vainas traen bicho: se decide al armar, nunca a mitad de partida */
     const conBicho = new Set();
-    while (conBicho.size < CON_GUSANO) conBicho.add(Math.floor(Math.random() * cantidad));
+    while (!BICHO_TRAS && conBicho.size < CON_GUSANO) conBicho.add(Math.floor(Math.random() * cantidad));
 
     /* Cada hilera se centra por su cuenta. Con una cantidad que no es
        múltiplo de tres la última queda coja, y dejarla pegada a la
@@ -275,6 +284,25 @@ export default {
 
   objetivos() { return [vainasGrupo, plaga.grupo]; },
 
+  /* qué enseña la mano guía ahora (main.js la dibuja): el bicho suelto
+     primero, luego un haba a la vista, y si no, frotar una vaina a lo
+     largo de su costura */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const w = new THREE.Vector3();
+    for (const v of vainas) {
+      const h = v.abierta && v.habas.find(x => x.visible && !x.userData.ida);
+      if (h) { h.getWorldPosition(w); return { tipo: 'tocar', desde: w.clone() }; }
+    }
+    const cerrada = vainas.find(v => !v.abierta);
+    if (!cerrada) return null;
+    cerrada.obj.getWorldPosition(w);
+    const a = cerrada.obj.rotation.y, ex = Math.cos(a) * 0.3, ez = -Math.sin(a) * 0.3;
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x - ex, w.y, w.z - ez), hasta: new THREE.Vector3(w.x + ex, w.y, w.z + ez) };
+  },
+
   alTocar(info) {
     if (terminado || !info.raiz) return;
     const t = info.raiz.userData.tipo;
@@ -289,7 +317,7 @@ export default {
       if (rec && !rec.abierta) {
         api.sfx('resist');
         api.tween(rec.obj.rotation, 'z', 0.12, 0.07, undefined, () => api.tween(rec.obj.rotation, 'z', 0, 0.14));
-        api.pista('Pásale el dedo <b>a lo largo de la costura</b> para abrirla.', 3000);
+        (api.pistaError || ((k, m, ms) => api.pista(m, ms)))('vaina-cerrada', 'Pásale el dedo <b>a lo largo de la costura</b> para abrirla.', 3000);
       }
     }
   },

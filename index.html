@@ -263,6 +263,10 @@
     <span id="hud-fallos" class="hud-fallos" role="status" aria-live="polite"></span>
     <div id="juego-controles" class="juego-controles"></div>
     <p id="juego-pista" class="juego-pista"></p>
+    <!-- LA MANO GUÍA: un dedo que hace el gesto encima del mesón cuando
+         el jugador se queda quieto o falla tres veces lo mismo. Mostrar
+         antes que contar; no recibe toques (pointer-events: none). -->
+    <div id="mano-guia" class="mano-guia" aria-hidden="true" hidden><span class="mano-guia-onda"></span><span class="mano-guia-dedo">👆</span></div>
   </main>
 
   <!-- ================= La cortina: la tarjeta de parada ================= -->
@@ -315,8 +319,14 @@
       <p id="olla-sigue" class="olla-sigue hidden"></p>
       <ul id="olla-actos" class="olla-actos"></ul>
       <ul id="olla-logros" class="logros"></ul>
-      <button type="button" id="olla-otra" class="btn btn--nopal btn--lg btn--block">Otra vez, más rápido</button>
-      <button type="button" id="olla-salir" class="btn btn--fantasma btn--sm btn--block">Volver a la despensa</button>
+      <!-- LA SALIDA SIEMPRE A LA VISTA: con la escalera de logros el
+           resumen pasaba del alto de la pantalla y «Volver a la despensa»
+           quedaba debajo del borde. El pie va pegado abajo de la hoja. -->
+      <div class="sheet-pie">
+        <button type="button" id="olla-nueva" class="btn btn--nopal btn--lg btn--block hidden"></button>
+        <button type="button" id="olla-otra" class="btn btn--nopal btn--lg btn--block">Otra vez, más rápido</button>
+        <button type="button" id="olla-salir" class="btn btn--fantasma btn--sm btn--block">Volver a la despensa</button>
+      </div>
     </div>
   </div>
 

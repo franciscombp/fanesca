@@ -10,7 +10,7 @@
 
 import Motor, { MESA_Y, BATEA, COMPOSTA, FRENTE_TABLA, EASE } from './motor3d.js';
 import { NIVELES, POR_VENIR, OLLA, ORDEN_OLLA, porId, cucharasDe, cucharasConFallos, tiempoBonito } from './niveles.js';
-import { ARRUINADO } from './arruinado.js';
+import { ARRUINADO, icoBicho } from './arruinado.js';
 import { HISTORIA, TARJETAS, CIERRE, CACUANGO_PARAMO } from './historia.js';
 import { ESCENARIOS, POR_DEFECTO } from './escenarios.js';
 import Editor, { esEscritorio } from './editor.js';
@@ -334,6 +334,12 @@ function resumenBolsa(bolsa) {
     r.bichos += m.bichos || 0;
   });
   return r;
+}
+
+/* la primera bolsa abierta cuyo básico nadie ha jugado: el paso
+   siguiente natural de quien empieza */
+function bolsaNuevaSinJugar() {
+  return ORDEN_BOLSAS.find(b => bolsaAbierta(b) && !sabeHacer(b)) || null;
 }
 
 /* LO MÁS CERCA. Con los dieciocho sabidos la cabecera decía «los
@@ -1901,16 +1907,24 @@ let pistaFila = [];        /* timeouts de la secuencia de arranque */
    vuelve a poner — la última que se mostró, que es la que aplica al
    momento en que el jugador está. */
 let ultimaPista = null;
+/* …pero un AVISO no es una pista: el del bicho entraba último en la
+   fila y el «?», a los veinte segundos sin abrir una vaina, enseñaba
+   «si sale el gusanito» en vez de cómo se abre. El gesto del mesón se
+   guarda aparte, y el «?» elige según lo que pasa ahora. */
+let pistaGesto = null;
+/* ¿el mesón montado usa la plaga compartida? (lo dice plaga.js) */
+let plagaEnMeson = false;
+let bichoSueltoAhora = false;
 const duracionDe = (msg) => {
   const palabras = String(msg).replace(/<[^>]*>/g, ' ').trim().split(/\s+/).length;
   return Math.max(2600, Math.min(12000, 1400 + palabras * 340));
 };
 function cortarFila() { pistaFila.forEach(clearTimeout); pistaFila = []; }
-function pistaAhora(msg, dur) {
+function pistaAhora(msg, dur, aviso = false) {
   const p = $('#juego-pista');
   p.innerHTML = msg;
   p.classList.add('visible');
-  ultimaPista = msg;
+  if (!aviso) ultimaPista = msg;
   clearTimeout(pistaId);
   pistaId = setTimeout(() => p.classList.remove('visible'), dur);
 }
@@ -1927,10 +1941,82 @@ function pistasEnFila(items) {
   let t = 0;
   items.filter(x => x && x.msg).forEach(x => {
     const dur = Math.max(x.ms || 0, duracionDe(x.msg));
-    pistaFila.push(setTimeout(() => pistaAhora(x.msg, dur), t));
+    pistaFila.push(setTimeout(() => pistaAhora(x.msg, dur, !!x.aviso), t));
     t += dur + 260;
   });
 }
+/* ---------- la mano guía y el vigía de quietud ----------
+   MOSTRAR ANTES QUE CONTAR. La pista era texto, y quien se quedaba
+   quieto en las habas —medido: a los cuarenta segundos— tenía el mesón
+   muerto delante y ninguna ayuda más. Ahora, en un mesón que todavía
+   no ha ganado, el juego espera: si en ocho segundos (quince en los
+   bravos) no avanza nada, vuelve a decir el gesto y el «?» late; si
+   sigue quieto, una mano hace el gesto sobre la pieza que toca. Lo
+   mismo al tercer toque equivocado. Como mucho dos veces por mesón, y
+   se va con el primer dedo: ayudar no es empujar. Cada nivel dice qué
+   enseñar con su `guia()`; el que no la tiene, sólo repite la pista. */
+let quietoId = null, quietoPaso = 0, guiaId = null, demosHechas = 0, ultimaPregunta = 0;
+let erroresPista = {};
+function esconderGuia() {
+  clearTimeout(guiaId);
+  const el = $('#mano-guia');
+  if (el && !el.hidden) { el.hidden = true; el.className = 'mano-guia'; }
+}
+function mostrarGuia(forzada = false) {
+  const m = modActual;
+  if (!m || typeof m.guia !== 'function' || (!forzada && demosHechas >= 2)) return false;
+  let g = null;
+  try { g = m.guia(); } catch (e) { g = null; }
+  if (!g || !g.desde || !Motor.camara) return false;
+  let a, b;
+  try { a = Motor.proyectar(g.desde); b = g.hasta ? Motor.proyectar(g.hasta) : a; } catch (e) { return false; }
+  const el = $('#mano-guia');
+  if (!el) return false;
+  el.style.setProperty('--x0', a.x + 'px'); el.style.setProperty('--y0', a.y + 'px');
+  el.style.setProperty('--x1', b.x + 'px'); el.style.setProperty('--y1', b.y + 'px');
+  el.className = 'mano-guia mano-guia--' + g.tipo;
+  el.hidden = false;
+  demosHechas++;
+  clearTimeout(guiaId);
+  guiaId = setTimeout(esconderGuia, g.tipo === 'frotar' ? 3300 : 2700);
+  return true;
+}
+function latirPregunta() {
+  const b = $('#btn-pista');
+  if (!b) return;
+  b.classList.remove('late'); void b.offsetWidth; b.classList.add('late');
+}
+function armarQuietud() {
+  clearTimeout(quietoId); quietoId = null; quietoPaso = 0;
+  const n = nivelActual;
+  if (!n || enModo() || estado.mejores[n.id]) return;
+  quietoId = setTimeout(pasoQuietud, (n.dificultad || 1) <= 2 ? 8000 : 15000);
+}
+function pasoQuietud() {
+  quietoId = null;
+  if (!nivelActual || !modActual || enModo() || (!corriendo && !relojEnEspera) || $$('.modal.open').length) return;
+  quietoPaso++;
+  if (quietoPaso === 1) {
+    const msg = bichoSueltoAhora ? '<b>Arrástralo</b> al cuenco verde, la composta. <b>No lo aprietes.</b>' : pistaGesto;
+    if (msg) pistaAhora(msg, duracionDe(msg), bichoSueltoAhora);
+    latirPregunta();
+    quietoId = setTimeout(pasoQuietud, 8000);
+  } else if (mostrarGuia() && demosHechas < 2) {
+    quietoId = setTimeout(pasoQuietud, 12000);
+  }
+}
+/* el gesto equivocado, contado: a la tercera vez, la mano lo hace */
+function pistaError(clave, msg, ms) {
+  erroresPista[clave] = (erroresPista[clave] || 0) + 1;
+  pista(msg, ms);
+  if (erroresPista[clave] === 3) mostrarGuia();
+}
+function reiniciarAyuda() {
+  clearTimeout(quietoId); quietoId = null; quietoPaso = 0;
+  demosHechas = 0; erroresPista = {};
+  esconderGuia();
+}
+
 /* mientras un nivel se construye, sus pistas se guardan para la fila
    en vez de pelearse con el gesto por el único cartel que hay */
 let capturaPista = null;
@@ -2029,6 +2115,8 @@ const api = {
     if (subio) {
       racha(cuanto, k);
       puntosFlotantes(cuanto);
+      /* avanzó: el vigía de quietud vuelve a empezar */
+      if (quietoId) armarQuietud();
     }
     /* El Apuro escucha el mismo latido que la barra. No necesita que
        el nivel sepa nada de él: con saber cuánto lleva hecho de su
@@ -2057,9 +2145,15 @@ const api = {
     if (corriendo || relojEnEspera) { relojEnEspera = false; arruinarNivel(motivo); }
   },
   aviso: alerta,
+  /* la plaga compartida se anuncia al armarse, y dice si hay bicho
+     suelto: el «?» y la ayuda lo necesitan saber */
+  hayPlaga() { plagaEnMeson = true; },
+  bichoSuelto(si) { bichoSueltoAhora = !!si; },
   /* un descuido: lo cuenta el juego, no el nivel (ver registrarFallo) */
   fallo: (tipo, msg, opc) => registrarFallo(tipo, msg, opc),
   pista: (msg, ms) => { if (capturaPista && msg) capturaPista(msg, ms); else pista(msg, ms); },
+  /* la pista del gesto equivocado: a la tercera, la mano lo enseña */
+  pistaError: (clave, msg, ms) => pistaError(clave, msg, ms),
   /* los pops suben de nota con la racha: la escalerita sonora es la
      recompensa más barata y más efectiva que existe — el jugador la
      persigue sin darse cuenta, y se reinicia sola al parar. EL TONO
@@ -2321,9 +2415,22 @@ async function jugar(id) {
   /* la dificultad de la parada viaja en la api: los bichos y las
      moscas la leen para saber cuánto perdonar */
   api.dificultad = n.dificultad || 1;
+  /* EL PRIMER BICHO DE LA VIDA se presenta despacio: camina a la mitad
+     y se queda quieto un momento al salir, para que la regla se lea
+     con el bicho delante y no corriendo hacia la batea. plaga.js lo
+     mira al soltarlo; el aviso lo da él mismo, cuando sale de verdad. */
+  {
+    const c = nivelConfig || {};
+    const conBichos = Array.isArray(c.gusanos) ? c.gusanos.some(g => g > 0) : (c.gusanos || 0) > 0;
+    api.primerBicho = !estado.devMode && conBichos && !!n.bicho && !n.avisoBicho && !(estado.bichosVistos || []).includes(n.bicho);
+    api.bichoVisto = () => {
+      if (n.bicho && !(estado.bichosVistos || []).includes(n.bicho)) { estado.bichosVistos = [...(estado.bichosVistos || []), n.bicho]; guardar(); }
+    };
+  }
   pintarFallos();
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
+  plagaEnMeson = false; bichoSueltoAhora = false;
   /* SI CONSTRUIR REVIENTA, SE VUELVE A LA MESA CON UN AVISO. Antes la
      excepción se escapaba de aquí y dejaba la cortina bajada para
      siempre —la parada "no abría" y no había cómo salir sin recargar. */
@@ -2366,20 +2473,28 @@ async function jugar(id) {
      una instrucción repetida enseña a saltarse las instrucciones. El
      gusanito, la mosca y el gorgojo se avisan la primera vez que
      aparecen y nunca más: son tres reglas, no veinticinco. */
-  if (traeBichos && n.bicho && !(estado.bichosVistos || []).includes(n.bicho)) {
+  /* Y SI EL BICHO ES DE LA PLAGA, se enseña cuando SALE: avisar de un
+     gusanito que todavía no existe, con la mano aún aprendiendo a abrir
+     vainas, era una regla leída en el vacío (y el «?» la repetía en vez
+     del gesto). Los demás —la mosca, los gusanos propios del choclo y
+     el zapallo— siguen avisando al arrancar. */
+  const loEnsenaLaPlaga = api.primerBicho && plagaEnMeson;
+  if (traeBichos && n.bicho && !loEnsenaLaPlaga && !(estado.bichosVistos || []).includes(n.bicho)) {
     estado.bichosVistos = [...(estado.bichosVistos || []), n.bicho];
     guardar();
-    fila.push({ msg: n.avisoBicho || `🪱 Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>` });
+    fila.push({ msg: n.avisoBicho || `${icoBicho(n.bicho)} Si sale <b>${n.bicho}</b>: pellízcalo y llévalo a la composta. <b>No lo aplastes.</b>`, aviso: true });
   }
   /* el «?» arranca con el gesto del ingrediente: en una parada ya
      superada la fila viene vacía, y sin esto repetiría la pista del
      nivel anterior */
   ultimaPista = gestoN;
+  pistaGesto = gestoN;
   /* el mesón ya está armado detrás: la cortina puede irse, y las
      pistas arrancan cuando empieza a irse — si para entonces el
      jugador ya se salió (o entró a otra parada), no hay nada que
      decir */
-  cerrarCortina().then(() => { if (nivelActual === n && modActual) pistasEnFila(fila); });
+  reiniciarAyuda();
+  cerrarCortina().then(() => { if (nivelActual === n && modActual) { pistasEnFila(fila); armarQuietud(); } });
   Editor.nivel(n.id);
   pintarBotonEditor();
   /* EL RELOJ ARRANCA CON EL PRIMER TOQUE. Leer las pistas de
@@ -2422,10 +2537,13 @@ function reglaDelApuro() {
   estado.apuroJugado = true; guardar();
   return '<b>El Apuro:</b> haz una parte de cada ingrediente y el reloj te <b>devuelve segundos</b>.';
 }
+/* la regla habla del plato que se cocina: con sólo las habas, «la
+   fanesca entera» era una promesa que esa olla no cumplía */
 function reglaDeLaOlla() {
   if (estado.ollaModoJugado) return null;
   estado.ollaModoJugado = true; guardar();
-  return '<b>La Olla:</b> la fanesca entera, de principio a fin. El reloj <b>sube</b>: es tu marca.';
+  const que = platoEnCurso ? platoEnCurso.enFrase : 'la fanesca entera';
+  return `<b>La Olla:</b> ${que}, de principio a fin. El reloj <b>sube</b>: es tu marca.`;
 }
 
 /* LA REGLA DE LA PORCIÓN, una vez por partida. En una cocina nadie
@@ -2498,6 +2616,9 @@ async function montarMeson(base, config, modo, opts = {}) {
      es de ESTE mesón y no del que se estaba jugando */
   modo.activar();
   api.dificultad = opts.dificultad || 1;
+  /* en los modos no hay presentación del bicho: se juega con lo sabido */
+  api.primerBicho = false; api.bichoVisto = null;
+  plagaEnMeson = false; bichoSueltoAhora = false;
   const capturadas = [];
   capturaPista = (msg, ms) => capturadas.push({ msg, ms });
   /* si construir revienta, se salta en vez de dejar medio mesón
@@ -2524,6 +2645,7 @@ async function montarMeson(base, config, modo, opts = {}) {
   if (opts.reglas) fila.push({ msg: opts.reglas });
   fila.push({ msg: gesto }, ...capturadas);
   ultimaPista = gesto;
+  pistaGesto = gesto;
   pistasEnFila(fila);
 }
 
@@ -2767,13 +2889,23 @@ const GANCHOS_OLLA = {
 /* el cartel que abre cada acto: dos segundos, sin nada que leer más
    allá del nombre y de dónde va la partida */
 let cartelId = null;
+/* EL LEMA CUENTA LO QUE HAY. «Los dieciséis, en orden» salía también
+   en la primera olla, la de un solo cuenco de habas. */
+const EN_LETRAS = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho'];
+let pasosEnCurso = [];
+function lemaDelActo(acto) {
+  const suyos = pasosEnCurso.filter(p => p.acto === acto.id);
+  if (acto.id !== 'prep' || !suyos.length || suyos.length >= 16) return acto.lema;
+  if (suyos.length === 1) return aMayuscula(`${nombreDeBolsa(suyos[0].base)}, para la olla`);
+  return `Los ${EN_LETRAS[suyos.length] || suyos.length}, en orden`;
+}
 function cartelDeActo(acto, i, de) {
   const el = $('#acto-cartel');
   if (!el) return;
   $('#acto-cartel-ico').textContent = acto.ico || '🍲';
   $('#acto-cartel-eyebrow').textContent = `acto ${i + 1} de ${de} · ${acto.eyebrow}`;
   $('#acto-cartel-nombre').textContent = acto.nombre;
-  $('#acto-cartel-lema').textContent = acto.lema;
+  $('#acto-cartel-lema').textContent = lemaDelActo(acto);
   el.hidden = false;
   el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra');
   clearTimeout(cartelId);
@@ -2797,6 +2929,7 @@ function arrancarOlla() {
     : p));
   if (!pasos.length) { toast('La olla está vacía todavía'); return; }
   platoEnCurso = plato;
+  pasosEnCurso = pasos;
   initAudio();
   pararReloj();
   tiempoMs = 0;
@@ -2899,13 +3032,27 @@ function cerrarOlla(resumen) {
     if (nuevos.length) guardar();
     const cajaL = $('#olla-logros');
     if (cajaL) {
-      cajaL.innerHTML = OLLA_MODO.logros.map(l => {
+      const fila = (l) => {
         const esNuevo = nuevos.some(x => x.id === l.id);
         const hecho = ya.includes(l.id);
         return `<li class="logro${esNuevo ? ' logro--nuevo' : (hecho ? '' : ' logro--pendiente')}">
           <strong>${hecho ? l.titulo : '· ' + l.titulo}</strong>
           <span>${hecho ? l.texto : (l.meta || '')}</span></li>`;
-      }).join('');
+      };
+      /* AL PRINCIPIO, SÓLO LO GANADO. A los tres minutos de juego la
+         escalera entera eran diez tarjetas, cinco de ellas pidiendo la
+         fanesca en menos de ocho minutos: una lista de deudas. Con
+         pocas bolsas se enseña lo ganado y una línea que despliega el
+         resto, para quien quiera mirar. */
+      const temprano = loQueSabe().size <= 3;
+      const ganados = OLLA_MODO.logros.filter(l => ya.includes(l.id));
+      const resto = OLLA_MODO.logros.length - ganados.length;
+      if (temprano && ganados.length && resto) {
+        cajaL.innerHTML = ganados.map(fila).join('')
+          + `<li class="logro logro--mas"><button type="button" class="logros-mas">y ${resto} más por ganar ›</button></li>`;
+        const mas = cajaL.querySelector('.logros-mas');
+        tocable(mas, () => { sfx('tab'); cajaL.innerHTML = OLLA_MODO.logros.map(fila).join(''); });
+      } else cajaL.innerHTML = OLLA_MODO.logros.map(fila).join('');
       /* después de las cucharas, no encima */
       nuevos.forEach((_, i) => setTimeout(() => { if ($('#modal-olla').classList.contains('open')) sfx('logro'); }, 1600 + i * 450));
     }
@@ -2921,6 +3068,24 @@ function cerrarOlla(resumen) {
     }
 
     $('#olla-otra').textContent = resumen.completa ? 'Otra vez, más rápido' : 'Volver a empezar';
+    /* QUÉ SIGUE, COMO BOTÓN. Tras la primera olla, la bolsa recién
+       abierta es el paso siguiente: va primero, y repetir la olla pasa
+       a segundo plano. Sólo al principio (tres bolsas o menos): después
+       el jugador ya sabe moverse por la despensa. */
+    const nueva = resumen.completa && loQueSabe().size <= 3 ? bolsaNuevaSinJugar() : null;
+    const btnNueva = $('#olla-nueva');
+    if (btnNueva) {
+      btnNueva.classList.toggle('hidden', !nueva);
+      if (nueva) {
+        const nb = rutaPorId(basicoDe(nueva));
+        const verbo = ((nb && nb.tarea) || 'Jugar').split(/,\s*|\s+y\s+/)[0];
+        btnNueva.innerHTML = `▶ ${verbo} ${nombreDeBolsa(nueva)}`;
+        btnNueva.dataset.nivel = nb ? nb.id : '';
+      }
+      $('#olla-otra').classList.toggle('btn--nopal', !nueva);
+      $('#olla-otra').classList.toggle('btn--lg', !nueva);
+      $('#olla-otra').classList.toggle('btn--fantasma', !!nueva);
+    }
     $('#modal-olla').classList.add('open');
   }, 700);
 }
@@ -3023,6 +3188,7 @@ function revelarCucharas(huecos, llenas, abierto, { alFinal, confeti } = {}) {
 
 function terminarNivel() {
   pararReloj();
+  reiniciarAyuda();
   sfx('plop'); buzz('pieza');
   Motor.destello('rgba(108,191,90,.45)');
   const n = nivelActual;
@@ -3173,6 +3339,7 @@ function terminarNivel() {
 
 function arruinarNivel(motivo) {
   pararReloj();
+  reiniciarAyuda();
   sfx('mal'); buzz('arruinado');
   Motor.destello('rgba(230,57,70,.55)');
   /* la sacudida vende golpes (el zapallo que se parte); para subrayar
@@ -3201,17 +3368,28 @@ function arruinarNivel(motivo) {
     if (ic) ic.textContent = (motivo && motivo.ico) || '🪱';
     /* y la frase de cocina del ingrediente, si la tiene: aquí no le
        quita el sitio a nada — el jugador está detenido a la fuerza */
+    /* LA PRIMERA VEZ DE CADA TROPIEZO, EL ARREGLO. El recuadro llevaba
+       siempre una nota de cocina, y quien se arruinaba la olla por
+       primera vez leía de la haba de la sierra en vez de qué hacer con
+       el gusano. La primera vez de cada motivo va el cómo; desde la
+       segunda, vuelve la cocina. */
     const notaEl = $('#arruinado-nota');
     if (notaEl) {
-      const nota = nivelActual && nivelActual.nota;
+      const vistos = estado.arruinadoVisto || (estado.arruinadoVisto = []);
+      const clave = motivo && motivo.clave;
+      const ensenar = motivo && motivo.como && clave && !vistos.includes(clave);
+      if (ensenar) { vistos.push(clave); guardar(); }
+      const nota = ensenar ? motivo.como : (nivelActual && nivelActual.nota);
       notaEl.textContent = nota || '';
       notaEl.classList.toggle('hidden', !nota);
+      notaEl.classList.toggle('arruinado-nota--como', !!ensenar);
     }
     $('#modal-arruinado').classList.add('open');
   }, 900);
 }
 
 function salirDelNivel() {
+  reiniciarAyuda();
   /* corta cualquier montaje en vuelo: si se sale mientras un mesón
      estaba cargando, el que llegue tarde ya no tiene a quién servir */
   montaje++;
@@ -3359,6 +3537,11 @@ function bindEventos() {
   tocable($('#apuro-otra'), () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
   tocable($('#apuro-salir'), () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
   tocable($('#olla-otra'), () => { sfx('tab'); cerrarModales(); arrancarOlla(); });
+  tocable($('#olla-nueva'), () => {
+    const id = $('#olla-nueva').dataset.nivel;
+    if (!id) return;
+    sfx('tab'); cerrarModales(); jugar(id);
+  });
   tocable($('#olla-salir'), () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
 
 
@@ -3371,10 +3554,20 @@ function bindEventos() {
   });
 
   /* «?»: la última pista, otra vez. No cuesta nada — el reloj corre
-     igual, que releer no es trampa. */
+     igual, que releer no es trampa. Y un segundo «?» seguido es «no
+     entiendo»: entonces la mano hace el gesto. */
   tocable($('#btn-pista'), () => {
     sfx('tab');
-    if (ultimaPista) pistaAhora(ultimaPista, duracionDe(ultimaPista));
+    const ahora = performance.now();
+    const otraVez = ahora - ultimaPregunta < 10000;
+    ultimaPregunta = ahora;
+    if (otraVez && mostrarGuia(true)) return;
+    /* con un bicho suelto, lo urgente es el bicho; sin haber hecho nada
+       todavía, el gesto; si no, la última pista (la de la fase en que
+       el jugador está) */
+    const msg = bichoSueltoAhora ? '<b>Arrástralo</b> al cuenco verde, la composta. <b>No lo aprietes.</b>'
+      : (hechosAhora === 0 && pistaGesto) ? pistaGesto : (ultimaPista || pistaGesto);
+    if (msg) pistaAhora(msg, duracionDe(msg), bichoSueltoAhora);
   });
   tocable($('#btn-cuaderno'), () => { sfx('tab'); mostrar('cuaderno'); });
   /* la meta más cercana (con la despensa llena) lleva a su bolsa */
@@ -3587,6 +3780,9 @@ function bindEventos() {
       return;
     }
     if (relojEnEspera) { relojEnEspera = false; arrancarReloj(); }
+    /* el dedo llegó: la mano se va y el vigía vuelve a contar */
+    esconderGuia();
+    if (quietoId) armarQuietud();
   }, { capture: true });
 
   /* el navegador se fue a otra pestaña: no correr el reloj de gratis */

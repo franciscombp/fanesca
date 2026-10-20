@@ -577,6 +577,44 @@ No se perdió una sola línea de texto. Cambió de sitio, a uno donde se
 lee porque se quiere. La hoja de listo sólo avisa, en un renglón, que
 hay página nueva — y lleva a leerla de un toque.
 
+### Mostrar antes que contar: `guia()` y `api.pistaError`
+
+La pista es texto, y el texto es lo último que se lee. Desde la 4.7
+un mesón que todavía no se ha ganado tiene un **vigía de quietud**: si
+en 8 s (15 en los bravos) no avanza nada, vuelve a decir el gesto y el
+«?» late; si sigue quieto, una **mano** hace el gesto encima de la
+pieza que toca. Lo mismo al tercer toque equivocado, y con un segundo
+«?» seguido. Como mucho dos veces por mesón, y se va con el primer
+dedo.
+
+Qué enseñar lo dice el nivel, con un export opcional:
+
+```js
+guia() {
+  // { tipo: 'tocar' | 'mantener' | 'frotar' | 'arrastrar',
+  //   desde: Vector3, hasta?: Vector3 }   — en el mundo; main.js proyecta
+}
+```
+
+El orden que usan las cuatro primeras bolsas: **el bicho suelto
+primero** (arrastrarlo a la composta), luego la pieza ya abierta, luego
+la cerrada. Un nivel sin `guia()` sólo repite la pista.
+
+Las pistas reactivas al gesto equivocado («con tocarlo no sale») van
+por `api.pistaError(clave, msg, ms)` en vez de `api.pista`: cuenta por
+clave y por montaje, y a la tercera lanza la mano.
+
+### El primer bicho de la vida
+
+`api.primerBicho` es verdadero en el mesón donde un bicho de la plaga
+sale por primera vez en la vida del jugador. Ese bicho camina a la
+mitad, se queda quieto 1.5 s al salir y se enseña cuando aparece, con
+una línea («Arrástralo al cuenco verde»), no en la fila de arranque.
+En las presentaciones (dificultad ≤ 2) la plaga perdona además una
+llegada a la batea, y a dos pasos de ella el bicho late y se avisa.
+Con `bichoTras: N` en la config, el bicho de las habas no se sortea:
+sale de la vaina número N que se abra.
+
 ## La dificultad manda sobre los bichos
 
 Los bichos eran iguales en la primera parada y en la última, y así el

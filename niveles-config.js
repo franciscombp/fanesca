@@ -239,6 +239,10 @@ export const VAINAS = {
       cantidad: 4,
       resistencia: 0,
       gusanos: 1,
+      /* el gusanito del primer nivel del juego sale de la TERCERA vaina
+         abierta, nunca de la primera: primero se aprende a desvainar y
+         se ve volar la cáscara a la composta; después, el giro */
+      bichoTras: 3,
     }
   },
   'habas-2-normal': {

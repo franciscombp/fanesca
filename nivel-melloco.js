@@ -262,7 +262,7 @@ export default {
     /* un toque seco no raspa nada: la baba pide recorrido */
     if (info.raiz && info.raiz.userData.tipo === 'melloco') {
       api.sfx('resist');
-      api.pista('Con tocarlo no sale. <b>Refriega</b>: pasa el dedo por encima, de lado a lado.', 3200);
+      (api.pistaError || ((k, m, ms) => api.pista(m, ms)))('tocar-melloco', 'Con tocarlo no sale. <b>Refriega</b>: pasa el dedo por encima, de lado a lado.', 3200);
     }
   },
 
