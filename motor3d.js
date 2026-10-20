@@ -744,9 +744,37 @@ function iniciarPellizco() {
   const a = punteros.get(ids[0]), b = punteros.get(ids[1]);
   const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
   pellizco = { ids, x0: mx, y0: my };
+  soltarPieza();
   actualizarRayo({ clientX: mx, clientY: my });
   const info = leerInfoPellizco(mx, my);
   if (nivel.alPellizcarInicio) nivel.alPellizcarInicio(info);
+}
+
+/* LA PIEZA CEDE BAJO EL DEDO. Casi todos los niveles resuelven al
+   LEVANTAR el dedo, y mientras está abajo nada respondía: el control
+   se sentía de goma. Un nivel que declara `presionables` (los tipos
+   de pieza que se tocan) recibe esto gratis: al bajar el dedo la pieza
+   se aplasta un pelo, y al soltar vuelve con un rebote. La lógica
+   sigue en el mismo sitio —cero latencia añadida—; es sólo el cuerpo
+   contestando. Nunca en piezas que el nivel ya anima de escala. */
+let presionada = null;   /* { obj, s } */
+function apretarPieza(info) {
+  const tipos = nivel && nivel.presionables;
+  const r = info && info.raiz;
+  if (!tipos || !r || !r.userData || !tipos.includes(r.userData.tipo) || r.userData.animaEscala) return;
+  soltarPieza();
+  const s0 = r.scale.clone();
+  presionada = { obj: r, s: s0 };
+  tween(r, 'scale', new THREE.Vector3(s0.x * 1.06, s0.y * 0.9, s0.z * 1.06), 0.06);
+}
+function soltarPieza() {
+  if (!presionada) return;
+  const { obj, s } = presionada;
+  presionada = null;
+  /* si ya se fue (voló a la batea, reventó), no hay nada que devolver */
+  if (!obj.parent || obj.userData.suelto) return;
+  tweens = tweens.filter(tw => !(tw.obj === obj && tw.prop === 'scale'));
+  tween(obj, 'scale', s, 0.2, easePop);
 }
 
 function onDown(e) {
@@ -765,6 +793,7 @@ function onDown(e) {
   actualizarRayo(e);
   gesto = { x0: e.clientX, y0: e.clientY, arrastrando: false, info: null };
   gesto.info = leerInfo(e);
+  apretarPieza(gesto.info);
   if (nivel.alPresionar) nivel.alPresionar(gesto.info);
 }
 function onMove(e) {
@@ -789,6 +818,7 @@ function onMove(e) {
   if (!gesto.arrastrando && Math.hypot(info.dx, info.dy) > UMBRAL_ARRASTRE) {
     gesto.arrastrando = true;
     info.arrastre = true;
+    soltarPieza();
     if (nivel.alArrastrarInicio) nivel.alArrastrarInicio(gesto.info);
   }
   if (gesto.arrastrando && nivel.alArrastrar) nivel.alArrastrar(info);
@@ -816,6 +846,7 @@ function onUp(e) {
   const arrastraba = gesto.arrastrando;
   const inicial = gesto.info;
   gesto = null;
+  soltarPieza();
   if (arrastraba) { if (nivel.alArrastrarFin) nivel.alArrastrarFin(info); }
   else { if (nivel.alTocar) nivel.alTocar(inicial); }
 }
@@ -1060,6 +1091,7 @@ export const Motor = {
      referencias, barrer antes no le quita nada a nadie. */
   descargar() {
     gesto = null;
+    presionada = null;
     pellizco = null;
     punteros.clear();
     tweens = [];

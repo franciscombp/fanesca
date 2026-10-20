@@ -271,6 +271,9 @@ export default {
     };
   },
 
+  /* el huevo cede bajo el dedo antes de cascarse (motor3d) */
+  presionables: ['huevo'],
+
   objetivos() { return [huevoObj].filter(Boolean); },
 
   alTocar() {

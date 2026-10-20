@@ -342,6 +342,9 @@ export default {
 
   actualizar(dt, t) {
     if (terminado) return;
+    /* la sartén chisporrotea mientras hay algo friéndose */
+    const friendo = tajadas.filter(r => r.estado === 'friendo').length;
+    if (friendo && api.sonarGesto) api.sonarGesto('freir', 0.4 + friendo * 0.2);
     for (const rec of tajadas) {
       if (rec.estado !== 'friendo') continue;
       if (enMano && enMano.rec === rec) continue;

@@ -154,8 +154,9 @@ function verterLeche(dt) {
     chorro.scale.set(1 + 0.12 * Math.sin(api.reloj * 31), Math.max(0.05, pico.y - (api.MESA_Y + 0.12)), 1);
     chorro.visible = true;
   }
-  if (Math.random() < 0.5) api.chispas(api.BATEA.clone().setY(api.MESA_Y + 0.45), '#fdfbf4', 3, 0.5);
-  if (Math.random() < 0.2) api.sfx('frotar');
+  if (Math.random() < 0.5) api.chispas(api.BATEA.clone().setY(api.MESA_Y + 0.45), '#fdfbf4', 3, 0.5, { forma: 'gota' });
+  /* la leche suena a chorro mientras cae, no a doce zumbidos por segundo */
+  (api.sonarGesto || (() => {}))('verter', 1);
   if (vertiendo >= 0.9 && !terminado) {
     terminado = true;
     hechos = TOTAL;

@@ -113,7 +113,8 @@ function frotarHasta(p) {
     rec.camisita.scale.setScalar(1 + k * 0.35);
     rec.camisita.material.opacity = 0.55 - k * 0.3;
     rec.obj.rotation.y += d * 2.4;
-    if (Math.random() < 0.2) api.sfx('frotar');
+    /* un sonido que sigue al dedo, no un chasquido al azar por cuadro */
+    (api.sonarGesto || (() => {}))('frotar', d * 30);
     if (rec.frote >= FROTE_PIDE) soltarCamisita(rec);
     return;   /* un dedo frota UN garbanzo: el de abajo */
   }

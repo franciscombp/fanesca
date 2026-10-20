@@ -132,7 +132,7 @@ function enrollar(cuanto) {
     parcial.position.set(hoja.obj.position.x - medio, api.MESA_Y + ALTO * r, TABLA_Z);
     parcial.rotation.z -= cuanto * 6;     /* gira mientras engorda */
   }
-  if (Math.random() < 0.15) api.sfx('frotar');
+  (api.sonarGesto || (() => {}))('frotar', cuanto * 40);
   if (k < 1) return;
   if (parcial) parcial.visible = false;
 

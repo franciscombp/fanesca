@@ -396,6 +396,9 @@ export default {
     api.pista(`<b>Arrastra al canasto</b> los que sirvan. <b>Tócalo</b> para abrirle la hoja y verle el grano — te dejan abrir <b>${APERTURAS}</b>.`, 5200);
   },
 
+  /* el choclo cede bajo el dedo (motor3d) */
+  presionables: ['choclo'],
+
   objetivos() { return [grupo]; },
 
   alTocar(info) {

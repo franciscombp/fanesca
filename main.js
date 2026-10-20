@@ -336,6 +336,33 @@ function resumenBolsa(bolsa) {
   return r;
 }
 
+/* LA ESCALERA DE PLATOS, para elegir qué cocinar. Cuenta lo que hay
+   en tres estados —ya sale, se puede, falta— y lo que falta lo dice
+   con nombres: «te faltan el mote y la col». */
+function abrirPlatos() {
+  const sabe = loQueSabe();
+  const tope = platoDe(sabe);
+  const lista = $('#platos-lista');
+  if (!lista) return;
+  lista.innerHTML = '';
+  PLATOS.forEach(pl => {
+    const faltan = pl.pide.filter(id => !sabe.has(id));
+    const rec = recordDe(pl);
+    const li = document.createElement('li');
+    li.className = 'plato-fila' + (faltan.length ? ' plato-fila--cerrada' : '') + (tope && pl.id === tope.id ? ' plato-fila--hoy' : '');
+    const estado = faltan.length
+      ? `te ${faltan.length === 1 && !bolsaPlural(faltan[0]) ? 'falta' : 'faltan'} ${listaDeBolsas(faltan)}`
+      : (rec ? `${'🥄'.repeat(Math.max(1, rec.cucharas || 1))} · ${relojDePartida(rec.ms)}` : 'cocinar por primera vez');
+    li.innerHTML = `<b>${pl.nombre}</b><small>${estado}</small>${faltan.length ? '<span aria-hidden="true">🔒</span>' : '<span aria-hidden="true">▶</span>'}`;
+    if (!faltan.length) {
+      li.setAttribute('role', 'button'); li.tabIndex = 0;
+      tocable(li, () => { sfx('tab'); cerrarModales(); arrancarOlla(pl.id); });
+    }
+    lista.appendChild(li);
+  });
+  $('#modal-platos').classList.add('open');
+}
+
 /* la primera bolsa abierta cuyo básico nadie ha jugado: el paso
    siguiente natural de quien empieza */
 function bolsaNuevaSinJugar() {
@@ -608,6 +635,57 @@ function sfx(tipo, tono = 1, opc = {}) {
     fuente.stop(t0 + dur + .03);
   });
 }
+
+/* LOS GESTOS CONTINUOS SUENAN CONTINUO. Frotar el garbanzo, rallar
+   el sambo o verter la leche disparaban un chasquido al azar en una
+   fracción de los cuadros: doce zumbidos por segundo a 60 Hz y el
+   doble en una pantalla de 120, sin nada que ver con la velocidad del
+   dedo. Ahora es un ruido filtrado en bucle cuyo volumen sigue al
+   gesto. El nivel sólo dice «esto está sonando, con esta fuerza»
+   mientras pasa; si deja de decirlo, el bucle se apaga solo — no hay
+   cómo dejarlo sonando al salir del mesón. */
+const BUCLES = {
+  frotar: { filtro: 'bandpass', fq: 1500, q: 2, g: .07 },
+  rallar: { filtro: 'bandpass', fq: 3200, q: 3, g: .06 },
+  verter: { filtro: 'lowpass', fq: 1100, q: .7, g: .09 },
+  /* el aceite: un siseo agudo mientras haya algo en la sartén */
+  freir: { filtro: 'highpass', fq: 2600, q: .7, g: .035 },
+};
+const buclesVivos = {};
+let vigiaBucles = null;
+function sonarGesto(tipo, v = 1) {
+  if (estado.silencio) return;
+  const def = BUCLES[tipo];
+  if (!def) return;
+  initAudio(); if (!audioCtx || !ruidoBuf) return;
+  let b = buclesVivos[tipo];
+  if (!b) {
+    const src = audioCtx.createBufferSource();
+    src.buffer = ruidoBuf; src.loop = true;
+    const f = audioCtx.createBiquadFilter();
+    f.type = def.filtro; f.frequency.value = def.fq; f.Q.value = def.q;
+    const g = audioCtx.createGain(); g.gain.value = .0001;
+    src.connect(f).connect(g).connect(bus || audioCtx.destination);
+    src.start();
+    b = buclesVivos[tipo] = { src, g, f, ultimo: 0 };
+  }
+  const k = Math.max(.2, Math.min(1, v));
+  b.g.gain.setTargetAtTime(def.g * k, audioCtx.currentTime, .04);
+  /* el timbre sube un poco con la fuerza: rallar rápido suena más agudo */
+  b.f.frequency.setTargetAtTime(def.fq * (.85 + .3 * k), audioCtx.currentTime, .06);
+  b.ultimo = performance.now();
+  if (!vigiaBucles) vigiaBucles = setInterval(revisarBucles, 60);
+}
+function revisarBucles(todos = false) {
+  const ahora = performance.now();
+  for (const [tipo, b] of Object.entries(buclesVivos)) {
+    const quieto = ahora - b.ultimo;
+    if (todos || quieto > 110) b.g.gain.setTargetAtTime(.0001, audioCtx.currentTime, .05);
+    if (todos || quieto > 450) { try { b.src.stop(audioCtx.currentTime + .2); } catch (e) {} delete buclesVivos[tipo]; }
+  }
+  if (!Object.keys(buclesVivos).length) { clearInterval(vigiaBucles); vigiaBucles = null; }
+}
+const pararBucles = () => revisarBucles(true);
 
 /* LA VIBRACIÓN TIENE VOCABULARIO. Había cien patrones sueltos con
    pausas de 10–12 ms, que el dedo no distingue (Android pide 50 ms o
@@ -1110,6 +1188,9 @@ function renderMesa() {
   const pct = Math.round(sabe.size / ORDEN_BOLSAS.length * 100);
   const anillo = $('#mesa-anillo'); if (anillo) anillo.style.setProperty('--p', pct);
   const cifra = $('#mesa-anillo-n'); if (cifra) cifra.textContent = `${sabe.size}/${ORDEN_BOLSAS.length}`;
+  /* la escalera se ofrece en cuanto hay más de un plato que cocinar */
+  const escPl = $('#mesa-escalera');
+  if (escPl) escPl.classList.toggle('hidden', PLATOS.filter(pl => pl.pide.every(id => sabe.has(id))).length < 2);
   const nota = $('#mesa-plato-nota');
   if (nota) {
     nota.textContent = plato ? plato.texto : 'Abre la primera bolsa y ya tendrás qué cocinar.';
@@ -2145,6 +2226,7 @@ const api = {
     if (corriendo || relojEnEspera) { relojEnEspera = false; arruinarNivel(motivo); }
   },
   aviso: alerta,
+  sonarGesto,
   /* la plaga compartida se anuncia al armarse, y dice si hay bicho
      suelto: el «?» y la ayuda lo necesitan saber */
   hayPlaga() { plagaEnMeson = true; },
@@ -2917,14 +2999,22 @@ function cartelDeActo(acto, i, de) {
    pueda cocinar mañana */
 let platoEnCurso = null;
 
-function arrancarOlla() {
+/* `platoId` opcional: un plato de más abajo de la escalera, ya sabido
+   entero. Sin él, el más alto, con todo lo que se sabe (como siempre) */
+function arrancarOlla(platoId) {
   if (!motorListo) { toast('Este minijuego necesita WebGL 😔'); return; }
   const sabe = loQueSabe();
-  const plato = platoDe(sabe);
+  let plato = platoDe(sabe);
   if (!plato) { toast('Primero aprende a preparar algo 🧺'); return; }
+  let receta = sabe;
+  const elegido = typeof platoId === 'string' ? PLATOS.find(p => p.id === platoId) : null;
+  if (elegido && elegido.id !== plato.id && elegido.pide.every(id => sabe.has(id))) {
+    plato = elegido;
+    receta = new Set(elegido.pide);
+  }
   /* el caldero anuncia el plato de hoy al terminar: sin esto, unas
      habas cocinadas se celebraban como «la fanesca armada» */
-  const pasos = pasosOlla(sabe).map(p => (p.base === 'caldero'
+  const pasos = pasosOlla(receta).map(p => (p.base === 'caldero'
     ? { ...p, config: { ...(p.config || {}), plato: { id: plato.id, enFrase: plato.enFrase } } }
     : p));
   if (!pasos.length) { toast('La olla está vacía todavía'); return; }
@@ -3390,6 +3480,7 @@ function arruinarNivel(motivo) {
 
 function salirDelNivel() {
   reiniciarAyuda();
+  pararBucles();
   /* corta cualquier montaje en vuelo: si se sale mientras un mesón
      estaba cargando, el que llegue tarde ya no tiene a quién servir */
   montaje++;
@@ -3505,6 +3596,7 @@ function bindEventos() {
       estado.silencio = !estado.silencio;
       guardar();
       pintarSonido();
+      if (estado.silencio) pararBucles();
       if (!estado.silencio) sfx('tab');
     });
   }
@@ -3536,7 +3628,12 @@ function bindEventos() {
   });
   tocable($('#apuro-otra'), () => { sfx('tab'); cerrarModales(); arrancarApuro(); });
   tocable($('#apuro-salir'), () => { sfx('tab'); cerrarModales(); mostrar('mesa'); });
-  tocable($('#olla-otra'), () => { sfx('tab'); cerrarModales(); arrancarOlla(); });
+  /* otra vez EL MISMO plato: si elegiste las habas, otra vez habas */
+  tocable($('#olla-otra'), () => { sfx('tab'); cerrarModales(); arrancarOlla(platoEnCurso && platoEnCurso.id); });
+  const escalera = $('#mesa-escalera');
+  if (escalera) tocable(escalera, () => { sfx('tab'); abrirPlatos(); });
+  const cerrarPl = $('#platos-cerrar');
+  if (cerrarPl) tocable(cerrarPl, () => { sfx('tab'); cerrarModales(); });
   tocable($('#olla-nueva'), () => {
     const id = $('#olla-nueva').dataset.nivel;
     if (!id) return;

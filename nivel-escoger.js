@@ -321,6 +321,9 @@ export default {
     api.progreso(0, TOTAL());
   },
 
+  /* el grano cede bajo el dedo (motor3d) */
+  presionables: ['grano'],
+
   objetivos() { return [granosGrupo, plaga.grupo]; },
 
   alTocar(info) {

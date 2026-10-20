@@ -196,6 +196,9 @@ export default {
     api.progreso(0, TOTAL);
   },
 
+  /* el chocho cede bajo el dedo antes de reventar (motor3d) */
+  presionables: ['chocho'],
+
   objetivos() { return [chochosGrupo, plaga.grupo]; },
 
   /* la mano guía: el gorgojo suelto a la composta, o apretar un chocho */

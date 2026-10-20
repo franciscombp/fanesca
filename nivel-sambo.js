@@ -128,7 +128,7 @@ function rallarHasta(p) {
   previo = p.clone();
   if (d < 1e-4 || d > 0.5) return;
   recorrido += d;
-  if (Math.random() < 0.25) api.sfx('frotar');
+  (api.sonarGesto || (() => {}))('rallar', d * 30);
   if (recorrido >= PASADA) {
     recorrido -= PASADA;
     pasadaHecha();

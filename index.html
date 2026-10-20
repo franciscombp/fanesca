@@ -96,6 +96,7 @@
         <span class="anillo consola-anillo" id="mesa-anillo" style="--p:0" aria-hidden="true"><b id="mesa-anillo-n">0/18</b></span>
       </header>
       <p id="mesa-plato-nota" class="mesa-plato-nota"></p>
+      <button type="button" id="mesa-escalera" class="mesa-escalera hidden">🍲 la escalera de platos ›</button>
       <div class="scroll scroll--despensa">
         <div id="mesa-lista" class="mesa-bolsas"></div>
         <div id="mesa-extras" class="mesa-extras">
@@ -198,6 +199,21 @@
       <p class="hola-pie">Cada ingrediente que aprendes cambia lo que sale de tu olla.</p>
       <button type="button" id="hola-empezar" class="btn btn--maiz btn--lg btn--block">▶ Empezar por las habas</button>
       <button type="button" id="hola-despensa" class="btn btn--fantasma btn--sm btn--block">Ver la despensa primero</button>
+    </div>
+  </div>
+
+  <!-- ================= Modal: la escalera de platos =================
+       COCINA EL QUE QUIERAS. La olla cocinaba siempre el plato más alto:
+       con la despensa llena, la única olla eran veinte pasos y nueve
+       minutos. Aquí están los diez platos —lo que ya sale, lo que se
+       puede, lo que falta— y cada uno con su récord. -->
+  <div id="modal-platos" class="modal" role="dialog" aria-modal="true" aria-labelledby="platos-titulo">
+    <div class="sheet">
+      <p class="sheet-eyebrow">la escalera de la olla</p>
+      <h3 id="platos-titulo" class="sheet-title">Lo que sale de tu olla</h3>
+      <p class="sheet-body">Cocina el que quieras: cada plato tiene su récord.</p>
+      <ul id="platos-lista" class="platos-lista"></ul>
+      <button type="button" id="platos-cerrar" class="btn btn--fantasma btn--sm btn--block">Cerrar</button>
     </div>
   </div>
 
