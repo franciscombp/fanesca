@@ -174,6 +174,21 @@ export default {
 
   objetivos() { return [grupo, plaga.grupo]; },
 
+  /* la mano guía: el gusanito suelto; si no, pasadas cortas encima de
+     un garbanzo que todavía tiene su camisita —el más frotado, y si no
+     el del medio, que la mano no quede en el filo de la pantalla */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const g = granos.filter(r => !r.ido)
+      .sort((a, c) => (c.frote - a.frote) || (Math.abs(a.obj.position.x) - Math.abs(c.obj.position.x)))[0];
+    if (!g) return null;
+    const w = new THREE.Vector3();
+    g.obj.getWorldPosition(w);
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x - 0.14, w.y, w.z), hasta: new THREE.Vector3(w.x + 0.14, w.y, w.z) };
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }

@@ -244,6 +244,26 @@ export default {
 
   objetivos() { return [bloqueObj, jarraObj, moscasGrupo].filter(Boolean); },
 
+  /* la mano guía: la mosca primero, de un toque encima de ella (aquí
+     tocarla la espanta; desmigar con ella puesta es lo que la mete a
+     la olla); luego los toques al bloque, y al final llevar la jarra
+     hasta encima de la batea, donde se vuelca sola */
+  guia() {
+    if (terminado) return null;
+    const w = new THREE.Vector3();
+    const m = moscaPosada();
+    if (m) { m.obj.getWorldPosition(w); return { tipo: 'tocar', desde: w }; }
+    if (fase === 'desmigar' && bloqueObj) {
+      bloqueObj.getWorldPosition(w);
+      return { tipo: 'tocar', desde: w.setY(api.MESA_Y + 0.3) };
+    }
+    if (fase === 'leche' && jarraObj) {
+      jarraObj.getWorldPosition(w);
+      return { tipo: 'arrastrar', desde: w.clone(), hasta: api.BATEA.clone().setY(api.MESA_Y + 0.4) };
+    }
+    return null;
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'mosca') {

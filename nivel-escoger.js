@@ -326,6 +326,27 @@ export default {
 
   objetivos() { return [granosGrupo, plaga.grupo]; },
 
+  /* la mano guía: el gorgojo suelto (aquí está desde el principio, y
+     es lo primero que hay que mirar); luego tocar una piedrita o un
+     grano picado; con la mesa limpia, barrer una lenteja hacia la batea */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const w = new THREE.Vector3();
+    if (fase === 'escoger') {
+      const s = granos.find(g => !g.ido && g.clase === 'piedra') || granos.find(g => !g.ido && g.clase !== 'buena');
+      if (!s) return null;
+      s.obj.getWorldPosition(w);
+      return { tipo: 'tocar', desde: w };
+    }
+    const l = granos.find(g => !g.ido && g.clase === 'buena');
+    if (!l) return null;
+    l.obj.getWorldPosition(w);
+    const dx = api.BATEA.x - w.x, dz = api.BATEA.z - w.z, d = Math.hypot(dx, dz) || 1;
+    return { tipo: 'arrastrar', desde: w.clone(), hasta: new THREE.Vector3(w.x + dx / d * 0.45, w.y, w.z + dz / d * 0.45) };
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }

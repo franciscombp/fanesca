@@ -276,6 +276,25 @@ export default {
 
   objetivos() { return [huevoObj].filter(Boolean); },
 
+  /* la mano guía: cascando, los golpecitos en el huevo; cuarteado,
+     rascar desde el pedazo que late hacia el medio del huevo. El casco
+     tiene su origen en el centro del huevo (getWorldPosition da el
+     centro para los ocho), así que su sitio sale de su malla. Y el
+     trazo termina en un punto del plano del centro, a menos de 0.34 de
+     él: es la vara de `cascoCerca`, y por ahí el dedo sí despega
+     pedazos (en pantalla cae sobre la cara de adelante). */
+  guia() {
+    if (terminado || !huevoObj) return null;
+    const centro = huevoObj.getWorldPosition(new THREE.Vector3());
+    if (fase === 'cascar') return { tipo: 'tocar', desde: centro };
+    if (fase !== 'pelar') return null;
+    const c = primero && primero.userData.tipo ? primero : cascos.find(x => x.userData.tipo);
+    if (!c) return null;
+    if (!c.geometry.boundingSphere) c.geometry.computeBoundingSphere();
+    const desde = c.localToWorld(c.geometry.boundingSphere.center.clone());
+    return { tipo: 'arrastrar', desde, hasta: centro.add(new THREE.Vector3(0.1, 0, 0.15)) };
+  },
+
   alTocar() {
     if (terminado) return;
     const p = api.puntoEnPlano(CENTRO().y);

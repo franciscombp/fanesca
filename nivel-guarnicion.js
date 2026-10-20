@@ -267,6 +267,29 @@ export default {
 
   objetivos() { return [sartenObj, platoObj, ajiObj, ...empanaditas, ...tajadas.map(t => t.obj)].filter(Boolean); },
 
+  /* la mano guía, en el orden en que apura el fuego: la dorada de los
+     dos lados se saca de la sartén; la que ya dora se voltea de un
+     toque; si no, una cruda a la sartén. Armando, lo que falta va
+     arrastrado encima del plato. Las alturas son las de los planos
+     donde el nivel mira el dedo. */
+  guia() {
+    if (terminado) return null;
+    const w = new THREE.Vector3();
+    const en = (o, y) => o.getWorldPosition(w).setY(y).clone();
+    if (fase === 'armar') {
+      const top = [...empanaditas, ajiObj, ...tajadas.map(t => t.obj)].find(o => o && o.userData.tipo === 'topping');
+      if (!top) return null;
+      return { tipo: 'arrastrar', desde: en(top, api.MESA_Y + 0.24), hasta: PLATO().setY(api.MESA_Y + 0.3) };
+    }
+    const lista = tajadas.find(t => t.estado === 'lista');
+    if (lista) return { tipo: 'arrastrar', desde: en(lista.obj, api.MESA_Y + 0.24), hasta: ESPERA(fritas % 3).setX(0.95).setY(api.MESA_Y + 0.3) };
+    const dora = tajadas.find(t => t.estado === 'friendo' && t.dora >= 1);
+    if (dora) return { tipo: 'tocar', desde: en(dora.obj, api.MESA_Y + 0.24) };
+    const cruda = tajadas.find(t => t.estado === 'cruda');
+    if (cruda) return { tipo: 'arrastrar', desde: en(cruda.obj, api.MESA_Y + 0.24), hasta: SARTEN().setY(api.MESA_Y + 0.3) };
+    return null;
+  },
+
   alTocar() {
     if (terminado) return;
     const p = api.puntoEnPlano(api.MESA_Y + 0.24);

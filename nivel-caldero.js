@@ -667,6 +667,18 @@ export default {
 
   objetivos() { return [grupo]; },
 
+  /* la mano guía: el cuenco que toca, arrastrado hasta la boca de la
+     olla (al aro). Es el mismo que se alumbra a la segunda equivocación:
+     a quien se quedó quieto le sobra la duda, no le falta el castigo. */
+  guia() {
+    if (terminado) return null;
+    const ing = siguiente();
+    const rec = ing && cuencos.find(c => c.ing.id === ing.id && !c.dentro);
+    if (!rec) return null;
+    const desde = rec.obj.getWorldPosition(new THREE.Vector3()).setY(api.MESA_Y + CUENCO_R * 0.6);
+    return { tipo: 'arrastrar', desde, hasta: new THREE.Vector3(0, api.MESA_Y + OLLA_ALTO + 0.03, OLLA_Z) };
+  },
+
   alTocar(info) {
     if (terminado) return;
     const rec = cercaDelDedo(info.cliente.x, info.cliente.y);

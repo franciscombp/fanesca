@@ -65,7 +65,12 @@ let terminado = false;
 let virando = 0;
 let viradoEnGesto = false;
 const VIRA_DESDE = 0.12;
-const VIRA_RECORRIDO = 0.5;
+/* 0.22 y no 0.5: botar pedía llevar el dedo a 1.28 del centro de la
+   batea (radio 0.66 + 0.12 + 0.5), y en un teléfono de 390 px el borde
+   de la pantalla, a la altura de la batea, queda a 1.11 — el arrastre
+   recto hasta el filo no botaba el agua; sólo el diagonal. Con 1.00
+   se bota unos dedos antes del borde. */
+const VIRA_RECORRIDO = 0.22;
 const VIRA_ANGULO = 0.6;
 
 /* el agua del mote no sale lechosa como la del arroz: sale TURBIA,
@@ -252,6 +257,25 @@ export default {
   },
 
   objetivos() { return [bateaObj, plaga.grupo]; },
+
+  /* la mano guía: el gorgojo suelto; si no, agitar de lado a lado por
+     el agua —el vaivén es lo que cuenta, no la vuelta—; con el agua ya
+     turbia, sacar el dedo por la izquierda hasta que la batea se vire.
+     Sale en diagonal, hacia el fondo: a la altura de la batea el punto
+     de botar cae fuera de un teléfono angosto, y atrás la mesa se ve
+     más ancha (el viraje sólo mide cuánto se aparta en x) */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    /* la última agua no se bota: lavado el mote, sólo quedaba el bicho */
+    if (!bateaObj || hechos >= TOTAL) return null;
+    const w = new THREE.Vector3();
+    bateaObj.getWorldPosition(w);
+    w.y = api.MESA_Y + 0.2;
+    if (enAgua >= AGITADAS) return { tipo: 'arrastrar', desde: w.clone(), hasta: new THREE.Vector3(w.x - (RADIO_BATEA + VIRA_DESDE + VIRA_RECORRIDO), w.y, w.z - 0.8) };
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x - 0.32, w.y, w.z), hasta: new THREE.Vector3(w.x + 0.32, w.y, w.z) };
+  },
 
   alTocar(info) {
     if (terminado) return;

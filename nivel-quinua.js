@@ -82,7 +82,12 @@ let virando = 0;
 let viradoEnGesto = false;
 /* desde dónde empieza a virar y cuánto hay que salirse para botar */
 const VIRA_DESDE = 0.12;
-const VIRA_RECORRIDO = 0.5;
+/* 0.22 y no 0.5: botar pedía llevar el dedo a 1.28 del centro de la
+   batea (radio 0.66 + 0.12 + 0.5), y en un teléfono de 390 px el borde
+   de la pantalla, a la altura de la batea, queda a 1.11 — el arrastre
+   recto hasta el filo no botaba el agua; sólo el diagonal. Con 1.00
+   se bota unos dedos antes del borde. */
+const VIRA_RECORRIDO = 0.22;
 const VIRA_ANGULO = 0.6;
 
 function centro() {
@@ -298,6 +303,27 @@ export default {
   },
 
   objetivos() { return [bateaObj, plaga.grupo]; },
+
+  /* la mano guía: el gorgojo suelto; si no, el vaivén pegado a la
+     orilla de adelante. La mano no sabe dar vueltas, pero una cuerda
+     cerca del filo barre ángulo alrededor del centro —que es lo que
+     aquí se cuenta— y uno por el medio no lavaría nada. Con el agua
+     colmada, sacar el dedo por la izquierda hasta virar la batea, en
+     diagonal hacia el fondo: a la altura de la batea el punto de botar
+     cae fuera de un teléfono angosto (el viraje sólo mide x) */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    if (!bateaObj || quitado >= TOTAL_RAD) return null;
+    const w = new THREE.Vector3();
+    bateaObj.getWorldPosition(w);
+    w.y = api.MESA_Y + 0.2;
+    if (espuma >= 1) return { tipo: 'arrastrar', desde: w.clone(), hasta: new THREE.Vector3(w.x - (RADIO_BATEA + VIRA_DESDE + VIRA_RECORRIDO), w.y, w.z - 0.8) };
+    /* adelante, pero sin pisar el filo de barro que tapa el agua */
+    const ex = RADIO_BATEA * 0.56, ez = RADIO_BATEA * 0.24;
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x - ex, w.y, w.z + ez), hasta: new THREE.Vector3(w.x + ex, w.y, w.z + ez) };
+  },
 
   alTocar(info) {
     if (terminado) return;

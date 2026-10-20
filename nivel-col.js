@@ -339,6 +339,25 @@ export default {
 
   objetivos() { return [colGrupo, plaga.grupo]; },
 
+  /* la mano guía: el gusano suelto; con la hoja puesta, empujarla de
+     orilla a orilla (sólo cuenta lo que va de lado); con el rollo
+     hecho, una pasada que lo cruza pegada a la punta, donde sale finita */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const w = new THREE.Vector3();
+    if (hoja) {
+      hoja.obj.getWorldPosition(w);
+      const a = ANCHO_HOJA * 0.36;
+      return { tipo: 'frotar', desde: new THREE.Vector3(w.x - a, w.y, w.z), hasta: new THREE.Vector3(w.x + a, w.y, w.z) };
+    }
+    if (!rollo) return null;
+    rollo.obj.getWorldPosition(w);
+    const z = w.z + rollo.largo / 2 - 0.04;
+    return { tipo: 'arrastrar', desde: new THREE.Vector3(w.x - 0.42, w.y, z), hasta: new THREE.Vector3(w.x + 0.42, w.y, z) };
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }

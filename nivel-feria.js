@@ -401,6 +401,25 @@ export default {
 
   objetivos() { return [grupo]; },
 
+  /* la mano guía enseña el GESTO, no la respuesta: lleva al canasto un
+     tierno que ya se sabe tierno (abierto, o con la señal honesta de
+     hoja verde); si no, abre de un toque uno que no sea seco mientras
+     la casera deje. Un tierno disfrazado no lo destapa nunca: escoger
+     es el juego. */
+  guia() {
+    if (terminado) return null;
+    const sobre = rec => new THREE.Vector3(rec.x, api.MESA_Y + ALTO + 0.05, rec.z);
+    const canasto = api.BATEA.clone().setY(api.MESA_Y + 0.30);
+    const libres = puesto.filter(r => !r.tomado);
+    const visto = libres.find(r => r.abierto && r.clase.sirve);
+    if (visto) return { tipo: 'arrastrar', desde: sobre(visto), hasta: canasto };
+    const dudoso = aperturas > 0 && libres.find(r => !r.abierto && r.senal !== SENAL.seco);
+    if (dudoso) return { tipo: 'tocar', desde: sobre(dudoso) };
+    const honesto = libres.find(r => r.clase.sirve && r.senal === SENAL.fresco);
+    if (honesto) return { tipo: 'arrastrar', desde: sobre(honesto), hasta: canasto };
+    return null;
+  },
+
   alTocar(info) {
     if (terminado) return;
     const rec = cercaDelDedo(info.cliente.x, info.cliente.y);

@@ -351,6 +351,30 @@ export default {
 
   objetivos() { return [presasGrupo, moscasGrupo]; },
 
+  /* la mano guía: la mosca posada se espanta arrastrando DESDE ella
+     (tocarla es aplastarla); si no, la presa limpia va hacia arriba a
+     la tina, y la salada se frota de lado a lado — nunca una con mosca
+     encima, que frotarla también la aplasta */
+  guia() {
+    if (terminado) return null;
+    const w = new THREE.Vector3();
+    const m = moscas.find(x => x.estado === 'posada');
+    if (m) {
+      m.obj.getWorldPosition(w);
+      return { tipo: 'arrastrar', desde: w.clone(), hasta: w.clone().add(new THREE.Vector3(0.45, 0, -0.4)) };
+    }
+    const limpia = presas.find(p => p.limpia && !p.tendida);
+    if (limpia) {
+      limpia.obj.getWorldPosition(w);
+      return { tipo: 'arrastrar', desde: w.clone(), hasta: new THREE.Vector3(huecosTina[0] ?? 0, tinaBase ?? api.MESA_Y, TINA_Z) };
+    }
+    const salada = presas.find(p => !p.tendida && p.sal.length && !moscaEn(p));
+    if (!salada) return null;
+    salada.obj.getWorldPosition(w);
+    const y = api.MESA_Y + 0.2;
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x - 0.22, y, w.z), hasta: new THREE.Vector3(w.x + 0.22, y, w.z) };
+  },
+
   alTocar(info) {
     if (terminado || !info.raiz) return;
     if (info.raiz.userData.tipo === 'mosca') {

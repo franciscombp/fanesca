@@ -242,6 +242,28 @@ export default {
 
   objetivos() { return [granosGrupo, plaga.grupo, piedra, mano]; },
 
+  /* la mano guía: el gorgojo a la composta; si no, el vaivén a lo
+     largo de la piedra sobre un grano que todavía muerde; y si sólo
+     quedan granos en la orilla, arrimar uno al centro — ahí es donde
+     se queda atascado quien no sabe que se escaparon */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    const w = new THREE.Vector3();
+    const g = granos.find(r => !r.hecho && !enOrilla(r));
+    if (g) {
+      g.obj.getWorldPosition(w);
+      const tope = LARGO_PIEDRA / 2 - 0.12;
+      const x0 = Math.max(-tope, w.x - 0.32), x1 = Math.min(tope, w.x + 0.32);
+      return { tipo: 'frotar', desde: new THREE.Vector3(x0, caraLosa(), w.z), hasta: new THREE.Vector3(x1, caraLosa(), w.z) };
+    }
+    const o = granos.find(r => !r.hecho);
+    if (!o) return null;
+    o.obj.getWorldPosition(w);
+    return { tipo: 'arrastrar', desde: w.clone().setY(caraLosa()), hasta: new THREE.Vector3(0, caraLosa(), PIEDRA_Z) };
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }

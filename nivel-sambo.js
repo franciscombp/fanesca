@@ -181,6 +181,20 @@ export default {
 
   objetivos() { return [ralladorObj, mediaObj, plaga.grupo].filter(Boolean); },
 
+  /* la mano guía: el gusanito suelto; si no, el vaivén a lo largo de
+     la plancha, de arriba abajo (en z). Cualquier arrastre agarra la
+     media, y lo único que ralla es el recorrido sobre el rallador */
+  guia() {
+    if (terminado) return null;
+    const b = plaga && plaga.lista().find(r => r.estado === 'suelto');
+    if (b) return { tipo: 'arrastrar', desde: b.nodo.position.clone(), hasta: api.COMPOSTA.clone().setY(api.MESA_Y + 0.25) };
+    if (!mediaObj || !ralladorObj || mediaActual >= MEDIAS) return null;
+    const w = new THREE.Vector3();
+    ralladorObj.getWorldPosition(w);
+    w.y = api.MESA_Y + 0.2;
+    return { tipo: 'frotar', desde: new THREE.Vector3(w.x, w.y, w.z - PASADA / 2), hasta: new THREE.Vector3(w.x, w.y, w.z + PASADA / 2) };
+  },
+
   alTocar(info) {
     if (terminado) return;
     if (info.raiz && info.raiz.userData.tipo === 'bicho') { plaga.tocado(plaga.de(info.raiz)); return; }
