@@ -901,6 +901,31 @@ function abrirCocina() {
   $('#modal-cocina').classList.add('open');
 }
 
+/* EL FOCO VA A LA HOJA QUE SE ABRE. Las hojas se abren con una clase
+   y nadie movía el foco: con TalkBack o VoiceOver el lector seguía
+   leyendo la pantalla de atrás. Se vigila la clase de cada hoja en un
+   solo sitio —son treinta lugares los que las abren— y al abrirse el
+   foco va a su título; al cerrarse, vuelve a donde estaba. */
+function vigilarFoco() {
+  if (typeof MutationObserver === 'undefined') return;
+  let previo = null;
+  const obs = new MutationObserver(muts => muts.forEach(m => {
+    const el = m.target;
+    const abierta = el.classList.contains('open');
+    const antes = /(^|\s)open(\s|$)/.test(m.oldValue || '');
+    if (abierta && !antes) {
+      previo = document.activeElement;
+      const t = el.querySelector('.sheet-title');
+      if (t) { t.setAttribute('tabindex', '-1'); try { t.focus({ preventScroll: true }); } catch (e) {} }
+    } else if (!abierta && antes && el.contains(document.activeElement)) {
+      const volver = previo && document.contains(previo) ? previo : null;
+      previo = null;
+      try { if (volver) volver.focus({ preventScroll: true }); else document.activeElement.blur(); } catch (e) {}
+    }
+  }));
+  $$('.modal').forEach(m => obs.observe(m, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }));
+}
+
 /* ---------- LA PAUSA ----------
    Con faena empezada, ‹ abre esto en vez de pedir «toca otra vez» con
    un aviso de dos segundos. El reloj se para (el de los modos también:
@@ -4171,6 +4196,7 @@ function mostrarFinal() {
 function init() {
   estado = cargar() || nuevoEstado();
   aplicarOpciones();
+  vigilarFoco();
 
   /* EL ATAJO DE AUTOR: `?dev` en la dirección prende el modo dev y
      `?dev=0` lo apaga, sin ritual de toques — para cuando el ritual
