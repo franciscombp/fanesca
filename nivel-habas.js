@@ -127,7 +127,8 @@ function abrirVaina(rec) {
     h.visible = true;
     h.scale.setScalar(0.01);
     setTimeout(() => {
-      api.tween(h.scale, 'x', 1, 0.22); api.tween(h.scale, 'y', 1, 0.22); api.tween(h.scale, 'z', 1, 0.22);
+      const pop = api.ease && api.ease.pop;   /* salen de la vaina con un saltito */
+      api.tween(h.scale, 'x', 1, 0.24, pop); api.tween(h.scale, 'y', 1, 0.24, pop); api.tween(h.scale, 'z', 1, 0.24, pop);
     }, i * 35);
   });
   abiertas++;
@@ -281,6 +282,9 @@ export default {
     TOTAL = vainas.length * POR_VAINA;
     api.progreso(0, TOTAL);
   },
+
+  /* el haba cede bajo el dedo antes de saltar a la batea (motor3d) */
+  presionables: ['haba'],
 
   objetivos() { return [vainasGrupo, plaga.grupo]; },
 

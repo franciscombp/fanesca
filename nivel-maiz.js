@@ -248,9 +248,12 @@ function despertarGusano(w) {
   gusanosGrupo.add(w.obj);
   colocarGusano(w);
   w.obj.scale.setScalar(0.01);
-  api.tween(w.obj.scale, 'x', 1, 0.3); api.tween(w.obj.scale, 'y', 1, 0.3); api.tween(w.obj.scale, 'z', 1, 0.3);
+  /* aparece con un saltito, como los de la plaga: se nota que llegó algo vivo */
+  const pop = api.ease && api.ease.pop;
+  api.tween(w.obj.scale, 'x', 1, 0.32, pop); api.tween(w.obj.scale, 'y', 1, 0.32, pop); api.tween(w.obj.scale, 'z', 1, 0.32, pop);
   giroObjetivo = acercarAngulo(giro.rotation.y, FRENTE - (w.a / A) * Math.PI * 2);
-  api.sfx('crack'); api.buzz([25, 30, 25]);
+  /* su chirrido de bicho: sonaba igual que abrir una vaina */
+  api.sfx('bicho'); api.buzz('bicho');
   api.aviso('🪱 ¡Un gusanito! Llévalo a la composta — no lo aplastes');
   api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda (o pellízcalo con dos dedos).', 5200);
 }

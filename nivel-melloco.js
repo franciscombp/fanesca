@@ -112,6 +112,8 @@ function encajar(v) {
 
 function raspar(rec, cuanto) {
   if (rec.limpio) return;
+  /* refregar suena mientras se refriega */
+  if (api.sonarGesto) api.sonarGesto('frotar', cuanto * 20);
   rec.baba = Math.max(0, rec.baba - cuanto / RASPADO);
   /* la baba se ve, no se cuenta: la cáscara pasa de brillante a mate */
   rec.babaza.material.opacity = BABA_OPACA * rec.baba;

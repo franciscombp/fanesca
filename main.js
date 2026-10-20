@@ -706,7 +706,10 @@ const pararBucles = () => revisarBucles(true);
 const HAPTICA = {
   acierto: 8, toque: 10, pieza: 14,
   logro: [14, 70, 22], aviso: [24, 60, 24], fallo: [40, 80, 40],
-  arruinado: [50, 90, 50, 90, 80], bicho: [10, 50, 10],
+  arruinado: [50, 90, 50, 90, 80],
+  /* tres golpecitos: ningún éxito tiene tres, así que el bicho se
+     reconoce con el teléfono en el bolsillo */
+  bicho: [10, 50, 10, 50, 10],
 };
 let vibraHasta = 0, vibraPeso = 0, ultimoGolpecito = 0;
 function buzz(p) {

@@ -135,6 +135,8 @@ function removerHasta(p) {
     return;
   }
 
+  /* remover suena a agua mientras se remueve, con la fuerza del dedo */
+  if (api.sonarGesto) api.sonarGesto('remover', avance * 8);
   quitado = Math.min(TOTAL_RAD, quitado + avance);
   espuma = Math.min(1, espuma + avance / CAPACIDAD_AGUA);
   pintar();

@@ -579,7 +579,8 @@ function nacerBicho() {
   nodo.rotation.y = Math.PI / 2;
   raiz.add(nodo);
   bichos.push({ nodo, gus, x, z, dir: Math.random() < 0.5 ? -1 : 1, estado: 'suelto', tope: R_PLANA * HUECO - 0.14 });
-  api.sfx('crack'); api.buzz([25, 30, 25]);
+  /* su chirrido de bicho: sonaba igual que abrir una vaina */
+  api.sfx('bicho'); api.buzz('bicho');
   api.aviso('🪱 ¡Un gusano entre las pepas! Llévalo a la composta — no lo aplastes');
   api.pista('<b>Arrástralo</b> a la composta, el cuenco verde de la izquierda (o pellízcalo con dos dedos).', 5000);
 }

@@ -764,6 +764,9 @@ function apretarPieza(info) {
   const tipos = nivel && nivel.presionables;
   const r = info && info.raiz;
   if (!tipos || !r || !r.userData || !tipos.includes(r.userData.tipo) || r.userData.animaEscala) return;
+  /* si el nivel ya le está animando la escala (aparece, revienta), no se
+     le pisa: la pieza cedería a media aparición */
+  if (tweens.some(tw => tw.obj === r.scale || (tw.obj === r && tw.prop === 'scale'))) return;
   soltarPieza();
   const s0 = r.scale.clone();
   presionada = { obj: r, s: s0 };

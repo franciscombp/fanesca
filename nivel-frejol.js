@@ -121,7 +121,8 @@ function reventar(rec) {
     const gz = Math.max(TABLA_Z - 0.62, Math.min(TABLA_Z + 0.62, rec.z + Math.sin(a) * d * 0.7));
     const g = nuevoGrano(rec.x, rec.z);
     g.scale.setScalar(0.4);
-    api.tween(g.scale, 'x', 1, 0.22); api.tween(g.scale, 'y', 1, 0.22); api.tween(g.scale, 'z', 1, 0.22);
+    const pop = api.ease && api.ease.pop;   /* el grano salta al tronar la vaina */
+    api.tween(g.scale, 'x', 1, 0.24, pop); api.tween(g.scale, 'y', 1, 0.24, pop); api.tween(g.scale, 'z', 1, 0.24, pop);
     api.tween(g.position, 'x', gx, 0.3);
     api.tween(g.position, 'z', gz, 0.3);
   }

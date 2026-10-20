@@ -44,6 +44,9 @@ const NOVEDADES = [
       '👵 <b>La familia vuelve a la cocina.</b> Cada plato que sube trae a alguien —la abuela, la tía con el costal, los primos, el tío con el bacalao— y en la despensa se oye la voz de la casa.',
       '🗣 <b>Se habla como en casa:</b> «¡Eso, guagua!», «¡Bacán!», y un «¡Atatay!» cuando sale el bicho.',
       '📖 <b>El cuaderno abre en la página que ganaste</b>, cada bolsa trae al pie la nota de su ingrediente y de qué lado del mar vino, y algunas frases del cuaderno se corrigieron para decir sólo lo que se sabe.',
+      '👆 <b>La mano que enseña llega a los veinte mesones</b>, del choclo al caldero.',
+      '💧 <b>Botar el agua</b> del mote y de la quinua ya se puede con un arrastre recto en teléfonos angostos.',
+      '🪱 <b>El gusano del choclo</b> ahora sí va hacia la batea, avisa antes de llegar y en las presentaciones se perdona una vez.',
     ],
     internos: [
       'Tu cocina: estado.opciones {letra, menosMov, bichosMansos}, aplicarOpciones() antes del primer pintado (html[data-letra], html.menos-mov), renderOpciones/abrirCocina, #btn-cocina siempre visible (⚙️) y #btn-opciones en la portada; motor3d movReducido() mira también html.menos-mov; menosMovimiento() en main para confeti y escena de la olla.',
@@ -51,7 +54,10 @@ const NOVEDADES = [
       'Bichos mansos en plaga.js (VEL ×0.55, quieto 1.5 s, GRACIA ×2, sin barrer que aplaste, tocar rescata con volarA, batea siempre perdona); en los gusanos propios del maíz y el zapallo caminan a 0.55 y apretarlos no los revienta; las moscas del bacalao y el queso vienen 1.6 veces más espaciadas. Se ofrecen en la hoja de «se arruinó» a la segunda ruina por bicho del mismo nivel (#arruinado-ayuda). window.__plaga para las pruebas.',
       'Piso de letra: --t-2xs = max(.66rem, 12px); .bolsa-pie y .renglon-dif suben.',
       'Cultura (auditoría con fuentes de prensa ecuatoriana y la regla del propio historia.js): PLATOS.llega/dice con la prosa de DIAS_RELATO; #listo-plato-llega, #mesa-voz (Caveat, se oculta < 700 px de alto), #olla-mesa. Exactitud: uchucuta sin habas y como «versión más aceptada», entradilla y bienvenida «se cocina una vez al año», platos sin «doce granos», fanesca regional, nota del choclo, parafrasis:true en Chancoso sin «», párrafo del Jueves Santo y «—dicen los historiadores—». RACHA_GRITOS ecuatorianos, exclamar() una vez por mesón. ORIGEN y pintarNotaBolsa(); estado.paginaNueva y data-tarjeta/data-pagina para aterrizar en el cuaderno; tarjetas en el orden de la despensa. calendario.js: Mushuk Nina del 20 al 22 de marzo (gana la Semana Santa si coinciden).',
-      'Pruebas: pruebas/opciones.mjs nueva (hoja, letra grande persistente, pausa con reloj quieto, bichos mansos, ayuda tras arruinar).',
+      'guia() en los 20 módulos (habas, chochos, fréjol y arveja de la 4.7.0; el resto ahora). VIRA_RECORRIDO 0.5 → 0.22 en mote y quinua: el punto de botar (1.28) caía fuera del ancho visible a 390 px (1.11 a la altura de la batea).',
+      'Lo que encontró la crítica del benchmark: el gusano del maíz iba hacia la COMPOSTA y al llegar arruinaba «se te fue a la batea» (ahora BATEA, por radio, con aviso y perdón); tocarlo en su respiro usaba w.nodo, que no existe (TypeError); veredicto() ya no promete la cuchara siguiente «bajando el tiempo» si un descuido la tapa; la nota de la racha se toma desde abajo si el respiro ya la cortó (los niveles suenan antes de contar) y arriba alterna Sol/La; registrarFallo(opc.leve) para descuidos que bajan cucharas pero no arruinan (el melloco disparado desde tres chiles, como promete su reto); la tajada limpia del zapallo se celebra.',
+      'Sensación: el gusano del maíz y del zapallo con sfx/buzz «bicho» (tres golpecitos) y aparición con ease.pop; habas y granos del fréjol con ease.pop; bucles «remover» (quinua) y «frotar» (melloco); presionables en habas; apretarPieza no pisa un tween de escala en curso.',
+      'Pruebas: pruebas/opciones.mjs nueva (hoja, letra grande persistente, pausa con reloj quieto, bichos mansos, ayuda tras arruinar). didactica, sonido, humo y caldero esperan a lo que miden en vez de tiempos fijos (fallaban con la máquina cargada).',
     ],
   },
   {

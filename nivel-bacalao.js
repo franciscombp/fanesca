@@ -368,7 +368,9 @@ export default {
       limpia.obj.getWorldPosition(w);
       return { tipo: 'arrastrar', desde: w.clone(), hasta: new THREE.Vector3(huecosTina[0] ?? 0, tinaBase ?? api.MESA_Y, TINA_Z) };
     }
-    const salada = presas.find(p => !p.tendida && p.sal.length && !moscaEn(p));
+    /* la más al centro: la de la orilla deja el dedo medio fuera */
+    const xDe = (p) => Math.abs(p.obj.getWorldPosition(w).x);
+    const salada = presas.filter(p => !p.tendida && p.sal.length && !moscaEn(p)).sort((a, b) => xDe(a) - xDe(b))[0];
     if (!salada) return null;
     salada.obj.getWorldPosition(w);
     const y = api.MESA_Y + 0.2;
