@@ -63,6 +63,9 @@ function nuevoEstado() {
     /* sin sonido: para jugar en el bus, en misa o con el bebé dormido.
        La vibración sigue, que es del teléfono y no molesta a nadie */
     silencio: false,
+    /* TU COCINA: las opciones y las ayudas. Ninguna cambia la receta,
+       sólo lo difícil, y se quitan cuando se quiera (ver renderOpciones) */
+    opciones: { letra: 'normal', menosMov: false, bichosMansos: false },
     /* LA OLLA — el modo de partida completa. `olla` es la mejor
        partida TERMINADA (ms, cucharas y las marcas por acto), que es
        contra lo que se corre en las siguientes. */
@@ -139,6 +142,8 @@ function migrar(s) {
   }
   delete s.olla;
   if (!Array.isArray(s.bichosVistos)) s.bichosVistos = [];
+  if (!s.opciones || typeof s.opciones !== 'object' || Array.isArray(s.opciones)) s.opciones = {};
+  s.opciones = { letra: 'normal', menosMov: false, bichosMansos: false, ...s.opciones };
   /* un récord de La Olla sin tiempo no es un récord: sin esto, un
      guardado tocado a mano dejaba el resumen comparando contra NaN */
   for (const k of Object.keys(s.ollas || {})) {
@@ -842,6 +847,88 @@ function pintarSonido() {
   v.setAttribute('aria-pressed', sin ? 'true' : 'false');
 }
 
+/* ---------- TU COCINA: opciones y ayudas ----------
+   Lo que se ofrece es lo que recomiendan las guías de accesibilidad
+   de juegos (Celeste, Overcooked, las de Xbox y Apple): ayudas con un
+   nombre que no juzga, que no quitan la mecánica y que se prenden y se
+   apagan en cualquier momento. Se aplican ANTES de pintar la portada,
+   para que la letra grande no llegue con un salto. */
+function aplicarOpciones() {
+  const o = estado.opciones || {};
+  const raizHtml = document.documentElement;
+  raizHtml.dataset.letra = o.letra === 'grande' ? 'grande' : 'normal';
+  raizHtml.classList.toggle('menos-mov', !!o.menosMov);
+}
+function renderOpciones() {
+  const lista = $('#opciones-lista');
+  if (!lista) return;
+  const o = estado.opciones;
+  const filas = [
+    { id: 'sonido', tit: 'Sonido', sub: 'Los ruidos de la cocina y la música de las cucharas', si: !estado.silencio,
+      cambiar: () => { estado.silencio = !estado.silencio; if (estado.silencio) pararBucles(); else sfx('tab'); } },
+    ...('vibrate' in navigator ? [{ id: 'vibracion', tit: 'Vibración', sub: 'El teléfono tiembla en lo que importa', si: estado.vibracion !== false,
+      cambiar: () => { estado.vibracion = estado.vibracion === false; buzz('toque'); } }] : []),
+    { id: 'letra', tit: 'Letra grande', sub: 'Todo el texto, un poco más grande', si: o.letra === 'grande',
+      cambiar: () => { o.letra = o.letra === 'grande' ? 'normal' : 'grande'; } },
+    { id: 'mov', tit: 'Menos movimiento', sub: 'Sin sacudidas, confeti ni animaciones de adorno', si: !!o.menosMov,
+      cambiar: () => { o.menosMov = !o.menosMov; } },
+    { id: 'bichos', tit: 'Bichos mansos', sub: 'Caminan despacio y un toque los rescata a la composta', si: !!o.bichosMansos,
+      cambiar: () => { o.bichosMansos = !o.bichosMansos; } },
+  ];
+  lista.innerHTML = '';
+  filas.forEach(f => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'opcion'; b.dataset.opcion = f.id;
+    b.setAttribute('aria-pressed', f.si ? 'true' : 'false');
+    b.innerHTML = `<b>${f.tit}</b><small>${f.sub}</small><i>${f.si ? 'sí' : 'no'}</i>`;
+    tocable(b, () => {
+      f.cambiar(); guardar(); aplicarOpciones(); pintarSonido(); renderOpciones();
+      if (f.id !== 'sonido') sfx('tab');
+    });
+    li.appendChild(b);
+    lista.appendChild(li);
+  });
+}
+function abrirCocina() {
+  renderOpciones();
+  renderEscenarios();
+  $('#modal-cocina').classList.add('open');
+}
+
+/* ---------- LA PAUSA ----------
+   Con faena empezada, ‹ abre esto en vez de pedir «toca otra vez» con
+   un aviso de dos segundos. El reloj se para (el de los modos también:
+   es una partida en solitario), el mesón deja de moverse y los bichos
+   se quedan quietos. Un segundo ‹ con la pausa abierta sale, como
+   antes el doble toque. */
+let pausado = null;   /* { corria } */
+function pausar() {
+  if (pausado) return;
+  pausado = { corria: corriendo };
+  corriendo = false;
+  Motor.setActive(false);
+  reiniciarAyuda();
+  const txt = $('#pausa-txt');
+  if (txt) txt.textContent = Apuro.activo ? 'El reloj de El Apuro está quieto. Si sales, lo que llevas se guarda.'
+    : (Olla.activo ? 'El reloj de la olla está quieto. Si sales, la olla se queda a medias.' : 'El reloj está quieto. Sigue cuando quieras.');
+  $('#modal-pausa').classList.add('open');
+}
+function reanudar() {
+  if (!pausado) return;
+  const p = pausado; pausado = null;
+  cerrarModales();
+  Motor.setActive(true);
+  if (p.corria) arrancarReloj();
+}
+function salirDePausa() {
+  pausado = null;
+  cerrarModales();
+  if (Apuro.activo) { Motor.setActive(true); Apuro.terminar('salida'); return; }
+  if (Olla.activo) { Motor.setActive(true); Olla.terminar('salida'); return; }
+  salirDelNivel();
+}
+
 function pintarDev() {
   const b = $('#btn-dev');
   if (!b) return;
@@ -1174,8 +1261,6 @@ function renderMesa() {
   const puedeCocina = algunHecho || !!estado.devMode;
   const esc = document.querySelector('.escenarios');
   if (esc) esc.classList.toggle('hidden', !puedeCocina);
-  const btnCocina = $('#btn-cocina');
-  if (btnCocina) btnCocina.classList.toggle('hidden', !puedeCocina);
 
   const sabe = loQueSabe();
   const plato = platoDe(sabe);
@@ -1415,11 +1500,17 @@ function pintarRetos(bolsa) {
    Papelitos de la fiesta cuando algo sale bien: cada uno nace con
    su columna, su color, su giro y su demora en variables, y el CSS
    lo deja caer. Se quitan solos; con movimiento reducido no salen. */
+/* el sistema lo pide, o se pidió en Tu cocina */
+function menosMovimiento() {
+  if (estado.opciones && estado.opciones.menosMov) return true;
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+}
+
 const CONFETI_COLORES = ['#f4b942', '#ffd36a', '#e8508a', '#5db55a', '#5fa8d3', '#e08a45', '#fff6e8'];
 function celebrar(cuantos = 28) {
   const caja = $('#confeti');
   if (!caja) return;
-  try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  if (menosMovimiento()) return;
   const piezas = [];
   for (let i = 0; i < cuantos; i++) {
     const p = document.createElement('i');
@@ -1458,7 +1549,7 @@ let ollaEscena = null;   /* la escena en curso: { timers, resolver } */
 function escenaOlla() {
   const esc = $('#olla-escena');
   if (!esc) return Promise.resolve();
-  try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve(); } catch (e) {}
+  if (menosMovimiento()) return Promise.resolve();
   if (ollaEscena) apagarEscenaOlla(true);
   return new Promise(resolver => {
     const ctx = { timers: [], resolver };
@@ -2247,6 +2338,8 @@ const api = {
   /* la plaga compartida se anuncia al armarse, y dice si hay bicho
      suelto: el «?» y la ayuda lo necesitan saber */
   hayPlaga() { plagaEnMeson = true; },
+  /* las ayudas de Tu cocina que un nivel puede leer (bichos mansos…) */
+  get ayudas() { return estado.opciones || {}; },
   bichoSuelto(si) { bichoSueltoAhora = !!si; },
   /* un descuido: lo cuenta el juego, no el nivel (ver registrarFallo) */
   fallo: (tipo, msg, opc) => registrarFallo(tipo, msg, opc),
@@ -2454,6 +2547,7 @@ let montaje = 0;
 async function jugar(id) {
   const n = rutaPorId(id);
   if (!n) return;
+  pausado = null;
   /* sin WebGL no hay mesón: entrar igual dejaba al jugador atrapado
      en una pantalla vacía. El aviso largo ya está puesto en la escena
      desde init(); aquí basta con no entrar. */
@@ -3460,9 +3554,12 @@ function terminarNivel() {
   }, 240);
 }
 
+const arruinadasEn = {};   /* por nivel, en esta sesión: cuántas veces se arruinó */
 function arruinarNivel(motivo) {
   pararReloj();
   reiniciarAyuda();
+  const idArr = nivelActual && nivelActual.id;
+  if (idArr) arruinadasEn[idArr] = (arruinadasEn[idArr] || 0) + 1;
   sfx('mal'); buzz('arruinado');
   Motor.destello('rgba(230,57,70,.55)');
   /* la sacudida vende golpes (el zapallo que se parte); para subrayar
@@ -3507,11 +3604,21 @@ function arruinarNivel(motivo) {
       notaEl.classList.toggle('hidden', !nota);
       notaEl.classList.toggle('arruinado-nota--como', !!ensenar);
     }
+    /* LA AYUDA DONDE HACE FALTA: a la segunda vez que un bicho arruina
+       el mismo nivel, la hoja ofrece repetirlo con bichos mansos. No es
+       un castigo ni un «modo fácil»: es la ayuda de Tu cocina, puesta
+       a mano justo cuando sirve, y se quita igual de fácil. */
+    const btnAyuda = $('#arruinado-ayuda');
+    if (btnAyuda) {
+      const porBichoAqui = motivo && (motivo.clave === 'aplastado' || motivo.clave === 'enLaBatea');
+      btnAyuda.classList.toggle('hidden', !(porBichoAqui && idArr && arruinadasEn[idArr] >= 2 && !estado.opciones.bichosMansos));
+    }
     $('#modal-arruinado').classList.add('open');
   }, 900);
 }
 
 function salirDelNivel() {
+  pausado = null;
   reiniciarAyuda();
   pararBucles();
   /* corta cualquier montaje en vuelo: si se sale mientras un mesón
@@ -3724,11 +3831,17 @@ function bindEventos() {
     nivelActual = null; modActual = null;
     arrancarOlla();
   });
-  /* la hoja de la cocina: dónde se cocina, fuera del recetario */
+  /* Tu cocina: desde la despensa, la portada y la pausa */
   const btnCocina = $('#btn-cocina');
-  if (btnCocina) tocable(btnCocina, () => { sfx('tab'); $('#modal-cocina').classList.add('open'); });
+  if (btnCocina) tocable(btnCocina, () => { sfx('tab'); abrirCocina(); });
+  const btnOpciones = $('#btn-opciones');
+  if (btnOpciones) tocable(btnOpciones, () => { sfx('tab'); abrirCocina(); });
   const cocinaCerrar = $('#cocina-cerrar');
-  if (cocinaCerrar) tocable(cocinaCerrar, () => { sfx('tab'); cerrarModales(); });
+  /* si se llegó desde la pausa, se vuelve a la pausa */
+  if (cocinaCerrar) tocable(cocinaCerrar, () => { sfx('tab'); cerrarModales(); if (pausado) $('#modal-pausa').classList.add('open'); });
+  tocable($('#pausa-seguir'), () => { sfx('tab'); reanudar(); });
+  tocable($('#pausa-cocina'), () => { sfx('tab'); cerrarModales(); abrirCocina(); });
+  tocable($('#pausa-salir'), () => { sfx('tab'); salirDePausa(); });
   tocable($('#cuaderno-volver'), () => { sfx('tab'); mostrar('mesa'); });
   /* la bolsa: volver a la despensa por arriba o por abajo, y el
      botón grande que juega el peldaño del cursor */
@@ -3741,7 +3854,6 @@ function bindEventos() {
   if (volverArriba) tocable(volverArriba, () => { sfx('tab'); mostrar('mesa'); });
   tocable($('#final-cuaderno'), () => { cerrarModales(); mostrar('cuaderno'); });
 
-  let salirArmado = 0;
   tocable($('#btn-salir'), () => {
     sfx('tab');
     /* En El Apuro salir CIERRA la partida en vez de tirarla: llevas
@@ -3751,33 +3863,14 @@ function bindEventos() {
        reloj — que es lo que el jugador quiere ver. Pero con el mismo
        doble toque que la campaña: un roce del pulgar no debe terminar
        una partida que iba bien. */
-    if (Apuro.activo) {
-      if (Date.now() - salirArmado > 2600) {
-        salirArmado = Date.now();
-        toast('¿Terminar El Apuro? Toca otra vez — lo que llevas se guarda');
-        return;
-      }
-      Apuro.terminar('salida');
-      return;
-    }
+    /* con la pausa abierta, el segundo ‹ sale (era el doble toque) */
+    if (pausado) { salirDePausa(); return; }
+    if (Apuro.activo || Olla.activo) { pausar(); return; }
     /* y en La Olla con más razón: es una partida de nueve minutos y
        lo que se pierde al salir no es una ración, es la fanesca */
-    if (Olla.activo) {
-      if (Date.now() - salirArmado > 2600) {
-        salirArmado = Date.now();
-        toast('¿Dejar la fanesca a medias? Toca otra vez');
-        return;
-      }
-      Olla.terminar('salida');
-      return;
-    }
     /* con faena empezada, un toque solo no bota el trabajo: el botón
        está a 40px del filo y el pulgar izquierdo pasa rozando */
-    if (corriendo && hechosAhora > 0 && Date.now() - salirArmado > 2600) {
-      salirArmado = Date.now();
-      toast('¿Dejar la faena a medias? Toca otra vez para salir');
-      return;
-    }
+    if (corriendo && hechosAhora > 0) { pausar(); return; }
     salirDelNivel();
   });
 
@@ -3864,6 +3957,14 @@ function bindEventos() {
     Motor.descargar();
     if (id) jugar(id);
   });
+  tocable($('#arruinado-ayuda'), () => {
+    const id = nivelActual ? nivelActual.id : null;
+    estado.opciones.bichosMansos = true; guardar();
+    toast('🤲 Bichos mansos puestos — se quitan en ⚙ Tu cocina', 3200);
+    cerrarModales();
+    Motor.descargar();
+    if (id) jugar(id);
+  });
   tocable($('#arruinado-salir'), () => { cerrarModales(); salirDelNivel(); });
 
   tocable($('#final-ok'), () => { cerrarModales(); mostrar('mesa'); });
@@ -3881,6 +3982,8 @@ function bindEventos() {
       return;
     }
     if (e.key === 'Escape') {
+      /* Escape en la pausa es «seguir», no cerrar y dejar el reloj quieto */
+      if (pausado) { reanudar(); return; }
       if ($$('.modal.open').length) { cerrarModales(); return; }
       /* también con Escape el Apuro se CIERRA guardando: la salida
          directa era la única ruta del juego que tiraba a la basura
@@ -3918,7 +4021,7 @@ function bindEventos() {
   /* el navegador se fue a otra pestaña: no correr el reloj de gratis */
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && corriendo) { corriendo = false; }
-    else if (!document.hidden && relojId && !corriendo) { arrancarReloj(); }
+    else if (!document.hidden && relojId && !corriendo && !pausado) { arrancarReloj(); }
     /* con la pestaña escondida el audio se suspende: no hay nada que
        oír y el contexto despierto gasta batería */
     if (audioCtx) { try { document.hidden ? audioCtx.suspend() : audioCtx.resume(); } catch (e) {} }
@@ -3959,6 +4062,7 @@ function mostrarFinal() {
 
 function init() {
   estado = cargar() || nuevoEstado();
+  aplicarOpciones();
 
   /* EL ATAJO DE AUTOR: `?dev` en la dirección prende el modo dev y
      `?dev=0` lo apaga, sin ritual de toques — para cuando el ritual

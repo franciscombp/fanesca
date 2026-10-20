@@ -120,7 +120,9 @@
   --font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
   --font-text:    'Nunito', 'Segoe UI', system-ui, sans-serif;
   --font-hand:    'Caveat', 'Segoe Script', cursive;
-  --t-2xs: .66rem; --t-xs: .74rem; --t-sm: .86rem; --t-md: .98rem;
+  /* la letra más chica tiene piso: 11 px se leen mal en un teléfono
+     de mano (las guías piden 12 como mínimo) */
+  --t-2xs: max(.66rem, 12px); --t-xs: .74rem; --t-sm: .86rem; --t-md: .98rem;
   --t-lg: 1.12rem; --t-xl: 1.4rem; --t-2xl: 1.85rem; --t-3xl: 2.5rem; --t-4xl: 3.3rem;
   --lead-tight: 1.1; --lead: 1.5;
   --track-caps: .16em;

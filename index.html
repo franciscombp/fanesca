@@ -67,6 +67,7 @@
              interruptor que no hace nada es peor que ninguno -->
         <button type="button" id="btn-vibracion" class="portada-link hidden" aria-pressed="false">📳 con vibración</button>
         <button type="button" id="btn-reiniciar" class="portada-link portada-link--peligro hidden">Empezar de nuevo</button>
+        <button type="button" id="btn-opciones" class="portada-link">⚙ opciones</button>
         <button type="button" id="btn-dev" class="portada-link">🛠 modo dev</button>
         <!-- un BOTÓN y no un span: en iOS Safari un span sin cursor:pointer
              no recibe `click`, y los cinco toques que revelan el modo dev
@@ -120,7 +121,7 @@
         </button>
         <!-- el botón grande de la despensa: cocinar lo que hoy sale -->
         <button type="button" id="btn-sigue" class="btn btn--maiz btn--lg dock-principal hidden"></button>
-        <button type="button" id="btn-cocina" class="icono-boton dock-lado hidden" aria-label="Dónde cocinar">🏠</button>
+        <button type="button" id="btn-cocina" class="icono-boton dock-lado" aria-label="Tu cocina: opciones y lugar">⚙️</button>
       </footer>
     </div>
   </main>
@@ -218,15 +219,34 @@
   </div>
 
   <!-- ================= Modal: dónde se cocina ================= -->
+  <!-- TU COCINA: cómo cocinas (las opciones y las ayudas) y dónde.
+       Se llega desde la portada, desde la despensa y desde la pausa del
+       mesón: un ajuste que sólo vive en la portada no existe para quien
+       ya está jugando. -->
   <div id="modal-cocina" class="modal" role="dialog" aria-modal="true" aria-labelledby="cocina-titulo">
     <div class="sheet">
-      <p class="sheet-eyebrow">la cocina</p>
-      <h3 id="cocina-titulo" class="sheet-title">¿Dónde cocinas hoy?</h3>
-      <p class="sheet-body">Cambiar de sitio no cambia ni una regla: es puro gusto.</p>
+      <p class="sheet-eyebrow">tu cocina</p>
+      <h3 id="cocina-titulo" class="sheet-title">Cómo y dónde cocinas</h3>
+      <ul id="opciones-lista" class="opciones-lista"></ul>
+      <p class="opciones-pie">Las ayudas no cambian la receta, sólo lo difícil. Se quitan cuando quieras.</p>
       <div class="escenarios">
+        <p class="opciones-sub">dónde cocinas hoy — es puro gusto</p>
         <div id="escenarios-lista" class="escenarios-lista"></div>
       </div>
       <button type="button" id="cocina-cerrar" class="btn btn--maiz btn--lg btn--block">Listo</button>
+    </div>
+  </div>
+
+  <!-- LA PAUSA: con faena empezada, ‹ no bota el trabajo ni pide un
+       segundo toque a ciegas: la olla espera, y el reloj también. -->
+  <div id="modal-pausa" class="modal" role="dialog" aria-modal="true" aria-labelledby="pausa-titulo">
+    <div class="sheet">
+      <p class="sheet-eyebrow">pausa</p>
+      <h3 id="pausa-titulo" class="sheet-title">La olla espera</h3>
+      <p id="pausa-txt" class="sheet-body">El reloj está quieto. Sigue cuando quieras.</p>
+      <button type="button" id="pausa-seguir" class="btn btn--nopal btn--lg btn--block">Seguir cocinando</button>
+      <button type="button" id="pausa-cocina" class="btn btn--peltre btn--block">⚙ Tu cocina</button>
+      <button type="button" id="pausa-salir" class="btn btn--fantasma btn--sm btn--block">Salir a la despensa</button>
     </div>
   </div>
 
@@ -427,6 +447,9 @@
            ingrediente que se acaba de arruinar. -->
       <p id="arruinado-nota" class="arruinado-nota hidden"></p>
       <button type="button" id="arruinado-reintentar" class="btn btn--chile btn--lg btn--block">Empezar de nuevo</button>
+      <!-- la ayuda se ofrece donde se necesita: tras dos tropiezos con
+           bichos en el mismo nivel. Sin juicio, y se quita en Tu cocina -->
+      <button type="button" id="arruinado-ayuda" class="btn btn--peltre btn--block hidden">🤲 Otra vez, con bichos mansos</button>
       <button type="button" id="arruinado-salir" class="btn btn--fantasma btn--sm btn--block">Dejarlo por hoy</button>
     </div>
   </div>

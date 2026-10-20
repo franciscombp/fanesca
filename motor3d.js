@@ -206,7 +206,9 @@ let trauma = 0, traumaT = 0;
    temblando (WCAG 2.3.3). El destello y el sonido ya dicen lo mismo. */
 let mqReducido = null;
 try { mqReducido = matchMedia('(prefers-reduced-motion: reduce)'); } catch (e) {}
-export const movReducido = () => !!(mqReducido && mqReducido.matches);
+/* …o «Menos movimiento» en Tu cocina, que pone la clase en <html> */
+export const movReducido = () => !!(mqReducido && mqReducido.matches)
+  || (typeof document !== 'undefined' && document.documentElement.classList.contains('menos-mov'));
 let camBase = new THREE.Vector3();
 let camMira = new THREE.Vector3();
 /* Mira más abajo de lo que parece natural, y es a propósito: subir

@@ -31,7 +31,14 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   /* las presentaciones van con uno o dos chiles: ahí se perdona un
      apretón, que es donde el bicho se conoce; de tres para arriba no */
   const PERDONA = DIF <= 2;
-  const BARRER_APLASTA = DIF >= 4;          /* en las bravas, barrer también mata */
+  /* BICHOS MANSOS (Tu cocina): para quien no llega a tiempo con el
+     dedo, no para quien no quiere aprender. Caminan a poco más de la
+     mitad, se quedan quietos al salir, un toque los RESCATA (vuelan
+     solos a la composta) y la batea los devuelve siempre. Rescatarlos
+     sigue pidiendo verlos y tocarlos, así que el reto de cazagusanos
+     cuenta igual. */
+  const MANSO = !!(api.ayudas && api.ayudas.bichosMansos);
+  const BARRER_APLASTA = DIF >= 4 && !MANSO;   /* en las bravas, barrer también mata */
   /* Un bicho que nace pegado a la batea es una derrota sin jugada: la
      vaina de la derecha está a un palmo del cuenco. Nazca donde nazca,
      se lo aparta hasta esta distancia para que siempre haya carrera. */
@@ -50,7 +57,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
   /* El bicho aparece justo bajo el dedo que lo destapó, y muchas veces
      ese dedo viene barriendo. Sin este respiro, destapar un bicho sería
      perder sin poder reaccionar — que no es dificultad, es injusticia. */
-  const GRACIA = (opts.gracia != null ? opts.gracia : 1.5) * (DIF <= 2 ? 0.6 : 0.4);
+  const GRACIA = (opts.gracia != null ? opts.gracia : 1.5) * (DIF <= 2 ? 0.6 : 0.4) * (MANSO ? 2 : 1);
 
   /* A qué altura viaja el bicho cargado. */
   const ALTO_CARGA = 0.3;
@@ -123,12 +130,16 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
        leer su pista tomaba casi 8. */
     const primero = !!api.primerBicho;
     const rec = { nodo, bicho, estado: 'suelto', t0: api.reloj, nace: api.reloj,
-      vel: VEL * (primero ? 0.5 : 1), quietoHasta: api.reloj + (primero ? 1.5 : 0) };
+      vel: VEL * (primero ? 0.5 : 1) * (MANSO ? 0.55 : 1), quietoHasta: api.reloj + (primero || MANSO ? 1.5 : 0) };
     lista.push(rec);
     pintarAro();
     /* su propio chirrido: antes sonaba igual que abrir una vaina */
     api.sfx('bicho'); api.buzz('bicho');
-    if (primero && !avisados) {
+    if (MANSO && !avisados) {
+      api.aviso(`${ICO} ¡Un ${nombre}!`);
+      api.pista('<b>Tócalo</b> y se va solo a la composta.', 3600);
+      if (api.bichoVisto) api.bichoVisto();
+    } else if (primero && !avisados) {
       /* UNA LÍNEA, con el bicho a la vista: eran treinta palabras a la
          vez —alerta y pista— y un pellizco de dos dedos nunca enseñado.
          Arrastrar basta; el pellizco se cuenta cuando se le resbale. */
@@ -143,7 +154,22 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
     return rec;
   }
 
-  return {
+  /* el toque que rescata (bichos mansos): el bicho vuela solo a la
+     composta, con la misma fiesta que llevarlo a mano */
+  function rescatar(rec) {
+    rec.estado = 'ido';
+    if (cargado === rec) cargado = null;
+    rec.nodo.scale.setScalar(1);
+    api.volarA(rec.nodo, api.COMPOSTA.clone().setY(api.MESA_Y + 0.16), { dur: 0.45, alto: 0.45 });
+    api.chispas(api.COMPOSTA.clone().setY(api.MESA_Y + 0.4), '#8ab143', 10);
+    api.sfx('bien'); api.buzz('pieza');
+    api.aviso(null);
+    api.toast('¡Fuera de la olla! 🌿');
+    if (api.bichoSalvado) api.bichoSalvado();
+    pintarAro();
+  }
+
+  const plaga = {
     soltar,
     grupo,
     objetivos() { return [grupo]; },
@@ -164,6 +190,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
        empuja. Cuidado con el dedo, no puntería. */
     tocado(rec) {
       if (!rec || rec.estado !== 'suelto') return false;
+      if (MANSO) { rescatar(rec); return false; }
       /* UN gesto, UNA consecuencia: sin esto un toque repetido se
          cobraba el perdón y la derrota antes de poder leer nada */
       if (rec.inmune && api.reloj < rec.inmune) return false;
@@ -325,7 +352,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
         const dx = destino.x - p.x, dz = destino.z - p.z;
         const d = Math.hypot(dx, dz);
         if (d < CERCA_BATEA) {
-          if (!perdonadoBatea) {
+          if (!perdonadoBatea || MANSO) {
             perdonadoBatea = true;
             /* de vuelta a donde empezó la carrera, mareado un momento */
             const k = ARRANQUE / Math.max(0.01, d);
@@ -379,4 +406,7 @@ export function nuevaPlaga(THREE, api, raiz, opts = {}) {
       if (grupo.parent) grupo.parent.remove(grupo);
     },
   };
+  /* las pruebas preguntan al juego, no al HUD (ver pruebas/README) */
+  if (typeof window !== 'undefined') window.__plaga = plaga;
+  return plaga;
 }

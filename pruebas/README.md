@@ -56,6 +56,7 @@ Dicen ✓ o ✗ y terminan con `TODO VERDE` o `HAY FALLOS`.
 | `carrusel` | recorrer con el dedo las dos pantallas que se recorren: bajar la despensa sin abrir bolsas sin querer, y pasar página en el cuaderno. |
 | `huevo` | cascar y pelar: el mesón que más se quejaba de que no se entendía. |
 | `sonido` | que la racha suba por una escala de verdad (la pentatónica de Do) y no en zigzag, que el tono que pide un nivel se respete, que las chispas salgan aunque se pidan al revés, que con movimiento reducido la cámara no tiemble, que la vibración no apile golpes que el dedo no distingue, y que en la hoja de listo suenen primero las cucharas y después la fiesta. |
+| `opciones` | Tu cocina: que la hoja se abra desde la portada y la despensa y recuerde lo que se cambia (la letra grande se aplica antes de pintar), que ‹ con faena empezada abra la pausa y el reloj se quede quieto, que con bichos mansos un toque rescate al bicho, y que la hoja de «se arruinó» ofrezca la ayuda a la segunda vez. |
 | `devmode` | el ritual de los cinco toques en el número de versión. |
 | `nota` | que la nota de versión se pueda cerrar en cuatro tamaños de teléfono. El botón se salía de la pantalla. |
 | `actualiza` | la actualización de verdad, con service worker: instalar, publicar una versión nueva, ver el botón y estrenarla. |
