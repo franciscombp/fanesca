@@ -124,8 +124,9 @@ if (escena === 'arveja') {
   c.position.set(0, MESA_Y + 1.25, 0.12);
   c.rotation.x = 0.1;
   scene.add(c);
-  if (escena === 'pelos') { cam = [0.1, 2.95, 1.45]; mira = [0, 2.55, 0.15]; fov = 32; }
-  else { cam = [0.25, 2.5, 4.6]; mira = [0, 2.1, 0.12]; fov = 34; }
+  /* la punta de las hojas queda a ~3.5 del piso y el penacho encima */
+  if (escena === 'pelos') { cam = [0.25, 4.15, 2.55]; mira = [0, 3.65, 0.3]; fov = 34; }
+  else { cam = [0.3, 2.9, 6.4]; mira = [0, 2.4, 0.12]; fov = 34; }
 }
 cam = vec(q.get('cam')) || cam; mira = vec(q.get('mira')) || mira; fov = +(q.get('fov') || fov);
 
