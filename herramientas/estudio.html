@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio de modelos</title>
+<!--
+  EL ESTUDIO: un modelo de cerca, con la cocina y la luz del juego.
+
+  Las fotos de mesón (pruebas/fotos.mjs) dicen cómo se ve un nivel;
+  no sirven para juzgar una hoja de choclo o una vaina, que en el
+  teléfono vertical ocupan un dedo. Aquí se arma la misma cocina
+  (construirCocina: las mismas luces, el mismo sol, el mismo tono) y
+  se pone el modelo delante, armado COMO LO ARMA SU NIVEL, para
+  mirarlo de cerca y comparar antes y después.
+
+    estudio.html?escena=arveja | choclo | choclo-medio | pelos
+                &cam=x,y,z&mira=x,y,z&fov=n   (opcional)
+
+  Cuando termina de pintar deja window.listo = true (para Playwright).
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #1d1612; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+<script type="importmap">
+  { "imports": { "three": "../vendor/three.module.min.js", "three/addons/": "../vendor/addons/" } }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { pieza, parte, construirCocina, ALTO_TABLA } from '../modelos/index.js';
+import { A, P, posicionDe, BASE_HOJA, HOJAS, NUDOS } from '../modelos/choclo.js';
+import { POR_VAINA, PASO_ARVEJA, VAINA, ARVEJA_R, perfilVaina } from '../modelos/arveja.js';
+
+const MESA_Y = 0.96;
+const q = new URLSearchParams(location.search);
+const escena = q.get('escena') || 'arveja';
+const vec = (s) => s && s.split(',').map(Number);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio || 1);
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.98;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const { grupo } = construirCocina(THREE, MESA_Y);
+scene.add(grupo);
+const sol = scene.getObjectByName('sol');
+if (sol) sol.shadow.mapSize.set(2048, 2048);
+
+/* ---------- la vaina, como la arma nivel-arveja ---------- */
+function vaina(abierta) {
+  const v = pieza('vaina-arveja', THREE);
+  v.position.y = MESA_Y + ALTO_TABLA + VAINA.alto;
+  for (let i = 0; i < POR_VAINA; i++) {
+    const a = pieza('arveja', THREE, { variante: i });
+    const x = (i - (POR_VAINA - 1) / 2) * PASO_ARVEJA;
+    const pf = perfilVaina(x);
+    const cabe = Math.min(1, (pf.ancho * 0.9) / ARVEJA_R.z);
+    a.position.set(x, -pf.hondo + ARVEJA_R.y * cabe, pf.z);
+    a.scale.setScalar(cabe);
+    a.visible = abierta;
+    v.add(a);
+  }
+  if (abierta) {
+    parte(v, 'bisagra').rotation.x = -2.15;
+    parte(v, 'bisagra').children.forEach(c => { if (c.name && c.name.startsWith('bulto')) c.visible = false; });
+    const h = parte(v, 'hilo'); if (h) h.visible = false;
+  }
+  return v;
+}
+
+/* ---------- el choclo, como lo arma nivel-maiz ---------- */
+const CURVA_HOJA = [1.15, 0.85, 0.70];
+function choclo(peladas = 0) {
+  const g = new THREE.Group();
+  g.add(pieza('tusa', THREE, { madurez: 'tierno' }));
+  for (let a = 0; a < A; a++) for (let p = 0; p < P; p++) {
+    const { th, r, h } = posicionDe(a, p);
+    const gr = pieza('grano-choclo', THREE, { madurez: 'tierno', punta: p === 0 || p === P - 1, variante: a * 7 + p * 3 });
+    gr.position.set(Math.sin(th) * (r + 0.03), h, Math.cos(th) * (r + 0.03));
+    gr.rotation.y = th;
+    g.add(gr);
+  }
+  for (let i = 0; i < HOJAS; i++) {
+    const pivot = new THREE.Group();
+    pivot.rotation.y = (i / HOJAS) * Math.PI * 2;
+    pivot.position.y = BASE_HOJA;
+    const m = pieza('hoja-choclo', THREE, { indice: i, total: HOJAS });
+    pivot.add(m);
+    /* se pelan las de delante, que son las que mira la cámara */
+    const delante = [0, 1, HOJAS - 1, 2, HOJAS - 2].slice(0, peladas);
+    if (delante.includes(i)) {
+      for (let n = 0; n < NUDOS; n++) { const nd = parte(m, 'nudo' + n); if (nd) nd.rotation.x = CURVA_HOJA[n]; }
+    }
+    g.add(pivot);
+  }
+  if (!peladas || peladas < HOJAS) g.add(pieza('pelos-choclo', THREE));
+  return g;
+}
+
+let cam = [0, 1.9, 2.4], mira = [0, 1.15, 0.5], fov = 30;
+if (escena === 'arveja') {
+  const z = 0.55;
+  const cerrada = vaina(false); cerrada.position.set(-0.28, cerrada.position.y, z - 0.30); cerrada.rotation.y = 0.12;
+  const abierta = vaina(true); abierta.position.set(0.05, abierta.position.y, z + 0.12); abierta.rotation.y = -0.08;
+  scene.add(cerrada, abierta);
+  for (let i = 0; i < 3; i++) {
+    const a = pieza('arveja', THREE, { variante: i + 1 });
+    a.position.set(0.55 + i * 0.13, MESA_Y + ARVEJA_R.y, z + 0.32 + (i % 2) * 0.08);
+    a.rotation.set(i, i * 2, 0);
+    scene.add(a);
+  }
+  cam = [0.12, 2.05, 1.85]; mira = [0.05, 1.1, 0.48]; fov = 30;
+} else if (escena === 'choclo' || escena === 'choclo-medio' || escena === 'pelos') {
+  const c = choclo(escena === 'choclo-medio' ? 3 : 0);
+  c.position.set(0, MESA_Y + 1.25, 0.12);
+  c.rotation.x = 0.1;
+  scene.add(c);
+  if (escena === 'pelos') { cam = [0.1, 2.95, 1.45]; mira = [0, 2.55, 0.15]; fov = 32; }
+  else { cam = [0.25, 2.5, 4.6]; mira = [0, 2.1, 0.12]; fov = 34; }
+}
+cam = vec(q.get('cam')) || cam; mira = vec(q.get('mira')) || mira; fov = +(q.get('fov') || fov);
+
+const camara = new THREE.PerspectiveCamera(fov, innerWidth / innerHeight, 0.05, 40);
+camara.position.set(...cam);
+camara.lookAt(...mira);
+
+/* todo proyecta y recibe: aquí se mira de cerca, no se ahorra */
+scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+
+let n = 0;
+(function pintar() {
+  renderer.render(scene, camara);
+  if (++n === 3) window.listo = true;
+  requestAnimationFrame(pintar);
+})();
+window.estudio = { scene, camara, renderer, THREE };
+</script>
+</body>
+</html>

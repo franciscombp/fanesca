@@ -972,9 +972,11 @@ export default {
         /* Saltarse el deshojado. Pelar diez hojas a mano cada vez que
            se quiere mirar la rejilla vuelve imposible probar nada de
            lo que pasa DESPUÉS — que es donde vive el nivel. */
-        pelar() {
-          hojas.forEach(h => { if (!h.ida) pelarHoja(h); });
-          intentarPelos();
+        pelar(n) {
+          /* con un número pela sólo esas (para mirar un choclo a medio
+             pelar); sin él, todas y los pelos */
+          hojas.filter(h => !h.ida).slice(0, n ?? Infinity).forEach(pelarHoja);
+          if (n == null) intentarPelos();
           return fase;
         },
         /* sacar un bicho sin tener que adivinar bajo qué grano está */

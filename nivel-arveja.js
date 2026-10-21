@@ -341,6 +341,15 @@ export default {
 
     TOTAL = vainas.length * POR_VAINA;
     api.progreso(0, TOTAL);
+
+    /* mirilla de depuración, como window.__maiz: abrir vainas por el
+       camino de verdad (deshilarlas) para fotografiarlas abiertas */
+    if (typeof window !== 'undefined') {
+      window.__arveja = {
+        abrir(n) { vainas.filter(r => !r.abierta).slice(0, n ?? Infinity).forEach(r => deshilar(r, LARGO_HILO)); },
+        get vainas() { return vainas.map(r => ({ abierta: r.abierta, vaciada: r.vaciada })); },
+      };
+    }
   },
 
   objetivos() { return [vainasGrupo, plaga.grupo]; },
