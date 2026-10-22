@@ -6,3 +6,6 @@
 /*.png
 !icon*.png
 node_modules
+
+# Los worktrees que abren los agentes mientras trabajan: no son del juego.
+.claude/worktrees/
