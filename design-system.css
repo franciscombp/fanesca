@@ -143,6 +143,14 @@
   --nav-h: 0px;
 }
 
+/* SIN ZOOM POR DOBLE TOQUE. Tocar rápido el mismo botón acercaba la
+   pantalla y no había cómo volver: el user-scalable=no del viewport
+   no basta, iOS lo ignora. `manipulation` quita sólo el doble toque;
+   el pellizco sigue (accesibilidad). Con :where(*) la regla no pesa
+   nada, así que el lienzo 3D, el carrusel y el mesón, que piden
+   touch-action:none, y los scrolls con pan-y se quedan con lo suyo. */
+:where(*) { touch-action: manipulation; }
+
 /* ============================================================
    2. COMPONENTES
    ============================================================ */
