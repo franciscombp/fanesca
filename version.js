@@ -30,10 +30,21 @@
    no le pasó a él.
    ============================================================ */
 
-const APP_VERSION = '4.8.0';
+const APP_VERSION = '4.8.1';
 
 /* la más reciente primero */
 const NOVEDADES = [
+  {
+    v: '4.8.1',
+    fecha: '2026-10-23',
+    titulo: 'La pantalla se queda quieta',
+    cambios: [
+      '👆 <b>Tocar rápido ya no acerca la pantalla.</b> Dos toques seguidos en el mismo botón hacían zoom y no había cómo volver. Pellizcar para ver más grande sigue funcionando.',
+    ],
+    internos: [
+      'design-system.css: :where(*) { touch-action: manipulation } antes de los componentes (la misma regla que mal-ds 1.0.18). Especificidad cero: los touch-action:none (canvas 3D, .carrusel .scroll, mesón) y pan-y (cuaderno) se quedan. Llega a index.html y a las dos páginas de herramientas/.',
+    ],
+  },
   {
     v: '4.8.0',
     fecha: '2026-10-20',
